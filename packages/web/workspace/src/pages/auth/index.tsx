@@ -141,7 +141,7 @@ export function Email() {
             </Announcement>
           </Show>
           <NewConsoleTips>
-            <li>View logs and manage all your apps</li>
+            <li>Git push to deploy your apps</li>
             <li>Get alerts for any issues in your apps</li>
             <li>
               <a href="https://docs.sst.dev/console" target="_blank">
