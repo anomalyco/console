@@ -1,6 +1,6 @@
-import { createSessionBuilder } from "sst/node/future/auth";
+import { auth } from "sst/auth";
 
-export const sessions = createSessionBuilder<{
+export const sessions = auth.sessions<{
   account: {
     accountID: string;
     email: string;

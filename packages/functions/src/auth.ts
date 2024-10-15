@@ -1,24 +1,18 @@
-import {
-  Issuer,
-  OauthAdapter,
-  AuthHandler,
-  CodeAdapter,
-} from "sst/node/future/auth";
-import { Config } from "sst/node/config";
+import { auth } from "sst/aws/auth";
 import { Account } from "@console/core/account";
-import { Slack } from "@console/core/slack";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import Botpoison from "@botpoison/node";
 import { sessions } from "./sessions";
 import { withActor } from "@console/core/actor";
-import { Response, useCookie, useFormValue, useResponse } from "sst/node/api";
-import { User } from "@console/core/user";
 import { z } from "zod";
+import { CodeAdapter, OauthAdapter } from "sst/auth/adapter";
+import { Issuer } from "sst/auth";
+import { Resource } from "sst";
 
 const ses = new SESv2Client({});
 
-export const handler = AuthHandler({
-  sessions,
+export const handler = auth.authorizer({
+  session: sessions,
   providers: {
     slack: OauthAdapter({
       issuer: new Issuer({
@@ -27,8 +21,8 @@ export const handler = AuthHandler({
         token_endpoint: "https://slack.com/api/oauth.v2.access",
       }),
       scope: "chat:write team:read chat:write.public",
-      clientID: Config.SLACK_CLIENT_ID,
-      clientSecret: Config.SLACK_CLIENT_SECRET,
+      clientID: Resource.SlackClientID.value,
+      clientSecret: Resource.SlackClientSecret.value,
     }),
     email: CodeAdapter({
       async onCodeRequest(code, claims) {
@@ -52,7 +46,7 @@ export const handler = AuthHandler({
 
             if (!process.env.IS_LOCAL) {
               const botpoison = new Botpoison({
-                secretKey: Config.BOTPOISON_SECRET_KEY,
+                secretKey: Resource.BotpoisonSecretKey.value,
               });
               const { ok } = await botpoison.verify(claims.challenge);
               if (!ok)
@@ -87,30 +81,25 @@ export const handler = AuthHandler({
               await ses.send(cmd);
             }
 
-            return {
-              statusCode: 302,
-              headers: {
-                Location:
-                  process.env.AUTH_FRONTEND_URL +
-                  "/auth/code?" +
-                  new URLSearchParams({ email: claims.email }).toString(),
-              },
-            };
-          }
+            return Response.redirect(
+              process.env.AUTH_FRONTEND_URL +
+                "/auth/code?" +
+                new URLSearchParams({ email: claims.email }).toString(),
+              302,
+            );
+          },
         );
       },
       async onCodeInvalid() {
-        return {
-          statusCode: 302,
-          headers: {
-            Location:
-              process.env.AUTH_FRONTEND_URL + "/auth/code?error=invalid_code",
-          },
-        };
+        return Response.redirect(
+          process.env.AUTH_FRONTEND_URL + "/auth/code?error=invalid_code",
+          302,
+        );
       },
     }),
   },
   callbacks: {
+    /*
     connect: {
       async start() {
         const workspaceID = useFormValue("workspaceID");
@@ -151,7 +140,7 @@ export const handler = AuthHandler({
             if (result.provider === "slack") {
               await Slack.connect(result.tokenset.access_token!);
             }
-          }
+          },
         );
 
         return {
@@ -171,26 +160,25 @@ export const handler = AuthHandler({
         };
       },
     },
+    */
     auth: {
       async allowClient(clientID, redirect) {
         return true;
       },
-      async success(input, response) {
+      async success(ctx, response) {
         let email: string | undefined;
 
-        if (input.provider === "email") {
+        if (response.provider === "email") {
           if (
-            input.claims.impersonate &&
-            input.claims.email.split("@")[1] !== "sst.dev"
+            response.claims.impersonate &&
+            response.claims.email?.split("@")[1] !== "sst.dev"
           )
-            return response.http({
-              statusCode: 401,
-              body: "Unauthorized",
+            return new Response("Unauthorized", {
+              status: 401,
             });
-          email = input.claims.impersonate || input.claims.email;
+          email = response.claims.impersonate || response.claims.email;
         }
         if (!email) throw new Error("No email found");
-
         let accountID = await Account.fromEmail(email).then((x) => x?.id);
         if (!accountID) {
           console.log("creating account for", email);
@@ -198,8 +186,7 @@ export const handler = AuthHandler({
             email: email!,
           });
         }
-
-        return response.session({
+        return ctx.session({
           type: "account",
           properties: {
             accountID: accountID!,

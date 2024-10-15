@@ -12,7 +12,7 @@
     "@jsx-email/render": "^1.1.0",
     "@tsconfig/node16": "^1.0.3",
     "luxon": "^3.3.0",
-    "sst": "2.43.4",
+    "sst": "3.2.19",
     "tsx": "^3.12.7"
   },
   "devDependencies": {
