@@ -1,13 +1,13 @@
 import { drizzle } from "drizzle-orm/planetscale-serverless";
-import { Client, connect } from "@planetscale/database";
-import { Config } from "sst/node/config";
+import { Client } from "@planetscale/database";
+import { Resource } from "sst";
 import { fetch } from "undici";
 export * from "drizzle-orm";
 
 const client = new Client({
-  host: "aws.connect.psdb.cloud",
-  username: Config.PLANETSCALE_USERNAME,
-  password: Config.PLANETSCALE_PASSWORD,
+  host: Resource.Database.host,
+  username: Resource.Database.username,
+  password: Resource.Database.password,
   fetch,
 });
 

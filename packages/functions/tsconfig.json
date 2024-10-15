@@ -1,10 +1,10 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
     "jsx": "react",
     "noUncheckedIndexedAccess": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@console/core/*": ["../core/src/*"]
