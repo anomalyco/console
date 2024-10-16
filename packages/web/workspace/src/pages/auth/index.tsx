@@ -160,7 +160,7 @@ export function Email() {
       </Stack>
       <Form
         method="get"
-        action={import.meta.env.VITE_AUTH_URL + "/authorize"}
+        action={import.meta.env.VITE_AUTH_URL + "email/authorize"}
         onSubmit={async (e) => {
           setSubmitting(true);
           e.preventDefault();
@@ -214,7 +214,7 @@ export function Code() {
       .join("");
     location.href =
       import.meta.env.VITE_AUTH_URL +
-      "/callback?" +
+      "email/callback?" +
       new URLSearchParams({
         code,
       }).toString();

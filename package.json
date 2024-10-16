@@ -8,28 +8,24 @@
     "packages/web/*"
   ],
   "scripts": {
-    "build": "sst build",
-    "console": "sst console",
-    "deploy": "sst deploy",
-    "dev": "sst dev",
     "env": "env",
     "prepare": "git config --local core.hooksPath .githooks",
-    "remove": "sst remove",
+    "dev": "sst dev",
     "sso": "aws sso login --sso-session=sst --no-browser",
+    "build": "sst build",
+    "deploy": "sst deploy",
+    "remove": "sst remove",
+    "console": "sst console",
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
-    "@aws-cdk/aws-kinesisfirehose-alpha": "2.142.1-alpha.0",
     "@tsconfig/node16": "^16.1.0",
-    "@types/aws-lambda": "8.10.145",
-    "aws-cdk-lib": "2.142.1",
     "constructs": "10.3.0",
-    "sst": "3.2.19",
+    "sst": "3.2.26",
     "turbo": "^1.10.13",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@tsconfig/node20": "^20.1.4",
-    "sst": "3.2.19"
+    "@tsconfig/node20": "^20.1.4"
   }
 }
