@@ -6,9 +6,9 @@ import {
   PlanetScalePreparedQueryHKT,
   PlanetscaleQueryResultHKT,
 } from "drizzle-orm/planetscale-serverless";
-import { Context } from "sst/context/context2.js";
 import { db } from "../drizzle";
 import { ExtractTablesWithRelations } from "drizzle-orm";
+import { createContext } from "../context";
 
 export type Transaction = MySqlTransaction<
   PlanetscaleQueryResultHKT,
@@ -19,7 +19,7 @@ export type Transaction = MySqlTransaction<
 
 export type TxOrDb = Transaction | typeof db;
 
-const TransactionContext = Context.create<{
+const TransactionContext = createContext<{
   tx: TxOrDb;
   effects: (() => void | Promise<void>)[];
 }>("TransactionContext");

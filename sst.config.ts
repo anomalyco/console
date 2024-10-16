@@ -21,5 +21,6 @@ export default $config({
     await import("./infra/alerts");
     await import("./infra/storage");
     await import("./infra/auth");
+    await import("./infra/web");
   },
 });

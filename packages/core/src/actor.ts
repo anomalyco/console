@@ -1,5 +1,5 @@
-import { Context } from "sst/context/context2.js";
 import { z } from "zod";
+import { createContext } from "./context";
 
 export const PublicActor = z.object({
   type: z.literal("public"),
@@ -41,7 +41,7 @@ export const Actor = z.discriminatedUnion("type", [
 ]);
 export type Actor = z.infer<typeof Actor>;
 
-const ActorContext = Context.create<Actor>("actor");
+const ActorContext = createContext<Actor>("actor");
 
 export const useActor = ActorContext.use;
 export const withActor = ActorContext.with;

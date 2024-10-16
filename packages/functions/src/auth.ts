@@ -36,26 +36,24 @@ export const handler = auth.authorizer({
             console.log("code", code);
             const email = z.string().email().safeParse(claims.email);
             if (!email.success) {
-              return {
-                statusCode: 302,
-                headers: {
-                  Location: process.env.AUTH_FRONTEND_URL + "/auth/email",
-                },
-              };
+              return Response.redirect(
+                process.env.AUTH_FRONTEND_URL +
+                  "/auth/email?error=invalid_email",
+                302,
+              );
             }
 
-            if (!process.env.IS_LOCAL) {
+            if (!process.env.IS_LOCAL && !process.env.SST_DEV) {
               const botpoison = new Botpoison({
                 secretKey: Resource.BotpoisonSecretKey.value,
               });
               const { ok } = await botpoison.verify(claims.challenge);
               if (!ok)
-                return {
-                  statusCode: 302,
-                  headers: {
-                    Location: process.env.AUTH_FRONTEND_URL + "/auth/email",
-                  },
-                };
+                return Response.redirect(
+                  process.env.AUTH_FRONTEND_URL +
+                    "/auth/email?error=invalid_challenge",
+                  302,
+                );
               console.log("challenge verified");
               const cmd = new SendEmailCommand({
                 Destination: {
@@ -168,6 +166,7 @@ export const handler = auth.authorizer({
       async success(ctx, response) {
         let email: string | undefined;
 
+        console.log(response);
         if (response.provider === "email") {
           if (
             response.claims.impersonate &&

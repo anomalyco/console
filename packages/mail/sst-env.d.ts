@@ -5,50 +5,9 @@ import "sst"
 export {}
 declare module "sst" {
   export interface Resource {
-    "Alerts": {
-      "arn": string
-      "type": "sst.aws.SnsTopic"
-    }
-    "Auth": {
-      "publicKey": string
-      "type": "sst.aws.Auth"
-    }
-    "AuthAuthenticator": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "AuthRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
-    "BotpoisonSecretKey": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Database": {
-      "database": string
-      "host": string
-      "password": string
-      "port": number
-      "type": "sst.sst.Linkable"
-      "username": string
-    }
-    "Email": {
-      "sender": string
-      "type": "sst.aws.Email"
-    }
     "SlackClientID": {
       "type": "sst.sst.Secret"
-      "value": string
-    }
-    "SlackClientSecret": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Storage": {
-      "name": string
-      "type": "sst.aws.Bucket"
+      "value": any
     }
   }
 }
