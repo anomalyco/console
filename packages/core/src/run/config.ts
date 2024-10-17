@@ -1,22 +1,23 @@
 import { z } from "zod";
-import { minimatch } from "minimatch";
 import { zod } from "../util/zod";
 import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { Env, runConfigTable } from "./run.sql";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq } from "drizzle-orm";
-import { event } from "../event";
+import { createEvent } from "../event";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export module RunConfig {
   export const Events = {
-    Updated: event(
+    Updated: createEvent(
       "app.config.updated",
       z.object({
         appID: z.string().cuid2(),
         stagePattern: z.string().min(1),
         awsAccountExternalID: z.string(),
-      })
+      }),
     ),
   };
 
@@ -42,12 +43,12 @@ export module RunConfig {
         .where(
           and(
             eq(runConfigTable.workspaceID, useWorkspace()),
-            eq(runConfigTable.appID, appID)
-          )
+            eq(runConfigTable.appID, appID),
+          ),
         )
         .execute()
-        .then((rows) => rows)
-    )
+        .then((rows) => rows),
+    ),
   );
 
   export const put = zod(
@@ -87,8 +88,8 @@ export module RunConfig {
             and(
               eq(runConfigTable.workspaceID, useWorkspace()),
               eq(runConfigTable.appID, input.appID),
-              eq(runConfigTable.stagePattern, input.stagePattern)
-            )
+              eq(runConfigTable.stagePattern, input.stagePattern),
+            ),
           )
           .then((rows) => rows[0]);
         if (!match) return;
@@ -104,13 +105,13 @@ export module RunConfig {
           .execute();
       });
       await createTransactionEffect(() =>
-        Events.Updated.publish({
+        bus.publish(Resource.Bus, Events.Updated, {
           appID: input.appID,
           stagePattern: input.stagePattern,
           awsAccountExternalID: input.awsAccountExternalID,
-        })
+        }),
       );
-    }
+    },
   );
 
   export const remove = zod(z.string().cuid2(), (input) =>
@@ -120,10 +121,10 @@ export module RunConfig {
         .where(
           and(
             eq(runConfigTable.id, input),
-            eq(runConfigTable.workspaceID, useWorkspace())
-          )
+            eq(runConfigTable.workspaceID, useWorkspace()),
+          ),
         )
         .execute();
-    })
+    }),
   );
 }

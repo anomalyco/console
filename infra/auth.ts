@@ -20,8 +20,14 @@ export const auth = new sst.aws.Auth("Auth", {
   },
 });
 
-new sst.aws.Router("AuthRouter", {
-  routes: {
-    "/*": auth.url,
-  },
-});
+// export const authRouter = new sst.aws.Router("AuthRouter", {
+//   routes: {
+//     "/*": auth.url,
+//   },
+//   domain: {
+//     name: "auth." + domain,
+//     dns: sst.aws.dns({
+//       override: true,
+//     }),
+//   },
+// });

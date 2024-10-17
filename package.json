@@ -21,7 +21,7 @@
   "devDependencies": {
     "@tsconfig/node16": "^16.1.0",
     "constructs": "10.3.0",
-    "sst": "3.2.26",
+    "sst": "3.2.31",
     "turbo": "^1.10.13",
     "typescript": "^5.2.2"
   },

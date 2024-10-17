@@ -17,6 +17,8 @@ import {
 } from "../util/transaction";
 import { zod } from "../util/zod";
 import { issueCount, issue, issueSubscriber } from "./issue.sql";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export const extract = zod(
   z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
@@ -118,7 +120,7 @@ export const extract = zod(
               },
             },
             () =>
-              Events.RateLimited.publish({
+              bus.publish(Resource.Bus, Events.RateLimited, {
                 stageID: row.stageID,
                 logGroup: input.logGroup,
               }),
@@ -353,7 +355,7 @@ export const extract = zod(
                   },
                 },
                 () =>
-                  Events.IssueDetected.publish({
+                  bus.publish(Resource.Bus, Events.IssueDetected, {
                     stageID: item.workspace.stageID,
                     group: item.group,
                   }),

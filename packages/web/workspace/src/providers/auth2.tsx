@@ -56,7 +56,7 @@ export const { use: useAuth2, provider: AuthProvider2 } =
       const all = [];
       for (const token of [...Object.keys(store.accounts), accessToken()]) {
         if (!token) continue;
-        const prom = fetch(import.meta.env.VITE_API_URL + "/rest/account", {
+        const prom = fetch(import.meta.env.VITE_API_URL + "/account", {
           headers: {
             authorization: `Bearer ${token}`,
           },

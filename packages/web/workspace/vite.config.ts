@@ -11,6 +11,7 @@ export default defineConfig({
     host: "0.0.0.0",
   },
   optimizeDeps: {
+    exclude: ["@modular-forms/solid"],
     esbuildOptions: {
       target: "es2020",
     },

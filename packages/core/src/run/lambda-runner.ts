@@ -17,7 +17,6 @@ import {
   DetachRolePolicyCommand,
   DeleteRolePolicyCommand,
 } from "@aws-sdk/client-iam";
-import { Config } from "sst/node/config";
 import { zod } from "../util/zod";
 import { Resource, Architecture, Compute } from "./run.sql";
 import { RETRY_STRATEGY } from "../util/aws";
@@ -27,19 +26,18 @@ import { Run } from ".";
 export module LambdaRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 15; // 15 minutes
 
+  // TODO: add image uri
   export const getImage = zod(z.enum(Architecture), (architecture) =>
-    architecture === "x86_64"
-      ? `${Config.IMAGE_URI}:x86_64-1`
-      : `${Config.IMAGE_URI}:arm64-1`
+    architecture === "x86_64" ? `:x86_64-1` : `:arm64-1`,
   );
 
   export const createResource = zod(
     z.object({
       credentials: z.custom<Credentials>(),
-      awsAccountExternalID: z.string().nonempty(),
-      region: z.string().nonempty(),
-      suffix: z.string().nonempty(),
-      image: z.string().nonempty(),
+      awsAccountExternalID: z.string().min(1),
+      region: z.string().min(1),
+      suffix: z.string().min(1),
+      image: z.string().min(1),
       architecture: z.enum(Architecture),
       compute: z.enum(Compute),
     }),
@@ -82,7 +80,7 @@ export module LambdaRunner {
                   },
                 ],
               }),
-            })
+            }),
           );
           await iam.send(
             new PutRolePolicyCommand({
@@ -98,14 +96,14 @@ export module LambdaRunner {
                   },
                 ],
               }),
-            })
+            }),
           );
           await iam.send(
             new AttachRolePolicyCommand({
               RoleName: roleName,
               PolicyArn:
                 "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-            })
+            }),
           );
           return ret.Role?.Arn!;
         } catch (e: any) {
@@ -117,7 +115,7 @@ export module LambdaRunner {
             .send(
               new GetRoleCommand({
                 RoleName: roleName,
-              })
+              }),
             )
             .then((ret) => ret.Role?.Arn!);
         }
@@ -143,7 +141,7 @@ export module LambdaRunner {
               },
               PackageType: "Image",
               Architectures: [architecture],
-            })
+            }),
           );
 
           await lambda.send(
@@ -151,7 +149,7 @@ export module LambdaRunner {
               FunctionName: ret.FunctionArn!,
               MaximumRetryAttempts: 0,
               MaximumEventAgeInSeconds: 3600,
-            })
+            }),
           );
         } catch (e: any) {
           if (e.name === "InvalidParameterValueException")
@@ -166,7 +164,7 @@ export module LambdaRunner {
           const ret = await lambda.send(
             new GetFunctionCommand({
               FunctionName: functionName,
-            })
+            }),
           );
 
           if (ret.Configuration?.State !== "Pending") {
@@ -175,13 +173,13 @@ export module LambdaRunner {
           await new Promise((r) => setTimeout(r, 5000));
         }
       }
-    }
+    },
   );
 
   export const removeResource = zod(
     z.object({
       credentials: z.custom<Credentials>(),
-      region: z.string().nonempty(),
+      region: z.string().min(1),
       resource: z.custom<Resource>(),
     }),
     async ({ region, resource, credentials }) => {
@@ -202,7 +200,7 @@ export module LambdaRunner {
             new DeleteRolePolicyCommand({
               RoleName: roleName,
               PolicyName: "eventbridge",
-            })
+            }),
           );
         } catch (e: any) {
           console.error(e);
@@ -214,7 +212,7 @@ export module LambdaRunner {
               RoleName: roleName,
               PolicyArn:
                 "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-            })
+            }),
           );
         } catch (e: any) {
           if (e.name !== "NoSuchEntityException") {
@@ -226,7 +224,7 @@ export module LambdaRunner {
           await iam.send(
             new DeleteRoleCommand({
               RoleName: roleName,
-            })
+            }),
           );
         } catch (e: any) {
           console.error(e);
@@ -248,19 +246,19 @@ export module LambdaRunner {
           const ret = await lambda.send(
             new DeleteFunctionCommand({
               FunctionName: functionName,
-            })
+            }),
           );
         } catch (e: any) {
           console.error(e);
         }
       }
-    }
+    },
   );
 
   export const invoke = zod(
     z.object({
       credentials: z.custom<Credentials>(),
-      region: z.string().nonempty(),
+      region: z.string().min(1),
       resource: z.custom<Resource>(),
       payload: z.custom<Run.RunnerEvent>(),
       timeoutInMinutes: z.number().int(),
@@ -278,8 +276,8 @@ export module LambdaRunner {
           FunctionName: resource.properties.function,
           InvocationType: "Event",
           Payload: JSON.stringify(payload),
-        })
+        }),
       );
-    }
+    },
   );
 }

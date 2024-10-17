@@ -11,7 +11,7 @@
     "@types/aws-lambda": "^8.10.114",
     "@types/luxon": "^3.3.1",
     "@types/node": "^18.16.0",
-    "sst": "3.2.26",
+    "sst": "3.2.31",
     "typescript": "^5.2.2"
   },
   "dependencies": {
@@ -27,10 +27,11 @@
     "@botpoison/node": "^0.1.10",
     "@console/mail": "workspace:*",
     "@esbuild/linux-arm64": "0.21.4",
+    "@hono/zod-validator": "^0.4.1",
     "drizzle-orm": "0.31.2",
     "esbuild": "0.21.4",
     "fast-jwt": "^2.2.1",
-    "hono": "^3.9.2",
+    "hono": "4.6.5",
     "luxon": "^3.3.0",
     "octokit": "^4.0.2",
     "remeda": "^1.17.1",

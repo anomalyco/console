@@ -9,23 +9,25 @@ import { and, eq, sql } from "drizzle-orm";
 import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { user } from "./user.sql";
 import { useActor, useWorkspace } from "../actor";
-import { event } from "../event";
+import { createEvent } from "../event";
 import { render } from "@jsx-email/render";
 import { InviteEmail } from "@console/mail/emails/templates/InviteEmail";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { workspace } from "../workspace/workspace.sql";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 const ses = new SESv2Client({});
 
 export const Info = createSelectSchema(user, {
   id: (schema) => schema.id.cuid2(),
-  email: (schema) => schema.email.trim().toLowerCase().nonempty(),
+  email: (schema) => schema.email.trim().toLowerCase().min(1),
   workspaceID: (schema) => schema.workspaceID.cuid2(),
 });
 export type Info = z.infer<typeof Info>;
 
 export const Events = {
-  UserCreated: event(
+  UserCreated: createEvent(
     "user.created",
     z.object({
       userID: z.string().cuid2(),
@@ -80,7 +82,7 @@ export const create = zod(
         )
         .then((rows) => rows[0]!.id);
       await createTransactionEffect(() =>
-        Events.UserCreated.publish({ userID: id }),
+        bus.publish(Resource.Bus, Events.UserCreated, { userID: id }),
       );
       return id;
     }),

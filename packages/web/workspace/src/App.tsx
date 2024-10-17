@@ -5,23 +5,16 @@ import "@fontsource/ibm-plex-mono/latin.css";
 import { styled } from "@macaron-css/solid";
 import { darkClass, lightClass, theme } from "./ui/theme";
 import { globalStyle, macaron$ } from "@macaron-css/core";
-import { dropAllDatabases } from "replicache";
 import { Match, Switch, onCleanup, Component, createSignal } from "solid-js";
 import { Navigate, Route, Router, Routes, useNavigate } from "@solidjs/router";
 import { Auth, Code } from "./pages/auth";
-import { AuthProvider } from "./providers/auth";
 import { RealtimeProvider } from "./providers/realtime";
 import { CommandBar, useCommandBar } from "./pages/workspace/command-bar";
 import { Debug } from "./pages/debug";
 import { Design } from "./pages/design";
 import { Workspace } from "./pages/workspace";
 import { WorkspaceCreate } from "./pages/workspace-create";
-import {
-  IconLogout,
-  IconAddCircle,
-  IconWorkspace,
-  IconApp,
-} from "./ui/icons/custom";
+import { IconAddCircle, IconWorkspace } from "./ui/icons/custom";
 import { LocalProvider } from "./providers/local";
 import { useStorage } from "./providers/account";
 import { DummyConfigProvider, DummyProvider } from "./providers/dummy";
@@ -31,8 +24,6 @@ import { NotFound } from "./pages/not-found";
 import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
 import { AuthProvider2, useAuth2 } from "./providers/auth2";
-import { createSubscription } from "./providers/replicache";
-import { AppStore } from "./data/app";
 
 const Root = styled("div", {
   base: {
@@ -210,14 +201,15 @@ export const App: Component = () => {
                                           }
                                         >
                                           <Navigate
-                                            href={`/${(
+                                            href={`/${
+                                              (
                                                 auth.current.workspaces.find(
                                                   (w) =>
                                                     w.id ===
                                                     storage.value.workspace,
                                                 ) || auth.current.workspaces[0]
                                               ).slug
-                                              }`}
+                                            }`}
                                           />
                                         </Match>
                                         <Match when={true}>

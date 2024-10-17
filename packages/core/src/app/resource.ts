@@ -1,6 +1,4 @@
 export * as Resource from "./resource";
-
-import { InferModel } from "drizzle-orm";
 import { resource } from "./app.sql";
 import { GetFunctionCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import {
@@ -8,7 +6,7 @@ import {
   DescribeStacksCommand,
 } from "@aws-sdk/client-cloudformation";
 import type { Credentials } from "../aws";
-import { event } from "../event";
+import { createEvent } from "../event";
 import { z } from "zod";
 import { zod } from "../util/zod";
 import { useTransaction } from "../util/transaction";
@@ -17,15 +15,15 @@ import { useWorkspace } from "../actor";
 import { RETRY_STRATEGY } from "../util/aws";
 
 export const Events = {
-  Updated: event(
+  Updated: createEvent(
     "app.resource.updated",
     z.object({
-      resourceID: z.string().nonempty(),
-    })
+      resourceID: z.string().min(1),
+    }),
   ),
 };
 
-type Model = InferModel<typeof resource>;
+type Model = typeof resource.$inferSelect;
 
 type Metadata =
   | {
@@ -158,14 +156,14 @@ export const Enrichers = {
     const info = await client.send(
       new GetFunctionCommand({
         FunctionName: resource.data.arn,
-      })
+      }),
     );
     client.destroy();
     return {
       size: info.Configuration?.CodeSize,
       runtime: info.Configuration?.Runtime,
       live: Boolean(
-        info.Configuration?.Environment?.Variables?.SST_FUNCTION_ID
+        info.Configuration?.Environment?.Variables?.SST_FUNCTION_ID,
       ),
     };
   },
@@ -181,19 +179,19 @@ export const Enrichers = {
     const result = await client.send(
       new DescribeStacksCommand({
         StackName: resource.id,
-      })
+      }),
     );
     client.destroy();
     const [stack] = result.Stacks || [];
     const parsed = JSON.parse(
       stack?.Outputs?.find((o) => o.OutputKey === "SSTMetadata")?.OutputValue ||
-        "{}"
+        "{}",
     );
     return {
       outputs:
         stack?.Outputs?.filter(
           (o) =>
-            o.OutputKey !== "SSTMetadata" && !o.OutputKey?.startsWith("Export")
+            o.OutputKey !== "SSTMetadata" && !o.OutputKey?.startsWith("Export"),
         ) || [],
       version: parsed.version as string | undefined,
     } as const;
@@ -205,24 +203,24 @@ export const Enrichers = {
       data: Extract<Metadata, { type: key }>["data"];
     },
     credentials: Credentials,
-    region: string
+    region: string,
   ) => Promise<any>;
 };
 
-export const fromID = zod(z.string().nonempty(), (id) =>
+export const fromID = zod(z.string().min(1), (id) =>
   useTransaction((tx) =>
     tx
       .select()
       .from(resource)
       .where(and(eq(resource.workspaceID, useWorkspace()), eq(resource.id, id)))
       .execute()
-      .then((x) => x[0])
-  )
+      .then((x) => x[0]),
+  ),
 );
 
 export const enrich = zod(
   z.object({
-    resourceID: z.string().nonempty(),
+    resourceID: z.string().min(1),
     credentials: z.custom<Credentials>(),
     region: z.string(),
   }),
@@ -238,15 +236,15 @@ export const enrich = zod(
           data: resource.metadata as any,
         },
         input.credentials,
-        input.region
+        input.region,
       );
-    })
+    }),
 );
 
 export const listFromStageID = zod(
   z.object({
-    stageID: z.string().nonempty(),
-    types: z.array(z.string().nonempty()),
+    stageID: z.string().min(1),
+    types: z.array(z.string().min(1)),
   }),
   (input) =>
     useTransaction((tx) =>
@@ -257,10 +255,10 @@ export const listFromStageID = zod(
           and(
             eq(resource.workspaceID, useWorkspace()),
             eq(resource.stageID, input.stageID),
-            inArray(resource.type, input.types)
-          )
+            inArray(resource.type, input.types),
+          ),
         )
         .execute()
-        .then((rows) => rows as Info[])
-    )
+        .then((rows) => rows as Info[]),
+    ),
 );

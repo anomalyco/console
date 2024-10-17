@@ -38,7 +38,6 @@ import {
   IAMClient,
   PutRolePolicyCommand,
 } from "@aws-sdk/client-iam";
-import { event } from "../event";
 
 export const Info = createSelectSchema(awsAccount, {
   id: (schema) => schema.id.cuid2(),
@@ -48,13 +47,13 @@ export const Info = createSelectSchema(awsAccount, {
 export type Info = z.infer<typeof Info>;
 
 export const Events = {
-  Created: event(
+  Created: createEvent(
     "aws.account.created",
     z.object({
       awsAccountID: z.string().cuid2(),
     }),
   ),
-  Removed: event(
+  Removed: createEvent(
     "aws.account.removed",
     z.object({
       awsAccountID: z.string().cuid2(),
@@ -97,7 +96,7 @@ export const create = zod(
         )
         .then((rows) => rows.at(0));
       await createTransactionEffect(() =>
-        Events.Created.publish({
+        bus.publish(Resource.Bus, Events.Created, {
           awsAccountID: existing!.id,
         }),
       );
@@ -119,7 +118,7 @@ export const scan = zod(Info.shape.id, (input) =>
         ),
       );
     await createTransactionEffect(() =>
-      Events.Created.publish({
+      bus.publish(Resource.Bus, Events.Created, {
         awsAccountID: input,
       }),
     );
@@ -261,12 +260,14 @@ export const bootstrapIon = zod(
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
 import { App } from "../app";
 import { Replicache } from "../replicache";
-import { Config } from "sst/node/config";
 import { db } from "../drizzle";
 import { app, stage } from "../app/app.sql";
 import { createPipe, groupBy, mapValues } from "remeda";
 import { RETRY_STRATEGY } from "../util/aws";
 import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
+import { Resource } from "sst";
+import { createEvent } from "../event";
+import { bus } from "sst/aws/bus";
 
 export const regions = zod(
   bootstrap.schema.shape.credentials,
@@ -306,7 +307,8 @@ export const integrate = zod(
     const iam = new IAMClient({
       credentials: input.credentials,
     });
-    const suffix = Config.STAGE !== "production" ? "-" + Config.STAGE : "";
+    const suffix =
+      Resource.App.stage !== "production" ? "-" + Resource.App.stage : "";
     const roleName = "SSTConsolePublisher" + suffix;
     await iam
       .send(

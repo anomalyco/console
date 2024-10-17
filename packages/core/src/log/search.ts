@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { event } from "../event";
+import { createEvent } from "../event";
 import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { zod } from "../util/zod";
 import { log_search } from "./log.sql";
 import { assertActor, useWorkspace } from "../actor";
 import { createSelectSchema } from "drizzle-zod";
 import { and, eq, lt, sql } from "drizzle-orm";
-import { sqliteView } from "drizzle-orm/sqlite-core";
 import { db } from "../drizzle";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export * as Search from "./search";
 export const Info = createSelectSchema(log_search, {
@@ -16,11 +17,11 @@ export const Info = createSelectSchema(log_search, {
 export type Info = z.infer<typeof Info>;
 
 export const Events = {
-  Created: event(
+  Created: createEvent(
     "log.search.created",
     z.object({
       id: z.string().cuid2(),
-    })
+    }),
   ),
 };
 
@@ -30,11 +31,11 @@ export const fromID = zod(Info.shape.id, (id) =>
       .select()
       .from(log_search)
       .where(
-        and(eq(log_search.id, id), eq(log_search.workspaceID, useWorkspace()))
+        and(eq(log_search.id, id), eq(log_search.workspaceID, useWorkspace())),
       )
       .execute()
-      .then((rows) => rows.at(0))
-  )
+      .then((rows) => rows.at(0)),
+  ),
 );
 
 export const search = zod(
@@ -71,11 +72,11 @@ export const search = zod(
         })
         .execute();
       await createTransactionEffect(() =>
-        Events.Created.publish({
+        bus.publish(Resource.Bus, Events.Created, {
           id: input.id,
-        })
+        }),
       );
-    })
+    }),
 );
 
 export const setStart = zod(
@@ -94,11 +95,11 @@ export const setStart = zod(
         .where(
           and(
             eq(log_search.id, input.id),
-            eq(log_search.workspaceID, useWorkspace())
-          )
+            eq(log_search.workspaceID, useWorkspace()),
+          ),
         )
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export const complete = zod(
@@ -116,11 +117,11 @@ export const complete = zod(
         .where(
           and(
             eq(log_search.id, input.id),
-            eq(log_search.workspaceID, useWorkspace())
-          )
+            eq(log_search.workspaceID, useWorkspace()),
+          ),
         )
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export async function cleanup() {

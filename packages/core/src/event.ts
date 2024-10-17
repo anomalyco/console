@@ -1,10 +1,10 @@
-import { createEventBuilder, ZodValidator } from "sst/node/event-bus";
+import { event } from "sst/event";
+import { ZodValidator } from "sst/event/validator";
 import { useActor } from "./actor";
 
-export const event = createEventBuilder({
-  bus: "bus",
+export const createEvent = event.builder({
   validator: ZodValidator,
-  metadataFn() {
+  metadata() {
     return {
       actor: useActor(),
     };

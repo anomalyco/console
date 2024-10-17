@@ -6,17 +6,18 @@ import { githubOrgTable, githubRepoTable } from "./git.sql";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, ne, inArray, isNull, notInArray, or, sql } from "../drizzle";
-import { Config } from "sst/node/config";
-import { event } from "../event";
+import { createEvent } from "../event";
 import { appRepoTable } from "../app/app.sql";
+import { Resource } from "sst";
+import { bus } from "sst/aws/bus";
 
 export module Github {
   export const Events = {
-    Installed: event(
+    Installed: createEvent(
       "github.installed",
       z.object({
         installationID: z.number().int(),
-      })
+      }),
     ),
   };
 
@@ -63,7 +64,7 @@ export module Github {
   }
 
   export function serializeRepo(
-    input: typeof githubRepoTable.$inferSelect
+    input: typeof githubRepoTable.$inferSelect,
   ): Repo {
     return {
       id: input.id,
@@ -93,8 +94,8 @@ export module Github {
   }
   function createClient(installationID: number) {
     const app = new App({
-      appId: Config.GITHUB_APP_ID,
-      privateKey: Config.GITHUB_PRIVATE_KEY,
+      appId: Resource.GithubAppID.value,
+      privateKey: Resource.GithubPrivateKey.value,
     });
     return app.getInstallationOctokit(installationID);
   }
@@ -135,8 +136,8 @@ export module Github {
           .where(
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
-              eq(githubOrgTable.externalOrgID, externalOrgID)
-            )
+              eq(githubOrgTable.externalOrgID, externalOrgID),
+            ),
           )
           .then((x) => x[0]?.id);
         console.log("connected", match);
@@ -146,24 +147,24 @@ export module Github {
           .from(appRepoTable)
           .innerJoin(
             githubRepoTable,
-            eq(appRepoTable.repoID, githubRepoTable.id)
+            eq(appRepoTable.repoID, githubRepoTable.id),
           )
           .innerJoin(
             githubOrgTable,
-            eq(githubRepoTable.githubOrgID, githubOrgTable.id)
+            eq(githubRepoTable.githubOrgID, githubOrgTable.id),
           )
           .where(
             and(
               eq(appRepoTable.workspaceID, useWorkspace()),
-              ne(githubOrgTable.id, match)
-            )
+              ne(githubOrgTable.id, match),
+            ),
           )
           .then((x) => x.map((x) => x.id));
         console.log(
           "deleting",
           toDelete.length,
           "app repos that don't match",
-          match
+          match,
         );
         if (toDelete.length === 0) return;
         await tx
@@ -171,12 +172,12 @@ export module Github {
           .where(
             and(
               eq(appRepoTable.workspaceID, useWorkspace()),
-              inArray(appRepoTable.id, toDelete)
-            )
+              inArray(appRepoTable.id, toDelete),
+            ),
           );
       });
-      await Events.Installed.publish({ installationID });
-    }
+      await bus.publish(Resource.Bus, Events.Installed, { installationID });
+    },
   );
 
   export const disconnect = zod(Org.shape.id, (id) =>
@@ -189,11 +190,11 @@ export module Github {
         .where(
           and(
             eq(githubOrgTable.id, id),
-            eq(githubOrgTable.workspaceID, useWorkspace())
-          )
+            eq(githubOrgTable.workspaceID, useWorkspace()),
+          ),
         )
         .execute();
-    })
+    }),
   );
 
   export const disconnectAll = zod(Org.shape.installationID, (installationID) =>
@@ -205,7 +206,7 @@ export module Github {
         })
         .where(eq(githubOrgTable.installationID, installationID))
         .execute();
-    })
+    }),
   );
 
   export const listAppReposByExternalRepoID = zod(
@@ -226,20 +227,20 @@ export module Github {
             and(
               eq(githubOrgTable.workspaceID, githubRepoTable.workspaceID),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
-              isNull(githubOrgTable.timeDisconnected)
-            )
+              isNull(githubOrgTable.timeDisconnected),
+            ),
           )
           .innerJoin(
             appRepoTable,
             and(
               eq(appRepoTable.workspaceID, githubRepoTable.workspaceID),
               eq(appRepoTable.type, "github"),
-              eq(appRepoTable.repoID, githubRepoTable.id)
-            )
+              eq(appRepoTable.repoID, githubRepoTable.id),
+            ),
           )
           .where(eq(githubRepoTable.externalRepoID, externalRepoID))
-          .execute()
-      )
+          .execute(),
+      ),
   );
 
   export const getExternalInfoByRepoID = zod(Repo.shape.id, (repoID) =>
@@ -255,18 +256,18 @@ export module Github {
           githubOrgTable,
           and(
             eq(githubOrgTable.workspaceID, useWorkspace()),
-            eq(githubOrgTable.id, githubRepoTable.githubOrgID)
-          )
+            eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+          ),
         )
         .where(
           and(
             eq(githubRepoTable.id, repoID),
-            eq(githubRepoTable.workspaceID, useWorkspace())
-          )
+            eq(githubRepoTable.workspaceID, useWorkspace()),
+          ),
         )
         .execute()
-        .then((x) => x[0])
-    )
+        .then((x) => x[0]),
+    ),
   );
 
   export const syncRepos = zod(
@@ -278,7 +279,7 @@ export module Github {
           .select()
           .from(githubOrgTable)
           .where(eq(githubOrgTable.installationID, installationID))
-          .execute()
+          .execute(),
       );
       if (orgs.length === 0) return;
 
@@ -294,7 +295,7 @@ export module Github {
           ...ret.data.repositories.map((repo) => ({
             id: repo.id,
             name: repo.name,
-          }))
+          })),
         );
         if (ret.data.repositories.length < 100) break;
       }
@@ -312,15 +313,15 @@ export module Github {
                       eq(githubRepoTable.githubOrgID, org.id),
                       notInArray(
                         githubRepoTable.externalRepoID,
-                        repos.map(({ id }) => id)
-                      )
+                        repos.map(({ id }) => id),
+                      ),
                     )
                   : and(
                       eq(githubRepoTable.workspaceID, org.workspaceID),
-                      eq(githubRepoTable.githubOrgID, org.id)
-                    )
-              )
-            )
+                      eq(githubRepoTable.githubOrgID, org.id),
+                    ),
+              ),
+            ),
           )
           .execute();
 
@@ -336,15 +337,15 @@ export module Github {
                 githubOrgID: org.id,
                 externalRepoID: repo.id,
                 name: repo.name,
-              }))
-            )
+              })),
+            ),
           )
           .onDuplicateKeyUpdate({
             set: { name: sql`VALUES(name)` },
           })
           .execute();
       });
-    }
+    },
   );
 
   export const getFile = zod(
@@ -366,7 +367,7 @@ export module Github {
         });
         return "content" in file.data ? file.data.content : undefined;
       } catch (e: any) {}
-    }
+    },
   );
 
   export const getCloneUrl = zod(
@@ -381,6 +382,6 @@ export module Github {
         .auth({ type: "installation" })
         .then((x: any) => x.token);
       return `https://oauth2:${oauthToken}@github.com/${input.owner}/${input.repo}.git`;
-    }
+    },
   );
 }
