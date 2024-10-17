@@ -79,7 +79,7 @@ export function WorkspaceCreate() {
             onSubmit={async (data) => {
               console.log("submitting");
               const result = await fetch(
-                import.meta.env.VITE_API_URL + "/rest/workspace",
+                import.meta.env.VITE_API_URL + "/account/workspace",
                 {
                   method: "POST",
                   headers: {

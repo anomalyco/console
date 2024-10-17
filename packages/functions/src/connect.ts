@@ -6,6 +6,8 @@ import {
 import { AWS } from "@console/core/aws";
 import { withActor } from "@console/core/actor";
 import { Replicache } from "@console/core/replicache";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export async function handler(event: CloudFormationCustomResourceEvent) {
   console.log(event);
@@ -21,7 +23,7 @@ export async function handler(event: CloudFormationCustomResourceEvent) {
         },
         async () => {
           const credentials = await AWS.assumeRole(
-            event.ResourceProperties.accountID
+            event.ResourceProperties.accountID,
           );
           if (credentials) {
             await AWS.Account.create({
@@ -33,7 +35,7 @@ export async function handler(event: CloudFormationCustomResourceEvent) {
           } else {
             status = "FAILED";
           }
-        }
+        },
       );
     } catch (ex) {
       console.error(ex);
@@ -51,14 +53,14 @@ export async function handler(event: CloudFormationCustomResourceEvent) {
       },
       async () => {
         const account = await AWS.Account.fromAccountID(
-          event.ResourceProperties.accountID
+          event.ResourceProperties.accountID,
         );
         if (!account) return;
 
-        await AWS.Account.Events.Removed.publish({
+        await bus.publish(Resource.Bus, AWS.Account.Events.Removed, {
           awsAccountID: account.id,
         });
-      }
+      },
     );
   }
 

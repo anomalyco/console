@@ -10,6 +10,8 @@ import {
   useTransaction,
 } from "@console/core/util/transaction";
 import { and, eq } from "drizzle-orm";
+import { Resource } from "sst";
+import { bus } from "sst/aws/bus";
 
 interface Events {
   "Object Created": {
@@ -72,7 +74,7 @@ export const handler = async (evt: Payload) => {
                 }
                 console.log("lock created for", row);
                 await createTransactionEffect(() =>
-                  State.Event.LockCreated.publish({
+                  bus.publish(Resource.Bus, State.Event.LockCreated, {
                     stageID: row.stageID!,
                     // @ts-expect-error
                     versionID: evt.detail.object["version-id"]!,
@@ -99,7 +101,7 @@ export const handler = async (evt: Payload) => {
           },
         },
         () =>
-          State.Event.SummaryCreated.publish({
+          bus.publish(Resource.Bus, State.Event.SummaryCreated, {
             stageID: row.stageID!,
             updateID: updateID!,
           }),
@@ -124,7 +126,7 @@ export const handler = async (evt: Payload) => {
           },
         },
         () =>
-          State.Event.HistoryCreated.publish({
+          bus.publish(Resource.Bus, State.Event.HistoryCreated, {
             stageID: row.stageID!,
             key: evt.detail.object.key,
           }),
@@ -168,7 +170,7 @@ export const handler = async (evt: Payload) => {
             if (row.stageID) {
               console.log("creating effect");
               await createTransactionEffect(() =>
-                Stage.Events.Updated.publish({
+                bus.publish(Resource.Bus, Stage.Events.Updated, {
                   stageID: row.stageID!,
                 }),
               );
