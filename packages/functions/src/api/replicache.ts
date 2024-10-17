@@ -146,7 +146,7 @@ const s3 = new S3Client({});
 ReplicacheRoute.post("/pull1", async (c) => {
   const actor = useActor();
   function log(...args: any[]) {
-    if (process.env.IS_LOCAL) return;
+    if (process.env.SST_DEV) return;
     console.log(...args);
   }
   log("actor", actor);
@@ -568,7 +568,7 @@ ReplicacheRoute.post("/push1", async (c) => {
           console.log(
             `Mutation ${mutation.id} has already been processed - skipping`,
           );
-          return;
+          return c.status(200);
         }
 
         if (mutation.id > nextMutationID) {
@@ -627,5 +627,5 @@ ReplicacheRoute.post("/push1", async (c) => {
 
   if (actor.type === "user") await Replicache.poke();
 
-  return c.status(200);
+  return c.text("ok");
 });

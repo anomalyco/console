@@ -1,4 +1,6 @@
-export const storage = new sst.aws.Bucket("Storage");
+export const storage = new sst.aws.Bucket("Storage", {
+  access: "public",
+});
 
 new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
   bucket: storage.name,

@@ -32,6 +32,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bus"
     }
+    "Connect": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "Database": {
       "database": string
       "host": string

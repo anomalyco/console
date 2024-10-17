@@ -362,7 +362,7 @@ export const integrate = zod(
             {
               Effect: "Allow",
               Action: ["events:PutEvents"],
-              Resource: [process.env.EVENT_BUS_ARN],
+              Resource: [Resource.Bus.arn],
             },
           ],
         }),
@@ -434,7 +434,7 @@ export const integrate = zod(
           Rule: "SSTConsole" + suffix,
           Targets: [
             {
-              Arn: process.env.EVENT_BUS_ARN,
+              Arn: Resource.Bus.arn,
               Id: "SSTConsole",
               RoleArn: `arn:aws:iam::${account.accountID}:role/${roleName}`,
             },
