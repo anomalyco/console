@@ -1,3 +1,4 @@
+import { api } from "./api";
 import { auth } from "./auth";
 
 export const workspace = new sst.aws.StaticSite("workspace", {
@@ -7,6 +8,8 @@ export const workspace = new sst.aws.StaticSite("workspace", {
     command: "pnpm build",
   },
   environment: {
-    VITE_AUTH_URL: auth.url,
+    VITE_AUTH_URL: auth.authenticator.url,
+    VITE_API_URL: api.url,
+    VITE_IOT_HOST: aws.iot.getEndpointOutput().endpointAddress,
   },
 });

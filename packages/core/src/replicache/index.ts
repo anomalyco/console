@@ -6,8 +6,8 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { Realtime } from "../realtime";
-import { Bucket } from "sst/node/bucket";
 import { compress, decompress } from "../util/compress";
+import { Resource } from "sst";
 
 export async function poke(profileID?: string) {
   console.log("sending poke");
@@ -35,7 +35,7 @@ export module CVR {
     const result = await s3
       .send(
         new GetObjectCommand({
-          Bucket: Bucket.storage.bucketName,
+          Bucket: Resource.Storage.name,
           Key: await path,
         }),
       )
@@ -52,7 +52,7 @@ export module CVR {
     const path = await key(clientGroupID, version);
     await s3.send(
       new PutObjectCommand({
-        Bucket: Bucket.storage.bucketName,
+        Bucket: Resource.Storage.name,
         Key: path,
         ContentEncoding: "gzip",
         ContentType: "application/json",

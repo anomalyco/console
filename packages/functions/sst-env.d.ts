@@ -5,9 +5,68 @@ import "sst"
 export {}
 declare module "sst" {
   export interface Resource {
+    "Alerts": {
+      "arn": string
+      "type": "sst.aws.SnsTopic"
+    }
+    "Api": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "Auth": {
+      "publicKey": string
+      "type": "sst.aws.Auth"
+    }
+    "AuthAuthenticator": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "BotpoisonSecretKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "Bus": {
+      "arn": string
+      "name": string
+      "type": "sst.aws.Bus"
+    }
+    "Database": {
+      "database": string
+      "host": string
+      "password": string
+      "port": number
+      "type": "sst.sst.Linkable"
+      "username": string
+    }
+    "Email": {
+      "sender": string
+      "type": "sst.aws.Email"
+    }
+    "GithubAppID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "GithubPrivateKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "SlackClientID": {
       "type": "sst.sst.Secret"
-      "value": any
+      "value": string
+    }
+    "SlackClientSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "Storage": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "workspace": {
+      "type": "sst.aws.StaticSite"
+      "url": string
     }
   }
 }

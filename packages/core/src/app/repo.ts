@@ -4,9 +4,10 @@ import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { appRepoTable } from "./app.sql";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm";
-import { event } from "../event";
-import { Trigger } from "../run/run.sql";
+import { and, eq } from "drizzle-orm";
+import { createEvent } from "../event";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export module AppRepo {
   export const Repo = z.object({
@@ -24,17 +25,17 @@ export module AppRepo {
   export type Repo = z.infer<typeof Repo>;
 
   export const Events = {
-    Connected: event(
+    Connected: createEvent(
       "app.repo.connected",
       z.object({
         appID: Repo.shape.appID,
         repoID: Repo.shape.repoID,
-      })
+      }),
     ),
   };
 
   export function serializeAppRepo(
-    input: typeof appRepoTable.$inferSelect
+    input: typeof appRepoTable.$inferSelect,
   ): Repo {
     return {
       id: input.id,
@@ -58,12 +59,12 @@ export module AppRepo {
         .where(
           and(
             eq(appRepoTable.workspaceID, useWorkspace()),
-            eq(appRepoTable.id, id)
-          )
+            eq(appRepoTable.id, id),
+          ),
         )
         .execute()
-        .then((rows) => rows[0])
-    )
+        .then((rows) => rows[0]),
+    ),
   );
 
   export const getByAppID = zod(Repo.shape.appID, (appID) =>
@@ -74,12 +75,12 @@ export module AppRepo {
         .where(
           and(
             eq(appRepoTable.workspaceID, useWorkspace()),
-            eq(appRepoTable.appID, appID)
-          )
+            eq(appRepoTable.appID, appID),
+          ),
         )
         .execute()
-        .then((rows) => rows[0])
-    )
+        .then((rows) => rows[0]),
+    ),
   );
 
   export const connect = zod(
@@ -103,12 +104,15 @@ export module AppRepo {
               repoID: input.repoID,
             },
           })
-          .execute()
+          .execute(),
       );
       await createTransactionEffect(() =>
-        Events.Connected.publish({ appID: input.appID, repoID: input.repoID })
+        bus.publish(Resource.Bus, Events.Connected, {
+          appID: input.appID,
+          repoID: input.repoID,
+        }),
       );
-    }
+    },
   );
 
   export const disconnect = zod(Repo.shape.id, (input) =>
@@ -118,11 +122,11 @@ export module AppRepo {
         .where(
           and(
             eq(appRepoTable.id, input),
-            eq(appRepoTable.workspaceID, useWorkspace())
-          )
+            eq(appRepoTable.workspaceID, useWorkspace()),
+          ),
         )
         .execute();
-    })
+    }),
   );
 
   export const putPath = zod(
@@ -139,11 +143,11 @@ export module AppRepo {
           .where(
             and(
               eq(appRepoTable.id, input.id),
-              eq(appRepoTable.workspaceID, useWorkspace())
-            )
+              eq(appRepoTable.workspaceID, useWorkspace()),
+            ),
           )
-          .execute()
+          .execute(),
       );
-    }
+    },
   );
 }

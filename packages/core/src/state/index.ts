@@ -16,8 +16,8 @@ import {
 } from "../util/transaction";
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
-import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
-import { event } from "../event";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { createEvent } from "../event";
 import { StageCredentials } from "../app/stage";
 import {
   S3Client,
@@ -27,28 +27,29 @@ import {
 import { RETRY_STRATEGY } from "../util/aws";
 import { AWS } from "../aws";
 import { Replicache } from "../replicache";
-import { useTransition } from "react";
 import { stage } from "../app/app.sql";
+import { bus } from "sst/aws/bus";
+import { Resource as SSTResource } from "sst";
 
 export module State {
   export const Event = {
-    LockCreated: event(
+    LockCreated: createEvent(
       "state.lock.created",
       z.object({ stageID: z.string(), versionID: z.string().optional() }),
     ),
-    LockRemoved: event(
+    LockRemoved: createEvent(
       "state.lock.removed",
       z.object({ stageID: z.string(), versionID: z.string().optional() }),
     ),
-    SummaryCreated: event(
+    SummaryCreated: createEvent(
       "state.summary.created",
       z.object({ stageID: z.string(), updateID: z.string() }),
     ),
-    HistoryCreated: event(
+    HistoryCreated: createEvent(
       "state.history.created",
       z.object({ stageID: z.string(), key: z.string() }),
     ),
-    HistorySynced: event(
+    HistorySynced: createEvent(
       "state.history.synced",
       z.object({ stageID: z.string(), updateID: z.string() }),
     ),
@@ -421,7 +422,7 @@ export module State {
               ),
             );
           await createTransactionEffect(() =>
-            Event.HistorySynced.publish({
+            bus.publish(SSTResource.Bus, Event.HistorySynced, {
               stageID: input.config.stageID,
               updateID: updateID,
             }),

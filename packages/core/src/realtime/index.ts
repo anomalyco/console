@@ -3,15 +3,15 @@ import {
   IoTDataPlaneClient,
   PublishCommand,
 } from "@aws-sdk/client-iot-data-plane";
-import { Config } from "sst/node/config";
 import { useWorkspace } from "../actor";
+import { Resource } from "sst";
 
 const data = new IoTDataPlaneClient({});
 
 export async function publish(
   topic: string,
   properties: any,
-  profileID?: string
+  profileID?: string,
 ) {
   const workspaceID = useWorkspace();
   await data.send(
@@ -20,11 +20,11 @@ export async function publish(
         JSON.stringify({
           properties,
           workspaceID,
-        })
+        }),
       ),
-      topic: `console/${Config.STAGE}/${workspaceID}/${
+      topic: `console/${Resource.App.stage}/${workspaceID}/${
         profileID ? profileID : "all"
       }/${topic}`,
-    })
+    }),
   );
 }

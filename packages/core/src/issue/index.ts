@@ -25,11 +25,11 @@ import {
   DeleteSubscriptionFilterCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
 import { Resource } from "../app/resource";
+import { Resource as SSTResource } from "sst";
 import { z } from "zod";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Stage, StageCredentials } from "../app/stage";
-import { event } from "../event";
-import { Config } from "sst/node/config";
+import { createEvent } from "../event";
 import { Warning } from "../warning";
 import { createTransaction, useTransaction } from "../util/transaction";
 import { Log } from "../log";
@@ -42,7 +42,7 @@ export type Count = typeof issueCount.$inferSelect;
 export * as Send from "./send";
 
 export const Events = {
-  ErrorDetected: event(
+  ErrorDetected: createEvent(
     "issue.error_detected",
     z.object({
       records: z
@@ -61,21 +61,21 @@ export const Events = {
         .array(),
     }),
   ),
-  RateLimited: event(
+  RateLimited: createEvent(
     "issue.rate_limited",
     z.object({
       stageID: z.string(),
       logGroup: z.string(),
     }),
   ),
-  IssueDetected: event(
+  IssueDetected: createEvent(
     "issue.detected",
     z.object({
       stageID: z.string(),
       group: z.string(),
     }),
   ),
-  SubscribeRequested: event(
+  SubscribeRequested: createEvent(
     "issue.subscribe_requested",
     z.object({
       stageID: z.string(),
@@ -155,8 +155,9 @@ export const connectStage = zod(
       "creating",
       config.region,
       uniqueIdentifier,
-      Config.ISSUES_ROLE_ARN,
-      Config.ISSUES_STREAM_ARN,
+      // TODO: add issue role arn
+      // Config.ISSUES_ROLE_ARN,
+      // Config.ISSUES_STREAM_ARN,
     );
     const cw = new CloudWatchLogsClient({
       region: config.region,
@@ -167,8 +168,9 @@ export const connectStage = zod(
       const destination = await cw.send(
         new PutDestinationCommand({
           destinationName: uniqueIdentifier,
-          roleArn: Config.ISSUES_ROLE_ARN,
-          targetArn: Config.ISSUES_STREAM_ARN,
+          // TODO: add issue role arn
+          roleArn: "",
+          targetArn: "",
         }),
       );
       console.log("created destination", destination.destination);
@@ -231,9 +233,8 @@ const disconnectStage = zod(z.custom<StageCredentials>(), async (config) => {
 export const subscribe = zod(z.custom<StageCredentials>(), async (config) => {
   const uniqueIdentifier = destinationIdentifier(config);
   console.log("subscribing", uniqueIdentifier);
-  const destination =
-    Config.ISSUES_DESTINATION_PREFIX.replace("<region>", config.region) +
-    uniqueIdentifier;
+  // TODO: add issue destination prefix
+  const destination = "".replace("<region>", config.region) + uniqueIdentifier;
   const cw = new CloudWatchLogsClient({
     region: config.region,
     credentials: config.credentials,
@@ -279,7 +280,8 @@ export const subscribe = zod(z.custom<StageCredentials>(), async (config) => {
         .send(
           new DeleteSubscriptionFilterCommand({
             filterName:
-              uniqueIdentifier + (Config.STAGE === "production" ? "" : `#dev`),
+              uniqueIdentifier +
+              (SSTResource.App.stage === "production" ? "" : `#dev`),
             logGroupName: item.logGroup!,
           }),
         )
@@ -342,7 +344,7 @@ export const subscribe = zod(z.custom<StageCredentials>(), async (config) => {
               destinationArn: destination,
               filterName:
                 uniqueIdentifier +
-                (Config.STAGE === "production" ? "" : `#dev`),
+                (SSTResource.App.stage === "production" ? "" : `#dev`),
               filterPattern: [
                 `?"Invoke Error"`,
                 // OOM and other runtime error
@@ -484,9 +486,9 @@ export const subscribeIon = zod(
   async (config) => {
     const uniqueIdentifier = destinationIdentifier(config);
     console.log("subscribing", uniqueIdentifier);
+    // TODO: add issue destination prefix
     const destination =
-      Config.ISSUES_DESTINATION_PREFIX.replace("<region>", config.region) +
-      uniqueIdentifier;
+      "".replace("<region>", config.region) + uniqueIdentifier;
     const cw = new CloudWatchLogsClient({
       region: config.region,
       credentials: config.credentials,
@@ -539,7 +541,7 @@ export const subscribeIon = zod(
             new DeleteSubscriptionFilterCommand({
               filterName:
                 uniqueIdentifier +
-                (Config.STAGE === "production" ? "" : `#dev`),
+                (SSTResource.App.stage === "production" ? "" : `#dev`),
               logGroupName: item.logGroup!,
             }),
           )
@@ -602,7 +604,7 @@ export const subscribeIon = zod(
                 destinationArn: destination,
                 filterName:
                   uniqueIdentifier +
-                  (Config.STAGE === "production" ? "" : `#dev`),
+                  (SSTResource.App.stage === "production" ? "" : `#dev`),
                 filterPattern: [
                   `?"Invoke Error"`,
                   // OOM and other runtime error
@@ -767,7 +769,8 @@ export const disableLogGroup = zod(
       .send(
         new DeleteSubscriptionFilterCommand({
           filterName:
-            uniqueIdentifier + (Config.STAGE === "production" ? "" : `#dev`),
+            uniqueIdentifier +
+            (SSTResource.App.stage === "production" ? "" : `#dev`),
           logGroupName: input.logGroup,
         }),
       )
