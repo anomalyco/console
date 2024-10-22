@@ -2,6 +2,21 @@ export const storage = new sst.aws.Bucket("Storage", {
   access: "public",
 });
 
+new aws.s3.BucketOwnershipControls("ownership-controls", {
+  bucket: storage.name,
+  rule: {
+    objectOwnership: "ObjectWriter",
+  },
+});
+
+new aws.s3.BucketPublicAccessBlock("StorageAccess", {
+  bucket: storage.name,
+  blockPublicAcls: false,
+  blockPublicPolicy: false,
+  ignorePublicAcls: false,
+  restrictPublicBuckets: false,
+});
+
 new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
   bucket: storage.name,
   rules: [
@@ -32,7 +47,7 @@ new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
         prefix: "temporary/monthly/",
       },
       expiration: {
-        days: 7,
+        days: 30,
       },
     },
   ],
