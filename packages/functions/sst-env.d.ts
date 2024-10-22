@@ -56,6 +56,16 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "IssueDestination": {
+      "prefix": string
+      "role": string
+      "stream": string
+      "type": "sst.sst.Linkable"
+    }
+    "IssueStream": {
+      "name": string
+      "type": "sst.aws.KinesisStream"
+    }
     "SlackClientID": {
       "type": "sst.sst.Secret"
       "value": string

@@ -18,11 +18,13 @@ export default $config({
     await import("./infra/dns");
     await import("./infra/planetscale");
     await import("./infra/bus");
+    await import("./infra/event");
     await import("./infra/email");
     await import("./infra/alerts");
     await import("./infra/storage");
     await import("./infra/auth");
     await import("./infra/api");
     await import("./infra/web");
+    await import("./infra/issues");
   },
 });

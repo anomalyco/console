@@ -2,7 +2,7 @@ import { bus } from "./bus";
 import { database } from "./planetscale";
 import { storage } from "./storage";
 
-const identity = aws.getCallerIdentityOutput();
+export const identity = aws.getCallerIdentityOutput();
 const connect = new sst.aws.Function("Connect", {
   handler: "packages/functions/src/connect.handler",
   permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
