@@ -8,7 +8,6 @@ import { globalStyle, macaron$ } from "@macaron-css/core";
 import { Match, Switch, onCleanup, Component, createSignal } from "solid-js";
 import { Navigate, Route, Router, Routes, useNavigate } from "@solidjs/router";
 import { Auth, Code } from "./pages/auth";
-import { RealtimeProvider } from "./providers/realtime";
 import { CommandBar, useCommandBar } from "./pages/workspace/command-bar";
 import { Debug } from "./pages/debug";
 import { Design } from "./pages/design";
@@ -167,7 +166,6 @@ export const App: Component = () => {
                     <DummyProvider>
                       <DummyConfigProvider>
                         <FlagsProvider>
-                          <RealtimeProvider />
                           <LocalProvider>
                             <InvocationProvider>
                               <GlobalCommands />

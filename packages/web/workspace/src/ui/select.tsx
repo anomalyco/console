@@ -167,6 +167,7 @@ const Seperator = styled(KSeperator.Root, {
   },
 });
 
+// @ts-expect-error
 const Listbox = styled(KSelect.Listbox, {
   base: {
     selectors: {

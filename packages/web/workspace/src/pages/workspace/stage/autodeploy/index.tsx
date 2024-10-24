@@ -5,11 +5,15 @@ import { List } from "./list";
 import { HeaderSlot } from "../../header";
 import { Show } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { Button, ButtonIcon, Stack, theme, utility } from "$/ui";
 import { IconGitHub } from "$/ui/icons/custom";
 import { createSubscription } from "$/providers/replicache";
 import { AppRepoStore, GithubOrgStore, GithubRepoStore } from "$/data/app";
 import { useStageContext } from "../context";
+import { ButtonIcon } from "$/ui/button";
+import { Stack } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Button } from "$/ui/button";
 
 const RepoLink = styled("a", {
   base: {
@@ -65,7 +69,7 @@ export function Autodeploy() {
     const ghRepo = ghRepos.find((repo) => repo.id === appRepo[0]?.repoID);
     const ghOrgs = await GithubOrgStore.all(tx);
     const ghOrg = ghOrgs.find(
-      (org) => org.id === ghRepo?.githubOrgID && !org.time.disconnected
+      (org) => org.id === ghRepo?.githubOrgID && !org.time.disconnected,
     );
     return { ghRepo, ghOrg };
   });

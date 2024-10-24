@@ -1,4 +1,3 @@
-import { Button, Fullscreen, Stack, Text } from "$/ui";
 import { AvatarInitialsIcon } from "$/ui/avatar-icon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "./context";
@@ -17,6 +16,9 @@ import {
 } from "@modular-forms/solid";
 import { object, string, email, toLowerCase } from "valibot";
 import { UserStore } from "$/data/user";
+import { Fullscreen, Stack } from "$/ui/layout";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const FieldList = styled("form", {
   base: {
@@ -33,7 +35,7 @@ export function User() {
     validate: valiForm(
       object({
         email: string(),
-      })
+      }),
     ),
     validateOn: "input",
   });

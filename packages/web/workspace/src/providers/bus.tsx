@@ -1,8 +1,5 @@
 import { createEmitter } from "@solid-primitives/event-bus";
 import type { Invocation, LogEvent } from "@console/core/log";
-import type {} from "sst/runtime/workers";
-import type {} from "sst/runtime/runtime";
-import type { Events } from "sst/bus";
 
 export const bus = createEmitter<{
   poke: {
@@ -16,10 +13,11 @@ export const bus = createEmitter<{
   "log.cleared": {
     source: string;
   };
-  "worker.stdout": Events["worker.stdout"];
-  "function.invoked": Events["function.invoked"];
-  "function.success": Events["function.success"];
-  "function.error": Events["function.error"];
+  //  TODO: fix types
+  "worker.stdout": any; // Events["worker.stdout"];
+  "function.invoked": any; // Events["function.invoked"];
+  "function.success": any; // Events["function.success"];
+  "function.error": any; // Events["function.error"];
   "cli.dev": {
     stage: string;
     app: string;

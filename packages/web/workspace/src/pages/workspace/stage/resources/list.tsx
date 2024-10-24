@@ -21,14 +21,6 @@ import { utility } from "$/ui/utility";
 import { Dropdown } from "$/ui/dropdown";
 import { Fullscreen, Row, Stack } from "$/ui/layout";
 import {
-  Tag,
-  Text,
-  TabTitle,
-  TextButton,
-  SplitOptions,
-  SplitOptionsOption,
-} from "$/ui";
-import {
   IconApi,
   IconRDS,
   IconAuth,
@@ -60,7 +52,7 @@ import {
 } from "$/ui/icons/custom";
 import { Resource } from "@console/core/app/resource";
 import type { State } from "@console/core/state";
-import { Link, Route, Routes } from "@solidjs/router";
+import { Link } from "@solidjs/router";
 import { Syncing } from "$/ui/loader";
 import {
   IconCheck,
@@ -71,12 +63,15 @@ import {
 import { UpdateStatusIcon } from "./updates/list";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
-import { } from "@solid-primitives/keyboard";
+import {} from "@solid-primitives/keyboard";
 import { formatBytes, formatSinceTime } from "$/common/format";
 import { ResourceIcon } from "$/common/resource-icon";
 import { createSubscription } from "$/providers/replicache";
 import { StateUpdateStore } from "$/data/app";
 import { DateTime } from "luxon";
+import { TextButton } from "$/ui/button";
+import { Tag } from "$/ui/tag";
+import { Text } from "$/ui/text";
 
 const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:aws:Auth": IconAuth,
@@ -498,7 +493,7 @@ function getFunctionById(resources: Resource.Info[], id: string) {
   return resources.find(
     (r) =>
       r.type === "Function" &&
-      (r.id === id || r.addr === id || r.metadata.arn === id)
+      (r.id === id || r.addr === id || r.metadata.arn === id),
   ) as Extract<Resource.Info, { type: "Function" }> | undefined;
 }
 
@@ -592,7 +587,7 @@ type SortedStateResource = State.Resource & {
   children: SortedStateResource[];
 };
 function sortStateResources(
-  resources: State.Resource[]
+  resources: State.Resource[],
 ): SortedStateResource[] {
   // Initialize an array to store root objects
   const roots: SortedStateResource[] = [];
@@ -643,7 +638,7 @@ function sortStateResources(
   return sortBy(
     roots,
     (r) => stateResourcePriority(r),
-    (r) => r.name
+    (r) => r.name,
   );
 }
 
@@ -669,7 +664,7 @@ function sortResources(resources: Resource.Info[]): Resource.Info[] {
       r.type === "KinesisStream" ||
       r.type === "SvelteKitSite" ||
       r.type === "SolidStartSite" ||
-      r.type === "ApiGatewayV1Api"
+      r.type === "ApiGatewayV1Api",
   );
 
   return displayResources.sort((a, b) => {
@@ -712,7 +707,7 @@ export function Header(props: HeaderProps) {
   const icon = createMemo(
     () =>
       props.icon ||
-      ResourceIcon[props.resource.type as keyof typeof ResourceIcon]
+      ResourceIcon[props.resource.type as keyof typeof ResourceIcon],
   );
   return (
     <HeaderRoot>
@@ -765,20 +760,20 @@ export function List() {
         .filter(([_, values]) => !values.length)
         .map(([key]) => key),
       (id) => (getFunctionById(resources(), id)?.enrichment?.size ? 0 : 1),
-      (id) => getFunctionById(resources(), id)?.metadata.handler || ""
-    )
+      (id) => getFunctionById(resources(), id)?.metadata.handler || "",
+    ),
   );
 
   const outputs = createMemo(() =>
     resources()
       .flatMap((r) => (r.type === "Stack" ? r.enrichment.outputs : []))
       .sort((a, b) => a.OutputKey!.localeCompare(b.OutputKey!))
-      .filter((o) => (o?.OutputValue?.trim() ?? "") !== "")
+      .filter((o) => (o?.OutputValue?.trim() ?? "") !== ""),
   );
 
   const stateResources = useStateResources();
   const SortedStateResource = createMemo(() =>
-    sortStateResources([...stateResources()])
+    sortStateResources([...stateResources()]),
   );
   const stateOutputs = createMemo(() => {
     const outputs: { key: string; value: string }[] = [];
@@ -1036,15 +1031,13 @@ export function List() {
                         </Switch>
                         <TitleText>{ctx.stage.name}</TitleText>
                       </TitleRow>
-                      <TitleDescLink
-                        href={`updates/${latestUpdate.value!.id}`}
-                      >
+                      <TitleDescLink href={`updates/${latestUpdate.value!.id}`}>
                         Updated{" "}
                         {formatSinceTime(
                           DateTime.fromISO(
-                            latestUpdate.value!.time.updated
+                            latestUpdate.value!.time.updated,
                           ).toSQL()!,
-                          true
+                          true,
                         )}
                       </TitleDescLink>
                     </Stack>
@@ -1227,7 +1220,7 @@ export function ApiCard(props: CardProps<"Api">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1260,8 +1253,8 @@ export function ApiCard(props: CardProps<"Api">) {
 export function WebSocketApiCard(props: CardProps<"WebSocketApi">) {
   const sortedRoutes = createMemo(() =>
     sortBy((route: any) => route.route.slice(1).length)(
-      props.resource.metadata.routes || []
-    )
+      props.resource.metadata.routes || [],
+    ),
   );
   return (
     <>
@@ -1298,7 +1291,7 @@ export function ApiGatewayV1ApiCard(props: CardProps<"ApiGatewayV1Api">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1396,7 +1389,7 @@ export function AppSyncCard(props: CardProps<"AppSync">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl || props.resource.metadata.url
@@ -1496,7 +1489,7 @@ export function StaticSiteCard(props: CardProps<"StaticSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1515,7 +1508,7 @@ export function NextjsSiteCard(props: CardProps<"NextjsSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1558,7 +1551,7 @@ export function SvelteKitSiteCard(props: CardProps<"SvelteKitSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1582,7 +1575,7 @@ export function RemixSiteCard(props: CardProps<"RemixSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1606,7 +1599,7 @@ export function AstroSiteCard(props: CardProps<"AstroSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1630,7 +1623,7 @@ export function SolidStartSiteCard(props: CardProps<"SolidStartSite">) {
         resource={props.resource}
         link={getUrl(
           props.resource.metadata.url,
-          props.resource.metadata.customDomainUrl
+          props.resource.metadata.customDomainUrl,
         )}
         description={
           props.resource.metadata.customDomainUrl ||
@@ -1674,7 +1667,7 @@ function FunctionChild(props: {
   const resources = useResourcesContext();
   const fn = createMemo(() => getFunctionById(resources(), props.id!));
   const runtime = createMemo(
-    () => fn()?.metadata.runtime || fn()?.enrichment.runtime || ""
+    () => fn()?.metadata.runtime || fn()?.enrichment.runtime || "",
   );
   return (
     <Show when={fn()}>
@@ -1694,8 +1687,8 @@ function FunctionChild(props: {
                 fallback={
                   exists().metadata.handler
                     ? new URL(
-                      "https://example.com/" + exists().metadata.handler
-                    ).pathname.replace(/\/+/g, "/")
+                        "https://example.com/" + exists().metadata.handler,
+                      ).pathname.replace(/\/+/g, "/")
                     : exists().cfnID
                 }
               >

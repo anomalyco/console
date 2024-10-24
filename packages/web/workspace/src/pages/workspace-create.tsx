@@ -1,14 +1,3 @@
-import {
-  Text,
-  Input,
-  theme,
-  Stack,
-  Button,
-  utility,
-  FormField,
-  Fullscreen,
-  AvatarInitialsIcon,
-} from "$/ui";
 import { styled } from "@macaron-css/solid";
 import { createForm, getValue, setError, valiForm } from "@modular-forms/solid";
 import { useNavigate } from "@solidjs/router";
@@ -17,6 +6,13 @@ import { minLength, object, string, regex } from "valibot";
 import { Header } from "./workspace/header";
 import { useAuth2 } from "$/providers/auth2";
 import { Workspace } from "@console/core/workspace";
+import { utility } from "$/ui/utility";
+import { theme } from "$/ui/theme";
+import { Fullscreen, Stack } from "$/ui/layout";
+import { AvatarInitialsIcon } from "$/ui/avatar-icon";
+import { FormField, Input } from "$/ui/form";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const CreateWorkspaceHint = styled("ul", {
   base: {

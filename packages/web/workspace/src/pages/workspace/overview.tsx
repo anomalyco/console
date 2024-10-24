@@ -4,17 +4,7 @@ import { UserStore } from "$/data/user";
 import { AccountStore } from "$/data/aws";
 import { StageStore } from "$/data/stage";
 import { useReplicache } from "$/providers/replicache";
-import {
-  theme,
-  utility,
-  Row,
-  Tag,
-  Text,
-  Stack,
-  Button,
-  TextButton,
-} from "$/ui";
-import { Fullscreen } from "$/ui/layout";
+import { Fullscreen, Row, Stack } from "$/ui/layout";
 import { Dropdown } from "$/ui/dropdown";
 import {
   IconChevronRight,
@@ -34,6 +24,12 @@ import { useLocalContext } from "$/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
 import { User } from "@console/core/user";
 import { useAuth2 } from "$/providers/auth2";
+import { TextButton } from "$/ui/button";
+import { Tag } from "$/ui/tag";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;

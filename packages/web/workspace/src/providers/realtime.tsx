@@ -1,3 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
+
+export const profileID = createId();
+/*
 import { iot, mqtt } from "aws-iot-device-sdk-v2";
 import { onCleanup, onMount } from "solid-js";
 import { bus } from "./bus";
@@ -5,7 +9,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { useDummy } from "./dummy";
 import { useAuth2 } from "./auth2";
 
-export const profileID = createId();
 
 export function RealtimeProvider() {
   let connection: mqtt.MqttClientConnection;
@@ -94,3 +97,4 @@ export function RealtimeProvider() {
 
   return null;
 }
+*/

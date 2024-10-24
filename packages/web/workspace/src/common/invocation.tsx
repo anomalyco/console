@@ -1,5 +1,4 @@
 import { ErrorList, ErrorItem } from "$/pages/workspace/stage/logs/error";
-import { Row, Stack, TabTitle, Tag, TextButton, theme, utility } from "$/ui";
 import { IconBookmark, IconArrowPath } from "$/ui/icons";
 import { IconCaretRight } from "$/ui/icons/custom";
 import { inputFocusStyles } from "$/ui/form";
@@ -16,12 +15,16 @@ import { unwrap } from "solid-js/store";
 import { formatDuration, formatBytes } from "./format";
 import { styled } from "@macaron-css/solid";
 import { useReplicache } from "$/providers/replicache";
-import { Resource } from "@console/core/app/resource";
-import { Invocation } from "@console/core/log";
 import { Link } from "@solidjs/router";
 import { DateTime } from "luxon";
 import { useKeyboardNavigator } from "./keyboard-navigator";
 import { useStageContext } from "$/pages/workspace/stage/context";
+import { TabTitle, TextButton } from "$/ui/button";
+import { Row, Stack } from "$/ui/layout";
+import { Tag } from "$/ui/tag";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Invocation } from "@console/core/log";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -346,7 +349,7 @@ export function InvocationRow(props: {
           {props.mixed
             ? props.function.handler
             : props.invocation.errors[0]?.message ||
-            props.invocation.logs[0]?.message}
+              props.invocation.logs[0]?.message}
         </LogPreview>
       </Summary>
       <Show when={expanded()}>

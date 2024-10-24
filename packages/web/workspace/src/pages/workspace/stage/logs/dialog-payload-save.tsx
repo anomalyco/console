@@ -1,19 +1,15 @@
 import { useReplicache } from "$/providers/replicache";
-import {
-  Input,
-  Button,
-  FormField,
-  LinkButton,
-  Row,
-  Stack,
-  Text,
-  theme,
-} from "$/ui";
+import { LinkButton } from "$/ui/button";
+import { FormField, Input } from "$/ui/form";
+import { Stack, Row } from "$/ui/layout";
 import { Modal } from "$/ui/modal";
+import { theme } from "$/ui/theme";
 import { styled } from "@macaron-css/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { batch, createEffect } from "solid-js";
 import { createStore, unwrap } from "solid-js/store";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 function init() {
   const [state, setState] = createStore<{
@@ -28,7 +24,7 @@ function init() {
 
   const input = () =>
     document.querySelector<HTMLInputElement>(
-      "[data-element=save-payload-dialog-name]"
+      "[data-element=save-payload-dialog-name]",
     )!;
 
   return {

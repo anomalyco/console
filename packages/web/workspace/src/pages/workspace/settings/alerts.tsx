@@ -7,17 +7,6 @@ import {
   createSignal,
   createMemo,
 } from "solid-js";
-import {
-  Row,
-  Text,
-  Stack,
-  Input,
-  theme,
-  Button,
-  Grower,
-  FormField,
-  LinkButton,
-} from "$/ui";
 import { utility } from "$/ui/utility";
 import { Dropdown } from "$/ui/dropdown";
 import {
@@ -53,6 +42,12 @@ import {
   createForm,
 } from "@modular-forms/solid";
 import { WarningStore } from "$/data/warning";
+import { LinkButton } from "$/ui/button";
+import { FormField, Input } from "$/ui/form";
+import { Stack, Row, Grower } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const PANEL_CONTENT_SPACE = "10";
 const PANEL_HEADER_SPACE = "3";
@@ -297,7 +292,7 @@ const PutForm = object({
   }),
   event: union(
     [literal("issue"), literal("autodeploy"), literal("autodeploy.error")],
-    "Must select event"
+    "Must select event",
   ),
 });
 
@@ -305,7 +300,7 @@ export function Alerts() {
   const rep = useReplicache();
   const users = createSubscription(
     async (tx) => UserStore.list(tx).then(filter((u) => !u.timeDeleted)),
-    []
+    [],
   );
   const alerts = createSubscription(async (tx) => {
     const ret = AlertStore.all(tx);
@@ -335,7 +330,7 @@ export function Alerts() {
           formData.source?.app?.includes(app.name)
         );
       })
-      .map((app) => app.id)
+      .map((app) => app.id),
   );
 
   const availableStages = createMemo(() => {
@@ -343,7 +338,7 @@ export function Alerts() {
       stages(),
       filter((s) => selectedApps().includes(s.appID)),
       map((s) => s.name),
-      unique()
+      unique(),
     );
   });
 
@@ -436,7 +431,7 @@ export function Alerts() {
           <MatchingStagesPanelExpanded>
             <MatchingStagesCopy>
               {joinWithAnd(
-                matchingStages().map(({ app, stage }) => `${app}/${stage}`)
+                matchingStages().map(({ app, stage }) => `${app}/${stage}`),
               )}
             </MatchingStagesCopy>
           </MatchingStagesPanelExpanded>
@@ -470,7 +465,7 @@ export function Alerts() {
                     color={field.error ? "danger" : "primary"}
                     hint={
                       getValue(putForm, "destination.type") === "slack" &&
-                        !slackTeam() ? (
+                      !slackTeam() ? (
                         <span>
                           <a href="#slack">Connect your Slack</a> workspace{" "}
                           below.
@@ -523,7 +518,7 @@ export function Alerts() {
                     }, []);
 
                     createComputed(() =>
-                      setValue(putForm, "source.app", value())
+                      setValue(putForm, "source.app", value()),
                     );
 
                     return (
@@ -620,7 +615,7 @@ export function Alerts() {
                       }, []);
 
                       createComputed(() =>
-                        setValue(putForm, "destination.email.users", value())
+                        setValue(putForm, "destination.email.users", value()),
                       );
                       return (
                         <FormField
@@ -662,7 +657,7 @@ export function Alerts() {
                       },
                       {
                         on: "blur",
-                      }
+                      },
                     )}
                   >
                     {(field, props) => (
@@ -755,19 +750,19 @@ export function Alerts() {
                 destination:
                   cloned.destination!.type === "slack"
                     ? {
-                      type: "slack",
-                      properties: {
-                        channel: cloned.destination!.slack?.channel!,
-                      },
-                    }
+                        type: "slack",
+                        properties: {
+                          channel: cloned.destination!.slack?.channel!,
+                        },
+                      }
                     : {
-                      type: "email",
-                      properties: {
-                        users: cloned.destination!.email!.users!.includes("*")
-                          ? "*"
-                          : cloned.destination!.email!.users!,
+                        type: "email",
+                        properties: {
+                          users: cloned.destination!.email!.users!.includes("*")
+                            ? "*"
+                            : cloned.destination!.email!.users!,
+                        },
                       },
-                    },
                 event: cloned.event!,
               });
               setEditing("active", false);
@@ -789,13 +784,13 @@ export function Alerts() {
       Object.fromEntries(
         warnings
           .filter((w) => w.type === "issue_alert_slack")
-          .map((w) => [w.target, w] as const)
-      )
+          .map((w) => [w.target, w] as const),
+      ),
   );
   const slackTeam = SlackTeamStore.all.watch(
     rep,
     () => [],
-    (all) => all.at(0)
+    (all) => all.at(0),
   );
 
   return (
@@ -823,7 +818,7 @@ export function Alerts() {
             <For each={alerts.value}>
               {(alert) => {
                 const isEditingRow = createMemo(
-                  () => editing.active && editing.id === alert.id
+                  () => editing.active && editing.id === alert.id,
                 );
 
                 return (
@@ -891,7 +886,7 @@ export function Alerts() {
                                     alert.source.stage.join(", ")}
                                 </AlertsPanelFromKeyword>{" "}
                                 {alert.source.app !== "*" &&
-                                  alert.source.app.length === 1
+                                alert.source.app.length === 1
                                   ? "stage"
                                   : "stages"}
                               </>
@@ -917,16 +912,16 @@ export function Alerts() {
                                       {destination().properties.users === "*"
                                         ? "To all users in the workspace"
                                         : (
-                                          destination().properties
-                                            .users as string[]
-                                        )
-                                          .map(
-                                            (id) =>
-                                              users.value.find(
-                                                (u) => u.id === id
-                                              )?.email
+                                            destination().properties
+                                              .users as string[]
                                           )
-                                          .join(", ")}
+                                            .map(
+                                              (id) =>
+                                                users.value.find(
+                                                  (u) => u.id === id,
+                                                )?.email,
+                                            )
+                                            .join(", ")}
                                     </AlertsPanelToLabel>
                                   </>
                                 )}

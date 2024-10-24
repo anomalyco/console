@@ -48,6 +48,11 @@ declare module "sst" {
       "sender": string
       "type": "sst.aws.Email"
     }
+    "Error": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
     "GithubAppID": {
       "type": "sst.sst.Secret"
       "value": string

@@ -3,28 +3,12 @@ import { Link, useParams } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { Show, Switch, Match, createMemo, createEffect, For } from "solid-js";
 import { IconCheck, IconNoSymbol } from "$/ui/icons";
-import {
-  IconCaretRight,
-  IconSubRight,
-  IconArrowPathSpin,
-} from "$/ui/icons/custom";
-import {
-  utility,
-  Tag,
-  Row,
-  Text,
-  Alert,
-  Stack,
-  Button,
-  Histogram,
-  ButtonGroup,
-} from "$/ui";
+import { IconCaretRight, IconArrowPathSpin } from "$/ui/icons/custom";
 import { formatSinceTime, parseTime } from "$/common/format";
 import { IssueCountStore, IssueStore } from "$/data/issue";
 import { useReplicache } from "$/providers/replicache";
 import { DateTime, Interval } from "luxon";
 import { StackTrace } from "../logs/error";
-import { bus } from "$/providers/bus";
 import { Log, LogTime, LogMessage } from "$/common/invocation";
 import { fromEntries } from "remeda";
 import { useResourcesContext, useStageContext } from "../context";
@@ -33,6 +17,14 @@ import { useCommandBar } from "../../command-bar";
 import { getLogInfo } from "./common";
 import { useReplicacheStatus } from "$/providers/replicache-status";
 import { NotFound } from "$/pages/not-found";
+import { ButtonGroup } from "$/ui/button";
+import { Histogram } from "$/ui/histogram";
+import { Stack, Row } from "$/ui/layout";
+import { Tag } from "$/ui/tag";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
+import { Alert } from "$/ui/alert";
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -169,12 +161,12 @@ export function Detail() {
     if (issue()?.invocation) return;
     await fetch(
       import.meta.env.VITE_API_URL +
-      "/rest/log?" +
-      new URLSearchParams({
-        pointer: JSON.stringify(issue()!.pointer),
-        stageID: issue()!.stageID,
-        groupID: issue()!.group,
-      }),
+        "/rest/log?" +
+        new URLSearchParams({
+          pointer: JSON.stringify(issue()!.pointer),
+          stageID: issue()!.stageID,
+          groupID: issue()!.group,
+        }),
       {
         headers: {
           authorization: rep().auth,

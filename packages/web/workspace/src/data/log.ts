@@ -231,7 +231,7 @@ bus.on("function.error", (e) => {
         id: invocation.id,
         type: e.errorType,
         message: e.errorMessage,
-        stack: e.trace.map((t) => ({
+        stack: e.trace.map((t: any) => ({
           raw: t,
         })),
       });

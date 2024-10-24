@@ -9,7 +9,7 @@ import { Lambda } from "@console/core/lambda";
 import { assertActor, withActor, useWorkspace } from "@console/core/actor";
 import { User } from "@console/core/user";
 import { Issue } from "@console/core/issue";
-import { and, db, eq, or } from "@console/core/drizzle";
+import { and, eq, or } from "@console/core/drizzle";
 import { useTransaction } from "@console/core/util/transaction";
 import { issueSubscriber } from "@console/core/issue/issue.sql";
 import { warning } from "@console/core/warning/warning.sql";
@@ -18,6 +18,8 @@ import { Slack } from "@console/core/slack";
 import { AppRepo } from "@console/core/app/repo";
 import { RunConfig } from "@console/core/run/config";
 import { Alert } from "@console/core/alert";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 
 export const server = new Server()
   .expose("log_poller_subscribe", LogPoller.subscribe)
@@ -59,8 +61,8 @@ export const server = new Server()
           .where(
             and(
               eq(issueSubscriber.workspaceID, useWorkspace()),
-              eq(issueSubscriber.stageID, input.stageID)
-            )
+              eq(issueSubscriber.stageID, input.stageID),
+            ),
           )
           .execute();
         await tx
@@ -71,22 +73,20 @@ export const server = new Server()
               eq(warning.stageID, input.stageID),
               or(
                 eq(warning.type, "log_subscription"),
-                eq(warning.type, "issue_rate_limited")
-              )
-            )
+                eq(warning.type, "issue_rate_limited"),
+              ),
+            ),
           )
           .execute();
       });
-      await Stage.Events.ResourcesUpdated.publish({
+      await bus.publish(Resource.Bus, Stage.Events.ResourcesUpdated, {
         stageID: input.stageID,
       });
-    }
+    },
   )
   .expose("aws_account_scan", AWS.Account.scan)
-  .mutation(
-    "app_stage_sync",
-    z.object({ stageID: z.string() }),
-    async (input) => await App.Stage.Events.Updated.publish(input)
+  .mutation("app_stage_sync", z.object({ stageID: z.string() }), (input) =>
+    bus.publish(Resource.Bus, App.Stage.Events.Updated, input),
   )
   .mutation("workspace_create", Workspace.create.schema, async (input) => {
     const actor = assertActor("account");
@@ -102,7 +102,7 @@ export const server = new Server()
         User.create({
           email: actor.properties.email,
           first: true,
-        })
+        }),
     );
   })
   .expose("user_create", User.create)

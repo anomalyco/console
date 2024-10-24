@@ -5,7 +5,6 @@ import {
   LogLoadingIndicatorIcon,
   LogLoadingIndicatorIconSvg,
 } from "../logs/detail";
-import { theme, Text, utility, Row, TextButton } from "$/ui";
 import { InvocationRow } from "$/common/invocation";
 import { For, Match, Show, Switch, createMemo } from "solid-js";
 import {
@@ -13,13 +12,18 @@ import {
   useStageContext,
   useStateResources,
 } from "../context";
-import { concat, filter, flatMap, map, pipe } from "remeda";
+import { concat, filter, map, pipe } from "remeda";
 import { IconArrowsUpDown, IconBoltSolid } from "$/ui/icons";
 import { useInvocations } from "$/providers/invocation";
 import {
   KeyboardNavigator,
   createKeyboardNavigator,
 } from "$/common/keyboard-navigator";
+import { TextButton } from "$/ui/button";
+import { Row } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
 
 const Root = styled("div", {
   base: {

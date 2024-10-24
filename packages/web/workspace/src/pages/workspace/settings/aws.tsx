@@ -1,16 +1,19 @@
 import { AccountStore } from "$/data/aws";
 import { createSubscription, useReplicache } from "$/providers/replicache";
-import { theme, utility, Text, Row, Stack, Button, LinkButton } from "$/ui";
 import { Dropdown } from "$/ui/dropdown";
 import { IconEllipsisVertical, IconExclamationTriangle } from "$/ui/icons";
 import { IconAws, IconAdd, IconArrowPathSpin } from "$/ui/icons/custom";
+import { Stack } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { Link } from "@solidjs/router";
 import { For, Show, Switch, Match } from "solid-js";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const Root = styled("div", {
-  base: {
-  },
+  base: {},
 });
 
 const Card = styled("div", {
@@ -25,7 +28,7 @@ const CardLeft = styled("div", {
   base: {
     ...utility.row(3),
     alignItems: "center",
-  }
+  },
 });
 
 const CardTitle = styled("p", {
@@ -57,7 +60,7 @@ const CardRight = styled("div", {
   base: {
     ...utility.row(5),
     alignItems: "center",
-  }
+  },
 });
 
 const CardActions = styled("div", {
@@ -138,11 +141,14 @@ export function AWS() {
         </Text>
       </Stack>
       <Root>
-        <Show when={accounts.value.length} fallback={
-          <Link href="../account">
-            <Button>Connect an AWS Account</Button>
-          </Link>
-        }>
+        <Show
+          when={accounts.value.length}
+          fallback={
+            <Link href="../account">
+              <Button>Connect an AWS Account</Button>
+            </Link>
+          }
+        >
           <Stack space="7">
             <For each={accounts.value}>
               {(account) => (
@@ -151,9 +157,10 @@ export function AWS() {
                     <IconAws width="32" height="32" />
                     <Stack space="1.5">
                       <CardTitle>{account.accountID}</CardTitle>
-                      <Show when={account.timeFailed} fallback={
-                        <CardDesc>Connected</CardDesc>
-                      }>
+                      <Show
+                        when={account.timeFailed}
+                        fallback={<CardDesc>Connected</CardDesc>}
+                      >
                         <CardDesc>Disconnected</CardDesc>
                       </Show>
                     </Stack>
@@ -170,7 +177,9 @@ export function AWS() {
                           </CardError>
                         </CardStatus>
                       </Match>
-                      <Match when={!account.timeDiscovered && !account.timeFailed}>
+                      <Match
+                        when={!account.timeDiscovered && !account.timeFailed}
+                      >
                         <CardStatus>
                           <CardStatusIcon status="info">
                             <IconArrowPathSpin />
@@ -185,7 +194,8 @@ export function AWS() {
                       <Button
                         color="secondary"
                         disabled={
-                          account.timeDiscovered === null || account.timeFailed !== null
+                          account.timeDiscovered === null ||
+                          account.timeFailed !== null
                         }
                         onClick={() => {
                           rep().mutate.aws_account_scan(account.id);

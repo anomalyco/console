@@ -1,6 +1,5 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import { DateTime } from "luxon";
-import { Button, Row, Stack, Text, theme } from "$/ui";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "../context";
 import { utility } from "$/ui/utility";
@@ -16,6 +15,10 @@ import { Alerts } from "./alerts";
 import { useNavigate } from "@solidjs/router";
 import { useAuth2 } from "$/providers/auth2";
 import { AWS } from "./aws";
+import { theme } from "$/ui/theme";
+import { Stack, Row } from "$/ui/layout";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 export const PANEL_CONTENT_SPACE = "10";
 export const PANEL_HEADER_SPACE = "3";

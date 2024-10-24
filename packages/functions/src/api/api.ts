@@ -5,10 +5,16 @@ import { ReplicacheRoute } from "./replicache";
 import { auth } from "./auth";
 import { WebhookRoute } from "./webhook";
 import { BillingRoute } from "./billing";
+import { handle } from "hono/aws-lambda";
+import { AccountRoute } from "./account";
+import { logger } from "hono/logger";
+import { compress } from "hono/compress";
+import { DebugRoute } from "./debug";
 
 const app = new Hono();
 app
   .use(logger())
+  .use(compress())
   .use(async (c, next) => {
     c.header("Cache-Control", "no-store");
     return next();
@@ -48,9 +54,7 @@ app
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
   .route("/billing", BillingRoute)
-  .route("/account", AccountRoute);
+  .route("/account", AccountRoute)
+  .route("/debug", DebugRoute);
 
-import { handle } from "hono/aws-lambda";
-import { AccountRoute } from "./account";
-import { logger } from "hono/logger";
 export const handler = handle(app);

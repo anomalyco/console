@@ -5,21 +5,6 @@ import {
   GithubOrgStore,
   GithubRepoStore,
 } from "$/data/app";
-import {
-  theme,
-  utility,
-  Tag,
-  Row,
-  Text,
-  Stack,
-  Input,
-  TabTitle,
-  Grower,
-  Button,
-  FormField,
-  ButtonIcon,
-  LinkButton,
-} from "$/ui";
 import { Select } from "$/ui/select";
 import { Dropdown } from "$/ui/dropdown";
 import {
@@ -66,6 +51,14 @@ import { array, minLength, object, optional, string } from "valibot";
 import { AWS } from "$/data/aws";
 import { createStore } from "solid-js/store";
 import { fromEntries, map, pipe, sortBy, filter } from "remeda";
+import { LinkButton, TabTitle, ButtonIcon } from "$/ui/button";
+import { FormField, Input } from "$/ui/form";
+import { Grower, Row, Stack } from "$/ui/layout";
+import { Tag } from "$/ui/tag";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const HEADER_HEIGHT = 54;
 
@@ -418,8 +411,8 @@ export const EditTargetForm = object({
       object({
         key: string([minLength(1, "Set the key of the variable")]),
         value: string([minLength(1, "Set the value of the variable")]),
-      })
-    )
+      }),
+    ),
   ),
 });
 
@@ -435,17 +428,17 @@ export function Settings() {
   const workspace = useWorkspace();
   const runConfigs = createSubscription(
     (tx) => RunConfigStore.forApp(tx, app.app.id),
-    []
+    [],
   );
 
   const appRepo = createSubscription((tx) =>
-    AppRepoStore.forApp(tx, app.app.id).then((repos) => repos[0])
+    AppRepoStore.forApp(tx, app.app.id).then((repos) => repos[0]),
   );
 
   const needsGithub = createSubscription(async (tx) => {
     const ghOrgs = await GithubOrgStore.all(tx);
     const appRepo = await AppRepoStore.forApp(tx, app.app.id).then(
-      (repos) => repos[0]
+      (repos) => repos[0],
     );
     if (appRepo) {
       const ghRepo = await GithubRepoStore.get(tx, appRepo.repoID);
@@ -469,7 +462,7 @@ export function Settings() {
       .sort(
         (a, b) =>
           DateTime.fromISO(b.time.created).toMillis() -
-          DateTime.fromISO(a.time.created).toMillis()
+          DateTime.fromISO(a.time.created).toMillis(),
       )[0];
     return run?.status === "error";
   });
@@ -488,7 +481,7 @@ export function Settings() {
     "message",
     (e) => {
       if (e.data === "github.success") setOverrideGithub(true);
-    }
+    },
   );
 
   const [putForm, { Form, Field, FieldArray }] = createForm({
@@ -566,7 +559,7 @@ export function Settings() {
                 onSelect={() => {
                   if (
                     !confirm(
-                      "Are you sure you want to remove this environment?"
+                      "Are you sure you want to remove this environment?",
                     )
                   )
                     return;
@@ -598,7 +591,7 @@ export function Settings() {
               awsAccountExternalID: data.awsAccount,
               appID: app.app.id,
               env: fromEntries(
-                (data.env || []).map((item) => [item.key, item.value])
+                (data.env || []).map((item) => [item.key, item.value]),
               ),
             });
             setEditing("active", false);
@@ -721,16 +714,16 @@ export function Settings() {
                                       onPaste={(e) => {
                                         const data =
                                           e.clipboardData?.getData(
-                                            "text/plain"
+                                            "text/plain",
                                           );
                                         if (!data) return;
                                         setValue(
                                           putForm,
                                           `env.${index()}.value`,
-                                          data
+                                          data,
                                         );
                                         e.currentTarget.value = "0".repeat(
-                                          data.length
+                                          data.length,
                                         );
                                         e.preventDefault();
                                       }}
@@ -836,8 +829,8 @@ export function Settings() {
         new Set(
           orgs.value
             .filter((org) => !org.time.disconnected)
-            .map((org) => org.id)
-        )
+            .map((org) => org.id),
+        ),
     );
     const sortedRepos = createMemo(() =>
       pipe(
@@ -847,13 +840,13 @@ export function Settings() {
           label: repo.name,
           value: repo.id,
         })),
-        sortBy((repo) => repo.label)
-      )
+        sortBy((repo) => repo.label),
+      ),
     );
     const newRepo = createMemo(() => props.new === true);
     const empty = createMemo(() => sortedRepos().length === 0);
     const expanded = createMemo(() =>
-      newRepo() ? !empty() && !!getValue(repoForm, "repo") : true
+      newRepo() ? !empty() && !!getValue(repoForm, "repo") : true,
     );
 
     return (
@@ -1040,7 +1033,7 @@ export function Settings() {
                   const info = createSubscription(async (tx) => {
                     const repo = await GithubRepoStore.get(
                       tx,
-                      appRepo.value!.repoID
+                      appRepo.value!.repoID,
                     );
                     const org = await GithubOrgStore.get(tx, repo.githubOrgID);
                     return {
@@ -1066,7 +1059,7 @@ export function Settings() {
                                     target="_blank"
                                     href={githubRepo(
                                       info.value!.org.login,
-                                      info.value!.repo.name
+                                      info.value!.repo.name,
                                     )}
                                   >
                                     {info.value!.org.login}
@@ -1086,12 +1079,12 @@ export function Settings() {
                                   onClick={() => {
                                     if (
                                       !confirm(
-                                        "Are you sure you want to disconnect from this repo?"
+                                        "Are you sure you want to disconnect from this repo?",
                                       )
                                     )
                                       return;
                                     rep().mutate.app_repo_disconnect(
-                                      appRepo.value!.id
+                                      appRepo.value!.id,
                                     );
                                     reset(repoForm, {
                                       initialValues: repoFormInitialValues,
@@ -1142,7 +1135,7 @@ export function Settings() {
                           <For
                             each={pipe(
                               runConfigs.value,
-                              sortBy((val) => val.stagePattern.length)
+                              sortBy((val) => val.stagePattern.length),
                             )}
                           >
                             {(config) => (
@@ -1184,7 +1177,7 @@ export function Settings() {
                                 <Show
                                   when={
                                     !runConfigs.value.find((c) =>
-                                      c.stagePattern.startsWith("pr-")
+                                      c.stagePattern.startsWith("pr-"),
                                     )
                                   }
                                 >

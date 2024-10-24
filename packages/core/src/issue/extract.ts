@@ -95,23 +95,8 @@ export const extract = zod(
     }
 
     if (count > 10_000) {
-      const limited = await db
-        .select({
-          workspaceID: issueSubscriber.workspaceID,
-          stageID: issueSubscriber.stageID,
-        })
-        .from(issueSubscriber)
-        .where(
-          and(
-            inArray(
-              issueSubscriber.workspaceID,
-              workspaces.map((x) => x.workspaceID),
-            ),
-            eq(issueSubscriber.logGroup, input.logGroup),
-          ),
-        );
       await Promise.all(
-        limited.map((row) =>
+        workspaces.map((row) =>
           withActor(
             {
               type: "system",

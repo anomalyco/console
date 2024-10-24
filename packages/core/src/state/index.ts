@@ -16,9 +16,9 @@ import {
 } from "../util/transaction";
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
-import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { createEvent } from "../event";
-import { StageCredentials } from "../app/stage";
+import { Stage, StageCredentials } from "../app/stage";
 import {
   S3Client,
   GetObjectCommand,
@@ -45,9 +45,26 @@ export module State {
       "state.summary.created",
       z.object({ stageID: z.string(), updateID: z.string() }),
     ),
+    UpdateCreated: createEvent(
+      "state.update.created",
+      z.object({ stageID: z.string(), updateID: z.string() }),
+    ),
+    SnapshotCreated: createEvent(
+      "state.snapshot.created",
+      z.object({ stageID: z.string(), updateID: z.string() }),
+    ),
+    StateUpdated: createEvent(
+      "state.updated",
+      z.object({ stageID: z.string() }),
+    ),
+    StateSynced: createEvent("state.synced", z.object({ stageID: z.string() })),
     HistoryCreated: createEvent(
       "state.history.created",
-      z.object({ stageID: z.string(), key: z.string() }),
+      z.object({
+        stageID: z.string(),
+        key: z.string(),
+        initial: z.boolean().optional(),
+      }),
     ),
     HistorySynced: createEvent(
       "state.history.synced",
@@ -197,6 +214,62 @@ export module State {
       outputs: input.outputs,
     };
   }
+  export const resyncHistory = zod(
+    z.object({
+      config: z.custom<StageCredentials>(),
+    }),
+    async (input) => {
+      const bootstrap = await AWS.Account.bootstrapIon(input.config);
+      if (!bootstrap) return;
+      const existing = await useTransaction((tx) =>
+        tx
+          .select({ id: stateUpdateTable.id })
+          .from(stateUpdateTable)
+          .where(eq(stateUpdateTable.stageID, input.config.stageID))
+          .execute(),
+      ).then((rows) => new Set(rows.map((row) => row.id)));
+
+      const s3 = new S3Client({
+        ...input.config,
+        retryStrategy: RETRY_STRATEGY,
+      });
+      const updates = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: bootstrap.bucket,
+          Prefix: `history/${input.config.app}/${input.config.stage}/`,
+          MaxKeys: 100,
+        }),
+      );
+
+      let index = 0;
+      for (const obj of (updates.Contents || []).toReversed()) {
+        index++;
+        const updateID = obj
+          .Key!.split("/")
+          .at(-1)!
+          .split(".")[0]!
+          .split("-")[1]!;
+        if (existing.has(updateID)) continue;
+        await useTransaction(async (tx) => {
+          await tx.insert(stateUpdateTable).ignore().values({
+            id: updateID,
+            stageID: input.config.stageID,
+            index: 1,
+            command: "deploy",
+            workspaceID: useWorkspace(),
+          });
+          await receiveSummary({
+            config: input.config,
+            updateID,
+          });
+          await receiveHistory({
+            config: input.config,
+            key: obj.Key!,
+          });
+        });
+      }
+    },
+  );
 
   export const receiveHistory = zod(
     z.object({
@@ -292,7 +365,6 @@ export module State {
       );
 
       const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
-      const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
       const resourceDeletes = [] as string[];
       const counts = {} as Record<string, number>;
       console.log({
@@ -313,35 +385,28 @@ export module State {
           return "same";
         })();
         counts[action] = (counts[action] || 0) + 1;
-        resourceInserts.push({
-          stageID: input.config.stageID,
-          updateID: updateID,
-          updateCreatedID: action === "created" ? updateID : undefined,
-          updateModifiedID: action === "updated" ? updateID : undefined,
-          id: createId(),
-          timeStateModified: resource.modified
-            ? new Date(resource.modified)
-            : null,
-          timeStateCreated: resource.created
-            ? new Date(resource.created)
-            : null,
-          workspaceID: useWorkspace(),
-          type: resource.type,
-          urn: resource.urn,
-          custom: resource.custom,
-          inputs: resource.inputs,
-          outputs: resource.outputs,
-          parent: resource.parent,
-        });
         if (action !== "same") {
           eventInserts.push({
-            ...resourceInserts.at(-1)!,
+            stageID: input.config.stageID,
             updateID: updateID,
+            id: createId(),
+            timeStateModified: resource.modified
+              ? new Date(resource.modified)
+              : null,
+            timeStateCreated: resource.created
+              ? new Date(resource.created)
+              : null,
+            workspaceID: useWorkspace(),
+            type: resource.type,
+            urn: resource.urn,
+            custom: resource.custom,
+            inputs: resource.inputs,
+            outputs: resource.outputs,
+            parent: resource.parent,
             action: action,
           });
         }
       }
-
       for (const urn of Object.keys(previousResources)) {
         const resource = previousResources[urn];
         counts["deleted"] = (counts["deleted"] || 0) + 1;
@@ -465,7 +530,9 @@ export module State {
         runID?: string;
         command: string;
         created: string;
+        ignore: boolean;
       };
+      if (lock.ignore) return;
       if (!lock.updateID) return;
       if (!lock.command) return;
       if (!lock.created) return;
@@ -545,11 +612,7 @@ export module State {
       if (!obj) return;
       const summary = JSON.parse(await obj.Body!.transformToString()) as {
         version: string;
-        updateID: string;
-        resourceUpdated: number;
-        resourceCreated: number;
-        resourceDeleted: number;
-        resourceSame: number;
+        command?: UpdateCommand;
         timeStarted: string;
         timeCompleted: string;
         errors: {
@@ -561,12 +624,9 @@ export module State {
         await tx
           .update(stateUpdateTable)
           .set({
-            // resourceUpdated: summary.resourceUpdated,
-            // resourceCreated: summary.resourceCreated,
-            // resourceDeleted: summary.resourceDeleted,
-            // resourceSame: summary.resourceSame,
             errors: summary.errors,
             timeCompleted: new Date(summary.timeCompleted),
+            command: summary.command,
           })
           .where(
             and(
@@ -587,6 +647,415 @@ export module State {
           );
         await createTransactionEffect(() => Replicache.poke());
       });
+    },
+  );
+
+  export const receiveUpdate = zod(
+    z.object({
+      updateID: z.string(),
+      config: z.custom<StageCredentials>(),
+    }),
+    async (input) => {
+      console.log("receive update", input.updateID);
+      const s3 = new S3Client({
+        ...input.config,
+        retryStrategy: RETRY_STRATEGY,
+      });
+      const bootstrap = await AWS.Account.bootstrapIon(input.config);
+      if (!bootstrap) return;
+      const obj = await s3
+        .send(
+          new GetObjectCommand({
+            Bucket: bootstrap.bucket,
+            Key:
+              [
+                "update",
+                input.config.app,
+                input.config.stage,
+                input.updateID,
+              ].join("/") + ".json",
+          }),
+        )
+        .catch(() => {});
+      if (!obj) return;
+      const update = JSON.parse(await obj.Body!.transformToString()) as {
+        version: string;
+        command: UpdateCommand;
+        timeStarted: string;
+        timeCompleted?: string;
+        errors: {
+          urn: string;
+          message: string;
+        }[];
+      };
+      console.log("update", update);
+      await createTransaction(async (tx) => {
+        const max = await tx
+          .select({
+            count: count(),
+          })
+          .from(stateUpdateTable)
+          .where(
+            and(
+              eq(stateUpdateTable.workspaceID, useWorkspace()),
+              eq(stateUpdateTable.stageID, input.config.stageID),
+            ),
+          )
+          .then((result) => result[0]?.count || 0);
+        await tx
+          .insert(stateUpdateTable)
+          .values({
+            id: input.updateID,
+            index: max + 1,
+            errors: update.errors,
+            stageID: input.config.stageID,
+            workspaceID: useWorkspace(),
+            timeStarted: new Date(update.timeStarted),
+            timeCompleted: update.timeCompleted
+              ? new Date(update.timeCompleted)
+              : null,
+            command: update.command,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              errors: update.errors,
+              timeStarted: new Date(update.timeStarted),
+              timeCompleted: update.timeCompleted
+                ? new Date(update.timeCompleted)
+                : null,
+              command: update.command,
+            },
+          });
+        await tx
+          .update(stage)
+          .set({
+            timeUpdated: sql`CURRENT_TIMESTAMP(6)`,
+          })
+          .where(
+            and(
+              eq(stage.workspaceID, useWorkspace()),
+              eq(stage.id, input.config.stageID),
+            ),
+          );
+        await createTransactionEffect(() => Replicache.poke());
+      });
+    },
+  );
+
+  export const receiveSnapshot = zod(
+    z.object({
+      updateID: z.string(),
+      config: z.custom<StageCredentials>(),
+    }),
+    async (input) => {
+      const existing = await useTransaction((tx) =>
+        tx
+          .select()
+          .from(stateUpdateTable)
+          .where(
+            and(
+              eq(stateUpdateTable.workspaceID, useWorkspace()),
+              eq(stateUpdateTable.id, input.updateID),
+            ),
+          )
+          .then((result) => result.at(0)),
+      );
+      if (!existing) {
+        console.log("update not found", { updateID: input.updateID });
+        return;
+      }
+      const s3 = new S3Client({
+        ...input.config,
+        retryStrategy: RETRY_STRATEGY,
+      });
+      const bootstrap = await AWS.Account.bootstrapIon(input.config);
+      if (!bootstrap) return;
+      const key = `snapshot/${input.config.app}/${input.config.stage}/${input.updateID}.json`;
+      console.log("processing", key);
+      const state = await s3
+        .send(
+          new GetObjectCommand({
+            Bucket: bootstrap.bucket,
+            Key: key,
+          }),
+        )
+        .then(
+          async (result) =>
+            JSON.parse(await result.Body!.transformToString()).checkpoint
+              .latest || {},
+        )
+        .catch(() => {});
+      if (!state) return;
+      if (!state.resources) state.resources = [];
+      let continueToken: string | undefined;
+      let previousKey = await s3
+        .send(
+          new ListObjectsV2Command({
+            Bucket: bootstrap.bucket,
+            Prefix: `snapshot/${input.config.app}/${input.config.stage}/`,
+            StartAfter: key,
+            ContinuationToken: continueToken,
+          }),
+        )
+        .then((result) => result.Contents?.[0]?.Key);
+      // migrate from old history
+      if (!previousKey) {
+        previousKey = await s3
+          .send(
+            new ListObjectsV2Command({
+              Bucket: bootstrap.bucket,
+              Prefix: `history/${input.config.app}/${input.config.stage}/`,
+              ContinuationToken: continueToken,
+              MaxKeys: 1,
+            }),
+          )
+          .then((result) => result.Contents?.[0]?.Key);
+      }
+      let previousState = {
+        resources: [],
+      };
+      if (previousKey) {
+        previousState = await s3
+          .send(
+            new GetObjectCommand({
+              Bucket: bootstrap.bucket,
+              Key: previousKey,
+            }),
+          )
+          .then(
+            async (result) =>
+              JSON.parse(await result.Body!.transformToString()).checkpoint
+                .latest,
+          )
+          .catch(() => ({}));
+        console.log("found previous", previousKey);
+      }
+      if (!previousState)
+        previousState = {
+          resources: [],
+        };
+      if (!previousState.resources) previousState.resources = [];
+
+      const resources = Object.fromEntries(
+        state.resources.map((r: any) => [r.urn, r]),
+      );
+      const previousResources = Object.fromEntries(
+        previousState.resources.map((r: any) => [r.urn, r]),
+      );
+
+      const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
+      const resourceDeletes = [] as string[];
+      const counts = {} as Record<string, number>;
+      console.log({
+        stage: input.config.stageID,
+        update: input.updateID,
+      });
+      for (const [urn, resource] of Object.entries(resources)) {
+        const previous = previousResources[urn];
+        delete previousResources[urn];
+        resource.inputs = resource.inputs || {};
+        resource.outputs = resource.outputs || {};
+        delete resource.inputs["__provider"];
+        delete resource.outputs["__provider"];
+        const action = (() => {
+          if (!previous) return "created";
+          if (previous.created !== resource.created) return "created";
+          if (previous.modified !== resource.modified) return "updated";
+          return "same";
+        })();
+        counts[action] = (counts[action] || 0) + 1;
+        if (action !== "same") {
+          eventInserts.push({
+            stageID: input.config.stageID,
+            updateID: input.updateID,
+            id: createId(),
+            timeStateModified: resource.modified
+              ? new Date(resource.modified)
+              : null,
+            timeStateCreated: resource.created
+              ? new Date(resource.created)
+              : null,
+            workspaceID: useWorkspace(),
+            type: resource.type,
+            urn: resource.urn,
+            custom: resource.custom,
+            inputs: resource.inputs,
+            outputs: resource.outputs,
+            parent: resource.parent,
+            action: action,
+          });
+        }
+      }
+
+      for (const urn of Object.keys(previousResources)) {
+        const resource = previousResources[urn];
+        counts["deleted"] = (counts["deleted"] || 0) + 1;
+        eventInserts.push({
+          stageID: input.config.stageID,
+          updateID: input.updateID,
+          action: "deleted",
+          id: createId(),
+          workspaceID: useWorkspace(),
+          type: resource.type,
+          urn: resource.urn,
+          custom: resource.custom,
+          inputs: {},
+          outputs: {},
+          parent: resource.parent,
+        });
+        resourceDeletes.push(resource.urn);
+      }
+      await createTransaction(
+        async (tx) => {
+          await createTransactionEffect(() => Replicache.poke());
+          await tx
+            .update(stateUpdateTable)
+            .set({
+              resourceSame: counts.same || 0,
+              resourceCreated: counts.created || 0,
+              resourceUpdated: counts.updated || 0,
+              resourceDeleted: counts.deleted || 0,
+            })
+            .where(
+              and(
+                eq(stateUpdateTable.workspaceID, useWorkspace()),
+                eq(stateUpdateTable.id, input.updateID),
+              ),
+            );
+          if (eventInserts.length)
+            await tx.insert(stateEventTable).ignore().values(eventInserts);
+          if (resourceDeletes.length)
+            await tx
+              .delete(stateResourceTable)
+              .where(
+                and(
+                  eq(stateResourceTable.workspaceID, useWorkspace()),
+                  eq(stateResourceTable.stageID, input.config.stageID),
+                  inArray(stateResourceTable.urn, resourceDeletes),
+                ),
+              );
+          await tx
+            .update(stage)
+            .set({
+              timeUpdated: sql`CURRENT_TIMESTAMP(6)`,
+              timeDeleted:
+                existing.command === "remove" && state.resources.length === 0
+                  ? sql`CURRENT_TIMESTAMP(6)`
+                  : null,
+            })
+            .where(
+              and(
+                eq(stage.workspaceID, useWorkspace()),
+                eq(stage.id, input.config.stageID),
+              ),
+            );
+        },
+        {
+          isolationLevel: "read uncommitted",
+        },
+      );
+    },
+  );
+
+  export const receiveState = zod(
+    z.object({
+      config: z.custom<StageCredentials>(),
+    }),
+    async (input) => {
+      const s3 = new S3Client({
+        ...input.config,
+        retryStrategy: RETRY_STRATEGY,
+      });
+      const bootstrap = await AWS.Account.bootstrapIon(input.config);
+      if (!bootstrap) return;
+      const key = `app/${input.config.app}/${input.config.stage}.json`;
+      console.log("processing", key);
+      const state = await s3
+        .send(
+          new GetObjectCommand({
+            Bucket: bootstrap.bucket,
+            Key: key,
+          }),
+        )
+        .then(
+          async (result) =>
+            JSON.parse(await result.Body!.transformToString()).checkpoint
+              .latest || {},
+        )
+        .catch(() => {});
+      if (!state) return;
+      if (!state.resources) state.resources = [];
+      const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
+      for (const resource of state.resources) {
+        resource.inputs = resource.inputs || {};
+        resource.outputs = resource.outputs || {};
+        delete resource.inputs["__provider"];
+        delete resource.outputs["__provider"];
+        resourceInserts.push({
+          stageID: input.config.stageID,
+          updateID: "",
+          id: createId(),
+          timeStateModified: resource.modified
+            ? new Date(resource.modified)
+            : null,
+          timeStateCreated: resource.created
+            ? new Date(resource.created)
+            : null,
+          workspaceID: useWorkspace(),
+          type: resource.type,
+          urn: resource.urn,
+          custom: resource.custom,
+          inputs: resource.inputs,
+          outputs: resource.outputs,
+          parent: resource.parent,
+        });
+      }
+
+      await createTransaction(
+        async (tx) => {
+          if (resourceInserts.length)
+            await tx
+              .insert(stateResourceTable)
+              .values(resourceInserts)
+              .onDuplicateKeyUpdate({
+                set: {
+                  updateModifiedID: sql`COALESCE(VALUES(update_modified_id), update_modified_id)`,
+                  updateCreatedID: sql`COALESCE(VALUES(update_created_id), update_created_id)`,
+                  timeStateCreated: sql`VALUES(time_state_created)`,
+                  timeStateModified: sql`VALUES(time_state_modified)`,
+                  type: sql`VALUES(type)`,
+                  custom: sql`VALUES(custom)`,
+                  inputs: sql`VALUES(inputs)`,
+                  outputs: sql`VALUES(outputs)`,
+                  parent: sql`VALUES(parent)`,
+                },
+              });
+          await tx.delete(stateResourceTable).where(
+            and(
+              eq(stateResourceTable.workspaceID, useWorkspace()),
+              eq(stateResourceTable.stageID, input.config.stageID),
+              resourceInserts.length
+                ? notInArray(
+                    stateResourceTable.urn,
+                    resourceInserts.map((i) => i.urn),
+                  )
+                : undefined,
+            ),
+          );
+          if (!resourceInserts.length) {
+            await Stage.remove(input.config.stageID);
+          }
+          await createTransactionEffect(() =>
+            bus.publish(SSTResource.Bus, State.Event.StateSynced, {
+              stageID: input.config.stageID,
+            }),
+          );
+          await createTransactionEffect(() => Replicache.poke());
+        },
+        {
+          isolationLevel: "read uncommitted",
+        },
+      );
     },
   );
 }

@@ -31,5 +31,10 @@
   },
   "dependencies": {
     "@tsconfig/node20": "^20.1.4"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@macaron-css/solid": "patches/@macaron-css__solid.patch"
+    }
   }
 }

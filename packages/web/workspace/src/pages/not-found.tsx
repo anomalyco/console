@@ -1,10 +1,10 @@
 import { Show } from "solid-js";
 import { styled } from "@macaron-css/solid";
 import { Link } from "@solidjs/router";
-import { theme } from "$/ui";
 import { Text } from "$/ui/text";
 import { Stack, Fullscreen } from "$/ui/layout";
 import { Header } from "./workspace/header";
+import { theme } from "$/ui/theme";
 
 const HomeLink = styled(Link, {
   base: {
@@ -30,7 +30,9 @@ export function NotFound(props: ErrorScreenProps) {
       <Show when={props.header}>
         <Header />
       </Show>
-      <Fullscreen inset={props.inset ? props.inset : props.header ? "header" : "none"}>
+      <Fullscreen
+        inset={props.inset ? props.inset : props.header ? "header" : "none"}
+      >
         <Stack space="2.5" horizontal="center">
           <Text size="lg">{props.message || "Page not found"}</Text>
           <HomeLink href="/">Go back home</HomeLink>
@@ -46,7 +48,9 @@ export function NotAllowed(props: ErrorScreenProps) {
       <Show when={props.header}>
         <Header />
       </Show>
-      <Fullscreen inset={props.inset ? props.inset : props.header ? "header" : "none"}>
+      <Fullscreen
+        inset={props.inset ? props.inset : props.header ? "header" : "none"}
+      >
         <Stack space="2.5" horizontal="center">
           <Text size="lg">Access not allowed</Text>
           <NotAllowedDesc>

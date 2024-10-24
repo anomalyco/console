@@ -11,7 +11,6 @@ import { sortBy } from "remeda";
 import { IconCheck, IconClipboard, IconDocumentDuplicate } from "$/ui/icons";
 import { DateTime } from "luxon";
 import { formatSinceTime } from "$/common/format";
-import { Row, Tag, Text, Stack, theme, utility } from "$/ui";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "$/pages/not-found";
 import { Link, useNavigate, useParams } from "@solidjs/router";
@@ -20,6 +19,9 @@ import { useReplicacheStatus } from "$/providers/replicache-status";
 import { useStageContext } from "../context";
 import { StateResourceStore } from "$/data/app";
 import { NavigationAction, useCommandBar } from "../../command-bar";
+import { Row, Stack } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 
 const Container = styled("div", {
   base: {
@@ -200,9 +202,9 @@ export function Detail() {
   const outputs = createMemo(() =>
     resource() && Object.keys(resource()!.outputs).length
       ? Object.keys(resource()!.outputs).map((key) => ({
-        key,
-        value: resource()!.outputs[key],
-      }))
+          key,
+          value: resource()!.outputs[key],
+        }))
       : [],
   );
 
@@ -210,13 +212,13 @@ export function Detail() {
     return [
       ...(resource()?.parent
         ? [
-          NavigationAction({
-            category: "Resource",
-            title: "Go to parent",
-            nav,
-            path: "../" + encodeURIComponent(resource()!.parent!),
-          }),
-        ]
+            NavigationAction({
+              category: "Resource",
+              title: "Go to parent",
+              nav,
+              path: "../" + encodeURIComponent(resource()!.parent!),
+            }),
+          ]
         : []),
       {
         icon: IconClipboard,
@@ -349,7 +351,7 @@ export function Detail() {
                     when={
                       resource()!.time.stateModified &&
                       resource()!.time.stateCreated !==
-                      resource()!.time.stateModified
+                        resource()!.time.stateModified
                     }
                     fallback={<PanelValueEmpty>—</PanelValueEmpty>}
                   >

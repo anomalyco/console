@@ -1,10 +1,9 @@
 import { sortBy } from "remeda";
 import { DateTime } from "luxon";
-import { Row } from "$/ui/layout";
+import { Row, Stack } from "$/ui/layout";
 import { Link } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { State } from "@console/core/state";
-import { Stack, theme, utility } from "$/ui";
 import { IconCommandLine, IconTag } from "$/ui/icons";
 import { inputFocusStyles } from "$/ui/form";
 import { useStageContext } from "../../context";
@@ -21,6 +20,8 @@ import {
 } from "$/common/url-builder";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 
 const LEGEND_RES = 2;
 const LEGEND_WIDTH = 160;
@@ -389,7 +390,7 @@ function Update(props: UpdateProps) {
   });
 
   const update = createSubscription((tx) =>
-    StateUpdateStore.get(tx, ctx.stage.id, props.id)
+    StateUpdateStore.get(tx, ctx.stage.id, props.id),
   );
 
   const runInfo = createMemo(() => {
@@ -404,14 +405,14 @@ function Update(props: UpdateProps) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-        ? trigger.tag
-        : trigger.branch;
+          ? trigger.tag
+          : trigger.branch;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-        ? githubTag(repoURL, trigger.tag)
-        : githubBranch(repoURL, trigger.branch);
+          ? githubTag(repoURL, trigger.tag)
+          : githubBranch(repoURL, trigger.branch);
 
     return { trigger, repoURL, branch, uri };
   });
@@ -479,7 +480,7 @@ function Update(props: UpdateProps) {
                   target="_blank"
                   href={githubCommit(
                     runInfo()!.repoURL,
-                    runInfo()!.trigger.commit.id
+                    runInfo()!.trigger.commit.id,
                   )}
                 >
                   <UpdateGitIcon size="md">
@@ -528,7 +529,7 @@ function Update(props: UpdateProps) {
         <Show when={props.timeStarted} fallback={<UpdateTime>—</UpdateTime>}>
           <UpdateTime
             title={DateTime.fromISO(props.timeStarted!).toLocaleString(
-              DateTime.DATETIME_FULL
+              DateTime.DATETIME_FULL,
             )}
           >
             {formatSinceTime(DateTime.fromISO(props.timeStarted!).toSQL()!)}
@@ -555,7 +556,7 @@ function ChangeLegend(props: ChangeLegendProps) {
 
   const widths = createMemo(() => {
     const nonZero = [same(), created(), updated(), deleted()].filter(
-      (n) => n !== 0
+      (n) => n !== 0,
     ).length;
 
     let sameWidth =
@@ -579,7 +580,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         sameWidth,
         createdWidth,
         updatedWidth,
-        deletedWidth
+        deletedWidth,
       );
       if (maxWidth === sameWidth) {
         sameWidth += widthDifference;
@@ -640,7 +641,7 @@ export function List() {
   const ctx = useStageContext();
   const updates = createSubscription(
     (tx) => StateUpdateStore.forStage(tx, ctx.stage.id),
-    []
+    [],
   );
 
   return (

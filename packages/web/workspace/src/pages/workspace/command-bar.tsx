@@ -12,7 +12,6 @@ import {
 } from "solid-js";
 import { styled } from "@macaron-css/solid";
 import { theme } from "$/ui/theme";
-import { Text } from "$/ui/text";
 import { filter, groupBy, pipe } from "remeda";
 import { globalStyle } from "@macaron-css/core";
 import { Portal } from "solid-js/web";
@@ -23,8 +22,8 @@ import {
 import { createMutationObserver } from "@solid-primitives/mutation-observer";
 import { utility } from "$/ui/utility";
 import { IconSubRight } from "$/ui/icons/custom";
-import { Navigator, useLocation, useNavigate } from "@solidjs/router";
-import { useBus } from "sst/bus";
+import { Navigator, useLocation } from "@solidjs/router";
+import { Text } from "$/ui/text";
 import { bus } from "$/providers/bus";
 
 export interface Action {

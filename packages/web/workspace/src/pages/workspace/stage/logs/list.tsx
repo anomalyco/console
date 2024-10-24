@@ -9,7 +9,6 @@ import {
   IconDotNetRuntime,
   IconContainerRuntime,
 } from "$/ui/icons/custom";
-import { Tag } from "$/ui";
 import { sortBy } from "remeda";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
@@ -23,6 +22,7 @@ import { Row, Stack, Fullscreen } from "$/ui/layout";
 import { useReplicache } from "$/providers/replicache";
 import { IconCheck, IconEllipsisVertical } from "$/ui/icons";
 import { formatBytes, formatDuration } from "$/common/format";
+import { Tag } from "$/ui/tag";
 
 const Content = styled("div", {
   base: {
@@ -332,7 +332,7 @@ export function List() {
             <ChildDetailValue
               outline={isInternal}
               title={
-                (fn.outputs && fn.outputs.timeout && !live())
+                fn.outputs && fn.outputs.timeout && !live()
                   ? `${fn.outputs.timeout} seconds`
                   : undefined
               }

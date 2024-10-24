@@ -1,6 +1,5 @@
 import { CSSProperties } from "@macaron-css/core";
 import { Workspace } from "@console/core/workspace";
-import { Row, Stack, AvatarInitialsIcon, Text, theme } from "$/ui";
 import { IconApp } from "$/ui/icons/custom";
 import { IconChevronUpDown, IconMagnifyingGlass } from "$/ui/icons";
 import { utility } from "$/ui/utility";
@@ -22,6 +21,9 @@ import {
 } from "solid-js";
 import { createInitializedContext } from "$/common/context";
 import { dropAllDatabases } from "replicache";
+import { AvatarInitialsIcon } from "$/ui/avatar-icon";
+import { Row } from "$/ui/layout";
+import { theme } from "$/ui/theme";
 
 const breadCrumbStyles: CSSProperties = {
   flexShrink: 0,
@@ -297,7 +299,9 @@ export function Header(props: { app?: string; stage?: string }) {
               <Show when={props.stage}>
                 <BreadcrumbSeparator>/</BreadcrumbSeparator>
                 <Breadcrumb>
-                  <BreadcrumbCopy href={`/${workspace!().slug}/${props.app}/${props.stage}`}>
+                  <BreadcrumbCopy
+                    href={`/${workspace!().slug}/${props.app}/${props.stage}`}
+                  >
                     {props.stage}
                   </BreadcrumbCopy>
                   <Switcher onClick={() => bar.show("stage-switcher")}>

@@ -1,25 +1,10 @@
 import { DateTime } from "luxon";
-import {
-  AppStore,
-  RunStore,
-  RepoFromApp,
-  StateUpdateStore,
-} from "$/data/app";
+import { AppStore, RunStore, RepoFromApp, StateUpdateStore } from "$/data/app";
 import { UserStore } from "$/data/user";
 import { AccountStore } from "$/data/aws";
 import { ActiveStages } from "$/data/stage";
 import { createSubscription, useReplicache } from "$/providers/replicache";
-import {
-  theme,
-  utility,
-  Row,
-  Tag,
-  Text,
-  Stack,
-  Button,
-  TextButton,
-} from "$/ui";
-import { Fullscreen } from "$/ui/layout";
+import { Fullscreen, Row, Stack } from "$/ui/layout";
 import { Dropdown } from "$/ui/dropdown";
 import {
   IconChevronRight,
@@ -40,21 +25,17 @@ import { Link, useNavigate, useSearchParams } from "@solidjs/router";
 import { For, Match, Show, Switch, createEffect, createMemo } from "solid-js";
 import { Header } from "./header";
 import { useLocalContext } from "$/providers/local";
-import {
-  filter,
-  flatMap,
-  groupBy,
-  map,
-  pipe,
-  sortBy,
-  entries,
-  nthBy,
-} from "remeda";
+import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
 import { User } from "@console/core/user";
 import { useAuth2 } from "$/providers/auth2";
 import { parseTime, formatSinceTime, formatCommit } from "$/common/format";
 import { githubCommit, githubRepo } from "$/common/url-builder";
-import { AppRepo } from "@console/core/app/repo";
+import { TextButton } from "$/ui/button";
+import { Tag } from "$/ui/tag";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -269,7 +250,7 @@ function sortUsers(users: User.Info[], selfEmail: string): User.Info[] {
     users,
     (user) => (user.email === selfEmail ? 0 : 1), // Your own user
     (user) => (!user.timeSeen ? 0 : 1), // Invites
-    (user) => user.email.length // Sort by length
+    (user) => user.email.length, // Sort by length
   );
 }
 
@@ -305,7 +286,7 @@ export function OverviewNext() {
   const accounts = AccountStore.list.watch(
     rep,
     () => [],
-    (accounts) => accounts.filter((a) => !a.timeDeleted)
+    (accounts) => accounts.filter((a) => !a.timeDeleted),
   );
   const auth = useAuth2();
   const local = useLocalContext();
@@ -325,14 +306,14 @@ export function OverviewNext() {
               pipe(
                 stages(),
                 filter((s) => s.appID === app.id),
-                sortBy((s) => s.timeUpdated)
+                sortBy((s) => s.timeUpdated),
               ).at(-1)?.timeUpdated || "",
             "desc",
           ],
-          (app) => app.name
-        )
-      )
-    )
+          (app) => app.name,
+        ),
+      ),
+    ),
   );
   const nav = useNavigate();
   const selfEmail = createMemo(() => auth.current.email);
@@ -340,12 +321,12 @@ export function OverviewNext() {
     const result = pipe(
       stages(),
       groupBy(
-        (s) => `${apps.value.find((a) => a.id === s.appID)?.name}/${s.name}`
+        (s) => `${apps.value.find((a) => a.id === s.appID)?.name}/${s.name}`,
       ),
       entries,
       filter(([, stages]) => stages.length > 1),
       flatMap(([_, stages]) => stages),
-      map((s) => s.id)
+      map((s) => s.id),
     );
     return new Set(result);
   });
@@ -356,13 +337,13 @@ export function OverviewNext() {
   const sortedUsers = createMemo(() =>
     sortUsers(
       users().filter((u) => !u.timeDeleted),
-      selfEmail()
-    )
+      selfEmail(),
+    ),
   );
   const usersCapped = createMemo(() =>
     sortedUsers().length > OVERFLOW_USERS_COUNT
       ? sortedUsers().slice(0, OVERFLOW_USERS_DISPLAY)
-      : sortedUsers()
+      : sortedUsers(),
   );
 
   createEffect(() => {
@@ -396,14 +377,14 @@ export function OverviewNext() {
         (c) =>
           props.app.name === local().app && c.name === local().stage ? 0 : 1,
         (c) => (c.unsupported ? 1 : 0),
-        [(c) => c.timeUpdated, "desc"]
+        [(c) => c.timeUpdated, "desc"],
       );
     });
     const repo = createSubscription(RepoFromApp(props.app.id));
     const childrenCapped = createMemo(() =>
       children().length > OVERFLOW_APPS_COUNT
         ? children().slice(0, OVERFLOW_APPS_DISPLAY)
-        : children()
+        : children(),
     );
     const showOverflow = createMemo(() => {
       return showApps().includes(props.app.id);
@@ -415,7 +396,7 @@ export function OverviewNext() {
         .sort(
           (a, b) =>
             DateTime.fromISO(b.time.created).toMillis() -
-            DateTime.fromISO(a.time.created).toMillis()
+            DateTime.fromISO(a.time.created).toMillis(),
         )[0];
       if (!run) return;
       return !run.stageID && run.status === "error";
@@ -424,7 +405,9 @@ export function OverviewNext() {
       <Card>
         <CardHeader>
           <CardTitle href={props.app.name}>
-            <CardTitleIcon><IconApp width="20" height="20" /></CardTitleIcon>
+            <CardTitleIcon>
+              <IconApp width="20" height="20" />
+            </CardTitleIcon>
             <CardTitleText>{props.app.name}</CardTitleText>
           </CardTitle>
           <Show when={repo.value && latestRunError.value}>
@@ -517,7 +500,10 @@ export function OverviewNext() {
                 </Text>
                 <Text size="sm" on="surface" color="secondary">
                   Autodeploy your apps with the Console{" "}
-                  <a href="https://ion.sst.dev/docs/console/#autodeploy" target="_blank">
+                  <a
+                    href="https://ion.sst.dev/docs/console/#autodeploy"
+                    target="_blank"
+                  >
                     Learn more
                     <AnnouncementLinkIcon>
                       <IconChevronRight width="13" height="13" />
@@ -791,7 +777,7 @@ function StageCard(props: StageCardProps) {
       const run = await RunStore.get(
         tx,
         props.stage.id,
-        latestUpdate.value.runID
+        latestUpdate.value.runID,
       );
       if (run.trigger.source !== "github") return;
       const repoUrl = githubRepo(run.trigger.repo.owner, run.trigger.repo.repo);
@@ -846,14 +832,25 @@ function StageCard(props: StageCardProps) {
           <StageLinkText>{props.stage.name}</StageLinkText>
         </StageLink>
         <Switch>
-          <Match when={props.stage.name === local()?.stage && app()?.name === local()?.app}>
+          <Match
+            when={
+              props.stage.name === local()?.stage &&
+              app()?.name === local()?.app
+            }
+          >
             <Link href={`${stageUri()}/local`}>
-              <Tag level="tip" style="outline">Local</Tag>
+              <Tag level="tip" style="outline">
+                Local
+              </Tag>
             </Link>
           </Match>
           <Match when={latestUpdate.value?.errors.length}>
-            <Link href={`${stageUri()}/resources/updates/${latestUpdate.value?.id}`}>
-              <Tag style="outline" level="danger">Error</Tag>
+            <Link
+              href={`${stageUri()}/resources/updates/${latestUpdate.value?.id}`}
+            >
+              <Tag style="outline" level="danger">
+                Error
+              </Tag>
             </Link>
           </Match>
           <Match when={props.stage.unsupported}>
@@ -872,7 +869,7 @@ function StageCard(props: StageCardProps) {
         <StageRegion>{props.stage.region}</StageRegion>
         <StageUpdatedTime
           title={parseTime(props.stage.timeUpdated).toLocaleString(
-            DateTime.DATETIME_FULL
+            DateTime.DATETIME_FULL,
           )}
         >
           {formatSinceTime(props.stage.timeUpdated, false, true)}
@@ -932,7 +929,7 @@ function UserCard(props: UserCardProps) {
               onSelect={() => {
                 if (
                   !confirm(
-                    "Are you sure you want to remove them from the workspace?"
+                    "Are you sure you want to remove them from the workspace?",
                   )
                 )
                   return;

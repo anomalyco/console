@@ -23,6 +23,8 @@ export const UpdateCommand = z.union([
   z.literal("edit"),
 ]);
 
+export type UpdateCommand = z.infer<typeof UpdateCommand>;
+
 export const Command = ["deploy", "refresh", "remove", "edit"] as const;
 
 export const stateUpdateTable = mysqlTable(
@@ -56,7 +58,7 @@ export const stateUpdateTable = mysqlTable(
       foreignColumns: [runTable.workspaceID, runTable.id],
     }).onDelete("cascade"),
     // index: unique("index").on(table.workspaceID, table.stageID, table.index),
-  })
+  }),
 );
 
 export const Action = ["created", "updated", "deleted"] as const;
@@ -94,14 +96,14 @@ export const stateEventTable = mysqlTable(
       table.workspaceID,
       table.stageID,
       table.updateID,
-      table.urn
+      table.urn,
     ),
     updateID: foreignKey({
       name: "state_event_update_id",
       columns: [table.workspaceID, table.updateID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
-  })
+  }),
 );
 
 export const stateResourceTable = mysqlTable(
@@ -140,5 +142,5 @@ export const stateResourceTable = mysqlTable(
       columns: [table.workspaceID, table.updateModifiedID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
-  })
+  }),
 );

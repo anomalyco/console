@@ -11,5 +11,5 @@ export const handler = EventHandler(Issue.Events.RateLimited, (evt) =>
       logGroup: evt.properties.logGroup,
       config,
     });
-  })
+  }),
 );
