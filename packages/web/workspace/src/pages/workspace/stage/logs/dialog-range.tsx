@@ -1,22 +1,16 @@
-import {
-  Input,
-  Grower,
-  Button,
-  FormField,
-  LinkButton,
-  Row,
-  Stack,
-  Text,
-  theme,
-} from "$/ui";
 import { Modal } from "$/ui/modal";
 import { utility } from "$/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createInputMask } from "@solid-primitives/input-mask";
 import { DateTime } from "luxon";
 import { DATETIME_LONG } from "$/common/format";
+import { LinkButton } from "$/ui/button";
+import { FormField, Input } from "$/ui/form";
+import { Stack, Row, Grower } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 function init() {
   const [state, setState] = createStore<{
@@ -131,10 +125,10 @@ export function DialogRange(props: {
                       store.parsed.toLocaleString(DATETIME_LONG) +
                       "."
                     : store.error
-                    ? "Use a valid date format like " +
-                      DateTime.now().toFormat("MM/dd/yyyy h:m a") +
-                      "."
-                    : "Look for logs older than the given date."
+                      ? "Use a valid date format like " +
+                        DateTime.now().toFormat("MM/dd/yyyy h:m a") +
+                        "."
+                      : "Look for logs older than the given date."
                 }
               >
                 <Input
@@ -146,7 +140,7 @@ export function DialogRange(props: {
                     for (const f of FORMATS) {
                       const result = DateTime.fromFormat(
                         e.currentTarget.value,
-                        f
+                        f,
                       );
                       if (result?.isValid) {
                         setStore({

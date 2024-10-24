@@ -1,17 +1,8 @@
 import { styled } from "@macaron-css/solid";
 import { Row, Stack } from "$/ui/layout";
 import { IconCheck, IconNoSymbol, IconExclamationTriangle } from "$/ui/icons";
-import { inputFocusStyles } from "$/ui/form";
+import { inputFocusStyles, SplitOptions, SplitOptionsOption } from "$/ui/form";
 import { IconCaretRight, IconSubRight } from "$/ui/icons/custom";
-import {
-  utility,
-  Text,
-  Button,
-  Histogram,
-  ButtonGroup,
-  SplitOptions,
-  SplitOptionsOption,
-} from "$/ui";
 import { formatSinceTime, parseTime } from "$/common/format";
 import { Link, useNavigate, useSearchParams } from "@solidjs/router";
 import { theme } from "$/ui/theme";
@@ -38,12 +29,16 @@ import { WarningStore } from "$/data/warning";
 import { IssueCountStore } from "$/data/issue";
 import { useCommandBar } from "../../command-bar";
 import { getLogInfo } from "./common";
-import { createEventListener } from "@solid-primitives/event-listener";
 import {
   KeyboardNavigator,
   createKeyboardNavigator,
   useKeyboardNavigator,
 } from "$/common/keyboard-navigator";
+import { ButtonGroup } from "$/ui/button";
+import { Histogram } from "$/ui/histogram";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const COL_COUNT_WIDTH = 260;
 const COL_TIME_WIDTH = 140;

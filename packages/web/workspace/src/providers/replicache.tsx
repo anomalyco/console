@@ -9,7 +9,6 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import { Splash } from "$/ui";
 import { Client } from "@console/functions/replicache/framework";
 import type { ServerType } from "@console/functions/replicache/server";
 import { bus } from "./bus";
@@ -33,6 +32,7 @@ import {
 import { useReplicacheStatus } from "./replicache-status";
 import { useAuth2 } from "./auth2";
 import { createStore, reconcile } from "solid-js/store";
+import { Splash } from "$/ui/splash";
 
 const mutators = new Client<ServerType>()
   .mutation("app_stage_sync", async () => {})

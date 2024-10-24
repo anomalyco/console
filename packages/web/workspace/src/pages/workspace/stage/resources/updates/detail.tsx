@@ -9,7 +9,6 @@ import { useStageContext } from "../../context";
 import { CMD_MAP, STATUS_MAP, errorCountCopy, UpdateStatusIcon } from "./list";
 import { NotFound } from "$/pages/not-found";
 import { inputFocusStyles } from "$/ui/form";
-import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
 import { formatDuration, formatSinceTime } from "$/common/format";
@@ -28,8 +27,12 @@ import {
   githubCommit,
   githubTag,
 } from "$/common/url-builder";
-import { Row, Text, Stack, Button, theme, utility } from "$/ui";
 import { sortBy } from "remeda";
+import { Stack, Row } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const AVATAR_SIZE = 36;
 const SIDEBAR_WIDTH = 300;
@@ -349,19 +352,19 @@ export function Detail() {
   const ctx = useStageContext();
   const replicacheStatus = useReplicacheStatus();
   const update = createSubscription((tx) =>
-    StateUpdateStore.get(tx, ctx.stage.id, params.updateID)
+    StateUpdateStore.get(tx, ctx.stage.id, params.updateID),
   );
   const resources = StateEventStore.forUpdate.watch(
     rep,
     () => [ctx.stage.id, params.updateID],
-    (resources) => sortBy(resources, [(r) => getResourceName(r.urn)!, "asc"])
+    (resources) => sortBy(resources, [(r) => getResourceName(r.urn)!, "asc"]),
   );
 
   const run = createSubscription(async (tx) => {
     const update = await StateUpdateStore.get(
       tx,
       ctx.stage.id,
-      params.updateID
+      params.updateID,
     );
     if (!update.runID) return;
     return RunStore.get(tx, ctx.stage.id, update.runID);
@@ -369,7 +372,7 @@ export function Detail() {
   const repoURL = createMemo(() =>
     run.value?.trigger.source === "github"
       ? githubRepo(run.value.trigger.repo.owner, run.value.trigger.repo.repo)
-      : ""
+      : "",
   );
 
   const status = createMemo(() => {
@@ -392,13 +395,13 @@ export function Detail() {
     return "updating";
   });
   const deleted = createMemo(() =>
-    resources().filter((r) => r.action === "deleted")
+    resources().filter((r) => r.action === "deleted"),
   );
   const created = createMemo(() =>
-    resources().filter((r) => r.action === "created")
+    resources().filter((r) => r.action === "created"),
   );
   const updated = createMemo(() =>
-    resources().filter((r) => r.action === "updated")
+    resources().filter((r) => r.action === "updated"),
   );
   const isEmpty = createMemo(
     () =>
@@ -406,7 +409,7 @@ export function Detail() {
       !deleted().length &&
       !created().length &&
       !updated().length &&
-      !update.value.resource.same
+      !update.value.resource.same,
   );
 
   function renderSidebar() {
@@ -418,14 +421,14 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.branch;
+            ? trigger.tag
+            : trigger.branch;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-          ? githubTag(repoURL(), trigger.tag)
-          : githubBranch(repoURL(), trigger.branch);
+            ? githubTag(repoURL(), trigger.tag)
+            : githubBranch(repoURL(), trigger.branch);
 
       return { trigger, branch, uri };
     });
@@ -452,7 +455,7 @@ export function Detail() {
                       rel="noreferrer"
                       href={githubCommit(
                         repoURL(),
-                        runInfo()!.trigger.commit.id
+                        runInfo()!.trigger.commit.id,
                       )}
                     >
                       <GitIcon size="md">
@@ -505,7 +508,7 @@ export function Detail() {
                 title={
                   update.value!.time.started
                     ? DateTime.fromISO(
-                        update.value!.time.started!
+                        update.value!.time.started!,
                       ).toLocaleString(DateTime.DATETIME_FULL)
                     : undefined
                 }
@@ -513,7 +516,7 @@ export function Detail() {
                 {update.value!.time.started
                   ? formatSinceTime(
                       DateTime.fromISO(update.value!.time.started!).toSQL()!,
-                      true
+                      true,
                     )
                   : "—"}
               </Text>
@@ -533,7 +536,7 @@ export function Detail() {
                       DateTime.fromISO(update.value!.time.completed!)
                         .diff(DateTime.fromISO(update.value!.time.started!))
                         .as("milliseconds"),
-                      true
+                      true,
                     )
                   : "—"}
               </Text>

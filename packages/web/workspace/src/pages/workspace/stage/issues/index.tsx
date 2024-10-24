@@ -2,11 +2,11 @@ import { Link, Route, Routes } from "@solidjs/router";
 import { Match, Switch } from "solid-js";
 import { List } from "./list";
 import { Detail } from "./detail";
-import { Fullscreen } from "$/ui";
 import { Warning } from "../";
 import { NotFound } from "../../../not-found";
 import { useWorkspace } from "../../context";
 import { useStageContext } from "../context";
+import { Fullscreen } from "$/ui/layout";
 
 export function Issues() {
   const ctx = useStageContext();

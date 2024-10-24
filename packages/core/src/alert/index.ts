@@ -75,7 +75,7 @@ export module Alert {
           .select()
           .from(alert)
           .where(eq(alert.workspaceID, useWorkspace()))
-          .execute()
+          .execute(),
       );
       return alerts.filter(
         (alert) =>
@@ -83,9 +83,9 @@ export module Alert {
           (!stage ||
             alert.source.stage === "*" ||
             alert.source.stage.includes(stage)) &&
-          events.includes(alert.event ?? "issue")
+          events.includes(alert.event ?? "issue"),
       );
-    }
+    },
   );
 
   export const put = zod(
@@ -120,19 +120,19 @@ export module Alert {
             and(
               eq(warning.workspaceID, useWorkspace()),
               eq(warning.type, "issue_alert_slack"),
-              eq(warning.target, id)
-            )
+              eq(warning.target, id),
+            ),
           );
         return id;
-      })
+      }),
   );
 
   export const remove = zod(Info.shape.id, (input) =>
     useTransaction((tx) =>
       tx
         .delete(alert)
-        .where(and(eq(alert.id, input), eq(alert.workspaceID, useWorkspace())))
-    )
+        .where(and(eq(alert.id, input), eq(alert.workspaceID, useWorkspace()))),
+    ),
   );
 
   export const sendSlack = zod(
@@ -170,7 +170,7 @@ export module Alert {
             },
           });
       }
-    }
+    },
   );
   export const sendEmail = zod(
     z.object({
@@ -193,12 +193,14 @@ export module Alert {
                 ? undefined
                 : inArray(user.id, destination.properties.users),
               isNull(user.timeDeleted),
-              isNotNull(user.timeSeen)
-            )
+              isNotNull(user.timeSeen),
+            ),
           );
         console.log(
           "sending email to",
-          users.map((u) => u.email)
+          users.map((u) => u.email),
+          "from",
+          fromAddress,
         );
         if (!users.length) return;
 
@@ -219,12 +221,12 @@ export module Alert {
                   Subject: { Data: subject },
                 },
               },
-            })
+            }),
           );
         } catch (ex) {
           console.error(ex);
         }
         return;
-      })
+      }),
   );
 }

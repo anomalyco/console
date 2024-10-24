@@ -1,4 +1,5 @@
 import { bus } from "./bus";
+import { email } from "./email";
 import { issues } from "./issues";
 import { database } from "./planetscale";
 
@@ -6,13 +7,13 @@ bus.subscribe(
   {
     handler: "packages/functions/src/event.handler",
     permissions: [
-      { actions: ["sts:*", "logs:*"], resources: ["*"] },
+      { actions: ["sts:*", "logs:*", "ses:*"], resources: ["*"] },
       {
         actions: ["iam:PassRole"],
         resources: [issues.properties.role],
       },
     ],
-    link: [database, bus, issues],
+    link: [database, bus, issues, email],
     timeout: "5 minute",
   },
   {

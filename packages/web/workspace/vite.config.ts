@@ -5,13 +5,13 @@ import inspect from "vite-plugin-inspect";
 import path from "path";
 
 export default defineConfig({
-  plugins: [inspect(), macaronVitePlugin(), solidPlugin() as any],
+  plugins: [inspect(), macaronVitePlugin(), solidPlugin()],
   server: {
     port: 3000,
     host: "0.0.0.0",
   },
   optimizeDeps: {
-    exclude: ["@modular-forms/solid"],
+    // exclude: ["@modular-forms/solid"],
     esbuildOptions: {
       target: "es2020",
     },

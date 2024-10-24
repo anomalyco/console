@@ -25,12 +25,15 @@ import {
   HeaderProvider,
   useHeaderContext,
 } from "../header";
-import { Fullscreen, Row, Stack, TabTitle, theme, utility } from "$/ui";
 import { Local } from "./local";
 import { IconExclamationTriangle } from "$/ui/icons";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
 import { DateTime } from "luxon";
+import { TabTitle } from "$/ui/button";
+import { Stack, Fullscreen, Row } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 
 export function Stage() {
   const stageContext = createStageContext();
@@ -119,7 +122,7 @@ export function Inner() {
   const issues = useIssuesContext();
   const issuesCount = createMemo(
     () =>
-      issues().filter((item) => !item.timeResolved && !item.timeIgnored).length
+      issues().filter((item) => !item.timeResolved && !item.timeIgnored).length,
   );
   const updates = StateUpdateStore.forStage.watch(rep, () => [ctx.stage.id]);
   const header = useHeaderContext();
@@ -128,14 +131,14 @@ export function Inner() {
     () =>
       outdated()
         .map((r) => r.type === "Stack" && r.enrichment.version)
-        .sort()[0]
+        .sort()[0],
   );
   const latestRunError = createSubscription(async (tx) => {
     const runs = await RunStore.forStage(tx, ctx.stage.id);
     const run = runs.sort(
       (a, b) =>
         DateTime.fromISO(b.time.created).toMillis() -
-        DateTime.fromISO(a.time.created).toMillis()
+        DateTime.fromISO(a.time.created).toMillis(),
     )[0];
     return run?.status === "error";
   });

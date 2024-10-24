@@ -118,7 +118,7 @@ export const { use: useInvocations, provider: InvocationProvider } =
             id: invocation.id,
             error: data.errorType,
             message: data.errorMessage,
-            stack: data.trace.map((t) => ({
+            stack: data.trace.map((t: any) => ({
               raw: t,
             })),
             failed: true,

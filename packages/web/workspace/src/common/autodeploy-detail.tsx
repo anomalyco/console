@@ -42,11 +42,14 @@ import {
   githubCommit,
   githubTag,
 } from "$/common/url-builder";
-import { Row, Text, Stack, theme, utility } from "$/ui";
 import { pipe, dropWhile, drop, takeWhile, filter } from "remeda";
 import { useWorkspace } from "../pages/workspace/context";
 import { useAuth2 } from "$/providers/auth2";
 import { IconTag, IconXCircle } from "$/ui/icons";
+import { utility } from "$/ui/utility";
+import { theme } from "$/ui/theme";
+import { Stack, Row } from "$/ui/layout";
+import { Text } from "$/ui/text";
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -275,7 +278,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
   const replicacheStatus = useReplicacheStatus();
   const data = createSubscription(async (tx) => {
     const runs = (await RunStore.all(tx)).filter(
-      (run) => run.id === params.runID
+      (run) => run.id === params.runID,
     );
     if (!runs.length) return;
 
@@ -285,7 +288,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
     const stage = await StageStore.get(tx, run.stageID);
 
     const update = (await StateUpdateStore.forStage(tx, run.stageID)).find(
-      (update) => update.runID === run.id
+      (update) => update.runID === run.id,
     );
     return { run, stage, update };
   });
@@ -337,21 +340,21 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
     const repoURL = createMemo(() =>
       trigger.source === "github"
         ? githubRepo(trigger.repo.owner, trigger.repo.repo)
-        : ""
+        : "",
     );
     const runInfo = createMemo(() => {
       const branch =
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.branch;
+            ? trigger.tag
+            : trigger.branch;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-          ? githubTag(repoURL(), trigger.tag)
-          : githubBranch(repoURL(), trigger.branch);
+            ? githubTag(repoURL(), trigger.tag)
+            : githubBranch(repoURL(), trigger.branch);
 
       return { trigger, branch, uri };
     });
@@ -426,7 +429,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               title={
                 data.value!.run.time.started
                   ? DateTime.fromISO(
-                      data.value!.run.time.started!
+                      data.value!.run.time.started!,
                     ).toLocaleString(DateTime.DATETIME_FULL)
                   : undefined
               }
@@ -434,7 +437,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               {data.value!.run.time.started
                 ? formatSinceTime(
                     DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
-                    true
+                    true,
                   )
                 : "—"}
             </Text>
@@ -454,7 +457,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     DateTime.fromISO(data.value!.run.time.completed!)
                       .diff(DateTime.fromISO(data.value!.run.time.started!))
                       .as("milliseconds"),
-                    true
+                    true,
                   )
                 : "—"}
             </Text>
@@ -487,14 +490,14 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     stageID: data.value!.stage!.id,
                     logStream: log.logStream,
                     logGroup: log.logGroup,
-                  }
+                  },
             ).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,
               Authorization: "Bearer " + auth.current.token,
             },
-          }
+          },
         ).then(
           (res) =>
             res.json() as Promise<
@@ -502,14 +505,14 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                 message: string;
                 timestamp: number;
               }[]
-            >
+            >,
         );
         console.log("!! LENGTH AAA", results.length);
         return results;
       },
       {
         initialValue: [],
-      }
+      },
     );
     createEffect(() => {
       console.log("!! EFFECT", logs().length);
@@ -521,7 +524,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         dropWhile((r) => !r.message.startsWith("[sst.deploy.start]")),
         drop(1),
         filter((r) => r.message.trim() != ""),
-        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]"))
+        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]")),
       );
     });
 
@@ -544,7 +547,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
           >
             Logs —{" "}
             {DateTime.fromMillis(trimmedLogs()![0].timestamp!).toLocaleString(
-              DATETIME_NO_TIME
+              DATETIME_NO_TIME,
             )}
           </PanelTitle>
         </Show>
@@ -558,7 +561,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     .toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}
                 >
                   {DateTime.fromMillis(entry.timestamp).toFormat(
-                    "HH:mm:ss.SSS"
+                    "HH:mm:ss.SSS",
                   )}
                 </LogTime>
                 <LogMessage>{entry.message}</LogMessage>

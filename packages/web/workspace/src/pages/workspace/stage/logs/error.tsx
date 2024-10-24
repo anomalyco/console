@@ -1,9 +1,11 @@
-import { utility, theme, Text, SpanSpacer } from "$/ui";
 import { IconChevronDown, IconChevronRight } from "$/ui/icons";
+import { SpanSpacer } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 import { Invocation, StackFrame } from "@console/core/log";
 import { styled } from "@macaron-css/solid";
-import { createMemoObject } from "@solidjs/router/dist/utils";
 import { For, Show, createMemo, createSignal } from "solid-js";
+import { Text } from "$/ui/text";
 
 export const ErrorList = styled("div", {
   base: {
@@ -127,17 +129,17 @@ export function StackTrace(props: { stack: StackFrame[] }) {
   const first = createMemo(() =>
     Math.max(
       props.stack.findIndex((frame) => frame.important),
-      0
-    )
+      0,
+    ),
   );
   const anyContext = createMemo(() =>
-    props.stack.some((frame) => frame.context)
+    props.stack.some((frame) => frame.context),
   );
 
   function renderStacktraceFrameContext(start: number, context: string[]) {
     // Find the minimum number of leading spaces across all context lines
     const minLeadingSpaces = Math.min(
-      ...context.map((row) => countLeadingSpaces(row))
+      ...context.map((row) => countLeadingSpaces(row)),
     );
     const offset = Math.max(1, start - 3);
     const active = Math.min(3, start - 1);
@@ -197,8 +199,8 @@ export function StackTrace(props: { stack: StackFrame[] }) {
                   !frame.context && anyContext()
                     ? "2"
                     : !frame.important && anyContext()
-                    ? "1"
-                    : undefined
+                      ? "1"
+                      : undefined
                 }
                 onClick={() => {
                   if (!frame.context) return;
@@ -260,8 +262,8 @@ export function StackTrace(props: { stack: StackFrame[] }) {
                             ? "medium"
                             : undefined
                           : expand()
-                          ? "semibold"
-                          : undefined
+                            ? "semibold"
+                            : undefined
                       }
                     >
                       {frame.file!}

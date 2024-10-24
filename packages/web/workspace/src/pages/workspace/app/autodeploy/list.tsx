@@ -4,7 +4,6 @@ import { Row } from "$/ui/layout";
 import { Link } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { useAppContext } from "../context";
-import { Stack, theme, utility } from "$/ui";
 import {
   IconArrowLongRight,
   IconExclamationTriangle,
@@ -26,6 +25,8 @@ import {
 import { RunStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 
 export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   switch (error.type) {
@@ -454,15 +455,16 @@ function RunItem({ run }: { run: Run.Run }) {
             <img
               width="24"
               height="24"
-              src={`https://avatars.githubusercontent.com/u/${runInfo()!.trigger.sender.id
-                }?s=48&v=4`}
+              src={`https://avatars.githubusercontent.com/u/${
+                runInfo()!.trigger.sender.id
+              }?s=48&v=4`}
             />
           </RunSenderAvatar>
           <RunGitLink
             target="_blank"
             href={githubCommit(
               runInfo()!.repoURL,
-              runInfo()!.trigger.commit.id
+              runInfo()!.trigger.commit.id,
             )}
           >
             <RunGitIcon size="md">
@@ -495,7 +497,7 @@ function RunItem({ run }: { run: Run.Run }) {
         <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
           <RunTime
             title={DateTime.fromISO(run.time.created!).toLocaleString(
-              DateTime.DATETIME_FULL
+              DateTime.DATETIME_FULL,
             )}
           >
             {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}
@@ -514,7 +516,7 @@ export function List() {
     return pipe(
       all,
       filter((run) => run.appID === ctx.app.id),
-      sortBy([(run) => run.time.created, "desc"])
+      sortBy([(run) => run.time.created, "desc"]),
     );
   });
 

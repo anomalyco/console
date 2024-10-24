@@ -1,5 +1,4 @@
 import { useReplicache } from "$/providers/replicache";
-import { Tag, Text } from "$/ui";
 import { Dropdown } from "$/ui/dropdown";
 import {
   IconBolt,
@@ -18,6 +17,7 @@ import {
 import { IconAws, IconArrowPathSpin } from "$/ui/icons/custom";
 import { Row, Stack, Fullscreen } from "$/ui/layout";
 import { TextButton, IconButton } from "$/ui/button";
+import { Text } from "$/ui/text";
 import { Warning } from "../";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
@@ -52,6 +52,7 @@ import {
   createKeyboardNavigator,
 } from "$/common/keyboard-navigator";
 import { profileID } from "$/providers/realtime";
+import { Tag } from "$/ui/tag";
 
 const LogSwitchButton = styled("button", {
   base: {

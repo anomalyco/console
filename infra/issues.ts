@@ -9,6 +9,7 @@ stream.subscribe(
   {
     handler: "packages/functions/src/issues/subscriber.handler",
     timeout: "15 minutes",
+    permissions: [{ actions: ["sts:*", "logs:*"], resources: ["*"] }],
     nodejs: {
       install: ["source-map"],
     },
@@ -60,8 +61,8 @@ new aws.iam.RolePolicy("IssuePolicy", {
 export const issues = new sst.Linkable("IssueDestination", {
   properties: {
     role: role.arn,
-    prefix: `arn:aws:logs:<region>:${identity.accountId}:destination:`,
-    stream: stream.name,
+    prefix: $interpolate`arn:aws:logs:<region>:${identity.accountId}:destination:`,
+    stream: stream.arn,
   },
 });
 

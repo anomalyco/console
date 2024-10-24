@@ -1,13 +1,16 @@
 import { UserStore } from "$/data/user";
 import { useReplicache } from "$/providers/replicache";
-import { Row, Stack, Text, theme, utility } from "$/ui";
 import { IconBookmark, IconTrash, IconXMark } from "$/ui/icons";
+import { Stack, Row } from "$/ui/layout";
 import { Modal } from "$/ui/modal";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
 import { Actor, UserActor } from "@console/core/actor";
 import type { LambdaPayload } from "@console/core/lambda";
 import { styled } from "@macaron-css/solid";
 import { For, Show, createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
+import { Text } from "$/ui/text";
 
 const IconClose = styled("div", {
   base: {

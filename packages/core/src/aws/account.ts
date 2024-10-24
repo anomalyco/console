@@ -206,7 +206,7 @@ export const bootstrap = zod(
 
       return {
         bucket,
-        version: "normal" as const,
+        version: "v2" as const,
       };
     }
 
@@ -247,7 +247,7 @@ export const bootstrapIon = zod(
       const parsed = JSON.parse(param.Parameter.Value);
       return {
         bucket: parsed.state,
-        version: "ion" as const,
+        version: "v3" as const,
       };
     } catch {
       return;
@@ -258,7 +258,7 @@ export const bootstrapIon = zod(
 );
 
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
-import { App } from "../app";
+import { App, Stage } from "../app";
 import { Replicache } from "../replicache";
 import { db } from "../drizzle";
 import { app, stage } from "../app/app.sql";
@@ -268,6 +268,7 @@ import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 import { Resource } from "sst";
 import { createEvent } from "../event";
 import { bus } from "sst/aws/bus";
+import { State } from "../state";
 
 export const regions = zod(
   bootstrap.schema.shape.credentials,
@@ -374,6 +375,9 @@ export const integrate = zod(
     console.log("regions", r);
 
     for (const region of r) {
+      if (region !== "us-east-1") {
+        continue;
+      }
       const config = {
         credentials: input.credentials,
         region: region!,
@@ -471,11 +475,14 @@ export const integrate = zod(
         ),
       );
 
-      const stages = [] as { app: string; stage: string }[];
+      const stages = [] as {
+        app: string;
+        stage: string;
+      }[];
       for (const b of bootstrapBuckets) {
         console.log("scanning", b.bucket);
         while (true) {
-          if (b.version === "normal") {
+          if (b.version === "v2") {
             const list = await s3
               .send(
                 new ListObjectsV2Command({
@@ -509,7 +516,6 @@ export const integrate = zod(
                 app: appName,
                 stage: stageName,
               });
-              existing[appName]?.delete(stageName);
               console.log(region, "found", stageName, appName);
             }
 
@@ -517,7 +523,7 @@ export const integrate = zod(
             token = list.ContinuationToken;
           }
 
-          if (b.version === "ion") {
+          if (b.version === "v3") {
             const list = await s3
               .send(
                 new ListObjectsV2Command({
@@ -558,7 +564,7 @@ export const integrate = zod(
               if (!state) continue;
               if (!state.resources) continue;
               if (state.resources.length === 0) continue;
-              existing[appName]?.delete(stageName);
+
               stages.push({
                 app: appName!,
                 stage: stageName!,
@@ -571,7 +577,8 @@ export const integrate = zod(
       }
       for (const item of stages) {
         console.log("found stage", item);
-        await createTransaction(async () => {
+        existing[item.app]?.delete(item.stage);
+        await createTransaction(async (tx) => {
           let app = await App.fromName(item.app).then((a) => a?.id);
           if (!app) {
             console.log("creating app", item.app);
@@ -579,7 +586,6 @@ export const integrate = zod(
               name: item.app,
             });
           }
-
           let stage = await App.Stage.fromName({
             appID: app,
             name: item.stage,
@@ -595,6 +601,12 @@ export const integrate = zod(
               awsAccountID: account.id,
             });
             await Replicache.poke();
+          }
+
+          if (stage) {
+            await bus.publish(Resource.Bus, Stage.Events.Updated, {
+              stageID: stage,
+            });
           }
         });
       }

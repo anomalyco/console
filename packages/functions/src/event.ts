@@ -1,6 +1,7 @@
 import { withActor } from "@console/core/actor";
 import { App, Stage } from "@console/core/app";
 import { AWS } from "@console/core/aws";
+import { Issue } from "@console/core/issue";
 import { State } from "@console/core/state";
 import { bus } from "sst/aws/bus";
 
@@ -12,10 +13,19 @@ export const handler = bus.subscriber(
     App.Stage.Events.ResourcesUpdated,
     State.Event.SummaryCreated,
     State.Event.HistoryCreated,
+    State.Event.HistorySynced,
+    State.Event.SnapshotCreated,
+    State.Event.StateUpdated,
+    State.Event.StateSynced,
+    State.Event.UpdateCreated,
+    Stage.Events.ResourcesUpdated,
+    Issue.Events.RateLimited,
+    Issue.Events.IssueDetected,
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
-      console.log("event", evt);
+      console.log(evt.type);
+      console.log(evt);
       switch (evt.type) {
         case AWS.Account.Events.Created.type:
           const account = await AWS.Account.fromID(evt.properties.awsAccountID);
@@ -50,6 +60,85 @@ export const handler = bus.subscriber(
           await State.receiveSummary({
             updateID: evt.properties.updateID,
             config,
+          });
+          break;
+        }
+
+        case Stage.Events.ResourcesUpdated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) {
+            return;
+          }
+          await Issue.subscribe(config);
+          break;
+        }
+
+        case State.Event.HistoryCreated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await State.receiveHistory({
+            key: evt.properties.key,
+            config,
+          });
+          break;
+        }
+
+        case State.Event.HistorySynced.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Issue.subscribeIon(config);
+          break;
+        }
+
+        case State.Event.UpdateCreated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await State.receiveUpdate({
+            config,
+            updateID: evt.properties.updateID,
+          });
+          break;
+        }
+
+        case State.Event.SnapshotCreated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await State.receiveSnapshot({
+            config,
+            updateID: evt.properties.updateID,
+          });
+          break;
+        }
+
+        case State.Event.StateUpdated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await State.receiveState({
+            config,
+          });
+          break;
+        }
+
+        case State.Event.StateSynced.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Issue.subscribeIon(config);
+          break;
+        }
+
+        case Issue.Events.RateLimited.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Issue.disableLogGroup({
+            logGroup: evt.properties.logGroup,
+            config,
+          });
+          break;
+        }
+
+        case Issue.Events.IssueDetected.type: {
+          await withActor(evt.metadata.actor, async () => {
+            await Issue.Send.triggerIssue(evt.properties);
           });
           break;
         }

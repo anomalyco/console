@@ -1,14 +1,15 @@
-import { Button, Fullscreen, Row, Stack, Text, theme } from "$/ui";
 import { AvatarInitialsIcon } from "$/ui/avatar-icon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "./context";
 import { utility } from "$/ui/utility";
-import { createId } from "@paralleldrive/cuid2";
-import { useReplicache } from "$/providers/replicache";
 import { Link, useNavigate } from "@solidjs/router";
 import { IconArrowsRightLeft } from "$/ui/icons";
 import { IconAws } from "$/ui/icons/custom";
 import { Header } from "./header";
+import { Fullscreen, Stack, Row } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
 
 const AddAccountGraphicAwsIcon = styled("div", {
   base: {

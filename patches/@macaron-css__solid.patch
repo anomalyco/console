@@ -1,0 +1,34 @@
+diff --git a/package.json b/package.json
+index c3f06bb43f13f07c712043f8e3beac3a0ea1b8fa..970a66f819dcf9c71b0657f67ea2fbf94df907a1 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,6 @@
+   "name": "@macaron-css/solid",
+   "version": "1.5.3",
+   "license": "MIT",
+-  "type": "module",
+   "repository": {
+     "type": "git",
+     "url": "https://github.com/mokshit06/macaron.git",
+@@ -11,12 +10,14 @@
+   "exports": {
+     ".": {
+       "types": "./dist/index.d.mts",
+-      "import": "./dist/index.mjs"
++      "import": "./dist/index.mjs",
++      "require": "./dist/index.js"
+     },
+     "./dist/*": "./dist/*",
+     "./runtime": {
+       "types": "./dist/runtime.d.mts",
+-      "import": "./dist/runtime.mjs"
++      "import": "./dist/runtime.mjs",
++      "require": "./dist/runtime.js"
+     }
+   },
+   "dependencies": {
+@@ -35,3 +36,4 @@
+     "src"
+   ]
+ }
++

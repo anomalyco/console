@@ -35,6 +35,7 @@ import { createTransaction, useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
 import * as Send from "./send";
+import { filter, map, pipe, uniq, unique } from "remeda";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -155,9 +156,8 @@ export const connectStage = zod(
       "creating",
       config.region,
       uniqueIdentifier,
-      // TODO: add issue role arn
-      // Config.ISSUES_ROLE_ARN,
-      // Config.ISSUES_STREAM_ARN,
+      SSTResource.IssueDestination.role,
+      SSTResource.IssueDestination.stream,
     );
     const cw = new CloudWatchLogsClient({
       region: config.region,
@@ -168,9 +168,8 @@ export const connectStage = zod(
       const destination = await cw.send(
         new PutDestinationCommand({
           destinationName: uniqueIdentifier,
-          // TODO: add issue role arn
-          roleArn: "",
-          targetArn: "",
+          roleArn: SSTResource.IssueDestination.role,
+          targetArn: SSTResource.IssueDestination.stream,
         }),
       );
       console.log("created destination", destination.destination);
@@ -233,8 +232,9 @@ const disconnectStage = zod(z.custom<StageCredentials>(), async (config) => {
 export const subscribe = zod(z.custom<StageCredentials>(), async (config) => {
   const uniqueIdentifier = destinationIdentifier(config);
   console.log("subscribing", uniqueIdentifier);
-  // TODO: add issue destination prefix
-  const destination = "".replace("<region>", config.region) + uniqueIdentifier;
+  const destination =
+    SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
+    uniqueIdentifier;
   const cw = new CloudWatchLogsClient({
     region: config.region,
     credentials: config.credentials,
@@ -486,9 +486,9 @@ export const subscribeIon = zod(
   async (config) => {
     const uniqueIdentifier = destinationIdentifier(config);
     console.log("subscribing", uniqueIdentifier);
-    // TODO: add issue destination prefix
     const destination =
-      "".replace("<region>", config.region) + uniqueIdentifier;
+      SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
+      uniqueIdentifier;
     const cw = new CloudWatchLogsClient({
       region: config.region,
       credentials: config.credentials,
@@ -496,106 +496,42 @@ export const subscribeIon = zod(
     });
 
     try {
-      // Get all function resources
       const resources = await db
         .select()
         .from(stateResourceTable)
         .where(
           and(
-            eq(stateResourceTable.type, "aws:lambda/function:Function"),
+            inArray(stateResourceTable.type, [
+              "aws:lambda/function:Function",
+              "aws:cloudwatch/logGroup:LogGroup",
+            ]),
             eq(stateResourceTable.workspaceID, useWorkspace()),
             eq(stateResourceTable.stageID, config.stageID),
           ),
         );
-      const functions = resources.filter(
-        (r) => !Boolean(r.outputs?.environment?.variables?.SST_FUNCTION_ID),
-      );
-      if (!functions.length) {
-        console.log("no functions");
-        return;
-      }
 
-      const toDelete = await db
-        .select({
-          id: issueSubscriber.id,
-          logGroup: issueSubscriber.logGroup,
-        })
-        .from(issueSubscriber)
-        .where(
-          and(
-            eq(issueSubscriber.workspaceID, useWorkspace()),
-            eq(issueSubscriber.stageID, config.stageID),
-            not(
-              inArray(
-                issueSubscriber.functionID,
-                functions.map((x) => x.id),
-              ),
-            ),
-          ),
-        );
-
-      for (const item of toDelete) {
-        console.log("deleting", item.logGroup);
-        await cw
-          .send(
-            new DeleteSubscriptionFilterCommand({
-              filterName:
-                uniqueIdentifier +
-                (SSTResource.App.stage === "production" ? "" : `#dev`),
-              logGroupName: item.logGroup!,
-            }),
-          )
-          .catch((e) => {
-            if (e instanceof ResourceNotFoundException) return;
-            throw e;
-          });
-
-        await db
-          .delete(issueSubscriber)
-          .where(
-            and(
-              eq(issueSubscriber.workspaceID, useWorkspace()),
-              eq(issueSubscriber.id, item.id),
-            ),
-          );
-      }
-
-      await db.delete(issueSubscriber).where(
-        and(
-          eq(issueSubscriber.workspaceID, useWorkspace()),
-          eq(issueSubscriber.stageID, config.stageID),
-          not(
-            inArray(
-              issueSubscriber.functionID,
-              functions.map((x) => x.id),
-            ),
-          ),
-        ),
+      const groups = pipe(
+        resources,
+        map((resource): string | undefined => {
+          if (
+            resource.type === "aws:lambda/function:Function" &&
+            resource.outputs.loggingConfig
+          ) {
+            return resource.outputs.loggingConfig.logGroup;
+          }
+          if (resource.type === "aws:cloudwatch/logGroup:LogGroup") {
+            return resource.outputs.name;
+          }
+        }),
+        filter(Boolean),
+        unique(),
       );
 
-      const exists = await db
-        .select({
-          functionID: issueSubscriber.functionID,
-          logGroup: issueSubscriber.logGroup,
-        })
-        .from(issueSubscriber)
-        .where(
-          and(
-            eq(issueSubscriber.stageID, config.stageID),
-            eq(issueSubscriber.workspaceID, useWorkspace()),
-          ),
-        )
-        .execute();
+      for (const group of groups) {
+        await subscribe(group as string);
+      }
 
-      console.log("updating", resources.length, "functions");
-      async function subscribe(logGroup: string, functionID: string) {
-        if (
-          exists.find(
-            (item) =>
-              item.functionID === functionID && item.logGroup === logGroup,
-          )
-        )
-          return;
+      async function subscribe(logGroup: string) {
         console.log("subscribing", logGroup);
         while (true) {
           try {
@@ -621,19 +557,6 @@ export const subscribeIon = zod(
                 logGroupName: logGroup,
               }),
             );
-
-            if (functionID)
-              await db
-                .insert(issueSubscriber)
-                .ignore()
-                .values({
-                  stageID: config.stageID,
-                  workspaceID: useWorkspace(),
-                  functionID: functionID,
-                  id: createId(),
-                  logGroup,
-                })
-                .execute();
 
             await Warning.remove({
               target: logGroup,
@@ -726,12 +649,6 @@ export const subscribeIon = zod(
             break;
           }
         }
-      }
-
-      for (const fn of functions) {
-        const logGroup = fn.outputs?.loggingConfig?.logGroup;
-        if (!logGroup) continue;
-        await subscribe(logGroup, fn.id);
       }
     } finally {
       cw.destroy();

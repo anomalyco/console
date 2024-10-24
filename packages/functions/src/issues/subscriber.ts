@@ -1,20 +1,10 @@
 import { Issue } from "@console/core/issue";
 import { unzipSync } from "zlib";
 import { withActor } from "@console/core/actor";
-import { Handler } from "sst/context";
-import { KinesisStreamEvent, KinesisStreamBatchResponse } from "aws-lambda";
+import { KinesisStreamEvent } from "aws-lambda";
 import { queue } from "@console/core/util/queue";
 
-declare module "sst/context" {
-  interface Handlers {
-    kinesis_stream: {
-      event: KinesisStreamEvent;
-      response: KinesisStreamBatchResponse;
-    };
-  }
-}
-
-export const handler = Handler("kinesis_stream", (event) =>
+export const handler = async (event: KinesisStreamEvent) =>
   withActor(
     {
       type: "public",
@@ -72,5 +62,4 @@ export const handler = Handler("kinesis_stream", (event) =>
 
       return response;
     },
-  ),
-);
+  );

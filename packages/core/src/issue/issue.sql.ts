@@ -49,7 +49,7 @@ export const issue = mysqlTable(
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     group: unique("group").on(table.workspaceID, table.stageID, table.group),
     updated: index("updated").on(table.workspaceID, table.timeUpdated),
-  })
+  }),
 );
 
 export const issueSubscriber = mysqlTable(
@@ -69,9 +69,9 @@ export const issueSubscriber = mysqlTable(
       table.workspaceID,
       table.stageID,
       table.functionID,
-      table.logGroup
+      table.logGroup,
     ),
-  })
+  }),
 );
 
 export const issueCount = mysqlTable(
@@ -93,9 +93,9 @@ export const issueCount = mysqlTable(
       table.workspaceID,
       table.stageID,
       table.group,
-      table.hour
+      table.hour,
     ),
-  })
+  }),
 );
 
 export const issueAlertLimit = mysqlTable(
@@ -106,5 +106,5 @@ export const issueAlertLimit = mysqlTable(
   },
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
-  })
+  }),
 );

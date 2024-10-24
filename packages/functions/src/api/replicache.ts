@@ -295,9 +295,11 @@ ReplicacheRoute.post("/pull1", async (c) => {
             ? {
                 stateEvent: inArray(stateEventTable.updateID, updates),
                 stateUpdate: inArray(stateUpdateTable.id, updates),
-                stateResource: notInArray(stateResourceTable.updateID, updates),
               }
             : {}),
+          stateResource: deletedStages.length
+            ? notInArray(stateResourceTable.stageID, deletedStages)
+            : undefined,
           run: runs.length ? inArray(runTable.id, runs) : undefined,
         } satisfies {
           [key in keyof typeof TABLES]?: SQLWrapper;

@@ -1,4 +1,14 @@
-import { eq, and, isNull, gt, sql, getTableColumns, or, lt } from "drizzle-orm";
+import {
+  eq,
+  and,
+  isNull,
+  gt,
+  sql,
+  getTableColumns,
+  or,
+  lt,
+  isNotNull,
+} from "drizzle-orm";
 import { useWorkspace } from "../actor";
 import { app, stage } from "../app/app.sql";
 import { db } from "../drizzle";
@@ -13,6 +23,8 @@ import { render } from "@jsx-email/render";
 import type { KnownBlock } from "@slack/web-api";
 import { Workspace } from "../workspace";
 import { Alert } from "../alert";
+import { useTransaction } from "../util/transaction";
+import { Resource } from "sst";
 
 export const Limit = createSelectSchema(issueAlertLimit);
 
@@ -23,48 +35,67 @@ export const triggerIssue = zod(
   }),
   async (input) => {
     console.log("triggering issue", input);
-    const result = await db
-      .select({
-        ...getTableColumns(issue),
-        slug: workspace.slug,
-        appName: app.name,
-        stageName: stage.name,
-        workspaceSlug: workspace.slug,
-      })
-      .from(issue)
-      .innerJoin(workspace, eq(workspace.id, issue.workspaceID))
-      .innerJoin(
-        stage,
-        and(eq(stage.id, issue.stageID), eq(stage.workspaceID, useWorkspace()))
-      )
-      .innerJoin(
-        app,
-        and(eq(app.id, stage.appID), eq(app.workspaceID, useWorkspace()))
-      )
-      .leftJoin(
-        issueAlertLimit,
-        and(
-          eq(issueAlertLimit.workspaceID, useWorkspace()),
-          eq(issueAlertLimit.id, issue.id)
-        )
-      )
-      .where(
-        and(
-          eq(issue.workspaceID, useWorkspace()),
-          eq(issue.stageID, input.stageID),
-          eq(issue.group, input.group),
-          or(
-            // alert first time
-            isNull(issueAlertLimit.timeUpdated),
-            // do not alert more than once every 30min
-            lt(issueAlertLimit.timeUpdated, sql`NOW() - INTERVAL 30 MINUTE`),
-            // if issue resolved after last alert, send alert
-            gt(issue.timeResolved, issueAlertLimit.timeUpdated)
+    const result = await useTransaction(async (tx) => {
+      await tx
+        .select()
+        .from(issue)
+        .for("update")
+        .where(
+          and(
+            eq(issue.workspaceID, useWorkspace()),
+            eq(issue.stageID, input.stageID),
+            eq(issue.group, input.group),
           ),
-          isNull(issue.timeIgnored)
+        );
+      return await tx
+        .select({
+          ...getTableColumns(issue),
+          slug: workspace.slug,
+          appName: app.name,
+          stageName: stage.name,
+          workspaceSlug: workspace.slug,
+        })
+        .from(issue)
+        .innerJoin(workspace, eq(workspace.id, issue.workspaceID))
+        .innerJoin(
+          stage,
+          and(
+            eq(stage.id, issue.stageID),
+            eq(stage.workspaceID, useWorkspace()),
+          ),
         )
-      )
-      .then((rows) => rows[0]);
+        .innerJoin(
+          app,
+          and(eq(app.id, stage.appID), eq(app.workspaceID, useWorkspace())),
+        )
+        .leftJoin(
+          issueAlertLimit,
+          and(
+            eq(issueAlertLimit.workspaceID, useWorkspace()),
+            eq(issueAlertLimit.id, issue.id),
+          ),
+        )
+        .where(
+          and(
+            eq(issue.workspaceID, useWorkspace()),
+            eq(issue.stageID, input.stageID),
+            eq(issue.group, input.group),
+            or(
+              // alert first time
+              isNull(issueAlertLimit.timeUpdated),
+              // do not alert more than once every 30min
+              lt(issueAlertLimit.timeUpdated, sql`NOW() - INTERVAL 30 MINUTE`),
+              // if issue resolved after last alert, send alert
+              and(
+                isNotNull(issue.timeResolved),
+                gt(issue.timeResolved, issueAlertLimit.timeUpdated),
+              ),
+            ),
+            isNull(issue.timeIgnored),
+          ),
+        )
+        .then((rows) => rows[0]);
+    });
 
     if (!result) {
       console.log("not alertable");
@@ -147,11 +178,11 @@ export const triggerIssue = zod(
               assetsUrl: `https://console.sst.dev/email`,
               consoleUrl: "https://console.sst.dev",
               workspace: result.workspaceSlug,
-            })
+            }),
           ),
           plain: result.message,
-          replyToAddress: `alert+issues+${result.id}@${process.env.EMAIL_DOMAIN}`,
-          fromAddress: `${result.appName}/${result.stageName} via SST <alert+issues+${result.id}@${process.env.EMAIL_DOMAIN}>`,
+          replyToAddress: `alert+issues+${result.id}@${Resource.Email.sender}`,
+          fromAddress: `${result.appName}/${result.stageName} via SST <alert+issues+${result.id}@${Resource.Email.sender}>`,
         });
       }
     }
@@ -168,7 +199,7 @@ export const triggerIssue = zod(
             timeUpdated: sql`NOW()`,
           },
         });
-  }
+  },
 );
 
 export const triggerRateLimit = zod(
@@ -234,7 +265,7 @@ export const triggerRateLimit = zod(
               assetsUrl: `https://console.sst.dev/email`,
               consoleUrl: "https://console.sst.dev",
               workspace: workspace!.slug,
-            })
+            }),
           ),
           plain: message,
           replyToAddress: `alert+issues@${process.env.EMAIL_DOMAIN}`,
@@ -242,5 +273,5 @@ export const triggerRateLimit = zod(
         });
       }
     }
-  }
+  },
 );

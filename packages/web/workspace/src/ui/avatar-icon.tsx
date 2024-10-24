@@ -30,7 +30,7 @@ function generateAvatarSvg({
   }" r="${
     size / 2
   }"/><text x="50%" y="50%" style="color: ${textColor};line-height: 1;font-family: ${fontFamily};" alignment-baseline="middle" text-anchor="middle" font-size="${Math.round(
-    size * fontSize
+    size * fontSize,
   )}" font-weight="${fontWeight}" dy=".1em" dominant-baseline="middle" fill="${textColor}">${text}</text></svg>`;
 }
 
@@ -69,15 +69,15 @@ export function AvatarInitialsIcon(props: AvatarInitialsIconProps) {
       parts.length > 1
         ? parts[0].slice(0, 1) + parts[1].slice(0, 1)
         : parts.length === 1
-        ? parts[0][0]
-        : "-";
+          ? parts[0][0]
+          : "-";
 
     return encodeURIComponent(
       generateAvatarSvg({
         text,
         round,
         bgColor,
-      })
+      }),
     );
   });
 

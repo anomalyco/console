@@ -35,13 +35,128 @@ type Payload = {
 
 export const handler = async (evt: Payload) => {
   console.log(evt);
+  const region = evt.region;
+
+  if (
+    evt.detail.object.key.startsWith("update") &&
+    evt["detail-type"] === "Object Created"
+  ) {
+    let [, appHint, stageHint] = evt.detail.object.key.split("/");
+    [stageHint] = stageHint!.split(".");
+    await useTransaction(async (tx) => {
+      const stages = await findStages(
+        stageHint!,
+        appHint!,
+        evt.account,
+        region,
+      );
+      for (const row of stages) {
+        await withActor(
+          {
+            type: "system",
+            properties: {
+              workspaceID: row.workspaceID,
+            },
+          },
+          () =>
+            createTransaction(async () => {
+              if (!row.appID) {
+                row.appID = createId();
+                await tx.insert(app).values({
+                  workspaceID: row.workspaceID,
+                  name: appHint!,
+                  id: row.appID,
+                });
+              }
+
+              if (!row.stageID) {
+                row.stageID = createId();
+                await tx.insert(stage).values({
+                  appID: row.appID!,
+                  name: stageHint!,
+                  id: row.stageID,
+                  region: evt.region,
+                  workspaceID: row.workspaceID,
+                  awsAccountID: row.id,
+                });
+              }
+              await createTransactionEffect(() =>
+                bus.publish(Resource.Bus, State.Event.UpdateCreated, {
+                  stageID: row.stageID!,
+                  updateID: evt.detail.object.key
+                    .split("/")
+                    .at(-1)!
+                    .split(".")[0]!,
+                }),
+              );
+            }),
+        );
+      }
+    });
+  }
+
+  if (
+    evt["detail-type"] === "Object Created" &&
+    evt.detail.object.key.startsWith("snapshot")
+  ) {
+    let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
+    updateID = updateID!.split(".")[0]!;
+    const stages = await findStages(stageHint!, appHint!, evt.account, region);
+    for (const row of stages) {
+      await withActor(
+        {
+          type: "system",
+          properties: {
+            workspaceID: row.workspaceID,
+          },
+        },
+        () =>
+          bus.publish(Resource.Bus, State.Event.SnapshotCreated, {
+            stageID: row.stageID!,
+            updateID,
+          }),
+      );
+    }
+    return;
+  }
+
+  if (
+    evt["detail-type"] === "Object Created" &&
+    evt.detail.object.key.startsWith("app")
+  ) {
+    let [, appHint, stageHint] = evt.detail.object.key.split("/");
+    stageHint = stageHint!.split(".")[0];
+    const stages = await findStages(stageHint!, appHint!, evt.account, region);
+    for (const row of stages) {
+      await withActor(
+        {
+          type: "system",
+          properties: {
+            workspaceID: row.workspaceID,
+          },
+        },
+        () =>
+          bus.publish(Resource.Bus, State.Event.StateUpdated, {
+            stageID: row.stageID!,
+          }),
+      );
+    }
+    return;
+  }
+
+  // this is legacy now :(
   if (evt.detail.object.key.startsWith("lock")) {
     if (evt["detail-type"] === "Object Created") {
       console.log("lock created");
       await useTransaction(async (tx) => {
         let [, appHint, stageHint] = evt.detail.object.key.split("/");
         [stageHint] = stageHint!.split(".");
-        const stages = await findStages(stageHint!, appHint!, evt.account);
+        const stages = await findStages(
+          stageHint!,
+          appHint!,
+          evt.account,
+          region,
+        );
         for (const row of stages) {
           await withActor(
             {
@@ -88,10 +203,11 @@ export const handler = async (evt: Payload) => {
     }
   }
 
+  // this is legacy now :(
   if (evt.detail.object.key.startsWith("summary")) {
     let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
     updateID = updateID!.split(".")[0];
-    const stages = await findStages(stageHint!, appHint!, evt.account);
+    const stages = await findStages(stageHint!, appHint!, evt.account, region);
     for (const row of stages) {
       await withActor(
         {
@@ -110,13 +226,14 @@ export const handler = async (evt: Payload) => {
     return;
   }
 
+  // this is legacy now :(
   if (
     evt["detail-type"] === "Object Created" &&
     evt.detail.object.key.startsWith("history")
   ) {
     let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
     updateID = updateID!.split(".")[0];
-    const stages = await findStages(stageHint!, appHint!, evt.account);
+    const stages = await findStages(stageHint!, appHint!, evt.account, region);
     for (const row of stages) {
       await withActor(
         {
@@ -135,6 +252,7 @@ export const handler = async (evt: Payload) => {
     return;
   }
 
+  // this is v2
   if (
     evt["detail-type"] === "Object Created" ||
     evt["detail-type"] === "Object Deleted"
@@ -155,7 +273,7 @@ export const handler = async (evt: Payload) => {
     const { account, region } = evt;
     console.log("processing", appName, stageName, account, region);
 
-    const rows = await findStages(stageName!, appName!, account);
+    const rows = await findStages(stageName!, appName!, account, region);
 
     for (const row of rows) {
       await withActor(
@@ -197,7 +315,12 @@ export const handler = async (evt: Payload) => {
   }
 };
 
-async function findStages(stageName: string, appName: string, account: string) {
+async function findStages(
+  stageName: string,
+  appName: string,
+  account: string,
+  region: string,
+) {
   const rows = await useTransaction((tx) => {
     return tx
       .select({
@@ -214,7 +337,14 @@ async function findStages(stageName: string, appName: string, account: string) {
           eq(app.workspaceID, awsAccount.workspaceID),
         ),
       )
-      .leftJoin(stage, and(eq(stage.name, stageName!), eq(stage.appID, app.id)))
+      .leftJoin(
+        stage,
+        and(
+          eq(stage.name, stageName!),
+          eq(stage.appID, app.id),
+          eq(stage.region, region),
+        ),
+      )
       .where(and(eq(awsAccount.accountID, account)))
       .execute();
   });

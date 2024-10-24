@@ -1,4 +1,3 @@
-import { Button, ButtonIcon, Row, Stack, TabTitle, theme, utility } from "$/ui";
 import { useAppContext } from "../context";
 import { Show } from "solid-js";
 import { Link, Route, Routes } from "@solidjs/router";
@@ -16,6 +15,11 @@ import {
 } from "$/data/app";
 import { DateTime } from "luxon";
 import { IconGitHub } from "$/ui/icons/custom";
+import { TabTitle, ButtonIcon } from "$/ui/button";
+import { Row, Stack } from "$/ui/layout";
+import { theme } from "$/ui/theme";
+import { utility } from "$/ui/utility";
+import { Button } from "$/ui/button";
 
 const RepoLink = styled("a", {
   base: {
@@ -72,19 +76,19 @@ export function Autodeploy() {
       .sort(
         (a, b) =>
           DateTime.fromISO(b.time.created).toMillis() -
-          DateTime.fromISO(a.time.created).toMillis()
+          DateTime.fromISO(a.time.created).toMillis(),
       )[0];
     const latestRunError = run?.status === "error";
 
     const appRepo = await AppRepoStore.forApp(tx, ctx.app.id);
     const ghRepo = (await GithubRepoStore.all(tx)).find(
-      (repo) => repo.id === appRepo[0]?.repoID
+      (repo) => repo.id === appRepo[0]?.repoID,
     );
 
     if (!ghRepo) return { latestRunError };
 
     const ghRepoOrg = (await GithubOrgStore.all(tx)).find(
-      (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected
+      (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected,
     );
 
     return {
@@ -127,8 +131,9 @@ export function Autodeploy() {
             <Stack space="2" horizontal="end">
               <RepoLink
                 target="_blank"
-                href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
-                  }`}
+                href={`https://github.com/${r.value!.ghRepoOrg!.login}/${
+                  r.value!.ghRepo!.name
+                }`}
               >
                 <RepoLinkIcon>
                   <IconGitHub width="16" height="16" />
