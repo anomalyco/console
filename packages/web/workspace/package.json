@@ -44,6 +44,8 @@
     "remeda": "2.10.1",
     "replicache": "14.2.2",
     "solid-js": "1.9.3",
-    "valibot": "0.19.0"
+    "solid-list": "^0.3.0",
+    "valibot": "0.19.0",
+    "virtua": "^0.35.1"
   }
 }
