@@ -174,6 +174,9 @@ export function AWS() {
                 <Dropdown.RadioGroup
                   value={search.view}
                   onChange={(val) => {
+                    if (val === "custom") {
+                      return;
+                    }
                     setSearch(
                       {
                         view: val,
