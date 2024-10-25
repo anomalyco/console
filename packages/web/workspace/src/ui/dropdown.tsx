@@ -1,19 +1,13 @@
-import { DropdownMenu } from "@kobalte/core";
-import { globalStyle } from "@macaron-css/core";
+import * as Kobalte from "@kobalte/core/dropdown-menu";
 import { styled } from "@macaron-css/solid";
 import { IconChevronDown } from "./icons";
 import { Text } from "./text";
 import { utility } from "./utility";
 import { theme } from "./theme";
-import {
-  inputStyles,
-  inputFocusStyles,
-  inputDisabledStyles,
-  inputDangerFocusStyles,
-} from "./form";
-import { JSX, Show, ComponentProps, ParentProps } from "solid-js";
+import { inputStyles, inputFocusStyles, inputDisabledStyles } from "./form";
+import { JSX, Show, ComponentProps } from "solid-js";
 
-const Trigger = styled(DropdownMenu.Trigger, {
+const Trigger = styled(Kobalte.Trigger<"button">, {
   base: {
     ...utility.row(2),
     ...inputStyles,
@@ -71,7 +65,7 @@ const Trigger = styled(DropdownMenu.Trigger, {
   },
 });
 
-const DownIcon = styled(DropdownMenu.Icon, {
+const DownIcon = styled(Kobalte.Icon<"span">, {
   base: {
     width: 20,
     height: 20,
@@ -96,7 +90,7 @@ const TriggerIcon = styled("span", {
   },
 });
 
-const Content = styled(DropdownMenu.Content, {
+const Content = styled(Kobalte.Content<"div">, {
   base: {
     marginTop: theme.space[1],
     padding: `${theme.space[1]} 0`,
@@ -110,7 +104,7 @@ const Content = styled(DropdownMenu.Content, {
   },
 });
 
-const Item = styled(DropdownMenu.Item, {
+const Item = styled(Kobalte.Item<"div">, {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
@@ -127,9 +121,9 @@ const Item = styled(DropdownMenu.Item, {
   },
 });
 
-const RadioGroup = styled(DropdownMenu.RadioGroup, {});
+const RadioGroup = styled(Kobalte.RadioGroup<"div">, {});
 
-const RadioItem = styled(DropdownMenu.RadioItem, {
+const RadioItem = styled(Kobalte.RadioItem<"div">, {
   base: {
     ...utility.row(2),
     alignItems: "center",
@@ -160,7 +154,7 @@ const RadioItemLabel = styled("span", {
   },
 });
 
-const ItemIndicator = styled(DropdownMenu.ItemIndicator, {
+const ItemIndicator = styled(Kobalte.ItemIndicator<"div">, {
   base: {
     opacity: theme.iconOpacity,
     display: "flex",
@@ -168,7 +162,7 @@ const ItemIndicator = styled(DropdownMenu.ItemIndicator, {
   },
 });
 
-const Seperator = styled(DropdownMenu.Separator, {
+const Seperator = styled(Kobalte.Separator<"hr">, {
   base: {
     height: 1,
     margin: `${theme.space[1]} 0`,
@@ -177,7 +171,7 @@ const Seperator = styled(DropdownMenu.Separator, {
   },
 });
 
-type Props = ComponentProps<typeof DropdownMenu.Root> & {
+type Props = ComponentProps<typeof Kobalte.Root> & {
   icon?: JSX.Element;
   size?: "sm" | "base";
   label?: string;
@@ -187,7 +181,7 @@ type Props = ComponentProps<typeof DropdownMenu.Root> & {
 
 export function Dropdown(props: Props) {
   return (
-    <DropdownMenu.Root {...props}>
+    <Kobalte.Root {...props}>
       <Trigger
         size={props.size}
         disabled={props.disabled}
@@ -215,10 +209,10 @@ export function Dropdown(props: Props) {
           <TriggerIcon>{props.icon}</TriggerIcon>
         </Show>
       </Trigger>
-      <DropdownMenu.Portal mount={document.getElementById("styled")!}>
+      <Kobalte.Portal mount={document.getElementById("styled")!}>
         <Content>{props.children}</Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+      </Kobalte.Portal>
+    </Kobalte.Root>
   );
 }
 

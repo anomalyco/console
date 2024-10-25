@@ -325,8 +325,8 @@ importers:
         specifier: 4.5.14
         version: 4.5.14
       '@kobalte/core':
-        specifier: 0.11.2
-        version: 0.11.2(solid-js@1.9.3)
+        specifier: 0.13.0
+        version: 0.13.0(solid-js@1.9.3)
       '@macaron-css/core':
         specifier: 1.5.1
         version: 1.5.1
@@ -1241,7 +1241,6 @@ packages:
   '@esbuild/linux-arm64@0.21.4':
     resolution: {integrity: sha512-/GLD2orjNU50v9PcxNpYZi+y8dJ7e7/LhQukN3S4jNDXCKkyyiyAz9zDw3siZ7Eh1tRcnCHAo/WcqKMzmi4eMQ==}
     engines: {node: '>=12'}
-    cpu: [arm64]
     os: [linux]
 
   '@esbuild/linux-arm@0.18.20':
@@ -1542,21 +1541,6 @@ packages:
   '@fontsource/rubik@4.5.14':
     resolution: {integrity: sha512-EvMK3kkeAgKkk8qAeT4PjpyAYyu72pIlJm+SXJ5vR/xhCX2yj2xoq3+YS38rPmPcCAnrAVONoQ3ezLxVm6jhBA==}
 
-  '@formatjs/ecma402-abstract@2.0.0':
-    resolution: {integrity: sha512-rRqXOqdFmk7RYvj4khklyqzcfQl9vEL/usogncBHRZfZBDOwMGuSRNFl02fu5KGHXdbinju+YXyuR+Nk8xlr/g==}
-
-  '@formatjs/fast-memoize@2.2.0':
-    resolution: {integrity: sha512-hnk/nY8FyrL5YxwP9e4r9dqeM6cAbo8PeU9UjyXojZMNvVad2Z06FAVHyR3Ecw6fza+0GH7vdJgiKIVXTMbSBA==}
-
-  '@formatjs/icu-messageformat-parser@2.7.8':
-    resolution: {integrity: sha512-nBZJYmhpcSX0WeJ5SDYUkZ42AgR3xiyhNCsQweFx3cz/ULJjym8bHAzWKvG5e2+1XO98dBYC0fWeeAECAVSwLA==}
-
-  '@formatjs/icu-skeleton-parser@1.8.2':
-    resolution: {integrity: sha512-k4ERKgw7aKGWJZgTarIcNEmvyTVD9FYh0mTrrBMHZ1b8hUu6iOJ4SzsZlo3UNAvHYa+PnvntIwRPt1/vy4nA9Q==}
-
-  '@formatjs/intl-localematcher@0.5.4':
-    resolution: {integrity: sha512-zTwEpWOzZ2CiKcB93BLngUX59hQkuZjT2+SAQEscSm52peDW/getsawMcWF1rGRpMCX6D7nSJA3CzJ8gn13N/g==}
-
   '@hono/zod-validator@0.4.1':
     resolution: {integrity: sha512-I8LyfeJfvVmC5hPjZ2Iij7RjexlgSBT7QJudZ4JvNPLxn0JQ3sqclz2zydlwISAnw21D2n4LQ0nfZdoiv9fQQA==}
     peerDependencies:
@@ -1572,9 +1556,6 @@ packages:
 
   '@internationalized/date@3.5.5':
     resolution: {integrity: sha512-H+CfYvOZ0LTJeeLOqm19E3uj/4YjrmOFtBufDHPfvtI80hFAMqtrp7oCACpe4Cil5l8S0Qu/9dYfZc/5lY8WQQ==}
-
-  '@internationalized/message@3.1.4':
-    resolution: {integrity: sha512-Dygi9hH1s7V9nha07pggCkvmRfDd3q2lWnMGvrJyrOwYMe1yj4D2T9BoH9I6MGR7xz0biQrtLPsqUkqXzIrBOw==}
 
   '@internationalized/number@3.5.3':
     resolution: {integrity: sha512-rd1wA3ebzlp0Mehj5YTuTI50AQEx80gWFyHcQu+u91/5NgdwBecO8BH6ipPfE+lmQ9d63vpB3H9SHoIUiupllw==}
@@ -1745,15 +1726,15 @@ packages:
     peerDependencies:
       react: ^18.2.0
 
-  '@kobalte/core@0.11.2':
-    resolution: {integrity: sha512-B19TvpmR0E8n7LJqopF0lbMayBErnWJ5MlTTnrgVAFU1up/2Bo1O6ldTK1c5NikmpppzIK2A8ovUwIhRqw/3Uw==}
+  '@kobalte/core@0.13.0':
+    resolution: {integrity: sha512-wTdcmdqjF9FJeJYMBC3YpbC3s7SUZY3gDLlVGbA+vWQRYL/FtqBhmvWDEGNYVvpaB/HoLHbFe0wVxhgXiPil5g==}
     peerDependencies:
-      solid-js: ^1.7.11
+      solid-js: ^1.8.15
 
-  '@kobalte/utils@0.9.0':
-    resolution: {integrity: sha512-TYVCpQcpqo1+0HBn3NXoGEBzxd4tH6Um1oc07nrYw1V7Qq0qbMaYAOnfBc1qhlh7sGV4XZldmb0j13Of0FrZQg==}
+  '@kobalte/utils@0.9.1':
+    resolution: {integrity: sha512-eeU60A3kprIiBDAfv9gUJX1tXGLuZiKMajUfSQURAF2pk4ZoMYiqIzmrMBvzcxP39xnYttgTyQEVLwiTZnrV4w==}
     peerDependencies:
-      solid-js: ^1.7.11
+      solid-js: ^1.8.8
 
   '@macaron-css/babel@1.5.1':
     resolution: {integrity: sha512-gN/ju/21avvQBeT3gGX/nLnWRrIcOIYcleKKZRi1hWK1b1lxJy7uMdNMFLf/4QpvlOTsqzu53I5seGatb445qg==}
@@ -4073,9 +4054,6 @@ packages:
     resolution: {integrity: sha512-riK/iQB2ctwkpWYgjjWIRv3MBLt2gzb2Sj0JNQNbyTXgyXsLWcDPJ5WS5ZDTCx7BRFnJsARtYh+58fjP5M2Y0Q==}
     engines: {node: '>=18'}
 
-  intl-messageformat@10.5.14:
-    resolution: {integrity: sha512-IjC6sI0X7YRjjyVH9aUgdftcmZK7WXdHeil4KwbjDnRWjnVitKpAx3rr6t6di1joFp5188VqKcobOPA6mCLG/w==}
-
   invariant@2.2.4:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
 
@@ -4954,6 +4932,11 @@ packages:
 
   solid-list@0.3.0:
     resolution: {integrity: sha512-t4hx/F/l8Vmq+ib9HtZYl7Z9F1eKxq3eKJTXlvcm7P7yI4Z8O7QSOOEVHb/K6DD7M0RxzVRobK/BS5aSfLRwKg==}
+    peerDependencies:
+      solid-js: ^1.8
+
+  solid-prevent-scroll@0.1.10:
+    resolution: {integrity: sha512-KplGPX2GHiWJLZ6AXYRql4M127PdYzfwvLJJXMkO+CMb8Np4VxqDAg5S8jLdwlEuBis/ia9DKw2M8dFx5u8Mhw==}
     peerDependencies:
       solid-js: ^1.8
 
@@ -8060,30 +8043,6 @@ snapshots:
 
   '@fontsource/rubik@4.5.14': {}
 
-  '@formatjs/ecma402-abstract@2.0.0':
-    dependencies:
-      '@formatjs/intl-localematcher': 0.5.4
-      tslib: 2.6.3
-
-  '@formatjs/fast-memoize@2.2.0':
-    dependencies:
-      tslib: 2.6.3
-
-  '@formatjs/icu-messageformat-parser@2.7.8':
-    dependencies:
-      '@formatjs/ecma402-abstract': 2.0.0
-      '@formatjs/icu-skeleton-parser': 1.8.2
-      tslib: 2.6.3
-
-  '@formatjs/icu-skeleton-parser@1.8.2':
-    dependencies:
-      '@formatjs/ecma402-abstract': 2.0.0
-      tslib: 2.6.3
-
-  '@formatjs/intl-localematcher@0.5.4':
-    dependencies:
-      tslib: 2.6.3
-
   '@hono/zod-validator@0.4.1(hono@4.6.5)(zod@3.23.8)':
     dependencies:
       hono: 4.6.5
@@ -8108,11 +8067,6 @@ snapshots:
   '@internationalized/date@3.5.5':
     dependencies:
       '@swc/helpers': 0.5.12
-
-  '@internationalized/message@3.1.4':
-    dependencies:
-      '@swc/helpers': 0.5.12
-      intl-messageformat: 10.5.14
 
   '@internationalized/number@3.5.3':
     dependencies:
@@ -8315,16 +8269,16 @@ snapshots:
     dependencies:
       react: 18.2.0
 
-  '@kobalte/core@0.11.2(solid-js@1.9.3)':
+  '@kobalte/core@0.13.0(solid-js@1.9.3)':
     dependencies:
-      '@floating-ui/dom': 1.6.10
+      '@floating-ui/dom': 1.6.11
       '@internationalized/date': 3.5.5
-      '@internationalized/message': 3.1.4
       '@internationalized/number': 3.5.3
-      '@kobalte/utils': 0.9.0(solid-js@1.9.3)
+      '@kobalte/utils': 0.9.1(solid-js@1.9.3)
       solid-js: 1.9.3
+      solid-prevent-scroll: 0.1.10(solid-js@1.9.3)
 
-  '@kobalte/utils@0.9.0(solid-js@1.9.3)':
+  '@kobalte/utils@0.9.1(solid-js@1.9.3)':
     dependencies:
       '@solid-primitives/event-listener': 2.3.3(solid-js@1.9.3)
       '@solid-primitives/keyed': 1.2.2(solid-js@1.9.3)
@@ -11045,13 +10999,6 @@ snapshots:
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
 
-  intl-messageformat@10.5.14:
-    dependencies:
-      '@formatjs/ecma402-abstract': 2.0.0
-      '@formatjs/fast-memoize': 2.2.0
-      '@formatjs/icu-messageformat-parser': 2.7.8
-      tslib: 2.6.3
-
   invariant@2.2.4:
     dependencies:
       loose-envify: 1.4.0
@@ -11901,6 +11848,11 @@ snapshots:
       seroval-plugins: 1.1.1(seroval@1.1.1)
 
   solid-list@0.3.0(solid-js@1.9.3):
+    dependencies:
+      '@corvu/utils': 0.4.2(solid-js@1.9.3)
+      solid-js: 1.9.3
+
+  solid-prevent-scroll@0.1.10(solid-js@1.9.3):
     dependencies:
       '@corvu/utils': 0.4.2(solid-js@1.9.3)
       solid-js: 1.9.3
