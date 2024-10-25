@@ -12,7 +12,7 @@ import { User } from "./user";
 import { Account } from "./account";
 import { Settings } from "./settings";
 import { Overview } from "./overview";
-import { WorkspaceContext } from "./context";
+import { ApiProvider, WorkspaceContext } from "./context";
 import { AppStore } from "$/data/app";
 import { IconApp, IconUserAdd, IconConnect } from "$/ui/icons/custom";
 import { StageStore } from "$/data/stage";
@@ -79,7 +79,9 @@ export function Workspace() {
       <Match when={workspace()}>
         <ReplicacheProvider workspaceID={workspace()!.id}>
           <WorkspaceContext.Provider value={() => workspace()!}>
-            <Content />
+            <ApiProvider>
+              <Content />
+            </ApiProvider>
           </WorkspaceContext.Provider>
         </ReplicacheProvider>
       </Match>

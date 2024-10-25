@@ -10,9 +10,9 @@ import { AccountRoute } from "./account";
 import { logger } from "hono/logger";
 import { compress } from "hono/compress";
 import { DebugRoute } from "./debug";
+import { LogRoute } from "./log";
 
-const app = new Hono();
-app
+export const app = new Hono()
   .use(logger())
   .use(compress())
   .use(async (c, next) => {
@@ -55,6 +55,7 @@ app
   .route("/webhook", WebhookRoute)
   .route("/billing", BillingRoute)
   .route("/account", AccountRoute)
-  .route("/debug", DebugRoute);
+  .route("/debug", DebugRoute)
+  .route("/log", LogRoute);
 
 export const handler = handle(app);
