@@ -4,6 +4,8 @@ import { Detail } from "./detail";
 import { List } from "./list";
 import { AWS } from "./aws";
 
+
+
 export function Logs() {
   return (
     <Routes>

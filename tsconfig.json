@@ -2,6 +2,7 @@
   "extends": "@tsconfig/node20/tsconfig.json",
   "exclude": ["packages"],
   "compilerOptions": {
-    "moduleResolution": "node"
+    "module": "ES2022",
+    "moduleResolution": "Bundler"
   }
 }

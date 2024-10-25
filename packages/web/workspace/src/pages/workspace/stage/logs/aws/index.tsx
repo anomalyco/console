@@ -4,10 +4,25 @@ import {
   IconBoltSolid,
   IconArrowPathRoundedSquare,
   IconCheck,
+  IconEllipsisHorizontal,
+  IconEllipsisVertical,
 } from "$/ui/icons";
+import { VListHandle, WindowVirtualizer } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
 import { useSearchParams } from "@solidjs/router";
-import { Match, Show, Switch } from "solid-js";
+import { createMultiList } from "solid-list";
+import {
+  batch,
+  createEffect,
+  createMemo,
+  createResource,
+  For,
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+} from "solid-js";
 import { LogLoadingIndicatorIconSvg } from "../detail";
 import { useStageContext } from "../../context";
 import { DateTime } from "luxon";
@@ -18,6 +33,14 @@ import { TextButton, IconButton } from "$/ui/button";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
+import { InvocationRow } from "$/common/invocation";
+import { hc } from "hono/client";
+import type { app } from "@console/functions/api/api";
+import { useApi } from "$/pages/workspace/context";
+import { createInvocationStore } from "$/data/invocation";
+import { IconArrowPathSpin } from "$/ui/icons/custom";
+import { createStore } from "solid-js/store";
+import { createEventListener } from "@solid-primitives/event-listener";
 
 const Root = styled("div", {
   base: {
@@ -43,6 +66,7 @@ const Header = styled("div", {
     },
   },
 });
+
 export const HeaderIcon = styled("div", {
   base: {
     padding: 2,
@@ -95,6 +119,36 @@ export const HeaderRight = styled("div", {
   },
 });
 
+const LogMoreIndicator = styled("div", {
+  base: {
+    ...utility.row(2),
+    alignItems: "center",
+    padding: `${theme.space[3]} ${theme.space[3]}`,
+    borderStyle: "solid",
+    borderWidth: "0 1px 1px 1px",
+    borderColor: theme.color.divider.base,
+    borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
+  },
+});
+
+const LogMoreIndicatorIcon = styled("div", {
+  base: {
+    padding: 2,
+    width: 20,
+    height: 20,
+    color: theme.color.text.dimmed.base,
+    opacity: theme.iconOpacity,
+  },
+});
+
+const LogMoreIndicatorCopy = styled("span", {
+  base: {
+    lineHeight: "normal",
+    color: theme.color.text.dimmed.base,
+    fontSize: theme.font.size.sm,
+  },
+});
+
 export function AWS() {
   const [search, setSearch] = useSearchParams<{
     logGroup: string;
@@ -104,6 +158,77 @@ export function AWS() {
   }>();
 
   const stage = useStageContext();
+  const api = useApi();
+  const tailed = createInvocationStore();
+  const past = createInvocationStore();
+
+  const tailer = setInterval(() => {
+    if (search.view === "local") return;
+    api.client.log.aws.tail
+      .$post({
+        json: {
+          stageID: stage.stage.id,
+          logGroup: search.logGroup,
+        },
+      })
+      .then((r) => r.json())
+      .then((val) => tailed.ingest(val as any));
+  }, 3000);
+  onCleanup(() => {
+    clearInterval(tailer);
+  });
+
+  const [pastResult, setPastResult] = createStore<{
+    start?: string;
+    completed?: boolean;
+    loading: boolean;
+  }>({
+    loading: false,
+  });
+  async function fetchPast() {
+    setPastResult("loading", true);
+    const result = await api.client.log.aws.past
+      .$get({
+        query: {
+          logGroup: search.logGroup,
+          stageID: stage.stage.id,
+          end: pastResult.start,
+        },
+      })
+      .then((r) => r.json());
+    past.ingest(result.invocations);
+    setPastResult({
+      start: result.start,
+      completed: result.completed,
+      loading: false,
+    });
+  }
+  onMount(() => {
+    fetchPast();
+  });
+
+  const invocations = createMemo(() =>
+    search.view === "live" ? tailed.all.toReversed() : past.all,
+  );
+  const list = createMultiList({
+    items: () => invocations().map((item) => item.id),
+    vimMode: true,
+    loop: false,
+    handleTab: true,
+    onSelectedChange: console.log,
+    onCursorChange: (cursor) => {
+      console.log(cursor);
+      if (cursor == null) return;
+      // const index = invocations().findIndex((tx) => tx.id === cursor);
+      // document
+      //   .querySelector(`[data-invocation-id=${cursor}]`)
+      //   ?.scrollIntoView();
+    },
+  });
+
+  createEventListener(window, "keydown", (e) => {
+    list.onKeyDown(e);
+  });
 
   return (
     <Root>
@@ -150,18 +275,28 @@ export function AWS() {
                     </span>
                   </Show>
                 </Match>
-                <Match when={search.view === "live"}>
-                  Tailing logs since bye
-                </Match>
+                <Match when={search.view === "live"}>Tailing logs</Match>
               </Switch>
             </HeaderDescription>
           </HeaderLeft>
           <HeaderRight>
             <Show when={search.view === "local" || search.view === "live"}>
-              <TextButton onClick={() => {}}>Clear</TextButton>
+              <TextButton onClick={() => tailed.clear()}>Clear</TextButton>
             </Show>
             <Show when={search.view === "past"}>
-              <IconButton title="Reload logs" onClick={() => {}}>
+              <IconButton
+                title="Reload logs"
+                onClick={() => {
+                  batch(() => {
+                    setPastResult({
+                      start: undefined,
+                      completed: false,
+                    });
+                    past.clear();
+                    fetchPast();
+                  });
+                }}
+              >
                 <IconArrowPathRoundedSquare
                   display="block"
                   width={20}
@@ -212,6 +347,58 @@ export function AWS() {
           </HeaderRight>
         </Header>
         <Invoke arn="" source="" id="" control={() => {}} onExpand={() => {}} />
+        <Show when={invocations().length}>
+          <WindowVirtualizer data={invocations()}>
+            {(invocation, index) => (
+              <InvocationRow
+                onClick={() => list.toggleSelected(invocation.id)}
+                expanded={list.selected().includes(invocation.id)}
+                focus={list.cursor() === invocation.id}
+                invocation={invocation}
+                function={{
+                  arn: "",
+                  handler: "",
+                  id: `function-${index}`,
+                }}
+                local={false}
+              />
+            )}
+          </WindowVirtualizer>
+        </Show>
+        <Show when={search.view === "past"}>
+          <Switch>
+            <Match when={pastResult.loading}>
+              <LogMoreIndicator>
+                <LogMoreIndicatorIcon>
+                  <IconArrowPathSpin />
+                </LogMoreIndicatorIcon>
+                <LogMoreIndicatorCopy>
+                  Scanning logs&hellip;
+                </LogMoreIndicatorCopy>
+              </LogMoreIndicator>
+            </Match>
+            <Match when={past.all.length}>
+              <LogMoreIndicator>
+                <Switch>
+                  <Match when={pastResult.completed}>
+                    <LogMoreIndicatorIcon>
+                      <IconEllipsisHorizontal />
+                    </LogMoreIndicatorIcon>
+                    <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
+                  </Match>
+                  <Match when={true}>
+                    <LogMoreIndicatorIcon>
+                      <IconEllipsisVertical />
+                    </LogMoreIndicatorIcon>
+                    <TextButton onClick={() => fetchPast()}>
+                      Load more logs
+                    </TextButton>
+                  </Match>
+                </Switch>
+              </LogMoreIndicator>
+            </Match>
+          </Switch>
+        </Show>
       </div>
     </Root>
   );

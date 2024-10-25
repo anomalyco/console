@@ -299,7 +299,9 @@ export function List() {
       <Child outline={isInternal}>
         <ChildColLeft>
           <Row space="3" vertical="center">
-            <ChildTitleLink href={`${fn.id}?logGroup=${getLogGroup(fn)}`}>
+            <ChildTitleLink
+              href={`aws/logs?logGroup=${getLogGroup(fn)}&view=past`}
+            >
               {isInternal
                 ? fn.name
                 : live()

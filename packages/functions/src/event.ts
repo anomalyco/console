@@ -137,9 +137,8 @@ export const handler = bus.subscriber(
         }
 
         case Issue.Events.IssueDetected.type: {
-          await withActor(evt.metadata.actor, async () => {
-            await Issue.Send.triggerIssue(evt.properties);
-          });
+          return
+          await Issue.Send.triggerIssue(evt.properties);
           break;
         }
       }

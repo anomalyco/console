@@ -369,6 +369,9 @@ importers:
       aws-iot-device-sdk-v2:
         specifier: 1.20.1
         version: 1.20.1
+      hono:
+        specifier: 4.6.5
+        version: 4.6.5
       luxon:
         specifier: 3.5.0
         version: 3.5.0

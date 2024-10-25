@@ -41,8 +41,9 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-const Root = styled("div", {
+const Root = styled("button", {
   base: {
+    width: "100%",
     borderStyle: "solid",
     borderWidth: "0 1px 1px 1px",
     borderColor: theme.color.divider.base,
@@ -159,6 +160,7 @@ export const Log = styled("div", {
 
 export const LogTime = styled("div", {
   base: {
+    userSelect: "none",
     flexShrink: 0,
     minWidth: 89,
     textAlign: "left",
@@ -282,10 +284,10 @@ export function InvocationRow(props: {
   };
   local: boolean;
   mixed?: boolean;
+  expanded?: boolean;
   focus?: boolean;
   onClick?: () => void;
 }) {
-  const [expanded, setExpanded] = createSignal(false);
   const [tab, setTab] = createSignal<
     "logs" | "request" | "response" | "report"
   >("logs");
@@ -310,23 +312,19 @@ export function InvocationRow(props: {
       : "info",
   );
 
-  const navigator = useKeyboardNavigator();
   const ctx = useStageContext();
 
   return (
     <Root
       data-element="invocation"
+      data-invocation-id={props.invocation.id}
       data-focus={props.focus ? true : undefined}
-      data-expanded={expanded() ? true : undefined}
-      expanded={expanded()}
+      data-expanded={props.expanded ? true : undefined}
+      expanded={props.expanded}
       level={level() === "info" ? "info" : "danger"}
+      onClick={props.onClick}
     >
-      <Summary
-        onClick={(e) => {
-          navigator?.focus(e.currentTarget);
-          setExpanded((r) => !r);
-        }}
-      >
+      <Summary>
         <Row flex={false} space="2" vertical="center">
           <CaretIcon>
             <IconCaretRight />
@@ -352,7 +350,7 @@ export function InvocationRow(props: {
               props.invocation.logs[0]?.message}
         </LogPreview>
       </Summary>
-      <Show when={expanded()}>
+      <Show when={props.expanded}>
         <Detail>
           <DetailHeader>
             <Row space="5" vertical="center">
