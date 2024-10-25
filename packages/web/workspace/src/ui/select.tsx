@@ -1,4 +1,5 @@
-import { Select as KSelect, Separator as KSeperator } from "@kobalte/core";
+import * as Kobalte from "@kobalte/core/select";
+import * as KSeperator from "@kobalte/core/separator";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import { IconCheck, IconChevronDown } from "./icons";
@@ -21,7 +22,7 @@ import {
   createComputed,
 } from "solid-js";
 
-const Trigger = styled(KSelect.Trigger, {
+const Trigger = styled(Kobalte.Trigger<"button">, {
   base: {
     ...utility.row(2),
     ...inputStyles,
@@ -81,7 +82,7 @@ const TriggerText = styled("span", {
   },
 });
 
-const DownIcon = styled(KSelect.Icon, {
+const DownIcon = styled(Kobalte.Icon<"span">, {
   base: {
     width: 20,
     height: 20,
@@ -99,7 +100,7 @@ const DownIcon = styled(KSelect.Icon, {
   },
 });
 
-const Content = styled(KSelect.Content, {
+const Content = styled(Kobalte.Content<"div">, {
   base: {
     marginTop: 0,
     zIndex: 1,
@@ -119,7 +120,7 @@ const listbox = style({
   maxHeight: 360,
 });
 
-const Item = styled(KSelect.Item, {
+const Item = styled(Kobalte.Item<"li">, {
   base: {
     ...utility.row(2),
     alignItems: "center",
@@ -150,7 +151,7 @@ const ItemLabel = styled("span", {
   },
 });
 
-const ItemIndicator = styled(KSelect.ItemIndicator, {
+const ItemIndicator = styled(Kobalte.ItemIndicator<"div">, {
   base: {
     opacity: theme.iconOpacity,
     display: "flex",
@@ -158,7 +159,7 @@ const ItemIndicator = styled(KSelect.ItemIndicator, {
   },
 });
 
-const Seperator = styled(KSeperator.Root, {
+const Seperator = styled(KSeperator.Root<"hr">, {
   base: {
     height: 1,
     margin: `${theme.space[1]} 0`,
@@ -168,7 +169,7 @@ const Seperator = styled(KSeperator.Root, {
 });
 
 // @ts-expect-error
-const Listbox = styled(KSelect.Listbox, {
+const Listbox = styled(Kobalte.Listbox, {
   base: {
     selectors: {
       "&::-webkit-scrollbar": {
@@ -214,7 +215,7 @@ export function Select(props: SingleSelect) {
     setValue(props.options.find((option) => props.value === option.value));
   });
   return (
-    <KSelect.Root<Option>
+    <Kobalte.Root<Option>
       {...rootProps}
       multiple={false}
       value={getValue()}
@@ -236,27 +237,27 @@ export function Select(props: SingleSelect) {
         </>
       )}
     >
-      <KSelect.HiddenSelect {...selectProps} />
+      <Kobalte.HiddenSelect {...selectProps} />
       <Trigger
         size={props.size}
         disabled={props.disabled}
         class={props.triggerClass}
       >
         <TriggerText size={props.size}>
-          <KSelect.Value<Option>>
+          <Kobalte.Value<Option>>
             {(state) => state.selectedOption()?.label}
-          </KSelect.Value>
+          </Kobalte.Value>
         </TriggerText>
         <DownIcon>
           <IconChevronDown width={15} height={15} />
         </DownIcon>
       </Trigger>
-      <KSelect.Portal mount={document.getElementById("styled")!}>
+      <Kobalte.Portal mount={document.getElementById("styled")!}>
         <Content>
           <Listbox class={listbox} />
         </Content>
-      </KSelect.Portal>
-    </KSelect.Root>
+      </Kobalte.Portal>
+    </Kobalte.Root>
   );
 }
 
@@ -281,7 +282,7 @@ export function MultiSelect(props: MultiSelectProps) {
     setValue(next);
   });
   return (
-    <KSelect.Root<Option>
+    <Kobalte.Root<Option>
       {...rootProps}
       multiple={true}
       value={getValue()}
@@ -303,26 +304,26 @@ export function MultiSelect(props: MultiSelectProps) {
         </>
       )}
     >
-      <KSelect.HiddenSelect {...selectProps} />
+      <Kobalte.HiddenSelect {...selectProps} />
       <Trigger size={props.size} disabled={props.disabled}>
         <TriggerText size={props.size}>
-          <KSelect.Value<Option>>
+          <Kobalte.Value<Option>>
             {(state) =>
               state.selectedOptions().length > 1
                 ? state.selectedOptions().length + " selected"
                 : state.selectedOption()?.label
             }
-          </KSelect.Value>
+          </Kobalte.Value>
         </TriggerText>
         <DownIcon>
           <IconChevronDown width={15} height={15} />
         </DownIcon>
       </Trigger>
-      <KSelect.Portal mount={document.getElementById("styled")!}>
+      <Kobalte.Portal mount={document.getElementById("styled")!}>
         <Content>
           <Listbox class={listbox} />
         </Content>
-      </KSelect.Portal>
-    </KSelect.Root>
+      </Kobalte.Portal>
+    </Kobalte.Root>
   );
 }

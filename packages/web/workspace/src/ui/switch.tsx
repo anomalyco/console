@@ -1,10 +1,10 @@
-import { Switch as KSwitch } from "@kobalte/core";
+import * as Kobalte from "@kobalte/core/switch";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import { Show, ComponentProps } from "solid-js";
 import { theme } from "./theme";
 
-const Root = styled(KSwitch.Root, {
+const Root = styled(Kobalte.Root<"div">, {
   base: {
     display: "inline-flex",
     alignItems: "center",
@@ -38,7 +38,7 @@ const control = style({
   },
 });
 
-const Thumb = styled(KSwitch.Thumb, {
+const Thumb = styled(Kobalte.Thumb<"div">, {
   base: {
     backgroundColor: theme.color.background.base,
     transition: "250ms transform",
@@ -64,7 +64,7 @@ const Thumb = styled(KSwitch.Thumb, {
   },
 });
 
-const Label = styled(KSwitch.Label, {
+const Label = styled(Kobalte.Label<"label">, {
   base: {
     marginRight: 10,
     fontWeight: 500,
@@ -76,7 +76,7 @@ const Label = styled(KSwitch.Label, {
   },
 });
 
-type Props = ComponentProps<typeof KSwitch.Root> & {
+type Props = ComponentProps<typeof Kobalte.Root<"div">> & {
   size?: "sm" | "base";
   label?: string;
   description?: string;
@@ -90,15 +90,15 @@ export function Toggle(props: Props) {
         <Label>{props.label}</Label>
       </Show>
       <Show when={props.description}>
-        <KSwitch.Description>{props.description}</KSwitch.Description>
+        <Kobalte.Description>{props.description}</Kobalte.Description>
       </Show>
       <Show when={props.errorMessage}>
-        <KSwitch.ErrorMessage>{props.errorMessage}</KSwitch.ErrorMessage>
+        <Kobalte.ErrorMessage>{props.errorMessage}</Kobalte.ErrorMessage>
       </Show>
-      <KSwitch.Input />
-      <KSwitch.Control class={control} data-size={props.size || "base"}>
+      <Kobalte.Input />
+      <Kobalte.Control class={control} data-size={props.size || "base"}>
         <Thumb />
-      </KSwitch.Control>
+      </Kobalte.Control>
     </Root>
   );
 }
