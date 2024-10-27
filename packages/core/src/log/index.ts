@@ -55,6 +55,8 @@ export interface Log {
   message: string;
 }
 
+export type LogEntry = Invocation | Log;
+
 export type LogEvent = LogEventBase &
   (
     | {

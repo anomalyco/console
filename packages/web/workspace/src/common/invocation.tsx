@@ -41,21 +41,9 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-const Root = styled("button", {
+const Root = styled("div", {
   base: {
     width: "100%",
-    borderStyle: "solid",
-    borderWidth: "0 1px 1px 1px",
-    borderColor: theme.color.divider.base,
-    ":last-child": {
-      borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
-    },
-    selectors: {
-      "&[data-focus]": {
-        ...inputFocusStyles,
-        outlineOffset: -1,
-      },
-    },
   },
   variants: {
     expanded: {
@@ -285,7 +273,6 @@ export function InvocationRow(props: {
   local: boolean;
   mixed?: boolean;
   expanded?: boolean;
-  focus?: boolean;
   onClick?: () => void;
 }) {
   const [tab, setTab] = createSignal<
@@ -318,7 +305,6 @@ export function InvocationRow(props: {
     <Root
       data-element="invocation"
       data-invocation-id={props.invocation.id}
-      data-focus={props.focus ? true : undefined}
       data-expanded={props.expanded ? true : undefined}
       expanded={props.expanded}
       level={level() === "info" ? "info" : "danger"}
@@ -351,7 +337,7 @@ export function InvocationRow(props: {
         </LogPreview>
       </Summary>
       <Show when={props.expanded}>
-        <Detail>
+        <Detail onClick={(e) => e.stopImmediatePropagation()}>
           <DetailHeader>
             <Row space="5" vertical="center">
               <TabTitle
