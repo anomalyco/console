@@ -7,16 +7,13 @@ import {
   IconEllipsisHorizontal,
   IconEllipsisVertical,
 } from "$/ui/icons";
-import { VListHandle, WindowVirtualizer } from "virtua/solid";
+import { VList, VirtualizerHandle } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
 import { useSearchParams } from "@solidjs/router";
 import { createMultiList } from "solid-list";
 import {
   batch,
-  createEffect,
   createMemo,
-  createResource,
-  For,
   Match,
   onCleanup,
   onMount,
@@ -34,24 +31,28 @@ import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
 import { InvocationRow } from "$/common/invocation";
-import { hc } from "hono/client";
-import type { app } from "@console/functions/api/api";
 import { useApi } from "$/pages/workspace/context";
-import { createInvocationStore } from "$/data/invocation";
+import { createLogStore, isInvocation, isLog } from "$/data/invocation";
 import { IconArrowPathSpin } from "$/ui/icons/custom";
 import { createStore } from "solid-js/store";
 import { createEventListener } from "@solid-primitives/event-listener";
+import { style } from "@macaron-css/core";
+import { inputFocusStyles } from "$/ui/form";
 
 const Root = styled("div", {
   base: {
     padding: theme.space[4],
-    ...utility.stack(5),
+    height: "calc(100vh - 52px - 68px)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
   },
 });
 
 const Header = styled("div", {
   base: {
     ...utility.row(0),
+    flexShrink: 0,
     height: 52,
     alignItems: "center",
     justifyContent: "space-between",
@@ -125,7 +126,7 @@ const LogMoreIndicator = styled("div", {
     alignItems: "center",
     padding: `${theme.space[3]} ${theme.space[3]}`,
     borderStyle: "solid",
-    borderWidth: "0 1px 1px 1px",
+    borderWidth: "1px",
     borderColor: theme.color.divider.base,
     borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
   },
@@ -149,6 +150,35 @@ const LogMoreIndicatorCopy = styled("span", {
   },
 });
 
+const Scroller = style({
+  selectors: {
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
+    "&:empty": {
+      display: "none",
+    },
+  },
+});
+
+const Row = styled("button", {
+  base: {
+    width: "100%",
+    minHeight: 52,
+    display: "flex",
+    alignItems: "center",
+    borderStyle: "solid",
+    borderWidth: "0 1px 1px 1px",
+    borderColor: theme.color.divider.base,
+    selectors: {
+      "&[data-focus]": {
+        ...inputFocusStyles,
+        outlineOffset: -1,
+      },
+    },
+  },
+});
+
 export function AWS() {
   const [search, setSearch] = useSearchParams<{
     logGroup: string;
@@ -159,16 +189,17 @@ export function AWS() {
 
   const stage = useStageContext();
   const api = useApi();
-  const tailed = createInvocationStore();
-  const past = createInvocationStore();
+  const tailed = createLogStore();
+  const past = createLogStore();
 
   const tailer = setInterval(() => {
     if (search.view === "local") return;
     api.client.log.aws.tail
-      .$post({
-        json: {
+      .$get({
+        query: {
           stageID: stage.stage.id,
           logGroup: search.logGroup,
+          hint: search.hint,
         },
       })
       .then((r) => r.json())
@@ -193,6 +224,7 @@ export function AWS() {
           logGroup: search.logGroup,
           stageID: stage.stage.id,
           end: pastResult.start,
+          hint: search.hint,
         },
       })
       .then((r) => r.json());
@@ -207,11 +239,13 @@ export function AWS() {
     fetchPast();
   });
 
-  const invocations = createMemo(() =>
+  const rows = createMemo(() =>
     search.view === "live" ? tailed.all.toReversed() : past.all,
   );
+
+  let vlist: VirtualizerHandle | undefined;
   const list = createMultiList({
-    items: () => invocations().map((item) => item.id),
+    items: () => rows().map((item) => item.id),
     vimMode: true,
     loop: false,
     handleTab: true,
@@ -219,10 +253,11 @@ export function AWS() {
     onCursorChange: (cursor) => {
       console.log(cursor);
       if (cursor == null) return;
-      // const index = invocations().findIndex((tx) => tx.id === cursor);
-      document
-        .querySelector<HTMLElement>(`[data-invocation-id="${cursor}"]`)
-        ?.focus();
+      const index = rows().findIndex((tx) => tx.id === cursor);
+      document.querySelector<HTMLElement>(`[data-row-id="${cursor}"]`)?.focus();
+      vlist?.scrollToIndex(index, {
+        align: "nearest",
+      });
     },
   });
 
@@ -235,171 +270,186 @@ export function AWS() {
       <Text size="lg" weight="medium">
         Logs
       </Text>
-      <div>
-        <Header>
-          <HeaderLeft>
-            <HeaderIcon
-              pulse={search.view !== "past"}
-              glow={
-                (search.view === "local" && stage.connected) ||
-                search.view === "live"
-              }
-            >
-              <Switch>
-                <Match when={search.view === "local" && !stage.connected}>
-                  <IconArrowsUpDown />
-                </Match>
-                <Match when={search.view === "past"}>
-                  <IconArrowDown />
-                </Match>
-                <Match when={true}>
-                  <IconBoltSolid class={LogLoadingIndicatorIconSvg} />
-                </Match>
-              </Switch>
-            </HeaderIcon>
-            <HeaderDescription>
-              <Switch>
-                <Match when={search.view === "local" && !stage.connected}>
-                  Trying to connect to local `sst dev`
-                </Match>
-                <Match when={search.view === "local"}>
-                  Tailing logs from local `sst dev`
-                </Match>
-                <Match when={search.view === "past"}>
-                  <Show when={search.end} fallback="Viewing past logs">
-                    <span>
-                      Viewing logs older than{" "}
-                      {DateTime.fromISO(search.end!).toLocaleString(
-                        DATETIME_LONG,
-                      )}
-                    </span>
-                  </Show>
-                </Match>
-                <Match when={search.view === "live"}>Tailing logs</Match>
-              </Switch>
-            </HeaderDescription>
-          </HeaderLeft>
-          <HeaderRight>
-            <Show when={search.view === "local" || search.view === "live"}>
-              <TextButton onClick={() => tailed.clear()}>Clear</TextButton>
-            </Show>
-            <Show when={search.view === "past"}>
-              <IconButton
-                title="Reload logs"
-                onClick={() => {
-                  batch(() => {
-                    setPastResult({
-                      start: undefined,
-                      completed: false,
-                    });
-                    past.clear();
-                    fetchPast();
+      <Header>
+        <HeaderLeft>
+          <HeaderIcon
+            pulse={search.view !== "past"}
+            glow={
+              (search.view === "local" && stage.connected) ||
+              search.view === "live"
+            }
+          >
+            <Switch>
+              <Match when={search.view === "local" && !stage.connected}>
+                <IconArrowsUpDown />
+              </Match>
+              <Match when={search.view === "past"}>
+                <IconArrowDown />
+              </Match>
+              <Match when={true}>
+                <IconBoltSolid class={LogLoadingIndicatorIconSvg} />
+              </Match>
+            </Switch>
+          </HeaderIcon>
+          <HeaderDescription>
+            <Switch>
+              <Match when={search.view === "local" && !stage.connected}>
+                Trying to connect to local `sst dev`
+              </Match>
+              <Match when={search.view === "local"}>
+                Tailing logs from local `sst dev`
+              </Match>
+              <Match when={search.view === "past"}>
+                <Show when={search.end} fallback="Viewing past logs">
+                  <span>
+                    Viewing logs older than{" "}
+                    {DateTime.fromISO(search.end!).toLocaleString(
+                      DATETIME_LONG,
+                    )}
+                  </span>
+                </Show>
+              </Match>
+              <Match when={search.view === "live"}>Tailing logs</Match>
+            </Switch>
+          </HeaderDescription>
+        </HeaderLeft>
+        <HeaderRight>
+          <Show when={search.view === "local" || search.view === "live"}>
+            <TextButton onClick={() => tailed.clear()}>Clear</TextButton>
+          </Show>
+          <Show when={search.view === "past"}>
+            <IconButton
+              title="Reload logs"
+              onClick={() => {
+                batch(() => {
+                  setPastResult({
+                    start: undefined,
+                    completed: false,
                   });
+                  past.clear();
+                  fetchPast();
+                });
+              }}
+            >
+              <IconArrowPathRoundedSquare
+                display="block"
+                width={20}
+                height={20}
+              />
+            </IconButton>
+          </Show>
+          <Show when={search.view !== "local"}>
+            <Dropdown size="sm" label="View">
+              <Dropdown.RadioGroup
+                value={search.view}
+                onChange={(val) => {
+                  if (val === "custom") {
+                    return;
+                  }
+                  setSearch(
+                    {
+                      view: val,
+                    },
+                    {
+                      replace: true,
+                    },
+                  );
                 }}
               >
-                <IconArrowPathRoundedSquare
-                  display="block"
-                  width={20}
-                  height={20}
-                />
-              </IconButton>
-            </Show>
-            <Show when={search.view !== "local"}>
-              <Dropdown size="sm" label="View">
-                <Dropdown.RadioGroup
-                  value={search.view}
-                  onChange={(val) => {
-                    if (val === "custom") {
-                      return;
-                    }
-                    setSearch(
-                      {
-                        view: val,
-                      },
-                      {
-                        replace: true,
-                      },
-                    );
-                  }}
+                <Dropdown.RadioItem closeOnSelect value="live">
+                  <Dropdown.RadioItemLabel>Live</Dropdown.RadioItemLabel>
+                  <Dropdown.ItemIndicator>
+                    <IconCheck width={14} height={14} />
+                  </Dropdown.ItemIndicator>
+                </Dropdown.RadioItem>
+                <Dropdown.RadioItem closeOnSelect value="past">
+                  <Dropdown.RadioItemLabel>Past</Dropdown.RadioItemLabel>
+                  <Dropdown.ItemIndicator>
+                    <IconCheck width={14} height={14} />
+                  </Dropdown.ItemIndicator>
+                </Dropdown.RadioItem>
+                {/*
+                <Dropdown.RadioItem
+                  onSelect={() => {}}
+                  closeOnSelect
+                  value="custom"
                 >
-                  <Dropdown.RadioItem closeOnSelect value="live">
-                    <Dropdown.RadioItemLabel>Live</Dropdown.RadioItemLabel>
-                    <Dropdown.ItemIndicator>
-                      <IconCheck width={14} height={14} />
-                    </Dropdown.ItemIndicator>
-                  </Dropdown.RadioItem>
-                  <Dropdown.RadioItem closeOnSelect value="past">
-                    <Dropdown.RadioItemLabel>Past</Dropdown.RadioItemLabel>
-                    <Dropdown.ItemIndicator>
-                      <IconCheck width={14} height={14} />
-                    </Dropdown.ItemIndicator>
-                  </Dropdown.RadioItem>
-                  <Dropdown.RadioItem
-                    onSelect={() => {}}
-                    closeOnSelect
-                    value="custom"
-                  >
-                    Jump to&hellip;
-                  </Dropdown.RadioItem>
-                </Dropdown.RadioGroup>
-              </Dropdown>
-            </Show>
-          </HeaderRight>
-        </Header>
-        <Invoke arn="" source="" id="" control={() => {}} onExpand={() => {}} />
-        <Show when={invocations().length}>
-          <WindowVirtualizer data={invocations()}>
-            {(invocation, index) => (
-              <InvocationRow
-                onClick={() => list.toggleSelected(invocation.id)}
-                expanded={list.selected().includes(invocation.id)}
-                focus={list.cursor() === invocation.id}
-                invocation={invocation}
-                function={{
-                  arn: "",
-                  handler: "",
-                  id: `function-${index}`,
-                }}
-                local={false}
-              />
-            )}
-          </WindowVirtualizer>
-        </Show>
-        <Show when={search.view === "past"}>
-          <Switch>
-            <Match when={pastResult.loading}>
-              <LogMoreIndicator>
-                <LogMoreIndicatorIcon>
-                  <IconArrowPathSpin />
-                </LogMoreIndicatorIcon>
-                <LogMoreIndicatorCopy>
-                  Scanning logs&hellip;
-                </LogMoreIndicatorCopy>
-              </LogMoreIndicator>
-            </Match>
-            <Match when={past.all.length}>
-              <LogMoreIndicator>
-                <Switch>
-                  <Match when={pastResult.completed}>
-                    <LogMoreIndicatorIcon>
-                      <IconEllipsisHorizontal />
-                    </LogMoreIndicatorIcon>
-                    <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
-                  </Match>
-                  <Match when={true}>
-                    <LogMoreIndicatorIcon>
-                      <IconEllipsisVertical />
-                    </LogMoreIndicatorIcon>
-                    <TextButton onClick={() => fetchPast()}>
-                      Load more logs
-                    </TextButton>
-                  </Match>
-                </Switch>
-              </LogMoreIndicator>
-            </Match>
-          </Switch>
-        </Show>
-      </div>
+                  Jump to&hellip;
+                </Dropdown.RadioItem>
+                */}
+              </Dropdown.RadioGroup>
+            </Dropdown>
+          </Show>
+        </HeaderRight>
+      </Header>
+      <Invoke arn="" source="" id="" control={() => {}} onExpand={() => {}} />
+      <Show when={rows().length}>
+        <VList class={Scroller} ref={(r) => (vlist = r)} data={rows()}>
+          {(entry, index) => (
+            <Row
+              data-focus={list.cursor() === entry.id ? true : undefined}
+              data-row-id={entry.id}
+              onClick={() => list.toggleSelected(entry.id)}
+            >
+              <Switch>
+                <Match when={isInvocation(entry) && entry}>
+                  {(invocation) => (
+                    <InvocationRow
+                      expanded={list.selected().includes(entry.id)}
+                      invocation={invocation()}
+                      function={{
+                        arn: "",
+                        handler: "",
+                        id: `function-${index}`,
+                      }}
+                      local={false}
+                    />
+                  )}
+                </Match>
+                <Match when={isLog(entry) && entry}>
+                  {(log) => (
+                    <span>
+                      {log().timestamp} {log().message}
+                    </span>
+                  )}
+                </Match>
+              </Switch>
+            </Row>
+          )}
+        </VList>
+      </Show>
+      <Show when={search.view === "past"}>
+        <Switch>
+          <Match when={pastResult.loading}>
+            <LogMoreIndicator>
+              <LogMoreIndicatorIcon>
+                <IconArrowPathSpin />
+              </LogMoreIndicatorIcon>
+              <LogMoreIndicatorCopy>Scanning logs&hellip;</LogMoreIndicatorCopy>
+            </LogMoreIndicator>
+          </Match>
+          <Match when={past.all.length}>
+            <LogMoreIndicator>
+              <Switch>
+                <Match when={pastResult.completed}>
+                  <LogMoreIndicatorIcon>
+                    <IconEllipsisHorizontal />
+                  </LogMoreIndicatorIcon>
+                  <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
+                </Match>
+                <Match when={true}>
+                  <LogMoreIndicatorIcon>
+                    <IconEllipsisVertical />
+                  </LogMoreIndicatorIcon>
+                  <TextButton onClick={() => fetchPast()}>
+                    Load more logs
+                  </TextButton>
+                </Match>
+              </Switch>
+            </LogMoreIndicator>
+          </Match>
+        </Switch>
+      </Show>
     </Root>
   );
 }

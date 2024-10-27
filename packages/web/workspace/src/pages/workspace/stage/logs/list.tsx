@@ -300,7 +300,7 @@ export function List() {
         <ChildColLeft>
           <Row space="3" vertical="center">
             <ChildTitleLink
-              href={`aws/logs?logGroup=${getLogGroup(fn)}&view=past`}
+              href={`aws/logs?logGroup=${getLogGroup(fn)}&view=past&hint=normal`}
             >
               {isInternal
                 ? fn.name

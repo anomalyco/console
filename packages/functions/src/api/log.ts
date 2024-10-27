@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { notPublic } from "./auth";
 import { Stage } from "@console/core/app";
-import { Invocation, Log } from "@console/core/log";
+import { Invocation, Log, LogEntry } from "@console/core/log";
 import { Storage } from "@console/core/storage";
 import { Issue } from "@console/core/issue";
 import { Replicache } from "@console/core/replicache";
@@ -48,25 +48,26 @@ export const LogRoute = new Hono()
     await Replicache.poke();
     return c.json({});
   })
-  .post(
+  .get(
     "/aws/tail",
     zValidator(
-      "json",
+      "query",
       z.object({
         stageID: z.string(),
         logGroup: z.string(),
+        hint: z.enum(["normal", "lambda"]),
       }),
     ),
     async (c) => {
-      const body = c.req.valid("json");
+      const query = c.req.valid("query");
       let start = Date.now() - 2 * 60 * 1000;
       console.log("tailing from", start);
-      const config = await Stage.assumeRole(body.stageID);
+      const config = await Stage.assumeRole(query.stageID);
       if (!config) throw new HTTPException(500);
       const client = new CloudWatchLogsClient(config);
       const sourcemapKey =
         `arn:aws:lambda:${config.region}:${config.awsAccountID}:function:` +
-        body.logGroup.split("/").slice(3, 5).join("/");
+        query.logGroup.split("/").slice(3, 5).join("/");
 
       async function* fetchStreams(logGroup: string) {
         let nextToken: string | undefined;
@@ -128,7 +129,7 @@ export const LogRoute = new Hono()
 
       const streams: string[] = [];
 
-      for await (const stream of fetchStreams(body.logGroup)) {
+      for await (const stream of fetchStreams(query.logGroup)) {
         streams.push(stream.logStreamName || "");
         if (streams.length === 100) break;
       }
@@ -136,22 +137,36 @@ export const LogRoute = new Hono()
       if (!start) start = Date.now() - 2 * 60 * 1000;
 
       console.log("fetching since", new Date(start).toLocaleString());
-      const processor = Log.createProcessor({
-        sourcemapKey,
-        group: body.logGroup + "-tail",
-        config,
-      });
-
-      for await (const event of fetchEvents(body.logGroup, start, streams)) {
-        await processor.process({
-          timestamp: event.timestamp!,
-          line: event.message!,
-          streamName: event.logStreamName!,
-          id: event.eventId!,
-        });
+      if (query.hint === "normal") {
+        const events = [];
+        for await (const event of fetchEvents(query.logGroup, start, streams)) {
+          events.push({
+            id: event.eventId!,
+            timestamp: event.timestamp!,
+            message: event.message!,
+          });
+        }
+        return c.json(events);
       }
-      const data = processor.flush();
-      return c.json(data);
+
+      if (query.hint === "lambda") {
+        const processor = Log.createProcessor({
+          sourcemapKey,
+          group: query.logGroup + "-tail",
+          config,
+        });
+
+        for await (const event of fetchEvents(query.logGroup, start, streams)) {
+          await processor.process({
+            timestamp: event.timestamp!,
+            line: event.message!,
+            streamName: event.logStreamName!,
+            id: event.eventId!,
+          });
+        }
+        const data = processor.flush();
+        return c.json(data);
+      }
     },
   )
   .get(
@@ -162,6 +177,7 @@ export const LogRoute = new Hono()
         logGroup: z.string(),
         stageID: z.string(),
         end: z.string().optional(),
+        hint: z.enum(["normal", "lambda"]),
       }),
     ),
     async (c) => {
@@ -172,7 +188,7 @@ export const LogRoute = new Hono()
           message: "Failed to assume role for stage: " + query.stageID,
         });
       const client = new CloudWatchLogsClient(config);
-      const invocations: Invocation[] = [];
+      const entries: LogEntry[] = [];
       let end = query.end ? DateTime.fromISO(query.end) : DateTime.now();
       let start = query.end
         ? end.minus({ hours: 1 })
@@ -209,7 +225,6 @@ export const LogRoute = new Hono()
           config,
         });
 
-        let flushed = 0;
         while (true) {
           console.log(
             "scanning from",
@@ -236,47 +251,43 @@ export const LogRoute = new Hono()
                 queryId: result.queryId,
               }),
             );
+            const results = response.results || [];
+            console.log("log insights results", results.length);
+            results.sort((a, b) => a[0]!.value!.localeCompare(b[0]!.value!));
 
             if (response.status === "Complete") {
-              const results = response.results || [];
-              console.log("log insights results", results.length);
+              if (query.hint === "lambda") {
+                let index = 0;
+                async function flush() {
+                  const data = processor.flush(-1);
+                  if (data.length) {
+                    entries.push(...data);
+                  }
+                }
 
-              let index = 0;
+                for (const result of results) {
+                  await processor.process({
+                    id: index.toString(),
+                    timestamp: new Date(result[0]?.value! + " Z").getTime(),
+                    streamName: result[2]?.value!,
+                    line: result[1]?.value!,
+                  });
+                  index++;
+                }
+                await flush();
+              }
 
-              async function flush() {
-                const data = processor.flush(-1);
-                console.log(
-                  "flushing invocations",
-                  data.length,
-                  "flushed so far",
-                  flushed,
-                );
-                if (data.length) {
-                  flushed += data.length;
-                  invocations.push(...data);
+              if (query.hint === "normal") {
+                for (const result of results) {
+                  entries.push({
+                    id: result[3]!.value!,
+                    message: result[1]?.value!,
+                    timestamp: new Date(result[0]?.value! + " Z").getTime(),
+                  });
                 }
               }
 
-              let now = Date.now();
-              for (const result of results.sort((a, b) =>
-                a[0]!.value!.localeCompare(b[0]!.value!),
-              )) {
-                await processor.process({
-                  id: index.toString(),
-                  timestamp: new Date(result[0]?.value! + " Z").getTime(),
-                  streamName: result[2]?.value!,
-                  line: result[1]?.value!,
-                });
-                if (Date.now() - now > 10_000 && processor.ready) {
-                  console.log("taking too long, flushing");
-                  await flush();
-                  if (flushed >= 50) return false;
-                  now = Date.now();
-                }
-                index++;
-              }
-              await flush();
-              if (flushed >= 50) {
+              if (entries.length >= 50) {
                 return false;
               }
 
@@ -295,7 +306,7 @@ export const LogRoute = new Hono()
       return c.json({
         completed: result,
         start: start!.toISO()!,
-        invocations,
+        invocations: entries,
       });
     },
   );
