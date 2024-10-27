@@ -1,6 +1,7 @@
 import { createInitializedContext } from "$/common/context";
 import { useAuth2 } from "$/providers/auth2";
 import { Workspace } from "@console/core/workspace";
+import { app } from "@console/functions/api/api";
 import { hc } from "hono/client";
 import { Accessor, createContext, useContext } from "solid-js";
 
@@ -17,7 +18,7 @@ export const { use: useApi, provider: ApiProvider } = createInitializedContext(
   () => {
     const auth = useAuth2();
     const workspace = useWorkspace();
-    const client = hc(import.meta.env.VITE_API_URL, {
+    const client = hc<typeof app>(import.meta.env.VITE_API_URL, {
       headers: {
         Authorization: `Bearer ${auth.current.token}`,
         "x-sst-workspace": workspace().id,
