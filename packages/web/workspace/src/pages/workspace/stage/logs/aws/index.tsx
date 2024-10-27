@@ -220,9 +220,9 @@ export function AWS() {
       console.log(cursor);
       if (cursor == null) return;
       // const index = invocations().findIndex((tx) => tx.id === cursor);
-      // document
-      //   .querySelector(`[data-invocation-id=${cursor}]`)
-      //   ?.scrollIntoView();
+      document
+        .querySelector<HTMLElement>(`[data-invocation-id="${cursor}"]`)
+        ?.focus();
     },
   });
 
