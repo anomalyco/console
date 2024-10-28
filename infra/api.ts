@@ -1,4 +1,4 @@
-import { authRouter } from "./auth";
+import { auth } from "./auth";
 import { bus } from "./bus";
 import { domain } from "./dns";
 import { email } from "./email";
@@ -7,8 +7,8 @@ import { storage } from "./storage";
 
 const api = new sst.aws.Function("Api", {
   handler: "packages/functions/src/api/api.handler",
-  permissions: [{ actions: ["sts:*"], resources: ["*"] }],
-  link: [storage, authRouter, database, bus, email],
+  permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
+  link: [storage, auth, database, bus, email],
   nodejs: {
     install: ["source-map"],
   },
