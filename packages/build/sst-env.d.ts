@@ -15,6 +15,10 @@ declare module "sst" {
       "type": "sst.aws.Function"
       "url": string
     }
+    "ApiRouter": {
+      "type": "sst.aws.Router"
+      "url": string
+    }
     "Auth": {
       "publicKey": string
       "type": "sst.aws.Auth"
@@ -22,6 +26,10 @@ declare module "sst" {
     "AuthAuthenticator": {
       "name": string
       "type": "sst.aws.Function"
+      "url": string
+    }
+    "AuthRouter": {
+      "type": "sst.aws.Router"
       "url": string
     }
     "BotpoisonSecretKey": {
@@ -84,10 +92,6 @@ declare module "sst" {
     "Storage": {
       "name": string
       "type": "sst.aws.Bucket"
-    }
-    "workspace": {
-      "type": "sst.aws.StaticSite"
-      "url": string
     }
   }
 }

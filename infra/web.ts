@@ -1,16 +1,16 @@
-import { api } from "./api";
-import { auth } from "./auth";
+import { apiRouter } from "./api";
+import { authRouter } from "./auth";
 import { connectTemplateUrl } from "./connect";
 
-export const workspace = new sst.aws.StaticSite("workspace", {
+new sst.aws.StaticSite("Workspace", {
   path: "./packages/web/workspace",
   build: {
     output: "./dist",
     command: "pnpm build",
   },
   environment: {
-    VITE_API_URL: api.url,
-    VITE_AUTH_URL: auth.authenticator.url,
+    VITE_API_URL: apiRouter.url,
+    VITE_AUTH_URL: authRouter.url,
     VITE_IOT_HOST: aws.iot.getEndpointOutput().endpointAddress,
     VITE_STAGE: $app.stage,
     VITE_CONNECT_URL: connectTemplateUrl,

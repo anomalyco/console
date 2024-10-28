@@ -59,7 +59,7 @@ export const handler = auth.authorizer({
                 Destination: {
                   ToAddresses: [email.data],
                 },
-                FromEmailAddress: `SST <mail@${process.env.EMAIL_DOMAIN}>`,
+                FromEmailAddress: `SST <auth@${Resource.Email.sender}>`,
                 Content: {
                   Simple: {
                     Body: {

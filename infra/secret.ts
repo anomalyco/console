@@ -7,3 +7,5 @@ export const secret = {
 };
 
 export const allSecrets = [...Object.values(secret)];
+
+export const assumable = { actions: ["sts:*"], resources: ["*"] };
