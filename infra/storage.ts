@@ -1,6 +1,4 @@
-export const storage = new sst.aws.Bucket("Storage", {
-  access: "public",
-});
+export const storage = new sst.aws.Bucket("Storage");
 
 new aws.s3.BucketOwnershipControls("ownership-controls", {
   bucket: storage.name,

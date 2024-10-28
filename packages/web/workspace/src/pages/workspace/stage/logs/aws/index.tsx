@@ -327,6 +327,7 @@ export function AWS() {
                     completed: false,
                   });
                   past.clear();
+                  list.setSelected([]);
                   fetchPast();
                 });
               }}

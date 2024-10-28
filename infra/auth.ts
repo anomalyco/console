@@ -3,7 +3,7 @@ import { email } from "./email";
 import { database } from "./planetscale";
 import { secret } from "./secret";
 
-export const auth = new sst.aws.Auth("Auth", {
+const auth = new sst.aws.Auth("Auth", {
   authenticator: {
     handler: "packages/functions/src/auth.handler",
     link: [
@@ -13,6 +13,7 @@ export const auth = new sst.aws.Auth("Auth", {
       secret.BotpoisonSecretKey,
       database,
     ],
+    permissions: [{ actions: ["ses:*"], resources: ["*"] }],
     url: true,
     environment: {
       AUTH_FRONTEND_URL: $dev ? "http://localhost:3000" : "https://" + domain,
@@ -20,14 +21,14 @@ export const auth = new sst.aws.Auth("Auth", {
   },
 });
 
-// export const authRouter = new sst.aws.Router("AuthRouter", {
-//   routes: {
-//     "/*": auth.url,
-//   },
-//   domain: {
-//     name: "auth." + domain,
-//     dns: sst.aws.dns({
-//       override: true,
-//     }),
-//   },
-// });
+export const authRouter = new sst.aws.Router("AuthRouter", {
+  routes: {
+    "/*": auth.url,
+  },
+  domain: {
+    name: "auth." + domain,
+    dns: sst.aws.dns({
+      override: true,
+    }),
+  },
+});
