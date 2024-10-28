@@ -3,7 +3,7 @@ import { email } from "./email";
 import { database } from "./planetscale";
 import { secret } from "./secret";
 
-const auth = new sst.aws.Auth("Auth", {
+export const auth = new sst.aws.Auth("Auth", {
   authenticator: {
     handler: "packages/functions/src/auth.handler",
     link: [

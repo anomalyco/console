@@ -7,7 +7,7 @@ bus.subscribe(
   {
     handler: "packages/functions/src/event.handler",
     permissions: [
-      { actions: ["sts:*", "logs:*", "ses:*"], resources: ["*"] },
+      { actions: ["sts:*", "logs:*", "ses:*", "iot:*"], resources: ["*"] },
       {
         actions: ["iam:PassRole"],
         resources: [issues.properties.role],

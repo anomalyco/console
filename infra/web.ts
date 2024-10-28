@@ -1,6 +1,7 @@
 import { apiRouter } from "./api";
 import { authRouter } from "./auth";
 import { connectTemplateUrl } from "./connect";
+import { domain } from "./dns";
 
 new sst.aws.StaticSite("Workspace", {
   path: "./packages/web/workspace",
@@ -8,6 +9,7 @@ new sst.aws.StaticSite("Workspace", {
     output: "./dist",
     command: "pnpm build",
   },
+  domain,
   environment: {
     VITE_API_URL: apiRouter.url,
     VITE_AUTH_URL: authRouter.url,
