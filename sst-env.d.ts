@@ -93,5 +93,9 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bucket"
     }
+    "workspace": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
   }
 }

@@ -444,23 +444,6 @@ export module State {
             );
           if (eventInserts.length)
             await tx.insert(stateEventTable).ignore().values(eventInserts);
-          if (resourceInserts.length)
-            await tx
-              .insert(stateResourceTable)
-              .values(resourceInserts)
-              .onDuplicateKeyUpdate({
-                set: {
-                  updateModifiedID: sql`COALESCE(VALUES(update_modified_id), update_modified_id)`,
-                  updateCreatedID: sql`COALESCE(VALUES(update_created_id), update_created_id)`,
-                  timeStateCreated: sql`VALUES(time_state_created)`,
-                  timeStateModified: sql`VALUES(time_state_modified)`,
-                  type: sql`VALUES(type)`,
-                  custom: sql`VALUES(custom)`,
-                  inputs: sql`VALUES(inputs)`,
-                  outputs: sql`VALUES(outputs)`,
-                  parent: sql`VALUES(parent)`,
-                },
-              });
           if (resourceDeletes.length)
             await tx
               .delete(stateResourceTable)
