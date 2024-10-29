@@ -301,6 +301,23 @@ export function List() {
             },
           ];
         }
+        if (r.type === "sstv2:aws:Function") {
+          console.log(r);
+          const logGroup = r.outputs?.enrichment?.logGroup;
+          const live = r.outputs?.enrichment?.live;
+          return [
+            {
+              name,
+              title: r.outputs?.handler,
+              link: live
+                ? `aws/logs?functionID=${r.outputs?.localId}&view=local&hint=lambda`
+                : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
+              type: r.type,
+              logGroup,
+              priority: 3,
+            },
+          ];
+        }
         if (r.type === "sst:aws:Service") {
           const logGroup = resources().find(
             (child) =>
