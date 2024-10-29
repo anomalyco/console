@@ -451,7 +451,10 @@ export function AWS() {
             <Row
               data-focus={list.cursor() === entry.id ? true : undefined}
               data-row-id={entry.id}
-              onClick={() => list.toggleSelected(entry.id)}
+              onClick={() => {
+                list.toggleSelected(entry.id);
+                list.setCursor(entry.id);
+              }}
             >
               <Switch>
                 <Match when={isInvocation(entry) && entry}>
