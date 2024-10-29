@@ -47,12 +47,27 @@ import {
   isLog,
   useLocalLogs,
 } from "$/providers/invocation";
-import { Stack } from "$/ui/layout";
+import { Stack, DivSpacer } from "$/ui/layout";
+
+const shortDateOptions: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  hour12: true,
+  minute: "numeric",
+  second: "numeric",
+  timeZoneName: "short",
+};
+const longDateOptions: Intl.DateTimeFormatOptions = {
+  ...shortDateOptions,
+  timeZone: "UTC",
+  year: "numeric",
+};
 
 const Root = styled("div", {
   base: {
     padding: theme.space[4],
-    height: "calc(100vh - 52px - 68px)",
+    height: `calc(100vh - ${theme.headerHeight.root} - ${theme.headerHeight.stage})`,
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -75,6 +90,14 @@ const Header = styled("div", {
     ":last-child": {
       borderRadius: theme.borderRadius,
     },
+  },
+});
+
+const LogGroup = styled("span", {
+  base: {
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_base,
+    color: theme.color.text.secondary.base,
   },
 });
 
@@ -174,7 +197,6 @@ const Scroller = style({
 const Row = styled("div", {
   base: {
     width: "100%",
-    minHeight: 52,
     display: "flex",
     alignItems: "center",
     borderStyle: "solid",
@@ -189,18 +211,83 @@ const Row = styled("div", {
   },
 });
 
+const LogRowRoot = styled("div", {
+  base: {
+    ...utility.row(2),
+    padding: `calc(${theme.space[1.5]} + 0.125rem) ${theme.space[3]} calc(${theme.space[1.5]} + 0.125rem) calc(${theme.space[3]} + 0.5rem)`,
+  },
+});
+
+const LogTimestamp = styled("div", {
+  base: {
+    ...utility.text.line,
+    lineHeight: 2.4,
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_sm,
+    color: theme.color.text.secondary.base,
+    flexShrink: 0,
+    minWidth: 190,
+  },
+});
+
+const LogMessage = styled("div", {
+  base: {
+    lineHeight: 2.4,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_sm,
+  },
+  variants: {
+    expanded: {
+      true: {
+        height: "auto",
+        overflow: "visible",
+      },
+      false: {
+        height: 31,
+        overflow: "hidden",
+      },
+    },
+  },
+});
+
+interface LogRowProps {
+  expanded?: boolean;
+  timestamp: number;
+  message: string;
+}
+function LogRow(props: LogRowProps) {
+  const shortDate = createMemo(() =>
+    new Intl.DateTimeFormat("en-US", shortDateOptions)
+      .format(props.timestamp)
+      .replace(" at ", ", "),
+  );
+  const longDate = createMemo(() =>
+    new Intl.DateTimeFormat("en-US", longDateOptions).format(
+      props.timestamp
+    ),
+  );
+  return (
+    <LogRowRoot>
+      <LogTimestamp title={longDate()}>{shortDate()}</LogTimestamp>
+      <LogMessage expanded={props.expanded}>{props.message}</LogMessage>
+    </LogRowRoot>
+  );
+}
+
 export function AWS() {
   const [search, setSearch] = useSearchParams<
     | {
-        logGroup: string;
-        hint: "normal" | "lambda";
-        view: "live" | "past";
-        end?: string;
-      }
+      logGroup: string;
+      hint: "normal" | "lambda";
+      view: "live" | "past";
+      end?: string;
+    }
     | {
-        view: "local";
-        functionID: string;
-      }
+      view: "local";
+      functionID: string;
+    }
   >();
 
   const stage = useStageContext();
@@ -318,10 +405,9 @@ export function AWS() {
         <Text size="lg" weight="medium">
           Logs
         </Text>
-        <Text size="lg" color="dimmed">
-          {description()}
-        </Text>
+        <LogGroup>{description()}</LogGroup>
       </Stack>
+      <DivSpacer space="4" />
       <Header>
         <HeaderLeft>
           <HeaderIcon
@@ -444,7 +530,7 @@ export function AWS() {
           </Show>
         </HeaderRight>
       </Header>
-      <Invoke arn="" source="" id="" control={() => {}} onExpand={() => {}} />
+      <Invoke arn="" source="" id="" control={() => { }} onExpand={() => { }} />
       <Show when={rows().length}>
         <VList class={Scroller} ref={(r) => (vlist = r)} data={rows()}>
           {(entry, index) => (
@@ -470,9 +556,11 @@ export function AWS() {
                 </Match>
                 <Match when={isLog(entry) && entry}>
                   {(log) => (
-                    <span>
-                      {log().timestamp} {log().message}
-                    </span>
+                    <LogRow
+                      message={log().message}
+                      timestamp={log().timestamp}
+                      expanded={list.selected().includes(entry.id)}
+                    />
                   )}
                 </Match>
               </Switch>

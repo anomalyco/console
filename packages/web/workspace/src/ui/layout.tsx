@@ -142,6 +142,24 @@ export const Hr = styled("hr", {
   },
 });
 
+export const DivSpacer = styled("div", {
+  base: {
+    flex: "0 0 auto",
+  },
+  variants: {
+    space: (() => {
+      const result = {} as Record<`${keyof (typeof theme)["space"]}`, any>;
+      for (const key in theme.space) {
+        const value = theme.space[key as keyof typeof theme.space];
+        result[key as keyof typeof theme.space] = {
+          height: value,
+        };
+      }
+      return result;
+    })(),
+  },
+});
+
 export const SpanSpacer = styled("span", {
   base: {},
   variants: {
