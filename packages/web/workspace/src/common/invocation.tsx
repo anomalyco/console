@@ -280,7 +280,7 @@ export function InvocationRow(props: {
   );
   const longDate = createMemo(() =>
     new Intl.DateTimeFormat("en-US", longDateOptions).format(
-      props.invocation.start,
+      props.invocation.start
     ),
   );
   const [replaying, setReplaying] = createSignal(false);
@@ -324,7 +324,7 @@ export function InvocationRow(props: {
           {props.mixed
             ? props.mixed.description
             : props.invocation.errors[0]?.message ||
-              props.invocation.logs[0]?.message}
+            props.invocation.logs[0]?.message}
         </LogPreview>
       </Summary>
       <Show when={props.expanded}>
