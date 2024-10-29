@@ -1,17 +1,23 @@
 import fs from "fs";
 import { createHash } from "crypto";
-import { storage } from "./storage";
+import { storage, storageAccess } from "./storage";
 import { ALL_REGIONS } from "./util";
 
 const buildspecPath = "packages/build/buildspec/index.mjs";
 const version = createHash("sha256")
   .update(fs.readFileSync(buildspecPath))
   .digest("hex");
-new aws.s3.BucketObjectv2("AutodeployBuildspec", {
-  bucket: storage.name,
-  key: `buildspec/${version}/index.mjs`,
-  acl: "public-read",
-});
+new aws.s3.BucketObjectv2(
+  "AutodeployBuildspec",
+  {
+    bucket: storage.name,
+    key: `buildspec/${version}/index.mjs`,
+    acl: "public-read",
+  },
+  {
+    dependsOn: [storageAccess],
+  },
+);
 
 if ($app.stage === "production" || $app.stage === "dev") {
   const repo = new aws.ecr.Repository("AutodeployRepository", {

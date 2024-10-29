@@ -1,4 +1,12 @@
-import { For, Show, Match, Switch, createMemo, createSignal } from "solid-js";
+import {
+  For,
+  Show,
+  Match,
+  Switch,
+  createMemo,
+  createSignal,
+  createEffect,
+} from "solid-js";
 import {
   IconFunction,
   IconGoRuntime,
@@ -295,12 +303,19 @@ export function List() {
   function renderFunction(fn: SortedResource, isInternal: boolean) {
     const live = () => fn.sst?.outputs["_live"];
     const [copying, setCopying] = createSignal(false);
+    createEffect(() => {
+      console.log(fn);
+    });
     return (
       <Child outline={isInternal}>
         <ChildColLeft>
           <Row space="3" vertical="center">
             <ChildTitleLink
-              href={`aws/logs?logGroup=${getLogGroup(fn)}&view=past&hint=normal`}
+              href={
+                live()
+                  ? `aws/logs?functionID=${fn.parent}&view=local&hint=lambda`
+                  : `aws/logs?logGroup=${getLogGroup(fn)}&view=past&hint=normal`
+              }
             >
               {isInternal
                 ? fn.name

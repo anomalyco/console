@@ -17,7 +17,7 @@ import { IconAddCircle, IconWorkspace } from "./ui/icons/custom";
 import { LocalProvider } from "./providers/local";
 import { useStorage } from "./providers/account";
 import { DummyConfigProvider, DummyProvider } from "./providers/dummy";
-import { InvocationProvider } from "./providers/invocation";
+import { LocalLogsProvider } from "./providers/invocation";
 import { FlagsProvider } from "./providers/flags";
 import { NotFound } from "./pages/not-found";
 import { Local } from "./pages/local";
@@ -167,7 +167,7 @@ export const App: Component = () => {
                       <DummyConfigProvider>
                         <FlagsProvider>
                           <LocalProvider>
-                            <InvocationProvider>
+                            <LocalLogsProvider>
                               <GlobalCommands />
                               <Routes>
                                 <Route path="local/*" component={Local} />
@@ -219,7 +219,7 @@ export const App: Component = () => {
                                 />
                                 <Route path="*" element={<NotFound />} />
                               </Routes>
-                            </InvocationProvider>
+                            </LocalLogsProvider>
                           </LocalProvider>
                         </FlagsProvider>
                       </DummyConfigProvider>

@@ -39,7 +39,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { LogSearchStore } from "$/data/log-search";
 import { DialogRange, DialogRangeControl } from "./dialog-range";
 import { InvocationRow } from "$/common/invocation";
-import { useInvocations } from "$/providers/invocation";
+import { useLocalLogs } from "$/providers/invocation";
 import { DateTime } from "luxon";
 import { useWorkspace } from "../../context";
 import { useDummy } from "$/providers/dummy";
@@ -203,7 +203,7 @@ const [pollerCache, setPollerCache] = createStore<{ [key: string]: number }>(
 
 export function Detail() {
   const stage = useStageContext();
-  const invocationsContext = useInvocations();
+  const invocationsContext = useLocalLogs();
   const bar = useCommandBar();
   const [id, setID] = createStore<{
     search: string;

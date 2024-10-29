@@ -12,7 +12,7 @@ import { StackTrace } from "../logs/error";
 import { Log, LogTime, LogMessage } from "$/common/invocation";
 import { fromEntries } from "remeda";
 import { useResourcesContext, useStageContext } from "../context";
-import { useInvocations } from "$/providers/invocation";
+import { useLocalLogs } from "$/providers/invocation";
 import { useCommandBar } from "../../command-bar";
 import { getLogInfo } from "./common";
 import { useReplicacheStatus } from "$/providers/replicache-status";
@@ -25,6 +25,7 @@ import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
 import { Alert } from "$/ui/alert";
+import { Invocation } from "@console/core/log";
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -146,7 +147,7 @@ export function Detail() {
   const params = useParams();
   const ctx = useStageContext();
   const rep = useReplicache();
-  const invocations = useInvocations();
+  const invocations = useLocalLogs();
   const issue = IssueStore.get.watch(rep, () => [ctx.stage.id, params.issueID]);
   const replicacheStatus = useReplicacheStatus();
 
@@ -181,7 +182,8 @@ export function Detail() {
   });
 
   const invocation = createMemo(
-    () => issue()?.invocation || invocations.forSource(issue()?.id).at(0),
+    () =>
+      (issue()?.invocation || invocations.get(issue()?.id).at(0)) as Invocation,
   );
 
   const resources = useResourcesContext();
