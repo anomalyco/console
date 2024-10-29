@@ -245,11 +245,9 @@ export function Inner() {
                   </TabTitle>
                 </Link>
               </Show>
-              <Show when={updates().length > 0}>
-                <Link href="logs">
-                  <TabTitle size="sm">Logs</TabTitle>
-                </Link>
-              </Show>
+              <Link href="logs">
+                <TabTitle size="sm">Logs</TabTitle>
+              </Link>
               <Show when={ctx.connected}>
                 <Link href="local">
                   <TabTitle size="sm">Local</TabTitle>

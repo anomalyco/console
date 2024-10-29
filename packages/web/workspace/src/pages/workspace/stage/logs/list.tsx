@@ -301,6 +301,24 @@ export function List() {
             },
           ];
         }
+        if (r.type === "sst:aws:Service") {
+          const logGroup = resources().find(
+            (child) =>
+              child.type === "aws:cloudwatch/logGroup:LogGroup" &&
+              child.parent === r.urn,
+          )?.outputs?.id;
+
+          return [
+            {
+              name,
+              title: name,
+              link: `aws/logs?logGroup=${logGroup}&view=past&hint=normal`,
+              type: r.type,
+              logGroup: logGroup,
+              priority: 3,
+            },
+          ];
+        }
         return [];
       }),
       groupBy((item) => item.logGroup),
