@@ -24,6 +24,7 @@ import { Replicache } from "../replicache";
 import { issueSubscriber } from "../issue/issue.sql";
 import { bus } from "sst/aws/bus";
 import { Resource as SSTResource } from "sst";
+import { State } from "../state";
 export * as Stage from "./stage";
 
 export const Events = {
@@ -365,6 +366,10 @@ export const syncMetadata = zod(
               parseVersion(x.enrichment.version) < MINIMUM_VERSION,
           ).length;
 
+        await State.receiveV2({
+          config: input.config,
+          resources: resources,
+        });
         await tx
           .update(stage)
           .set({ unsupported })

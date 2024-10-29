@@ -533,7 +533,7 @@ export function AWS() {
       <Invoke arn="" source="" id="" control={() => { }} onExpand={() => { }} />
       <Show when={rows().length}>
         <VList class={Scroller} ref={(r) => (vlist = r)} data={rows()}>
-          {(entry, index) => (
+          {(entry) => (
             <Row
               data-focus={list.cursor() === entry.id ? true : undefined}
               data-row-id={entry.id}
