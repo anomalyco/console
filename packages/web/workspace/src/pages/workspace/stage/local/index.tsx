@@ -14,7 +14,7 @@ import {
 } from "../context";
 import { concat, filter, map, pipe } from "remeda";
 import { IconArrowsUpDown, IconBoltSolid } from "$/ui/icons";
-import { useInvocations } from "$/providers/invocation";
+import { useLocalLogs } from "$/providers/invocation";
 import {
   KeyboardNavigator,
   createKeyboardNavigator,
@@ -70,10 +70,8 @@ export function Local() {
     ),
   );
   const ctx = useStageContext();
-  const invocationsContext = useInvocations();
-  const invocations = createMemo(() =>
-    invocationsContext.forSource("all").slice().reverse(),
-  );
+  const localLogs = useLocalLogs();
+  const entries = createMemo(() => localLogs.get("all").toReversed());
   const navigator = createKeyboardNavigator({
     target: "[data-element='invocation']",
     onSelect: (el) => (el.firstElementChild as HTMLElement).click(),
@@ -114,10 +112,10 @@ export function Local() {
             </Text>
           </Row>
           <div>
-            <Show when={invocations().length > 0}>
+            <Show when={entries().length > 0}>
               <TextButton
                 onClick={() => {
-                  invocationsContext.clear("all");
+                  localLogs.clear("all");
                 }}
               >
                 Clear
@@ -125,20 +123,7 @@ export function Local() {
             </Show>
           </div>
         </LogLoadingIndicator>
-        <KeyboardNavigator value={navigator}>
-          <For each={invocations()}>
-            {(invocation) => {
-              return (
-                <InvocationRow
-                  mixed
-                  local
-                  invocation={invocation}
-                  function={functionByLocalID()[invocation.source!]}
-                />
-              );
-            }}
-          </For>
-        </KeyboardNavigator>
+        <KeyboardNavigator value={navigator}></KeyboardNavigator>
       </LogList>
     </Root>
   );

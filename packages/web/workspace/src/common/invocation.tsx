@@ -1,7 +1,6 @@
 import { ErrorList, ErrorItem } from "$/pages/workspace/stage/logs/error";
 import { IconBookmark, IconArrowPath } from "$/ui/icons";
 import { IconCaretRight } from "$/ui/icons/custom";
-import { inputFocusStyles } from "$/ui/form";
 import {
   For,
   Match,
@@ -11,14 +10,10 @@ import {
   createSignal,
   mergeProps,
 } from "solid-js";
-import { unwrap } from "solid-js/store";
 import { formatDuration, formatBytes } from "./format";
 import { styled } from "@macaron-css/solid";
-import { useReplicache } from "$/providers/replicache";
 import { Link } from "@solidjs/router";
 import { DateTime } from "luxon";
-import { useKeyboardNavigator } from "./keyboard-navigator";
-import { useStageContext } from "$/pages/workspace/stage/context";
 import { TabTitle, TextButton } from "$/ui/button";
 import { Row, Stack } from "$/ui/layout";
 import { Tag } from "$/ui/tag";
@@ -265,15 +260,14 @@ const FunctionLink = styled(Link, {
 export function InvocationRow(props: {
   invocation: Invocation;
   onSavePayload?: () => void;
-  function: {
-    arn: string;
-    handler: string;
-    id: string;
-  };
   local: boolean;
-  mixed?: boolean;
+  mixed?: {
+    description: string;
+    link: string;
+  };
   expanded?: boolean;
   onClick?: () => void;
+  onReplay?: () => void;
 }) {
   const [tab, setTab] = createSignal<
     "logs" | "request" | "response" | "report"
@@ -290,7 +284,6 @@ export function InvocationRow(props: {
     ),
   );
   const [replaying, setReplaying] = createSignal(false);
-  const rep = useReplicache();
   const level = createMemo(() =>
     props.invocation.errors.length
       ? props.invocation.errors.some((error) => error.failed)
@@ -298,8 +291,6 @@ export function InvocationRow(props: {
         : "error"
       : "info",
   );
-
-  const ctx = useStageContext();
 
   return (
     <Root
@@ -331,7 +322,7 @@ export function InvocationRow(props: {
         </RequestID>
         <LogPreview>
           {props.mixed
-            ? props.function.handler
+            ? props.mixed.description
             : props.invocation.errors[0]?.message ||
               props.invocation.logs[0]?.message}
         </LogPreview>
@@ -389,7 +380,7 @@ export function InvocationRow(props: {
             </Row>
             <Show when={props.invocation.input}>
               <Row space="4" vertical="center">
-                <Show when={props.onSavePayload}>
+                <Show when={props.invocation.input}>
                   <TextButton
                     onClick={(e) => {
                       e.stopPropagation();
@@ -401,8 +392,8 @@ export function InvocationRow(props: {
                     Save
                   </TextButton>
                 </Show>
-                <Show when={!props.onSavePayload}>
-                  <FunctionLink href={`../resources/logs/${props.function.id}`}>
+                <Show when={props.mixed}>
+                  <FunctionLink href={props.mixed?.link!}>
                     View function
                   </FunctionLink>
                 </Show>
@@ -413,11 +404,7 @@ export function InvocationRow(props: {
                   onClick={(e) => {
                     e.stopPropagation();
                     setReplaying(true);
-                    rep().mutate.function_invoke({
-                      stageID: ctx.stage.id,
-                      functionARN: props.function.arn,
-                      payload: structuredClone(unwrap(props.invocation.input)),
-                    });
+                    props.onReplay?.();
                     setTimeout(() => setReplaying(false), 2000);
                   }}
                 >
