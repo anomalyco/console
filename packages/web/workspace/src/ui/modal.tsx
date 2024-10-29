@@ -1,6 +1,6 @@
 import { styled } from "@macaron-css/solid";
 import { theme } from "./theme";
-import { ParentProps, createEffect, createSignal, untrack } from "solid-js";
+import { createEffect, createSignal, ParentProps, untrack } from "solid-js";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Portal } from "solid-js/web";
 import { bus } from "$/providers/bus";
@@ -50,7 +50,7 @@ const Content = styled("div", {
 });
 
 export function Modal(
-  props: ParentProps<{ show: boolean; onClose: () => void }>
+  props: ParentProps<{ show: boolean; onClose: () => void }>,
 ) {
   let content!: HTMLDivElement;
   createEventListener(document, "mouseup", (e) => {

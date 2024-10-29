@@ -1,13 +1,13 @@
 import {
-  For,
-  JSX,
-  ParentProps,
   batch,
   createContext,
   createEffect,
   createMemo,
   createSignal,
+  For,
+  JSX,
   onCleanup,
+  ParentProps,
   useContext,
 } from "solid-js";
 import { styled } from "@macaron-css/solid";
@@ -51,8 +51,7 @@ export function NavigationAction(input: {
     icon: input.icon || IconSubRight,
     title: input.title,
     category: input.category,
-    disabled:
-      input.disabled ||
+    disabled: input.disabled ||
       (input.path.startsWith("/") &&
         (!input.prefix
           ? loc.pathname === input.path
@@ -100,7 +99,6 @@ const Modal = styled("div", {
     borderRadius: 10,
     flexShrink: 0,
     boxShadow: theme.color.shadow.drop.long,
-    backdropFilter: "blur(10px)",
     background: theme.color.background.modal,
     // Safari doesn't redraw properly when the height
     // of the modal changes
@@ -237,8 +235,8 @@ function createControl() {
     if (!visible()) return;
     const p = activeProviders().length
       ? activeProviders()
-          .map((p) => providers.find((e) => e.name === p)!)
-          .filter(Boolean)
+        .map((p) => providers.find((e) => e.name === p)!)
+        .filter(Boolean)
       : [...providers.values()].reverse();
     const actions = await Promise.all(
       p.map(async (entry) => {
