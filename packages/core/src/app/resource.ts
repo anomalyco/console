@@ -165,6 +165,7 @@ export const Enrichers = {
       live: Boolean(
         info.Configuration?.Environment?.Variables?.SST_FUNCTION_ID,
       ),
+      logGroup: info.Configuration?.LoggingConfig?.LogGroup,
     };
   },
   async WebSocketApi() {

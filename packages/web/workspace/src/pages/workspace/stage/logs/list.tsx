@@ -17,7 +17,7 @@ import {
   IconDotNetRuntime,
   IconContainerRuntime,
 } from "$/ui/icons/custom";
-import { sortBy } from "remeda";
+import { flatMap, groupBy, mapValues, pipe, sortBy, values } from "remeda";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Dropdown } from "$/ui/dropdown";
@@ -31,6 +31,7 @@ import { useReplicache } from "$/providers/replicache";
 import { IconCheck, IconEllipsisVertical } from "$/ui/icons";
 import { formatBytes, formatDuration } from "$/common/format";
 import { Tag } from "$/ui/tag";
+import { createEvent } from "@console/core/event";
 
 const Content = styled("div", {
   base: {
@@ -244,211 +245,104 @@ const EmptyResourcesCopy = styled("span", {
 });
 
 export function List() {
-  const nav = useNavigate();
   const rep = useReplicache();
   const ctx = useStageContext();
   const resources = StateResourceStore.forStage.watch(rep, () => [
     ctx.stage.id,
   ]);
 
-  const sorted = createMemo(() => sortFunctions(resources()));
-  const functions = createMemo(() =>
-    sortBy(sorted()[0], (fn) => fn.outputs.handler),
+  const logs = createMemo(() =>
+    pipe(
+      resources(),
+      flatMap((r) => {
+        const name = r.urn.split("::").at(-1)!;
+        if (r.type === "aws:cloudwatch/logGroup:LogGroup")
+          return [
+            {
+              name,
+              title: r.outputs?.id,
+              link: `aws/logs?logGroup=${r.outputs?.id}&view=past&hint=normal`,
+              type: r.type,
+              logGroup: r.outputs?.id,
+              priority: 1,
+            },
+          ];
+
+        if (r.type === "aws:lambda/function:Function") {
+          const logGroup = r.outputs?.loggingConfig?.logGroup;
+          return [
+            {
+              name,
+              title: name,
+              link: `aws/logs?functionID=${r.urn}&view=past&hint=lambda`,
+              type: r.type,
+              logGroup,
+              priority: 2,
+            },
+          ];
+        }
+        if (r.type === "sst:aws:Function") {
+          const lambda = resources().find(
+            (child) =>
+              child.type === "aws:lambda/function:Function" &&
+              child.parent === r.urn,
+          );
+          const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
+          return [
+            {
+              name,
+              title: r.outputs?._metadata.handler,
+              link: r.outputs?._live
+                ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
+                : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
+              type: r.type,
+              logGroup,
+              priority: 3,
+            },
+          ];
+        }
+        return [];
+      }),
+      groupBy((item) => item.logGroup),
+      mapValues((items) => sortBy(items, (item) => item.priority).at(-1)!),
+      values(),
+      sortBy((item) => item.title),
+    ),
   );
-  const internals = createMemo(() => sortBy(sorted()[1], (fn) => fn.name));
 
-  function Runtime(props: { runtime?: string }) {
-    return (
-      <ChildIcon title={props.runtime}>
-        <Switch>
-          <Match when={props.runtime?.startsWith("dotnet")}>
-            <IconDotNetRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("python")}>
-            <IconPythonRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("java")}>
-            <IconJavaRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("go")}>
-            <IconGoRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("nodejs")}>
-            <IconNodeRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("rust")}>
-            <IconRustRuntime />
-          </Match>
-          <Match when={props.runtime?.startsWith("container")}>
-            <IconContainerRuntime />
-          </Match>
-          <Match when={true}>
-            <IconFunction />
-          </Match>
-        </Switch>
-      </ChildIcon>
-    );
-  }
-
-  function renderBytes(size: number) {
-    const formattedSize = formatBytes(size);
-    return (
-      <>
-        {formattedSize.value}
-        <ChildDetailValueUnit>{formattedSize.unit}</ChildDetailValueUnit>
-      </>
-    );
-  }
-
-  function renderFunction(fn: SortedResource, isInternal: boolean) {
-    const live = () => fn.sst?.outputs["_live"];
-    const [copying, setCopying] = createSignal(false);
-    createEffect(() => {
-      console.log(fn);
-    });
-    return (
-      <Child outline={isInternal}>
-        <ChildColLeft>
-          <Row space="3" vertical="center">
-            <ChildTitleLink
-              href={
-                live()
-                  ? `aws/logs?functionID=${fn.parent}&view=local&hint=lambda`
-                  : `aws/logs?logGroup=${getLogGroup(fn)}&view=past&hint=normal`
-              }
-            >
-              {isInternal
-                ? fn.name
-                : live()
-                  ? live().handler
-                  : fn.outputs.handler}
-            </ChildTitleLink>
-          </Row>
-          <Show
-            when={fn.root && (!isInternal || fn.root!.name !== fn.name)}
-            fallback={
-              <ChildTagline outline={isInternal}>{fn.type}</ChildTagline>
-            }
-          >
-            <Row space="2">
-              <ChildDesc outline={isInternal}>{fn.root!.name}</ChildDesc>
-              <ChildTagline outline={isInternal}>{fn.root!.type}</ChildTagline>
-            </Row>
-          </Show>
-        </ChildColLeft>
-        <ChildColRight>
-          <Show when={live()}>
-            <ChildDetailLive>
-              <Tag style="outline" level="tip" size="small">
-                Live
-              </Tag>
-            </ChildDetailLive>
-          </Show>
-          <ChildDetail>
-            <ChildDetailLabel outline={isInternal}>Timeout</ChildDetailLabel>
-            <ChildDetailValue
-              outline={isInternal}
-              title={
-                fn.outputs && fn.outputs.timeout && !live()
-                  ? `${fn.outputs.timeout} seconds`
-                  : undefined
-              }
-            >
-              <Show
-                when={fn.outputs && fn.outputs.timeout && !live()}
-                fallback="—"
-              >
-                {formatDuration(fn.outputs.timeout * 1000)}
-              </Show>
-            </ChildDetailValue>
-          </ChildDetail>
-          <ChildDetail>
-            <ChildDetailLabel outline={isInternal}>Bundle</ChildDetailLabel>
-            <ChildDetailValue outline={isInternal}>
-              <Show
-                when={fn.outputs && fn.outputs.sourceCodeSize && !live()}
-                fallback="—"
-              >
-                {renderBytes(fn.outputs.sourceCodeSize)}
-              </Show>
-            </ChildDetailValue>
-          </ChildDetail>
-          <Row space="3" vertical="center">
-            <ChildDetail style={{ width: "75px" }}>
-              <ChildDetailLabel outline={isInternal}>Memory</ChildDetailLabel>
-              <ChildDetailValue outline={isInternal}>
-                <Show when={fn.outputs && fn.outputs.memorySize} fallback="—">
-                  {renderBytes(fn.outputs.memorySize * 1024 * 1024)}
-                </Show>
-              </ChildDetailValue>
-            </ChildDetail>
-            <Runtime runtime={live() ? live().runtime : fn.outputs.runtime} />
-            <Dropdown
-              size="sm"
-              disabled={copying()}
-              icon={
-                copying() ? (
-                  <IconCheck width={18} height={18} />
-                ) : (
-                  <IconEllipsisVertical width={18} height={18} />
-                )
-              }
-            >
-              <Dropdown.Item
-                onSelect={() =>
-                  nav(`../resources/${encodeURIComponent(fn.urn)}`)
-                }
-              >
-                View Resource
-              </Dropdown.Item>
-              <Dropdown.Seperator />
-              <Dropdown.Item
-                onSelect={() => {
-                  setCopying(true);
-                  navigator.clipboard.writeText(fn.urn);
-                  setTimeout(() => setCopying(false), 2000);
-                }}
-              >
-                Copy URN
-              </Dropdown.Item>
-            </Dropdown>
-          </Row>
-        </ChildColRight>
-      </Child>
-    );
-  }
+  createEffect(() => console.log(logs()));
 
   return (
     <Switch>
-      <Match
-        when={resources().length && (functions().length || internals().length)}
-      >
+      <Match when={logs().length}>
         <Content>
           <Stack space="4">
-            <Show when={functions().length}>
-              <Card>
-                <HeaderRoot>
-                  <HeaderTitle>Functions</HeaderTitle>
-                </HeaderRoot>
-                <Children>
-                  <For each={functions()}>
-                    {(fn) => renderFunction(fn, false)}
-                  </For>
-                </Children>
-              </Card>
-            </Show>
-            <Show when={internals().length}>
-              <Card outline>
-                <HeaderRoot>
-                  <HeaderTitle outline>Internals</HeaderTitle>
-                </HeaderRoot>
-                <Children>
-                  <For each={internals()}>
-                    {(fn) => renderFunction(fn, true)}
-                  </For>
-                </Children>
-              </Card>
-            </Show>
+            <Card>
+              <HeaderRoot>
+                <HeaderTitle>Logs</HeaderTitle>
+              </HeaderRoot>
+              <Children>
+                <For each={logs()}>
+                  {(log) => (
+                    <Child outline={false}>
+                      <ChildColLeft>
+                        <Row space="3" vertical="center">
+                          <ChildTitleLink href={log?.link}>
+                            {log?.title}
+                          </ChildTitleLink>
+                        </Row>
+                        <Row space="2">
+                          <ChildDesc outline={false}>{log?.name}</ChildDesc>
+                          <ChildTagline outline={false}>
+                            {log?.type}
+                          </ChildTagline>
+                        </Row>
+                      </ChildColLeft>
+                    </Child>
+                  )}
+                </For>
+              </Children>
+            </Card>
           </Stack>
         </Content>
       </Match>
@@ -460,107 +354,5 @@ export function List() {
         </Fullscreen>
       </Match>
     </Switch>
-  );
-}
-
-type SortedResource = State.Resource & {
-  name: string;
-  sst?: State.Resource;
-  root?: SortedResource;
-};
-function sortFunctions(
-  resources: State.Resource[],
-): [SortedResource[], SortedResource[]] {
-  // Create a map to store each object by its urn
-  const idMap: { [key: string]: SortedResource } = {};
-
-  resources.forEach((r) => {
-    idMap[r.urn] = { ...r, name: getResourceName(r.urn)! };
-  });
-
-  const functions: SortedResource[] = [];
-  const internals: SortedResource[] = [];
-
-  // Look for lambda functions with log groups
-  resources.forEach((r) => {
-    if (r.type !== "aws:lambda/function:Function") {
-      return;
-    }
-
-    const logGroup = getLogGroup(r);
-
-    if (!logGroup) {
-      return;
-    }
-
-    // Find the root component
-    const root = getRoot(idMap[r.urn]);
-
-    const fn: SortedResource = {
-      ...r,
-      sst: undefined,
-      name: getResourceName(r.urn)!,
-      root: root.urn === r.urn ? undefined : root,
-    };
-
-    const parent = r.parent && idMap[r.parent];
-
-    // If the parent is an SST function
-    if (parent && parent.type === "sst:aws:Function") {
-      fn.name = getResourceName(parent.urn)!;
-      fn.sst = { ...parent };
-
-      // Check if the parent is not an internal function
-      if (!isInternalFunction(parent, root)) {
-        functions.push(fn);
-        return;
-      }
-    }
-
-    internals.push(fn);
-  });
-
-  function getRoot(fn: SortedResource): SortedResource {
-    if (!fn.parent) {
-      return fn;
-    }
-
-    const parent = idMap[fn.parent];
-
-    if (!parent || parent.type === "pulumi:pulumi:Stack") {
-      return fn;
-    }
-
-    return getRoot(parent);
-  }
-
-  return [functions, internals];
-}
-
-function getResourceName(urn: string) {
-  return urn.split("::").at(-1);
-}
-
-function getLogGroup(fn: State.Resource) {
-  return fn.outputs &&
-    fn.outputs.loggingConfig &&
-    fn.outputs.loggingConfig.logGroup
-    ? fn.outputs.loggingConfig.logGroup
-    : undefined;
-}
-
-function isInternalFunction(fn: State.Resource, root?: SortedResource) {
-  return (
-    (root &&
-      (root!.type === "sst:aws:Nuxt" ||
-        root.type === "sst:aws:Astro" ||
-        root!.type === "sst:aws:Nextjs" ||
-        root!.type === "sst:aws:Remix" ||
-        root.type === "sst:aws:SolidStart" ||
-        root.type === "sst:aws:SvelteKit")) ||
-    (fn.outputs &&
-      fn.outputs["_metadata"] &&
-      fn.outputs["_metadata"].internal &&
-      fn.outputs["_metadata"].internal === true)
   );
 }

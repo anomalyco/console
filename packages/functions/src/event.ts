@@ -10,6 +10,7 @@ export const handler = bus.subscriber(
     AWS.Account.Events.Created,
     AWS.Account.Events.Removed,
     App.Stage.Events.Connected,
+    App.Stage.Events.Updated,
     App.Stage.Events.ResourcesUpdated,
     State.Event.SummaryCreated,
     State.Event.HistoryCreated,
@@ -45,6 +46,16 @@ export const handler = bus.subscriber(
           await AWS.Account.disconnect(evt.properties.awsAccountID);
           break;
 
+        case App.Stage.Events.Updated.type:
+        case App.Stage.Events.Connected.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Stage.syncMetadata({
+            config,
+            remove: evt.type === App.Stage.Events.Updated.type,
+          });
+          break;
+        }
         case App.Stage.Events.Connected.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
@@ -137,7 +148,7 @@ export const handler = bus.subscriber(
         }
 
         case Issue.Events.IssueDetected.type: {
-          return
+          return;
           await Issue.Send.triggerIssue(evt.properties);
           break;
         }
