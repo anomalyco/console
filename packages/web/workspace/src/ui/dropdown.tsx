@@ -134,6 +134,7 @@ const RadioItem = styled(Kobalte.RadioItem<"div">, {
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
     userSelect: "none",
+    WebkitUserSelect: "none",
     outline: "none",
     selectors: {
       "&[data-highlighted]": {

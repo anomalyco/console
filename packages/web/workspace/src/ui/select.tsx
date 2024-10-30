@@ -131,6 +131,7 @@ const Item = styled(Kobalte.Item<"li">, {
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
     userSelect: "none",
+    WebkitUserSelect: "none",
     outline: "none",
     selectors: {
       "&[data-highlighted]": {

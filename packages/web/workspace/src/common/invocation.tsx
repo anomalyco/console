@@ -144,6 +144,7 @@ export const Log = styled("div", {
 export const LogTime = styled("div", {
   base: {
     userSelect: "none",
+    WebkitUserSelect: "none",
     flexShrink: 0,
     minWidth: 89,
     textAlign: "left",
