@@ -14,6 +14,7 @@ import { createMultiList } from "solid-list";
 import {
   batch,
   createMemo,
+  createSignal,
   Match,
   onCleanup,
   onMount,
@@ -162,6 +163,27 @@ const LogMoreIndicator = styled("div", {
     borderWidth: "1px",
     borderColor: theme.color.divider.base,
     borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
+    position: "relative",
+  },
+  variants: {
+    shadow: {
+      true: {
+        borderTopWidth: 1,
+        ":before": {
+          content: "",
+          position: "absolute",
+          left: 0,
+          pointerEvents: "none",
+          top: "calc(-1rem - 1px)",
+          height: "1rem",
+          width: "100%",
+          background: theme.color.shadow.scroll
+        },
+      },
+      false: {
+        borderTopWidth: 0,
+      },
+    },
   },
 });
 
@@ -184,6 +206,9 @@ const LogMoreIndicatorCopy = styled("span", {
 });
 
 const Scroller = style({
+  borderWidth: "0 1px",
+  borderStyle: "solid",
+  borderColor: theme.color.divider.base,
   selectors: {
     "&::-webkit-scrollbar": {
       display: "none",
@@ -200,7 +225,7 @@ const Row = styled("div", {
     display: "flex",
     alignItems: "center",
     borderStyle: "solid",
-    borderWidth: "0 1px 1px 1px",
+    borderWidth: "0 0 1px 0",
     borderColor: theme.color.divider.base,
     selectors: {
       "&[data-focus]": {
@@ -221,6 +246,8 @@ const LogRowRoot = styled("div", {
 const LogTimestamp = styled("div", {
   base: {
     ...utility.text.line,
+    userSelect: "none",
+    WebkitUserSelect: "none",
     lineHeight: 2.4,
     fontFamily: theme.font.family.code,
     fontSize: theme.font.size.mono_sm,
@@ -399,6 +426,9 @@ export function AWS() {
     return search.logGroup;
   });
 
+  const [scrollEnd, setScrollEnd] = createSignal(false);
+  const showSahdow = createMemo(() => rows().length > 0 && !scrollEnd());
+
   return (
     <Root>
       <Stack space="2">
@@ -532,7 +562,16 @@ export function AWS() {
       </Header>
       <Invoke arn="" source="" id="" control={() => { }} onExpand={() => { }} />
       <Show when={rows().length}>
-        <VList class={Scroller} ref={(r) => (vlist = r)} data={rows()}>
+        <VList
+          class={Scroller}
+          ref={(r) => (vlist = r)}
+          data={rows()}
+          onScroll={() => {
+            setScrollEnd(
+              vlist?.scrollOffset! - vlist?.scrollSize! + vlist?.viewportSize! >= -1.5
+            );
+          }}
+        >
           {(entry) => (
             <Row
               data-focus={list.cursor() === entry.id ? true : undefined}
@@ -571,7 +610,7 @@ export function AWS() {
       <Show when={search.view === "past"}>
         <Switch>
           <Match when={pastResult.loading}>
-            <LogMoreIndicator>
+            <LogMoreIndicator shadow={showSahdow()}>
               <LogMoreIndicatorIcon>
                 <IconArrowPathSpin />
               </LogMoreIndicatorIcon>
@@ -579,7 +618,7 @@ export function AWS() {
             </LogMoreIndicator>
           </Match>
           <Match when={past.all.length}>
-            <LogMoreIndicator>
+            <LogMoreIndicator shadow={showSahdow()}>
               <Switch>
                 <Match when={pastResult.completed}>
                   <LogMoreIndicatorIcon>

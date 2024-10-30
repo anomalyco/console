@@ -69,6 +69,7 @@ const Label = styled(Kobalte.Label<"label">, {
     marginRight: 10,
     fontWeight: 500,
     userSelect: "none",
+    WebkitUserSelect: "none",
     letterSpacing: 0.5,
     textTransform: "uppercase",
     fontFamily: theme.font.family.code,
