@@ -273,7 +273,6 @@ const light = (() => {
         0 48px 96px hsla(${black.d1}, 0.07)
       `,
     },
-    scroll: `linear-gradient(hsla(${base.white}, 0) 0% , hsla(${base.white}, .8) 50%, hsla(${base.white}, 1) 100%)`,
   };
 
   const button = {
@@ -536,7 +535,6 @@ const dark = ((): typeof light => {
     0 48px 120px rgba(0, 0, 0, 0.15)
   `,
     },
-    scroll: `linear-gradient(hsla(${base.black}, 0) 0% , hsla(${base.black}, .8) 50%, hsla(${base.black}, 1) 100%)`,
   };
 
   const button = {

@@ -313,7 +313,7 @@ export function List() {
                           <IconConstruct width={19} height={19} />
                         </Match>
                         <Match when={log.icon === "function"}>
-                          <IconFunction width={17} height={17} />
+                          <IconFunction width={16} height={16} />
                         </Match>
                         <Match when={log.icon === "container"}>
                           <IconContainerRuntime width={20} height={20} />
