@@ -9,12 +9,7 @@ import {
 } from "solid-js";
 import {
   IconFunction,
-  IconGoRuntime,
-  IconJavaRuntime,
-  IconNodeRuntime,
-  IconRustRuntime,
-  IconPythonRuntime,
-  IconDotNetRuntime,
+  IconConstruct,
   IconContainerRuntime,
 } from "$/ui/icons/custom";
 import { flatMap, groupBy, mapValues, pipe, sortBy, values } from "remeda";
@@ -26,6 +21,7 @@ import { useStageContext } from "../context";
 import { StateResourceStore } from "$/data/app";
 import type { State } from "@console/core/state";
 import { Link, useNavigate } from "@solidjs/router";
+import { Text } from "$/ui/text";
 import { Row, Stack, Fullscreen } from "$/ui/layout";
 import { useReplicache } from "$/providers/replicache";
 import { IconCheck, IconEllipsisVertical } from "$/ui/icons";
@@ -35,64 +31,41 @@ import { createEvent } from "@console/core/event";
 
 const Content = styled("div", {
   base: {
+    ...utility.stack(4),
     padding: theme.space[4],
+  },
+});
+
+const PageHeader = styled("div", {
+  base: {
+    ...utility.stack(2.5),
+    justifyContent: "center",
+    height: 56,
+  },
+});
+
+const PageHeaderTitle = styled("p", {
+  base: {
+    fontSize: theme.font.size.lg,
+    fontWeight: theme.font.weight.medium,
+  },
+});
+
+const PageHeaderDesc = styled("p", {
+  base: {
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.dimmed.base,
   },
 });
 
 const Card = styled("div", {
   base: {
-    borderRadius: 4,
-    backgroundColor: theme.color.background.surface,
-  },
-  variants: {
-    outline: {
-      true: {
-        backgroundColor: "transparent",
-        border: `1px solid ${theme.color.divider.base}`,
-      },
-    },
-  },
-});
-
-const HeaderRoot = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: `0 ${theme.space[4]}`,
-    height: 50,
-    gap: theme.space[6],
-  },
-});
-
-const HeaderTitle = styled("span", {
-  base: {
-    color: theme.color.text.primary.surface,
-    fontWeight: theme.font.weight.medium,
-  },
-  variants: {
-    outline: {
-      true: {
-        color: theme.color.text.primary.base,
-      },
-    },
-  },
-});
-
-const Children = styled("div", {
-  base: {
     ...utility.stack(0),
+    borderRadius: 4,
     padding: `0 ${theme.space[3]} 0 ${theme.space[4]}`,
-    borderTop: `1px solid ${theme.color.divider.surface}`,
+    border: `1px solid ${theme.color.divider.base}`,
     ":empty": {
       display: "none",
-    },
-  },
-  variants: {
-    outline: {
-      true: {
-        borderColor: theme.color.divider.base,
-      },
     },
   },
 });
@@ -102,26 +75,32 @@ const Child = styled("div", {
     ...utility.row(4),
     padding: `${theme.space[4]} 0`,
     alignItems: "center",
-    justifyContent: "space-between",
-    borderBottom: `1px solid ${theme.color.divider.surface}`,
+    justifyContent: "left",
+    borderBottom: `1px solid ${theme.color.divider.base}`,
     selectors: {
       "&:last-child": {
         border: "none",
       },
     },
   },
-  variants: {
-    outline: {
-      true: {
-        borderColor: theme.color.divider.base,
-      },
-    },
+});
+
+const ChildIcon = styled("div", {
+  base: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 20,
+    height: 20,
+    opacity: theme.iconOpacity,
+    color: theme.color.icon.secondary,
   },
 });
 
-const ChildColLeft = styled("div", {
+const ChildColContent = styled("div", {
   base: {
-    ...utility.stack(1.5),
+    ...utility.stack(2),
     minWidth: 0,
   },
 });
@@ -145,16 +124,8 @@ const ChildDesc = styled("p", {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
-    fontSize: theme.font.size.mono_sm,
-    fontFamily: theme.font.family.code,
-    color: theme.color.text.secondary.surface,
-  },
-  variants: {
-    outline: {
-      true: {
-        color: theme.color.text.secondary.base,
-      },
-    },
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.secondary.base,
   },
 });
 
@@ -162,15 +133,9 @@ const ChildTagline = styled("p", {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
-    fontSize: theme.font.size.sm,
-    color: theme.color.text.dimmed.surface,
-  },
-  variants: {
-    outline: {
-      true: {
-        color: theme.color.text.dimmed.base,
-      },
-    },
+    fontSize: theme.font.size.mono_sm,
+    fontFamily: theme.font.family.code,
+    color: theme.color.text.dimmed.base,
   },
 });
 
@@ -185,14 +150,7 @@ const ChildDetailLabel = styled("div", {
   base: {
     ...utility.text.label,
     fontSize: theme.font.size.mono_sm,
-    color: theme.color.text.dimmed.surface,
-  },
-  variants: {
-    outline: {
-      true: {
-        color: theme.color.text.dimmed.base,
-      },
-    },
+    color: theme.color.text.dimmed.base,
   },
 });
 
@@ -201,18 +159,11 @@ const ChildDetailValue = styled("div", {
     ...utility.text.line,
     display: "flex",
     alignItems: "baseline",
-    color: theme.color.text.secondary.surface,
+    color: theme.color.text.secondary.base,
     fontFamily: theme.font.family.code,
     fontSize: theme.font.size.mono_base,
     textAlign: "right",
     lineHeight: "normal",
-  },
-  variants: {
-    outline: {
-      true: {
-        color: theme.color.text.dimmed.base,
-      },
-    },
   },
 });
 
@@ -225,15 +176,6 @@ const ChildDetailValueUnit = styled("span", {
 const ChildDetailLive = styled("div", {
   base: {
     width: 100,
-  },
-});
-
-const ChildIcon = styled("div", {
-  base: {
-    flexShrink: 0,
-    height: 20,
-    width: 20,
-    color: theme.color.icon.dimmed,
   },
 });
 
@@ -265,6 +207,7 @@ export function List() {
               type: r.type,
               logGroup: r.outputs?.id,
               priority: 1,
+              icon: "construct",
             },
           ];
 
@@ -278,6 +221,7 @@ export function List() {
               type: r.type,
               logGroup,
               priority: 2,
+              icon: "function"
             },
           ];
         }
@@ -298,6 +242,7 @@ export function List() {
               type: r.type,
               logGroup,
               priority: 3,
+              icon: "function"
             },
           ];
         }
@@ -315,6 +260,7 @@ export function List() {
               type: r.type,
               logGroup,
               priority: 3,
+              icon: "function",
             },
           ];
         }
@@ -333,6 +279,7 @@ export function List() {
               type: r.type,
               logGroup: logGroup,
               priority: 3,
+              icon: "container",
             },
           ];
         }
@@ -351,32 +298,40 @@ export function List() {
     <Switch>
       <Match when={logs().length}>
         <Content>
+          <PageHeader>
+            <PageHeaderTitle>Logs</PageHeaderTitle>
+            <PageHeaderDesc>Service, function, and other logs</PageHeaderDesc>
+          </PageHeader>
           <Stack space="4">
             <Card>
-              <HeaderRoot>
-                <HeaderTitle>Logs</HeaderTitle>
-              </HeaderRoot>
-              <Children>
-                <For each={logs()}>
-                  {(log) => (
-                    <Child outline={false}>
-                      <ChildColLeft>
-                        <Row space="3" vertical="center">
-                          <ChildTitleLink href={log?.link}>
-                            {log?.title}
-                          </ChildTitleLink>
-                        </Row>
-                        <Row space="2">
-                          <ChildDesc outline={false}>{log?.name}</ChildDesc>
-                          <ChildTagline outline={false}>
-                            {log?.type}
-                          </ChildTagline>
-                        </Row>
-                      </ChildColLeft>
-                    </Child>
-                  )}
-                </For>
-              </Children>
+              <For each={logs()}>
+                {(log) => (
+                  <Child>
+                    <ChildIcon>
+                      <Switch>
+                        <Match when={log.icon === "construct"}>
+                          <IconConstruct width={19} height={19} />
+                        </Match>
+                        <Match when={log.icon === "function"}>
+                          <IconFunction width={17} height={17} />
+                        </Match>
+                        <Match when={log.icon === "container"}>
+                          <IconContainerRuntime width={20} height={20} />
+                        </Match>
+                      </Switch>
+                    </ChildIcon>
+                    <ChildColContent>
+                      <Row space="3" vertical="center">
+                        <ChildTitleLink href={log?.link}>{log?.title}</ChildTitleLink>
+                      </Row>
+                      <Row space="2">
+                        <ChildDesc>{log?.type}</ChildDesc>
+                        <ChildTagline>{log?.name}</ChildTagline>
+                      </Row>
+                    </ChildColContent>
+                  </Child>
+                )}
+              </For>
             </Card>
           </Stack>
         </Content>
@@ -384,7 +339,7 @@ export function List() {
       <Match when={true}>
         <Fullscreen inset="header-tabs">
           <EmptyResourcesCopy>
-            Deploy a function to get started!
+            Deploy a function or service to get started!
           </EmptyResourcesCopy>
         </Fullscreen>
       </Match>
