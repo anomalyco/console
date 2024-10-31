@@ -75,6 +75,30 @@ const Root = styled("div", {
   },
 });
 
+const PageHeader = styled("div", {
+  base: {
+    ...utility.stack(2.5),
+    flex: "0 0 auto",
+    justifyContent: "center",
+    height: 56,
+  },
+});
+
+const PageHeaderTitle = styled("p", {
+  base: {
+    fontSize: theme.font.size.lg,
+    fontWeight: theme.font.weight.medium,
+  },
+});
+
+const PageHeaderDesc = styled("p", {
+  base: {
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_sm,
+    color: theme.color.text.secondary.base,
+  },
+});
+
 const Header = styled("div", {
   base: {
     ...utility.row(0),
@@ -91,14 +115,6 @@ const Header = styled("div", {
     ":last-child": {
       borderRadius: theme.borderRadius,
     },
-  },
-});
-
-const LogGroup = styled("span", {
-  base: {
-    fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_base,
-    color: theme.color.text.secondary.base,
   },
 });
 
@@ -166,19 +182,9 @@ const LogMoreIndicator = styled("div", {
     position: "relative",
   },
   variants: {
-    shadow: {
+    border: {
       true: {
         borderTopWidth: 1,
-        ":before": {
-          content: "",
-          position: "absolute",
-          left: 0,
-          pointerEvents: "none",
-          top: "calc(-1rem - 1px)",
-          height: "1rem",
-          width: "100%",
-          background: theme.color.shadow.scroll
-        },
       },
       false: {
         borderTopWidth: 0,
@@ -427,16 +433,15 @@ export function AWS() {
   });
 
   const [scrollEnd, setScrollEnd] = createSignal(false);
-  const showSahdow = createMemo(() => rows().length > 0 && !scrollEnd());
+  // Check if the logs have loaded
+  const showBorder = createMemo(() => rows().length > 0 && !scrollEnd());
 
   return (
     <Root>
-      <Stack space="2">
-        <Text size="lg" weight="medium">
-          Logs
-        </Text>
-        <LogGroup>{description()}</LogGroup>
-      </Stack>
+      <PageHeader>
+        <PageHeaderTitle>Logs</PageHeaderTitle>
+        <PageHeaderDesc>{description()}</PageHeaderDesc>
+      </PageHeader>
       <DivSpacer space="4" />
       <Header>
         <HeaderLeft>
@@ -610,7 +615,7 @@ export function AWS() {
       <Show when={search.view === "past"}>
         <Switch>
           <Match when={pastResult.loading}>
-            <LogMoreIndicator shadow={showSahdow()}>
+            <LogMoreIndicator border={showBorder()}>
               <LogMoreIndicatorIcon>
                 <IconArrowPathSpin />
               </LogMoreIndicatorIcon>
@@ -618,7 +623,7 @@ export function AWS() {
             </LogMoreIndicator>
           </Match>
           <Match when={past.all.length}>
-            <LogMoreIndicator shadow={showSahdow()}>
+            <LogMoreIndicator border={showBorder()}>
               <Switch>
                 <Match when={pastResult.completed}>
                   <LogMoreIndicatorIcon>
