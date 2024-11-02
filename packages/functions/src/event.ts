@@ -2,6 +2,7 @@ import { withActor } from "@console/core/actor";
 import { App, Stage } from "@console/core/app";
 import { AWS } from "@console/core/aws";
 import { Issue } from "@console/core/issue";
+import { Run } from "@console/core/run";
 import { State } from "@console/core/state";
 import { bus } from "sst/aws/bus";
 
@@ -22,6 +23,9 @@ export const handler = bus.subscriber(
     Stage.Events.ResourcesUpdated,
     Issue.Events.RateLimited,
     Issue.Events.IssueDetected,
+    Run.Event.Created,
+    Run.Event.CreateFailed,
+    Run.Event.Completed,
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
@@ -152,6 +156,22 @@ export const handler = bus.subscriber(
           await Issue.Send.triggerIssue(evt.properties);
           break;
         }
+
+        case Run.Event.Created.type: {
+          await Run.orchestrate(evt.properties.stageID);
+          break;
+        }
+
+        case Run.Event.CreateFailed.type: {
+          await Run.alert(evt.properties.runID);
+          break;
+        }
+
+        case Run.Event.Completed.type: {
+          await Run.complete(evt.properties);
+          await Run.alert(evt.properties.runID);
+          break;
+        }
       }
-    }),
+    })
 );

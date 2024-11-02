@@ -32,6 +32,30 @@ declare module "sst" {
       "type": "sst.aws.Router"
       "url": string
     }
+    "AutodeployConfig": {
+      "buildImage": string
+      "buildspecBucketName": string
+      "buildspecVersion": string
+      "runnerRemoverFunctionArn": string
+      "runnerRemoverScheduleGroupName": string
+      "runnerRemoverScheduleRoleArn": string
+      "timeoutMonitorFunctionArn": string
+      "timeoutMonitorScheduleGroupName": string
+      "timeoutMonitorScheduleRoleArn": string
+      "type": "sst.sst.Linkable"
+    }
+    "AutodeployConfigParser": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "AutodeployRunnerRemover": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "AutodeployTimeoutMonitor": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "BotpoisonSecretKey": {
       "type": "sst.sst.Secret"
       "value": string
@@ -68,6 +92,10 @@ declare module "sst" {
       "value": string
     }
     "GithubPrivateKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "GithubWebhookSecret": {
       "type": "sst.sst.Secret"
       "value": string
     }

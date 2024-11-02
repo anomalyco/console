@@ -1,66 +1,154 @@
 import fs from "fs";
 import { createHash } from "crypto";
 import { storage, storageAccess } from "./storage";
-import { ALL_REGIONS } from "./util";
+import { database } from "./planetscale";
+import { secret } from "./secret";
+import { bus } from "./bus";
 
-const buildspecPath = "packages/build/buildspec/index.mjs";
-const version = createHash("sha256")
-  .update(fs.readFileSync(buildspecPath))
-  .digest("hex");
-new aws.s3.BucketObjectv2(
-  "AutodeployBuildspec",
-  {
-    bucket: storage.name,
-    key: `buildspec/${version}/index.mjs`,
-    acl: "public-read",
-  },
-  {
-    dependsOn: [storageAccess],
-  },
-);
+const { bucket, version } = createBuildScript();
+const repo = createEcrRepo();
+const monitor = createBuildTimeoutMonitor();
+const remover = createRunnerRemover();
+createConfigParser();
 
-if ($app.stage === "production" || $app.stage === "dev") {
-  const repo = new aws.ecr.Repository("AutodeployRepository", {
-    name: `${$app.name}-${$app.stage}-images`,
+export const autodeploy = new sst.Linkable("AutodeployConfig", {
+  properties: {
+    buildImage: repo.repositoryUri,
+    buildspecBucketName: bucket,
+    buildspecVersion: version,
+    timeoutMonitorScheduleGroupName: monitor.scheduleGroup.name,
+    timeoutMonitorScheduleRoleArn: monitor.role.arn,
+    timeoutMonitorFunctionArn: monitor.handler.arn,
+    runnerRemoverScheduleGroupName: remover.scheduleGroup.name,
+    runnerRemoverScheduleRoleArn: remover.role.arn,
+    runnerRemoverFunctionArn: remover.handler.arn,
+  },
+  include: [
+    sst.aws.permission({
+      actions: ["scheduler:CreateSchedule"],
+      resources: ["*"],
+    }),
+  ],
+});
+
+function createBuildScript() {
+  const bucket = storage.name;
+  const buildspecPath = "packages/build/buildspec/index.mjs";
+  const version = createHash("sha256")
+    .update(fs.readFileSync(buildspecPath))
+    .digest("hex");
+  new aws.s3.BucketObjectv2(
+    "AutodeployBuildspec",
+    {
+      bucket,
+      key: `buildspec/${version}/index.mjs`,
+      acl: "public-read",
+    },
+    {
+      dependsOn: [storageAccess],
+    }
+  );
+  return { bucket, version };
+}
+
+function createEcrRepo() {
+  const repo = new aws.ecrpublic.Repository("AutodeployRepository", {
+    repositoryName: `${$app.name}-${$app.stage}-images`,
+    forceDestroy: true,
   });
-  // new aws.ecr.RepositoryPolicy("AutodeployRepositoryPolicy", {
-  //   repository: repo.name,
-  //   policy: JSON.stringify({
-  //     Version: "2012-10-17",
-  //     Statement: [
-  //       {
-  //         Sid: "AllowPull",
-  //         Effect: "Allow",
-  //         Principal: {
-  //           AWS: "*",
-  //         },
-  //         Action: ["ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage"],
-  //         Resource: [repo.arn],
-  //       },
-  //     ],
-  //   }),
-  // });
-  new aws.ecr.ReplicationConfiguration("AutodeployReplication", {
-    replicationConfiguration: {
-      rules: [
+  new aws.ecrpublic.RepositoryPolicy("AutodeployRepositoryPolicy", {
+    repositoryName: repo.repositoryName,
+    policy: aws.iam.getPolicyDocumentOutput({
+      statements: [
         {
-          repositoryFilters: [
+          sid: "AllowPull",
+          principals: [
             {
-              filterType: "PREFIX_MATCH",
-              filter: repo.name,
+              type: "*",
+              identifiers: ["*"],
             },
           ],
-          destinations: ALL_REGIONS.apply((regions) =>
-            regions
-              .filter((region) => region !== "us-east-1")
-              .filter((region) => !region.startsWith("ap-"))
-              .map((region) => ({
-                region,
-                registryId: repo.registryId,
-              })),
-          ),
+          actions: [
+            "ecr-public:BatchCheckLayerAvailability",
+            "ecr-public:DescribeImages",
+            "ecr-public:DescribeRepositories",
+          ],
         },
       ],
+    }).json,
+  });
+
+  return repo;
+}
+
+function createBuildTimeoutMonitor() {
+  const scheduleGroup = new aws.scheduler.ScheduleGroup(
+    "AutodeployTimeoutMonitorScheduleGroup",
+    { name: `${$app.name}-${$app.stage}-run-timeout-monitor` }
+  );
+  const handler = new sst.aws.Function("AutodeployTimeoutMonitor", {
+    handler: "packages/functions/src/run/monitor.handler",
+    link: [database, bus, secret.GithubAppID, secret.GithubPrivateKey],
+    permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
+  });
+  const role = new aws.iam.Role("AutodeployTimeoutMonitorRole", {
+    assumeRolePolicy: aws.iam.getPolicyDocumentOutput({
+      statements: [
+        {
+          actions: ["sts:AssumeRole"],
+          principals: [
+            {
+              type: "Service",
+              identifiers: ["scheduler.amazonaws.com"],
+            },
+          ],
+        },
+      ],
+    }).json,
+    inlinePolicies: [
+      {
+        policy: aws.iam.getPolicyDocumentOutput({
+          statements: [
+            {
+              actions: ["lambda:InvokeFunction"],
+              resources: [handler.arn],
+            },
+          ],
+        }).json,
+      },
+    ],
+  });
+  return { scheduleGroup, handler, role };
+}
+
+function createRunnerRemover() {
+  const scheduleGroup = new aws.scheduler.ScheduleGroup(
+    "AutodeployRunnerRemoverScheduleGroup",
+    { name: `${$app.name}-${$app.stage}-runner-remover` }
+  );
+  const handler = new sst.aws.Function("AutodeployRunnerRemover", {
+    handler: "packages/functions/src/run/runner-remover.handler",
+    link: [database],
+    environment: {
+      RUNNER_REMOVER_SCHEDULE_GROUP_NAME: scheduleGroup.name!,
+      RUNNER_REMOVER_SCHEDULE_ROLE_ARN: monitor.role.arn,
+    },
+    permissions: [
+      {
+        actions: ["sts:*", "iot:*", "scheduler:CreateSchedule", "iam:PassRole"],
+        resources: ["*"],
+      },
+    ],
+  });
+  return { scheduleGroup, handler, role: monitor.role };
+}
+
+function createConfigParser() {
+  return new sst.aws.Function("AutodeployConfigParser", {
+    handler: "packages/functions/src/run/config-parser.handler",
+    timeout: "1 minute",
+    nodejs: {
+      install: ["esbuild", "@esbuild/linux-arm64"],
     },
   });
 }

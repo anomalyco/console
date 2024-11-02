@@ -1,17 +1,81 @@
-import path from "path";
-import { Github } from "@console/core/git/github";
-import { Run } from "@console/core/run";
-import { App, Octokit } from "octokit";
-import { ApiHandler, useBody, useHeader } from "sst/node/api";
-import { Config } from "sst/node/config";
+import { Hono } from "hono";
+import { App } from "octokit";
+import { HTTPException } from "hono/http-exception";
 import { withActor } from "@console/core/actor";
-import { Trigger } from "@console/core/run/run.sql";
+import { Github } from "@console/core/git/github";
+import { Resource } from "sst";
+import { Run } from "@console/core/run";
+
+export const GithubRoute = new Hono();
+
+GithubRoute.get("/installed", async (c) => {
+  const workspaceID = c.req.query("state");
+  const installationID = parseInt(c.req.query("installation_id") ?? "");
+
+  if (!installationID)
+    throw new HTTPException(401, { message: "Unauthorized" });
+
+  // User has authorized the app
+  if (workspaceID) {
+    await withActor(
+      {
+        type: "system",
+        properties: {
+          workspaceID,
+        },
+      },
+      async () => {
+        await Github.connect(installationID);
+        await Github.syncRepos(installationID);
+      }
+    );
+  }
+
+  // No workspaceID when the installation is updated from GitHub console
+  if (!workspaceID) {
+    await withActor({ type: "public", properties: {} }, async () => {
+      await Github.syncRepos(installationID);
+    });
+  }
+
+  return c.html(`
+<html>
+  <script>
+    if (window.opener) {
+      window.opener.postMessage("github.success", "*")
+      window.close()
+    }
+  </script>`);
+});
+
+GithubRoute.get("/connect", async (c) => {
+  const workspaceID = c.req.query("workspaceID");
+  const appName =
+    Resource.App.stage === "production"
+      ? "sst-console"
+      : `sst-console-${Resource.App.stage}`;
+  return c.redirect(
+    `https://github.com/apps/${appName}/installations/new?state=${workspaceID}`
+  );
+});
+
+GithubRoute.post("/webhook", async (c) => {
+  console.log("!!!!! WEBHOOK", c.req.header("x-github-event"));
+  const ret = await app.webhooks.verifyAndReceive({
+    id: c.req.header("x-github-delivery")!,
+    name: c.req.header("x-github-event") as any,
+    signature: c.req.header("x-hub-signature-256")!,
+    payload: await c.req.text(),
+  });
+
+  return c.text("ok");
+});
 
 const app = new App({
-  appId: Config.GITHUB_APP_ID,
-  privateKey: Config.GITHUB_PRIVATE_KEY,
+  appId: Resource.GithubAppID.value,
+  privateKey: Resource.GithubPrivateKey.value,
   webhooks: {
-    secret: Config.GITHUB_WEBHOOK_SECRET,
+    secret: Resource.GithubWebhookSecret.value,
   },
 });
 app.webhooks.on("installation.deleted", async (event) => {
@@ -58,6 +122,7 @@ app.webhooks.on(
 );
 
 app.webhooks.on("push", async (event) => {
+  console.log("!!!!! PUSH", event.payload);
   const owner = event.payload.repository.owner!.login;
   const repo = event.payload.repository.name;
   const isTag = event.payload.ref.startsWith("refs/tags/");
@@ -102,19 +167,4 @@ app.webhooks.on("push", async (event) => {
       },
     },
   });
-});
-
-export const handler = ApiHandler(async (event) => {
-  const ret = await app.webhooks.verifyAndReceive({
-    id: useHeader("x-github-delivery")!,
-    name: useHeader("x-github-event") as any,
-    signature: useHeader("x-hub-signature-256")!,
-    payload: useBody()!,
-  });
-
-  //console.log(useHeader("x-github-event"), event);
-  return {
-    statusCode: 200,
-    body: "ok",
-  };
 });
