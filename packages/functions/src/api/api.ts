@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { ReplicacheRoute } from "./replicache";
 import { auth } from "./auth";
 import { WebhookRoute } from "./webhook";
+import { GithubRoute } from "./github";
 import { BillingRoute } from "./billing";
 import { handle } from "hono/aws-lambda";
 import { AccountRoute } from "./account";
@@ -27,7 +28,7 @@ export const app = new Hono()
           code: error.code,
           message: error.message,
         },
-        400,
+        400
       );
     }
     console.error(error);
@@ -39,7 +40,7 @@ export const app = new Hono()
             code: e?.code,
             message: e?.message,
           },
-          400,
+          400
         );
       }
     }
@@ -48,11 +49,12 @@ export const app = new Hono()
         code: "internal",
         message: "Internal server error",
       },
-      500,
+      500
     );
   })
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
+  .route("/github", GithubRoute)
   .route("/billing", BillingRoute)
   .route("/account", AccountRoute)
   .route("/debug", DebugRoute)

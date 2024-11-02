@@ -1,14 +1,27 @@
 import { auth } from "./auth";
+import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
 import { domain } from "./dns";
 import { email } from "./email";
 import { database } from "./planetscale";
+import { secret } from "./secret";
 import { storage } from "./storage";
 
 const api = new sst.aws.Function("Api", {
   handler: "packages/functions/src/api/api.handler",
+  timeout: "2 minutes",
   permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
-  link: [storage, auth, database, bus, email],
+  link: [
+    storage,
+    auth,
+    database,
+    bus,
+    email,
+    autodeploy,
+    secret.GithubAppID,
+    secret.GithubPrivateKey,
+    secret.GithubWebhookSecret,
+  ],
   nodejs: {
     install: ["source-map"],
   },
