@@ -48,7 +48,7 @@ export const handler = async (evt: Payload) => {
         stageHint!,
         appHint!,
         evt.account,
-        region,
+        region
       );
       for (const row of stages) {
         await withActor(
@@ -87,9 +87,9 @@ export const handler = async (evt: Payload) => {
                     .split("/")
                     .at(-1)!
                     .split(".")[0]!,
-                }),
+                })
               );
-            }),
+            })
         );
       }
     });
@@ -114,7 +114,7 @@ export const handler = async (evt: Payload) => {
           bus.publish(Resource.Bus, State.Event.SnapshotCreated, {
             stageID: row.stageID!,
             updateID,
-          }),
+          })
       );
     }
     return;
@@ -138,7 +138,7 @@ export const handler = async (evt: Payload) => {
         () =>
           bus.publish(Resource.Bus, State.Event.StateUpdated, {
             stageID: row.stageID!,
-          }),
+          })
       );
     }
     return;
@@ -155,7 +155,7 @@ export const handler = async (evt: Payload) => {
           stageHint!,
           appHint!,
           evt.account,
-          region,
+          region
         );
         for (const row of stages) {
           await withActor(
@@ -193,9 +193,9 @@ export const handler = async (evt: Payload) => {
                     stageID: row.stageID!,
                     // @ts-expect-error
                     versionID: evt.detail.object["version-id"]!,
-                  }),
+                  })
                 );
-              }),
+              })
           );
         }
       });
@@ -220,7 +220,7 @@ export const handler = async (evt: Payload) => {
           bus.publish(Resource.Bus, State.Event.SummaryCreated, {
             stageID: row.stageID!,
             updateID: updateID!,
-          }),
+          })
       );
     }
     return;
@@ -246,7 +246,7 @@ export const handler = async (evt: Payload) => {
           bus.publish(Resource.Bus, State.Event.HistoryCreated, {
             stageID: row.stageID!,
             key: evt.detail.object.key,
-          }),
+          })
       );
     }
     return;
@@ -290,7 +290,7 @@ export const handler = async (evt: Payload) => {
               await createTransactionEffect(() =>
                 bus.publish(Resource.Bus, Stage.Events.Updated, {
                   stageID: row.stageID!,
-                }),
+                })
               );
               return;
             }
@@ -308,7 +308,7 @@ export const handler = async (evt: Payload) => {
               name: stageName!,
               awsAccountID: row.id,
             });
-          }),
+          })
       );
       console.log("done", row);
     }
@@ -319,7 +319,7 @@ async function findStages(
   stageName: string,
   appName: string,
   account: string,
-  region: string,
+  region: string
 ) {
   const rows = await useTransaction((tx) => {
     return tx
@@ -332,18 +332,15 @@ async function findStages(
       .from(awsAccount)
       .leftJoin(
         app,
-        and(
-          eq(app.name, appName!),
-          eq(app.workspaceID, awsAccount.workspaceID),
-        ),
+        and(eq(app.name, appName!), eq(app.workspaceID, awsAccount.workspaceID))
       )
       .leftJoin(
         stage,
         and(
           eq(stage.name, stageName!),
           eq(stage.appID, app.id),
-          eq(stage.region, region),
-        ),
+          eq(stage.region, region)
+        )
       )
       .where(and(eq(awsAccount.accountID, account)))
       .execute();

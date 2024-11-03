@@ -9,8 +9,12 @@ import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { GetRoleCommand, IAMClient } from "@aws-sdk/client-iam";
 import {
   EventBridgeClient,
+  DescribeRuleCommand,
   PutRuleCommand,
   PutTargetsCommand,
+  DeleteRuleCommand,
+  RemoveTargetsCommand,
+  ResourceNotFoundException,
 } from "@aws-sdk/client-eventbridge";
 import { zod } from "../util/zod";
 import {
@@ -40,7 +44,6 @@ import { RETRY_STRATEGY } from "../util/aws";
 import { AWS, Credentials } from "../aws";
 import { AppRepo } from "../app/repo";
 import { Github } from "../git/github";
-import { LambdaRunner } from "./lambda-runner";
 import { CodebuildRunner } from "./codebuild-runner";
 import { Replicache } from "../replicache";
 import { minimatch } from "minimatch";
@@ -294,8 +297,7 @@ export module Run {
       const lambda = new LambdaClient({ retryStrategy: RETRY_STRATEGY });
       const ret = await lambda.send(
         new InvokeCommand({
-          // TODO: set function name
-          FunctionName: "",
+          FunctionName: SSTResource.AutodeployConfig.configParserFunctionArn,
           InvocationType: "RequestResponse",
           Payload: JSON.stringify({
             content: input.content,
@@ -616,21 +618,18 @@ export module Run {
       const cloneUrl = await Github.getCloneUrl(gitRepo);
 
       // Run runner
-      const Runner = useRunner(runner.engine);
       const timeoutInMinutes =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
-        Runner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-      await Runner.invoke({
+        CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
+      await CodebuildRunner.invoke({
         credentials: awsConfig.credentials,
         region: runner.region,
         resource: runner.resource,
         payload: {
           engine: runner.engine,
-          // @ts-expect-error
           buildspec: {
-            // TODO: fill these in
-            // version: Config.BUILDSPEC_VERSION,
-            // bucket: Bucket.Buildspec.bucketName,
+            version: SSTResource.AutodeployConfig.buildspecVersion,
+            bucket: SSTResource.AutodeployConfig.buildspecBucketName,
           },
           runID: run.id,
           workspaceID: useWorkspace(),
@@ -685,10 +684,9 @@ export module Run {
     }
 
     // Schedule timeout monitor
-    const Runner = useRunner(runner.engine);
     const timeoutInMinutes =
       timeoutToMinutes(run.config.target?.runner?.timeout) ??
-      Runner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
+      CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
     const scheduler = new SchedulerClient({ retryStrategy: RETRY_STRATEGY });
     await scheduler.send(
       new CreateScheduleCommand({
@@ -719,8 +717,9 @@ export module Run {
     z.object({
       runID: z.string().cuid2(),
       error: z.string().min(1).optional(),
+      ignoreIfCompleted: z.boolean().optional(),
     }),
-    async ({ runID, error }) => {
+    async ({ runID, error, ignoreIfCompleted }) => {
       const run = await useTransaction((tx) =>
         tx
           .select()
@@ -736,6 +735,7 @@ export module Run {
           .then((x) => x[0])
       );
       if (!run) return;
+      if (run.timeCompleted && ignoreIfCompleted) return;
 
       await createTransaction(async (tx) => {
         await tx
@@ -785,20 +785,11 @@ export module Run {
           .update(runTable)
           .set({
             timeStarted: new Date(),
-            log:
-              input.engine === "lambda"
-                ? {
-                    engine: "lambda",
-                    requestID: input.awsRequestId!,
-                    logGroup: input.logGroup,
-                    logStream: input.logStream,
-                    timestamp: input.timestamp,
-                  }
-                : {
-                    engine: "codebuild",
-                    logGroup: input.logGroup,
-                    logStream: input.logStream,
-                  },
+            log: {
+              engine: "codebuild",
+              logGroup: input.logGroup,
+              logStream: input.logStream,
+            },
           })
           .where(
             and(
@@ -827,15 +818,6 @@ export module Run {
     );
   });
 
-  const useRunner = zod(
-    z.enum(Engine),
-    (engine) =>
-      ({
-        lambda: LambdaRunner,
-        codebuild: CodebuildRunner,
-      }[engine])
-  );
-
   export const lookupRunner = zod(
     z.object({
       region: z.string().min(1),
@@ -845,10 +827,10 @@ export module Run {
     }),
     async (input) => {
       const engine = input.runnerConfig?.engine ?? DEFAULT_ENGINE;
-      const Runner = useRunner(engine);
       const architecture =
         input.runnerConfig?.architecture ?? DEFAULT_ARCHITECTURE;
-      const image = input.runnerConfig?.image ?? Runner.getImage(architecture);
+      const image =
+        input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const type = `${engine}-${architecture}-${image}-${compute}`;
       return await useTransaction((tx) =>
@@ -885,10 +867,10 @@ export module Run {
       const region = input.region;
       const credentials = input.credentials;
       const engine = input.runnerConfig?.engine ?? DEFAULT_ENGINE;
-      const Runner = useRunner(engine);
       const architecture =
         input.runnerConfig?.architecture ?? DEFAULT_ARCHITECTURE;
-      const image = input.runnerConfig?.image ?? Runner.getImage(architecture);
+      const image =
+        input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const type = `${engine}-${architecture}-${image}-${compute}`;
       const runnerSuffix =
@@ -919,7 +901,7 @@ export module Run {
         );
 
         // Create resources
-        resource = await Runner.createResource({
+        resource = await CodebuildRunner.createResource({
           credentials,
           awsAccountExternalID,
           region,
@@ -929,53 +911,119 @@ export module Run {
           compute,
         });
 
-        // Create event target in user account to forward external events
+        // Create bus target to forward two types of events to SST Console
+        // - "sst.external" events: events fired from within the runner
+        // - "aws.codebuild" events: events fired by AWS CodeBuild
+        const suffix =
+          SSTResource.App.stage !== "production"
+            ? "-" + SSTResource.App.stage
+            : "";
+        let roleArn: string | undefined;
+        const useRoleArn = async () => {
+          if (roleArn) return roleArn;
+          const iam = new IAMClient({ credentials });
+          const roleRet = await iam.send(
+            new GetRoleCommand({
+              RoleName: "SSTConsolePublisher" + suffix,
+            })
+          );
+          roleArn = roleRet.Role?.Arn!;
+          return roleArn;
+        };
         const eb = new EventBridgeClient({
           credentials,
           region,
           retryStrategy: RETRY_STRATEGY,
         });
-        const suffix =
-          SSTResource.App.stage !== "production"
-            ? "-" + SSTResource.App.stage
-            : "";
-        const ruleName = "SSTConsoleExternal" + suffix;
-        try {
+
+        // Create "sst.external" forwarder
+        await (async () => {
+          const ruleName = "SSTConsoleExternal" + suffix;
+          const ruleSource = "sst.external";
+          const targetId = "SSTConsoleExternal";
+          try {
+            const rule = await eb.send(
+              new DescribeRuleCommand({ Name: ruleName })
+            );
+            const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
+            if (eventPattern.source?.includes(ruleSource)) return;
+            await eb.send(
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
+            );
+            await eb.send(new DeleteRuleCommand({ Name: ruleName }));
+          } catch (e) {
+            if (!(e instanceof ResourceNotFoundException)) throw e;
+          }
           await eb.send(
             new PutRuleCommand({
               Name: ruleName,
               State: "ENABLED",
-              EventPattern: JSON.stringify({
-                source: ["sst.external"],
-              }),
+              EventPattern: JSON.stringify({ source: [ruleSource] }),
             })
           );
-
-          const iam = new IAMClient({ credentials });
-          const roleName = "SSTConsolePublisher" + suffix;
-          const roleRet = await iam.send(
-            new GetRoleCommand({
-              RoleName: roleName,
-            })
-          );
-
           await eb.send(
             new PutTargetsCommand({
               Rule: ruleName,
               Targets: [
                 {
                   Arn: SSTResource.Bus.arn,
-                  Id: "SSTConsoleExternal",
-                  RoleArn: roleRet.Role?.Arn!,
+                  Id: targetId,
+                  RoleArn: await useRoleArn(),
                 },
               ],
             })
           );
-        } catch (e: any) {
-          if (e.name !== "ResourceConflictException") {
-            throw e;
+        })();
+
+        // Create "aws.codebuild" forwarder
+        await (async () => {
+          const ruleName = "SSTConsoleCodebuild" + suffix;
+          const ruleSource = "aws.codebuild";
+          const ruleDetailType = "CodeBuild Build State Change";
+          const targetId = "SSTConsoleCodebuild";
+          try {
+            const rule = await eb.send(
+              new DescribeRuleCommand({ Name: ruleName })
+            );
+            const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
+            if (
+              eventPattern.source?.includes(ruleSource) &&
+              eventPattern["detail-type"]?.includes(ruleDetailType)
+            )
+              return;
+            await eb.send(
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
+            );
+            await eb.send(new DeleteRuleCommand({ Name: ruleName }));
+          } catch (e) {
+            if (!(e instanceof ResourceNotFoundException)) throw e;
           }
-        }
+          await eb.send(
+            new PutRuleCommand({
+              Name: ruleName,
+              State: "ENABLED",
+              EventPattern: JSON.stringify({
+                source: [ruleSource],
+                "detail-type": [ruleDetailType],
+                detail: {
+                  "build-status": ["FAILED"],
+                },
+              }),
+            })
+          );
+          await eb.send(
+            new PutTargetsCommand({
+              Rule: ruleName,
+              Targets: [
+                {
+                  Arn: SSTResource.Bus.arn,
+                  Id: targetId,
+                  RoleArn: await useRoleArn(),
+                },
+              ],
+            })
+          );
+        })();
 
         // Store resource
         await useTransaction((tx) =>
@@ -1019,11 +1067,10 @@ export module Run {
     }),
     async (input) => {
       const { runner, credentials } = input;
-      const Runner = useRunner(runner.engine);
 
       // Remove resources
       if (runner.resource) {
-        await Runner.removeResource({
+        await CodebuildRunner.removeResource({
           credentials,
           region: runner.region,
           resource: runner.resource,

@@ -34,10 +34,10 @@ export module CodebuildRunner {
   export const createResource = zod(
     z.object({
       credentials: z.custom<Credentials>(),
-      awsAccountExternalID: z.string().nonempty(),
-      region: z.string().nonempty(),
-      suffix: z.string().nonempty(),
-      image: z.string().nonempty(),
+      awsAccountExternalID: z.string().min(1),
+      region: z.string().min(1),
+      suffix: z.string().min(1),
+      image: z.string().min(1),
       architecture: z.enum(Architecture),
       compute: z.enum(Compute),
     }),

@@ -36,6 +36,7 @@ declare module "sst" {
       "buildImage": string
       "buildspecBucketName": string
       "buildspecVersion": string
+      "configParserFunctionArn": string
       "runnerRemoverFunctionArn": string
       "runnerRemoverScheduleGroupName": string
       "runnerRemoverScheduleRoleArn": string
