@@ -17,13 +17,6 @@ import { awsAccount } from "../aws/aws.sql";
 
 export const Resource = z.discriminatedUnion("engine", [
   z.object({
-    engine: z.literal("lambda"),
-    properties: z.object({
-      role: z.string().min(1),
-      function: z.string().min(1),
-    }),
-  }),
-  z.object({
     engine: z.literal("codebuild"),
     properties: z.object({
       role: z.string().min(1),
@@ -32,7 +25,7 @@ export const Resource = z.discriminatedUnion("engine", [
   }),
 ]);
 export type Resource = z.infer<typeof Resource>;
-export const Engine = ["lambda", "codebuild"] as const;
+export const Engine = ["codebuild"] as const;
 export const Architecture = ["x86_64", "arm64"] as const;
 export const Compute = ["small", "medium", "large", "xlarge"] as const;
 type RunErrors = {
@@ -59,13 +52,6 @@ export type RunError = {
 }[keyof RunErrors];
 
 export const Log = z.discriminatedUnion("engine", [
-  z.object({
-    engine: z.literal("lambda"),
-    requestID: z.string().min(1),
-    logGroup: z.string().min(1),
-    logStream: z.string().min(1),
-    timestamp: z.number().int(),
-  }),
   z.object({
     engine: z.literal("codebuild"),
     logGroup: z.string().min(1),

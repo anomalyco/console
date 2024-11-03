@@ -36,3 +36,55 @@ export const handler = bus.subscriber(
     );
   }
 );
+
+interface Events {
+  "CodeBuild Build State Change": {
+    "build-status": string;
+    "project-name": string;
+    "additional-information": {
+      environment: {
+        "environment-variables": {
+          name: string;
+          value: string;
+        }[];
+      };
+    };
+  };
+}
+
+type Payload = {
+  [key in keyof Events]: {
+    account: string;
+    region: string;
+    "detail-type": key;
+    detail: Events[key];
+  };
+}[keyof Events];
+
+export const codebuildHandler = async (evt: Payload) => {
+  console.log(evt);
+  const region = evt.region;
+
+  if (evt.detail["build-status"] !== "FAILED") return;
+  if (!evt.detail["project-name"].startsWith("sst-runner-")) return;
+
+  const runnerEnv = evt.detail["additional-information"]["environment"][
+    "environment-variables"
+  ].find((v) => v.name === "SST_RUNNER_EVENT");
+  if (!runnerEnv) return;
+
+  const runnerEvent = JSON.parse(runnerEnv.value);
+  withActor(
+    {
+      type: "system",
+      properties: { workspaceID: runnerEvent.workspaceID },
+    },
+    async () => {
+      await Run.complete({
+        runID: runnerEvent.runID,
+        error: "Runner failed",
+        ignoreIfCompleted: true,
+      });
+    }
+  );
+};

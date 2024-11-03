@@ -60,7 +60,6 @@ GithubRoute.get("/connect", async (c) => {
 });
 
 GithubRoute.post("/webhook", async (c) => {
-  console.log("!!!!! WEBHOOK", c.req.header("x-github-event"));
   const ret = await app.webhooks.verifyAndReceive({
     id: c.req.header("x-github-delivery")!,
     name: c.req.header("x-github-event") as any,
@@ -122,7 +121,6 @@ app.webhooks.on(
 );
 
 app.webhooks.on("push", async (event) => {
-  console.log("!!!!! PUSH", event.payload);
   const owner = event.payload.repository.owner!.login;
   const repo = event.payload.repository.name;
   const isTag = event.payload.ref.startsWith("refs/tags/");

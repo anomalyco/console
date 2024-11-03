@@ -9,7 +9,7 @@ const { bucket, version } = createBuildScript();
 const repo = createEcrRepo();
 const monitor = createBuildTimeoutMonitor();
 const remover = createRunnerRemover();
-createConfigParser();
+const parser = createConfigParser();
 
 export const autodeploy = new sst.Linkable("AutodeployConfig", {
   properties: {
@@ -22,27 +22,31 @@ export const autodeploy = new sst.Linkable("AutodeployConfig", {
     runnerRemoverScheduleGroupName: remover.scheduleGroup.name,
     runnerRemoverScheduleRoleArn: remover.role.arn,
     runnerRemoverFunctionArn: remover.handler.arn,
+    configParserFunctionArn: parser.arn,
   },
   include: [
     sst.aws.permission({
       actions: ["scheduler:CreateSchedule"],
       resources: ["*"],
     }),
+    sst.aws.permission({
+      actions: ["lambda:InvokeFunction"],
+      resources: [parser.arn],
+    }),
   ],
 });
 
 function createBuildScript() {
   const bucket = storage.name;
-  const buildspecPath = "packages/build/buildspec/index.mjs";
-  const version = createHash("sha256")
-    .update(fs.readFileSync(buildspecPath))
-    .digest("hex");
+  const content = fs.readFileSync("packages/build/buildspec/index.mjs", "utf8");
+  const version = createHash("sha256").update(content).digest("hex");
   new aws.s3.BucketObjectv2(
     "AutodeployBuildspec",
     {
       bucket,
       key: `buildspec/${version}/index.mjs`,
       acl: "public-read",
+      content,
     },
     {
       dependsOn: [storageAccess],

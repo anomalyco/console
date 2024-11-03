@@ -3,6 +3,7 @@ import { bus } from "./bus";
 import { email } from "./email";
 import { issues } from "./issues";
 import { database } from "./planetscale";
+import { secret } from "./secret";
 
 bus.subscribe(
   "EventSubscriber",
@@ -12,10 +13,21 @@ bus.subscribe(
       { actions: ["sts:*", "logs:*", "ses:*", "iot:*"], resources: ["*"] },
       {
         actions: ["iam:PassRole"],
-        resources: [issues.properties.role],
+        resources: [
+          issues.properties.role,
+          autodeploy.properties.timeoutMonitorScheduleRoleArn,
+        ],
       },
     ],
-    link: [database, bus, issues, email, autodeploy],
+    link: [
+      database,
+      bus,
+      issues,
+      email,
+      autodeploy,
+      secret.GithubAppID,
+      secret.GithubPrivateKey,
+    ],
     timeout: "5 minute",
   },
   {
@@ -48,6 +60,21 @@ bus.subscribe(
   {
     pattern: {
       source: ["sst.external"],
+    },
+  }
+);
+
+bus.subscribe(
+  "RunnerCodeBuildSubscriber",
+  {
+    handler:
+      "packages/functions/src/events/runner-updated-external.codebuildHandler",
+    link: [bus, database],
+    permissions: [{ actions: ["iot:*"], resources: ["*"] }],
+  },
+  {
+    pattern: {
+      source: ["aws.codebuild"],
     },
   }
 );
