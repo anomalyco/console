@@ -129,16 +129,25 @@ export async function handler(event, context) {
   }
 
   async function installSst() {
-    process.chdir(APP_PATH);
+    // Check if SST is installed locally
+    let searchPath = path.resolve(APP_PATH);
+    while (true) {
+      const sstPath = path.join(searchPath, "node_modules/.bin/sst");
+      if (fs.existsSync(sstPath)) {
+        console.log("Using locally installed SST binary at", sstPath);
+        return sstPath;
+      }
+      if (searchPath === path.resolve(REPO_PATH)) break;
+      searchPath = path.resolve(searchPath, "..");
+    }
 
-    // SST installed locally
-    if (fs.existsSync("node_modules/.bin/sst")) return;
-
+    // Install SST globally
     const { stage } = event;
     const semverPattern = sstConfig.app({ stage }).version;
-    console.log("Required SST version:", semverPattern ?? "Latest");
+    console.log("Installing SST globally, version:", semverPattern ?? "Latest");
 
-    shell(`npm -g install sst@${semverPattern ?? "ion"}`);
+    shell(`npm -g install sst@${semverPattern ?? "latest"}`);
+    return "sst";
   }
 
   async function runWorkflow() {
@@ -157,8 +166,10 @@ export async function handler(event, context) {
       sstConfig.console?.autodeploy?.workflow ??
       (async (context) => {
         install();
-        await installSst();
-        context.trigger.action === "removed" ? remove() : deploy();
+        const sstPath = await installSst();
+        context.trigger.action === "removed"
+          ? remove(sstPath)
+          : deploy(sstPath);
       });
 
     await workflow(context);
@@ -183,14 +194,14 @@ export async function handler(event, context) {
     else if (findUp("package.json")) shell("npm install");
   }
 
-  function deploy() {
+  /**
+   * @param {string} sstPath
+   */
+  function deploy(sstPath) {
     process.chdir(APP_PATH);
 
     const { stage, credentials, runID } = event;
-    const binary = fs.existsSync("node_modules/.bin/sst")
-      ? "node_modules/.bin/sst"
-      : "sst";
-    shell(`${binary} deploy --stage ${stage}`, {
+    shell(`${sstPath} deploy --stage ${stage}`, {
       env: {
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,
         AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
@@ -201,14 +212,14 @@ export async function handler(event, context) {
     });
   }
 
-  function remove() {
+  /**
+   * @param {string} sstPath
+   */
+  function remove(sstPath) {
     process.chdir(APP_PATH);
 
     const { stage, credentials, runID } = event;
-    const binary = fs.existsSync("node_modules/.bin/sst")
-      ? "node_modules/.bin/sst"
-      : "sst";
-    shell(`${binary} remove --stage ${stage}`, {
+    shell(`${sstPath} remove --stage ${stage}`, {
       env: {
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,
         AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
