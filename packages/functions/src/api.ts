@@ -37,9 +37,9 @@ export const withApiAuth = <T>(cb: () => Promise<T>) => {
               userID: user.id,
             },
           },
-          cb
+          cb,
         );
-      }
+      },
     );
     return result;
   };

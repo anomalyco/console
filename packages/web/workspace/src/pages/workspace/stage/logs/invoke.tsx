@@ -177,8 +177,6 @@ interface Props {
 
 export function Invoke(props: Props) {
   const bar = useCommandBar();
-  const ctx = useStageContext();
-
   let invokeTextArea!: HTMLTextAreaElement;
   let saveControl!: DialogPayloadSaveControl;
   let manageControl!: DialogPayloadManageControl;

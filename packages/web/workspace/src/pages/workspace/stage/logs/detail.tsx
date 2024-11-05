@@ -1,3 +1,4 @@
+const profileID = "foo";
 import { useReplicache } from "$/providers/replicache";
 import { Dropdown } from "$/ui/dropdown";
 import {
@@ -51,7 +52,6 @@ import {
   KeyboardNavigator,
   createKeyboardNavigator,
 } from "$/common/keyboard-navigator";
-import { profileID } from "$/providers/realtime";
 import { Tag } from "$/ui/tag";
 
 const LogSwitchButton = styled("button", {

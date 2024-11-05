@@ -4,6 +4,7 @@ import { email } from "./email";
 import { issues } from "./issues";
 import { database } from "./planetscale";
 import { secret } from "./secret";
+import { websocket } from "./websocket";
 
 bus.subscribe(
   "EventSubscriber",
@@ -30,6 +31,7 @@ bus.subscribe(
       autodeploy,
       secret.GithubAppID,
       secret.GithubPrivateKey,
+      websocket,
     ],
     timeout: "5 minute",
   },
@@ -44,7 +46,7 @@ bus.subscribe(
   "StackUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/stack-updated-external.handler",
-    link: [bus, database],
+    link: [bus, database, websocket],
   },
   {
     pattern: {
@@ -57,7 +59,7 @@ bus.subscribe(
   "RunnerUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/runner-updated-external.handler",
-    link: [bus, database],
+    link: [bus, database, websocket],
     permissions: [{ actions: ["iot:*"], resources: ["*"] }],
   },
   {
@@ -72,7 +74,7 @@ bus.subscribe(
   {
     handler:
       "packages/functions/src/events/runner-updated-external.codebuildHandler",
-    link: [bus, database],
+    link: [bus, database, websocket],
     permissions: [{ actions: ["iot:*"], resources: ["*"] }],
   },
   {

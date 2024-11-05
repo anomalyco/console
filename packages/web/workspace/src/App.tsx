@@ -23,6 +23,7 @@ import { NotFound } from "./pages/not-found";
 import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
 import { AuthProvider2, useAuth2 } from "./providers/auth2";
+import { RealtimeProvider } from "./providers/realtime";
 
 const Root = styled("div", {
   base: {
@@ -166,6 +167,7 @@ export const App: Component = () => {
                     <DummyProvider>
                       <DummyConfigProvider>
                         <FlagsProvider>
+                          <RealtimeProvider />
                           <LocalProvider>
                             <LocalLogsProvider>
                               <GlobalCommands />

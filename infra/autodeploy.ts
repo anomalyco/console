@@ -4,6 +4,7 @@ import { storage, storageAccess } from "./storage";
 import { database } from "./planetscale";
 import { secret } from "./secret";
 import { bus } from "./bus";
+import { websocket } from "./websocket";
 
 const { bucket, version } = createBuildScript();
 const repo = createEcrRepo();
@@ -50,7 +51,7 @@ function createBuildScript() {
     },
     {
       dependsOn: [storageAccess],
-    }
+    },
   );
   return { bucket, version };
 }
@@ -88,11 +89,17 @@ function createEcrRepo() {
 function createBuildTimeoutMonitor() {
   const scheduleGroup = new aws.scheduler.ScheduleGroup(
     "AutodeployTimeoutMonitorScheduleGroup",
-    { name: `${$app.name}-${$app.stage}-run-timeout-monitor` }
+    { name: `${$app.name}-${$app.stage}-run-timeout-monitor` },
   );
   const handler = new sst.aws.Function("AutodeployTimeoutMonitor", {
     handler: "packages/functions/src/run/monitor.handler",
-    link: [database, bus, secret.GithubAppID, secret.GithubPrivateKey],
+    link: [
+      database,
+      bus,
+      websocket,
+      secret.GithubAppID,
+      secret.GithubPrivateKey,
+    ],
     permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
   });
   const role = new aws.iam.Role("AutodeployTimeoutMonitorRole", {
@@ -128,11 +135,11 @@ function createBuildTimeoutMonitor() {
 function createRunnerRemover() {
   const scheduleGroup = new aws.scheduler.ScheduleGroup(
     "AutodeployRunnerRemoverScheduleGroup",
-    { name: `${$app.name}-${$app.stage}-runner-remover` }
+    { name: `${$app.name}-${$app.stage}-runner-remover` },
   );
   const handler = new sst.aws.Function("AutodeployRunnerRemover", {
     handler: "packages/functions/src/run/runner-remover.handler",
-    link: [database],
+    link: [database, websocket],
     environment: {
       RUNNER_REMOVER_SCHEDULE_GROUP_NAME: scheduleGroup.name!,
       RUNNER_REMOVER_SCHEDULE_ROLE_ARN: monitor.role.arn,
