@@ -50,16 +50,6 @@ export const handler = bus.subscriber(
           await AWS.Account.disconnect(evt.properties.awsAccountID);
           break;
 
-        case App.Stage.Events.Updated.type:
-        case App.Stage.Events.Connected.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) return;
-          await Stage.syncMetadata({
-            config,
-            remove: evt.type === App.Stage.Events.Updated.type,
-          });
-          break;
-        }
         case App.Stage.Events.Connected.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
@@ -125,10 +115,12 @@ export const handler = bus.subscriber(
           break;
         }
 
+        case App.Stage.Events.Updated.type:
+        case App.Stage.Events.Connected.type:
         case State.Event.StateUpdated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
-          await State.receiveState({
+          await State.refreshState({
             config,
           });
           break;
@@ -173,5 +165,5 @@ export const handler = bus.subscriber(
           break;
         }
       }
-    })
+    }),
 );

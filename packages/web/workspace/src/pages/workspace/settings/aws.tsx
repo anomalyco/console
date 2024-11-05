@@ -11,6 +11,7 @@ import { Link } from "@solidjs/router";
 import { For, Show, Switch, Match } from "solid-js";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
+import { DateTime } from "luxon";
 
 const Root = styled("div", {
   base: {},
@@ -194,8 +195,10 @@ export function AWS() {
                       <Button
                         color="secondary"
                         disabled={
-                          account.timeDiscovered === null ||
-                          account.timeFailed !== null
+                          (account.timeDiscovered === null ||
+                            account.timeFailed !== null) &&
+                          account.timeUpdated >
+                            DateTime.now().toUTC().minus({ minute: 1 }).toSQL()
                         }
                         onClick={() => {
                           rep().mutate.aws_account_scan(account.id);

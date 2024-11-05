@@ -221,7 +221,7 @@ export function List() {
               type: r.type,
               logGroup,
               priority: 2,
-              icon: "function"
+              icon: "function",
             },
           ];
         }
@@ -236,13 +236,13 @@ export function List() {
             {
               name,
               title: r.outputs?._metadata.handler,
-              link: r.outputs?._live
+              link: r.outputs?._metadata.dev
                 ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
                 : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
               type: r.type,
               logGroup,
               priority: 3,
-              icon: "function"
+              icon: "function",
             },
           ];
         }
@@ -322,7 +322,9 @@ export function List() {
                     </ChildIcon>
                     <ChildColContent>
                       <Row space="3" vertical="center">
-                        <ChildTitleLink href={log?.link}>{log?.title}</ChildTitleLink>
+                        <ChildTitleLink href={log?.link}>
+                          {log?.title}
+                        </ChildTitleLink>
                       </Row>
                       <Row space="2">
                         <ChildDesc>{log?.type}</ChildDesc>

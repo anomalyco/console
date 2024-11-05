@@ -24,7 +24,7 @@ export const assumeRole = zod(z.string(), async (id) => {
         RoleSessionName: "sst",
         ExternalId: workspaceID,
         DurationSeconds: 3600,
-      })
+      }),
     );
     await useTransaction((tx) =>
       tx
@@ -35,10 +35,10 @@ export const assumeRole = zod(z.string(), async (id) => {
         .where(
           and(
             eq(awsAccount.accountID, id),
-            eq(awsAccount.workspaceID, workspaceID)
-          )
+            eq(awsAccount.workspaceID, workspaceID),
+          ),
         )
-        .execute()
+        .execute(),
     );
     return {
       secretAccessKey: result.Credentials!.SecretAccessKey!,
@@ -57,10 +57,10 @@ export const assumeRole = zod(z.string(), async (id) => {
           .where(
             and(
               eq(awsAccount.accountID, id),
-              eq(awsAccount.workspaceID, workspaceID)
-            )
+              eq(awsAccount.workspaceID, workspaceID),
+            ),
           )
-          .execute()
+          .execute(),
       );
       return;
     }
