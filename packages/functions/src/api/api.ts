@@ -12,6 +12,7 @@ import { logger } from "hono/logger";
 import { compress } from "hono/compress";
 import { DebugRoute } from "./debug";
 import { LogRoute } from "./log";
+import { LambdaRoute } from "./lambda";
 
 export const app = new Hono()
   .use(logger())
@@ -28,7 +29,7 @@ export const app = new Hono()
           code: error.code,
           message: error.message,
         },
-        400
+        400,
       );
     }
     console.error(error);
@@ -40,7 +41,7 @@ export const app = new Hono()
             code: e?.code,
             message: e?.message,
           },
-          400
+          400,
         );
       }
     }
@@ -49,7 +50,7 @@ export const app = new Hono()
         code: "internal",
         message: "Internal server error",
       },
-      500
+      500,
     );
   })
   .route("/replicache", ReplicacheRoute)
@@ -58,6 +59,7 @@ export const app = new Hono()
   .route("/billing", BillingRoute)
   .route("/account", AccountRoute)
   .route("/debug", DebugRoute)
+  .route("/lambda", LambdaRoute)
   .route("/log", LogRoute);
 
 export const handler = handle(app);

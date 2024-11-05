@@ -292,8 +292,6 @@ export function List() {
     ),
   );
 
-  createEffect(() => console.log(logs()));
-
   return (
     <Switch>
       <Match when={logs().length}>

@@ -21,7 +21,7 @@ import { LambdaPayloadStore } from "$/data/lambda-payload";
 import { useStageContext } from "../context";
 import { Show, createEffect, createMemo } from "solid-js";
 import { createScan2 } from "$/data/store";
-import { useWorkspace } from "../../context";
+import { useApi, useWorkspace } from "../../context";
 import { bus } from "$/providers/bus";
 import { LinkButton, IconButton } from "$/ui/button";
 import { Row } from "$/ui/layout";
@@ -171,8 +171,7 @@ export interface InvokeControl {
 interface Props {
   control: (control: InvokeControl) => void;
   onExpand: () => void;
-  source: string;
-  id: string;
+  onInvoke: (payload: any) => Promise<void>;
   arn: string;
 }
 
@@ -183,9 +182,10 @@ export function Invoke(props: Props) {
   let invokeTextArea!: HTMLTextAreaElement;
   let saveControl!: DialogPayloadSaveControl;
   let manageControl!: DialogPayloadManageControl;
+  const api = useApi();
   const rep = useReplicache();
   const stage = useStageContext();
-  const key = createMemo(() => [stage.app.name, props.id].join("-"));
+  const key = createMemo(() => [stage.app.name, props.arn].join("-"));
   const lambdaPayloads = LambdaPayloadStore.list.watch(
     rep,
     () => [],
@@ -214,41 +214,13 @@ export function Invoke(props: Props) {
     invokeTextArea.selectionEnd = 0;
     invokeTextArea.scrollTop = 0;
   }
-  const workspace = useWorkspace();
 
   async function handleInvoke() {
     try {
       const payload = JSON.parse(invokeTextArea.value || "{}");
       setInvoke("error", false);
       setInvoke("invoking", true);
-      const result = await fetch(
-        import.meta.env.VITE_API_URL + "/rest/lambda/invoke",
-        {
-          headers: {
-            "x-sst-workspace": workspace().id,
-            authorization: rep().auth,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            stageID: ctx.stage.id,
-            payload,
-            functionARN: props.arn,
-          }),
-          method: "POST",
-        },
-      ).then((r) => r.json());
-
-      bus.emit("invocation", [
-        {
-          id: result.requestID,
-          start: Date.now(),
-          logs: [],
-          cold: false,
-          input: payload,
-          errors: [],
-          source: props.source,
-        },
-      ]);
+      await props.onInvoke(payload);
       setInvoke("invoking", false);
     } catch (ex) {
       console.error(ex);

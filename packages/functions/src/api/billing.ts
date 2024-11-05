@@ -4,55 +4,54 @@ import { Billing } from "@console/core/billing";
 import { stripe } from "@console/core/stripe";
 import { DateTime } from "luxon";
 
-export const BillingRoute = new Hono().use(notPublic);
+export const BillingRoute = new Hono()
+  .use(notPublic)
+  .post("/checkout", async (c) => {
+    const body = await c.req.json();
 
-BillingRoute.post("/checkout", async (c) => {
-  const body = await c.req.json();
+    const item = await Billing.Stripe.get();
+    if (!item?.customerID) {
+      throw new Error("No stripe customer ID");
+    }
 
-  const item = await Billing.Stripe.get();
-  if (!item?.customerID) {
-    throw new Error("No stripe customer ID");
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [
-      {
-        // TODO: add stripe price id
-        price: "",
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [
+        {
+          // TODO: add stripe price id
+          price: "",
+        },
+      ],
+      customer: item.customerID,
+      success_url: body.return_url,
+      cancel_url: body.return_url,
+      subscription_data: {
+        proration_behavior: "none",
+        billing_cycle_anchor: getAnchorDate().toUnixInteger(),
       },
-    ],
-    customer: item.customerID,
-    success_url: body.return_url,
-    cancel_url: body.return_url,
-    subscription_data: {
-      proration_behavior: "none",
-      billing_cycle_anchor: getAnchorDate().toUnixInteger(),
-    },
+    });
+
+    return c.json({
+      url: session.cancel_url,
+    });
+  })
+  .post("/portal", async (c) => {
+    const body = await c.req.json();
+
+    const item = await Billing.Stripe.get();
+    if (!item?.customerID) {
+      throw new Error("No stripe customer ID");
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: item.customerID,
+      return_url: body.return_url,
+    });
+
+    return c.json({
+      url: session.url,
+    });
   });
-
-  return c.json({
-    url: session.cancel_url,
-  });
-});
-
-BillingRoute.post("/portal", async (c) => {
-  const body = await c.req.json();
-
-  const item = await Billing.Stripe.get();
-  if (!item?.customerID) {
-    throw new Error("No stripe customer ID");
-  }
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer: item.customerID,
-    return_url: body.return_url,
-  });
-
-  return c.json({
-    url: session.url,
-  });
-});
 
 function getAnchorDate() {
   const now = DateTime.now();
