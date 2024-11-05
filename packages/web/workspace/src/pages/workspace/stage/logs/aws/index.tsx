@@ -297,9 +297,7 @@ function LogRow(props: LogRowProps) {
       .replace(" at ", ", "),
   );
   const longDate = createMemo(() =>
-    new Intl.DateTimeFormat("en-US", longDateOptions).format(
-      props.timestamp
-    ),
+    new Intl.DateTimeFormat("en-US", longDateOptions).format(props.timestamp),
   );
   return (
     <LogRowRoot>
@@ -312,15 +310,15 @@ function LogRow(props: LogRowProps) {
 export function AWS() {
   const [search, setSearch] = useSearchParams<
     | {
-      logGroup: string;
-      hint: "normal" | "lambda";
-      view: "live" | "past";
-      end?: string;
-    }
+        logGroup: string;
+        hint: "normal" | "lambda";
+        view: "live" | "past";
+        end?: string;
+      }
     | {
-      view: "local";
-      functionID: string;
-    }
+        view: "local";
+        functionID: string;
+      }
   >();
 
   const stage = useStageContext();
@@ -432,9 +430,28 @@ export function AWS() {
     return search.logGroup;
   });
 
+  const fn = createMemo(() => {
+    if (search.view === "local") {
+      const match = resources().find(
+        (r) =>
+          r.parent === search.functionID &&
+          r.type === "aws:lambda/function:Function",
+      );
+      return match;
+    }
+
+    if (search.hint === "lambda") {
+      const match = resources().find(
+        (r) => r.outputs?.loggingConfig?.logGroup === search.logGroup,
+      );
+      return match;
+    }
+  });
+
   const [scrollEnd, setScrollEnd] = createSignal(false);
   // Check if the logs have loaded
   const showBorder = createMemo(() => rows().length > 0 && !scrollEnd());
+  let invokeControl!: InvokeControl;
 
   return (
     <Root>
@@ -565,7 +582,45 @@ export function AWS() {
           </Show>
         </HeaderRight>
       </Header>
-      <Invoke arn="" source="" id="" control={() => { }} onExpand={() => { }} />
+      <Show when={fn()}>
+        <Invoke
+          arn={fn()?.outputs.arn}
+          control={(c) => (invokeControl = c)}
+          onExpand={() => {
+            if (search.view === "past")
+              setSearch(
+                {
+                  view: "live",
+                },
+                {
+                  replace: true,
+                },
+              );
+          }}
+          onInvoke={async (payload) => {
+            const result = await api.client.lambda.invoke
+              .$post({
+                json: {
+                  stageID: stage.stage.id,
+                  payload,
+                  functionARN: fn()?.outputs.arn,
+                },
+              })
+              .then((r) => r.json());
+            tailed.ingest([
+              {
+                id: result.requestID!,
+                start: Date.now(),
+                logs: [],
+                cold: false,
+                input: payload,
+                errors: [],
+                source: fn()?.outputs.arn,
+              },
+            ]);
+          }}
+        />
+      </Show>
       <Show when={rows().length}>
         <VList
           class={Scroller}
@@ -573,7 +628,10 @@ export function AWS() {
           data={rows()}
           onScroll={() => {
             setScrollEnd(
-              vlist?.scrollOffset! - vlist?.scrollSize! + vlist?.viewportSize! >= -1.5
+              vlist?.scrollOffset! -
+                vlist?.scrollSize! +
+                vlist?.viewportSize! >=
+                -1.5,
             );
           }}
         >
@@ -593,6 +651,20 @@ export function AWS() {
                       <InvocationRow
                         expanded={list.selected().includes(entry.id)}
                         invocation={invocation()}
+                        onSavePayload={async () => {
+                          invokeControl.savePayload(invocation()?.input!);
+                        }}
+                        onReplay={async () => {
+                          if (!fn()) return;
+                          await api.client.lambda.invoke.$post({
+                            json: {
+                              stageID: stage.stage.id,
+                              functionARN: fn()?.outputs?.arn!,
+                              payload: invocation()?.input,
+                            },
+                          });
+                          console.log(fn);
+                        }}
                         local={search.view === "local"}
                       />
                     );
