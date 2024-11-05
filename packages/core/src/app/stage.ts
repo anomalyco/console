@@ -32,26 +32,26 @@ export const Events = {
     "app.stage.connected",
     z.object({
       stageID: z.string().min(1),
-    })
+    }),
   ),
   Updated: createEvent(
     "app.stage.updated",
     z.object({
       stageID: z.string().min(1),
-    })
+    }),
   ),
   ResourcesUpdated: createEvent(
     "app.stage.resources_updated",
     z.object({
       stageID: z.string().min(1),
-    })
+    }),
   ),
   UsageRequested: createEvent(
     "app.stage.usage_requested",
     z.object({
       stageID: z.string().min(1),
       daysOffset: z.number().int().min(1),
-    })
+    }),
   ),
 };
 
@@ -72,8 +72,8 @@ export const fromID = zod(Info.shape.id, (stageID) =>
       .from(stage)
       .where(and(eq(stage.workspaceID, useWorkspace()), eq(stage.id, stageID)))
       .execute()
-      .then((x) => x[0])
-  )
+      .then((x) => x[0]),
+  ),
 );
 
 export const fromName = zod(
@@ -95,12 +95,12 @@ export const fromName = zod(
             eq(stage.region, input.region),
             eq(stage.appID, input.appID),
             eq(stage.awsAccountID, input.awsAccountID),
-            isNull(stage.timeDeleted)
-          )
+            isNull(stage.timeDeleted),
+          ),
         )
         .execute()
-        .then((x) => x[0])
-    )
+        .then((x) => x[0]),
+    ),
 );
 
 export const list = zod(
@@ -122,63 +122,7 @@ export const list = zod(
         items,
         cursor: items.length < SIZE ? undefined : items.at(-1)?.id,
       };
-    })
-);
-
-export const connect = zod(
-  Info.pick({
-    name: true,
-    appID: true,
-    id: true,
-    awsAccountID: true,
-    region: true,
-  }).partial({
-    id: true,
-  }),
-  (input) =>
-    createTransaction(async (tx) => {
-      console.log({ input });
-      const id = input.id ?? createId();
-      const result = await tx
-        .insert(stage)
-        .values({
-          id,
-          appID: input.appID,
-          workspaceID: useWorkspace(),
-          awsAccountID: input.awsAccountID,
-          name: input.name,
-          region: input.region,
-        })
-        .onDuplicateKeyUpdate({
-          set: {
-            awsAccountID: input.awsAccountID,
-            region: input.region,
-            timeDeleted: null,
-          },
-        })
-        .execute();
-      console.log(result);
-      const { insertID } = await tx
-        .select({ insertID: stage.id })
-        .from(stage)
-        .where(
-          and(
-            eq(stage.workspaceID, useWorkspace()),
-            eq(stage.appID, input.appID),
-            eq(stage.name, input.name),
-            eq(stage.region, input.region),
-            eq(stage.awsAccountID, input.awsAccountID)
-          )
-        )
-        .execute()
-        .then((x) => x[0]!);
-      await createTransactionEffect(() =>
-        bus.publish(SSTResource.Bus, Events.Connected, {
-          stageID: insertID,
-        })
-      );
-      return insertID;
-    })
+    }),
 );
 
 export const syncMetadata = zod(
@@ -199,8 +143,8 @@ export const syncMetadata = zod(
       .where(
         and(
           eq(stage.id, input.config.stageID),
-          eq(stage.workspaceID, useWorkspace())
-        )
+          eq(stage.workspaceID, useWorkspace()),
+        ),
       )
       .execute()
       .then((x) => x[0]);
@@ -228,7 +172,7 @@ export const syncMetadata = zod(
         new ListObjectsV2Command({
           Prefix: key,
           Bucket: bootstrap.bucket,
-        })
+        }),
       )
       .catch((err) => {
         if (err.name === "AccessDenied") return;
@@ -247,7 +191,7 @@ export const syncMetadata = zod(
             new GetObjectCommand({
               Key: `app/${input.config.app}/${input.config.stage}.json`,
               Bucket: ion.bucket,
-            })
+            }),
           )
           .catch(() => {});
         if (state) return;
@@ -264,7 +208,7 @@ export const syncMetadata = zod(
           new GetObjectCommand({
             Key: obj.Key!,
             Bucket: bootstrap.bucket,
-          })
+          }),
         )
         .catch((err) => {
           if (err.name === "AccessDenied") return;
@@ -290,7 +234,7 @@ export const syncMetadata = zod(
             ? await Enrichers[type as keyof typeof Enrichers](
                 res,
                 input.config.credentials,
-                input.config.region
+                input.config.region,
               ).catch(() => ({}))
             : {};
         r.push({
@@ -318,8 +262,8 @@ export const syncMetadata = zod(
           .where(
             and(
               eq(resource.stageID, input.config.stageID),
-              eq(resource.workspaceID, useWorkspace())
-            )
+              eq(resource.workspaceID, useWorkspace()),
+            ),
           )
           .execute()
           .then((x) => new Map(x.map((x) => [x.addr, x.id] as const)));
@@ -342,7 +286,7 @@ export const syncMetadata = zod(
                   metadata: res.data,
                   enrichment: res.enrichment,
                 };
-              })
+              }),
             )
             .onDuplicateKeyUpdate({
               set: {
@@ -363,7 +307,7 @@ export const syncMetadata = zod(
               // @ts-ignore
               !x.enrichment.version ||
               // @ts-ignore
-              parseVersion(x.enrichment.version) < MINIMUM_VERSION
+              parseVersion(x.enrichment.version) < MINIMUM_VERSION,
           ).length;
 
         await State.receiveV2({
@@ -376,8 +320,8 @@ export const syncMetadata = zod(
           .where(
             and(
               eq(stage.id, input.config.stageID),
-              eq(stage.workspaceID, useWorkspace())
-            )
+              eq(stage.workspaceID, useWorkspace()),
+            ),
           );
 
         const toDelete = [...existing.values()];
@@ -389,8 +333,8 @@ export const syncMetadata = zod(
               and(
                 eq(resource.stageID, input.config.stageID),
                 eq(resource.workspaceID, useWorkspace()),
-                inArray(resource.id, toDelete)
-              )
+                inArray(resource.id, toDelete),
+              ),
             );
 
         await tx
@@ -399,21 +343,21 @@ export const syncMetadata = zod(
           .where(
             and(
               eq(stage.id, input.config.stageID),
-              eq(stage.workspaceID, useWorkspace())
-            )
+              eq(stage.workspaceID, useWorkspace()),
+            ),
           );
         await createTransactionEffect(() => Replicache.poke());
         await createTransactionEffect(() =>
           bus.publish(SSTResource.Bus, Events.ResourcesUpdated, {
             stageID: input.config.stageID,
-          })
+          }),
         );
       },
       {
         isolationLevel: "read committed",
-      }
+      },
     );
-  }
+  },
 );
 
 export type StageCredentials = Exclude<
@@ -435,7 +379,7 @@ export const assumeRole = zod(Info.shape.id, async (stageID) => {
       .innerJoin(app, eq(stage.appID, app.id))
       .where(and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())))
       .execute()
-      .then((rows) => rows.at(0))
+      .then((rows) => rows.at(0)),
   );
   if (!result) return;
   const credentials = await AWS.assumeRole(result.accountID);
@@ -460,7 +404,7 @@ export const remove = zod(Info.shape.id, (stageID) =>
           timeDeleted: sql`CURRENT_TIMESTAMP(3)`,
         })
         .where(
-          and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace()))
+          and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())),
         )
         .execute();
       await tx
@@ -468,8 +412,8 @@ export const remove = zod(Info.shape.id, (stageID) =>
         .where(
           and(
             eq(resource.stageID, stageID),
-            eq(resource.workspaceID, useWorkspace())
-          )
+            eq(resource.workspaceID, useWorkspace()),
+          ),
         )
         .execute();
       await tx
@@ -477,16 +421,16 @@ export const remove = zod(Info.shape.id, (stageID) =>
         .where(
           and(
             eq(issueSubscriber.stageID, stageID),
-            eq(issueSubscriber.workspaceID, useWorkspace())
-          )
+            eq(issueSubscriber.workspaceID, useWorkspace()),
+          ),
         )
         .execute();
       await createTransactionEffect(() => Replicache.poke());
     },
     {
       isolationLevel: "read uncommitted",
-    }
-  )
+    },
+  ),
 );
 
 function parseVersion(input: string) {
