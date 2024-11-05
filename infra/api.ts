@@ -6,6 +6,7 @@ import { email } from "./email";
 import { database } from "./planetscale";
 import { secret } from "./secret";
 import { storage } from "./storage";
+import { websocket } from "./websocket";
 
 const api = new sst.aws.Function("Api", {
   handler: "packages/functions/src/api/api.handler",
@@ -21,6 +22,7 @@ const api = new sst.aws.Function("Api", {
     secret.GithubAppID,
     secret.GithubPrivateKey,
     secret.GithubWebhookSecret,
+    websocket,
   ],
   nodejs: {
     install: ["source-map"],

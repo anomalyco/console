@@ -122,6 +122,20 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bucket"
     }
+    "Websocket": {
+      "http": string
+      "realtime": string
+      "token": string
+      "type": "sst.sst.Linkable"
+    }
+    "WebsocketAuthorizer": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "WebsocketToken": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Workspace": {
       "type": "sst.aws.StaticSite"
       "url": string

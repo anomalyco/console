@@ -35,6 +35,7 @@ import { Account } from "../account";
 import { fromEntries, map, pipe, unique, uniqueBy } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
+import { Issue } from "../issue";
 
 export module State {
   export const Event = {
@@ -582,92 +583,6 @@ export module State {
     },
   );
 
-  export const receiveV2 = zod(
-    z.object({
-      resources: z
-        .custom<{
-          type: string;
-          id: string;
-          stackID: string;
-          addr: string;
-          data: any;
-          enrichment: any;
-        }>()
-        .array(),
-      config: z.custom<StageCredentials>(),
-    }),
-    async (input) => {
-      const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
-      const workspaceID = useWorkspace();
-      for (const resource of input.resources) {
-        const type = `sstv2:aws:${resource.type}`;
-        const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${resource.stackID}$${type}::${resource.id}`;
-        resourceInserts.push({
-          workspaceID,
-          type,
-          urn,
-          id: createId(),
-          custom: true,
-          inputs: {
-            addr: resource.addr,
-            stackID: resource.stackID,
-          },
-          outputs: {
-            ...resource.data,
-            enrichment: resource.enrichment,
-          },
-          stageID: input.config.stageID,
-          updateID: "",
-        });
-      }
-      await createTransaction(
-        async (tx) => {
-          if (resourceInserts.length)
-            await tx
-              .insert(stateResourceTable)
-              .values(resourceInserts)
-              .onDuplicateKeyUpdate({
-                set: {
-                  updateModifiedID: sql`COALESCE(VALUES(update_modified_id), update_modified_id)`,
-                  updateCreatedID: sql`COALESCE(VALUES(update_created_id), update_created_id)`,
-                  timeStateCreated: sql`VALUES(time_state_created)`,
-                  timeStateModified: sql`VALUES(time_state_modified)`,
-                  type: sql`VALUES(type)`,
-                  custom: sql`VALUES(custom)`,
-                  inputs: sql`VALUES(inputs)`,
-                  outputs: sql`VALUES(outputs)`,
-                  parent: sql`VALUES(parent)`,
-                },
-              });
-          await tx.delete(stateResourceTable).where(
-            and(
-              eq(stateResourceTable.workspaceID, useWorkspace()),
-              eq(stateResourceTable.stageID, input.config.stageID),
-              resourceInserts.length
-                ? notInArray(
-                    stateResourceTable.urn,
-                    resourceInserts.map((i) => i.urn),
-                  )
-                : undefined,
-            ),
-          );
-          if (!resourceInserts.length) {
-            await Stage.remove(input.config.stageID);
-          }
-          await createTransactionEffect(() =>
-            bus.publish(SSTResource.Bus, State.Event.StateSynced, {
-              stageID: input.config.stageID,
-            }),
-          );
-          await createTransactionEffect(() => Replicache.poke());
-        },
-        {
-          isolationLevel: "read uncommitted",
-        },
-      );
-    },
-  );
-
   export const receiveUpdate = zod(
     z.object({
       updateID: z.string(),
@@ -1155,11 +1070,7 @@ export module State {
                 ),
               );
           }
-          await createTransactionEffect(() =>
-            bus.publish(SSTResource.Bus, State.Event.StateSynced, {
-              stageID: input.config.stageID,
-            }),
-          );
+          await createTransactionEffect(() => Issue.subscribeIon(input.config));
           await createTransactionEffect(() => Replicache.poke());
         },
         {

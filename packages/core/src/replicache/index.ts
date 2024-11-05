@@ -8,10 +8,11 @@ import {
 import { Realtime } from "../realtime";
 import { compress, decompress } from "../util/compress";
 import { Resource } from "sst";
+import { Websocket } from "../websocket";
 
 export async function poke(profileID?: string) {
   console.log("sending poke");
-  await Realtime.publish("poke", {});
+  await Websocket.publish("poke", {});
   console.log("poke sent");
 }
 

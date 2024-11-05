@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_IOT_HOST: string
   readonly VITE_STAGE: string
   readonly VITE_CONNECT_URL: string
+  readonly VITE_WEBSOCKET_HTTP: string
+  readonly VITE_WEBSOCKET_REALTIME: string
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv

@@ -50,15 +50,6 @@ export const handler = bus.subscriber(
           await AWS.Account.disconnect(evt.properties.awsAccountID);
           break;
 
-        case App.Stage.Events.Connected.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) return;
-          await Stage.syncMetadata({
-            config,
-          });
-          break;
-        }
-
         case State.Event.SummaryCreated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
@@ -144,7 +135,6 @@ export const handler = bus.subscriber(
         }
 
         case Issue.Events.IssueDetected.type: {
-          return;
           await Issue.Send.triggerIssue(evt.properties);
           break;
         }
