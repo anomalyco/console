@@ -23,13 +23,18 @@ import {
   S3Client,
   GetObjectCommand,
   ListObjectsV2Command,
+  NoSuchBucket,
 } from "@aws-sdk/client-s3";
 import { RETRY_STRATEGY } from "../util/aws";
-import { AWS } from "../aws";
+import { AWS, Credentials } from "../aws";
 import { Replicache } from "../replicache";
-import { stage } from "../app/app.sql";
+import { app, stage } from "../app/app.sql";
 import { bus } from "sst/aws/bus";
 import { Resource as SSTResource } from "sst";
+import { Account } from "../account";
+import { fromEntries, map, pipe, unique, uniqueBy } from "remeda";
+import { Enrichers } from "../app/resource";
+import { queue } from "../util/queue";
 
 export module State {
   export const Event = {
@@ -214,62 +219,6 @@ export module State {
       outputs: input.outputs,
     };
   }
-  export const resyncHistory = zod(
-    z.object({
-      config: z.custom<StageCredentials>(),
-    }),
-    async (input) => {
-      const bootstrap = await AWS.Account.bootstrapIon(input.config);
-      if (!bootstrap) return;
-      const existing = await useTransaction((tx) =>
-        tx
-          .select({ id: stateUpdateTable.id })
-          .from(stateUpdateTable)
-          .where(eq(stateUpdateTable.stageID, input.config.stageID))
-          .execute(),
-      ).then((rows) => new Set(rows.map((row) => row.id)));
-
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
-      const updates = await s3.send(
-        new ListObjectsV2Command({
-          Bucket: bootstrap.bucket,
-          Prefix: `history/${input.config.app}/${input.config.stage}/`,
-          MaxKeys: 100,
-        }),
-      );
-
-      let index = 0;
-      for (const obj of (updates.Contents || []).toReversed()) {
-        index++;
-        const updateID = obj
-          .Key!.split("/")
-          .at(-1)!
-          .split(".")[0]!
-          .split("-")[1]!;
-        if (existing.has(updateID)) continue;
-        await useTransaction(async (tx) => {
-          await tx.insert(stateUpdateTable).ignore().values({
-            id: updateID,
-            stageID: input.config.stageID,
-            index: 1,
-            command: "deploy",
-            workspaceID: useWorkspace(),
-          });
-          await receiveSummary({
-            config: input.config,
-            updateID,
-          });
-          await receiveHistory({
-            config: input.config,
-            key: obj.Key!,
-          });
-        });
-      }
-    },
-  );
 
   export const receiveHistory = zod(
     z.object({
@@ -1026,7 +975,7 @@ export module State {
     },
   );
 
-  export const receiveState = zod(
+  export const refreshState = zod(
     z.object({
       config: z.custom<StageCredentials>(),
     }),
@@ -1035,49 +984,128 @@ export module State {
         ...input.config,
         retryStrategy: RETRY_STRATEGY,
       });
-      const bootstrap = await AWS.Account.bootstrapIon(input.config);
-      if (!bootstrap) return;
-      const key = `app/${input.config.app}/${input.config.stage}.json`;
-      console.log("processing", key);
-      const state = await s3
-        .send(
-          new GetObjectCommand({
-            Bucket: bootstrap.bucket,
-            Key: key,
-          }),
-        )
-        .then(
-          async (result) =>
-            JSON.parse(await result.Body!.transformToString()).checkpoint
-              .latest || {},
-        )
-        .catch(() => {});
-      if (!state) return;
-      if (!state.resources) state.resources = [];
       const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
-      for (const resource of state.resources) {
-        resource.inputs = resource.inputs || {};
-        resource.outputs = resource.outputs || {};
-        delete resource.inputs["__provider"];
-        delete resource.outputs["__provider"];
-        resourceInserts.push({
-          stageID: input.config.stageID,
-          updateID: "",
-          id: createId(),
-          timeStateModified: resource.modified
-            ? new Date(resource.modified)
-            : null,
-          timeStateCreated: resource.created
-            ? new Date(resource.created)
-            : null,
-          workspaceID: useWorkspace(),
-          type: resource.type,
-          urn: resource.urn,
-          custom: resource.custom,
-          inputs: resource.inputs,
-          outputs: resource.outputs,
-          parent: resource.parent,
-        });
+      const workspaceID = useWorkspace();
+
+      const v3bootstrap = await AWS.Account.bootstrapIon(input.config);
+      if (v3bootstrap) {
+        const key = `app/${input.config.app}/${input.config.stage}.json`;
+        console.log("looking for v3", key);
+        const state = await s3
+          .send(
+            new GetObjectCommand({
+              Bucket: v3bootstrap.bucket,
+              Key: key,
+            }),
+          )
+          .then(
+            async (result) =>
+              JSON.parse(await result.Body!.transformToString()).checkpoint
+                .latest || {},
+          )
+          .catch(() => {});
+        for (const resource of state?.resources || []) {
+          resource.inputs = resource.inputs || {};
+          resource.outputs = resource.outputs || {};
+          delete resource.inputs["__provider"];
+          delete resource.outputs["__provider"];
+          resourceInserts.push({
+            stageID: input.config.stageID,
+            updateID: "",
+            id: createId(),
+            timeStateModified: resource.modified
+              ? new Date(resource.modified)
+              : null,
+            timeStateCreated: resource.created
+              ? new Date(resource.created)
+              : null,
+            workspaceID,
+            type: resource.type,
+            urn: resource.urn,
+            custom: resource.custom,
+            inputs: resource.inputs,
+            outputs: resource.outputs,
+            parent: resource.parent,
+          });
+        }
+      }
+
+      const v2bootstrap = await AWS.Account.bootstrap(input.config);
+      if (v2bootstrap) {
+        console.log("looking for v2");
+        const list = await s3
+          .send(
+            new ListObjectsV2Command({
+              Prefix: `stackMetadata/app.${input.config.app}/stage.${input.config.stage}/`,
+              Bucket: v2bootstrap.bucket,
+            }),
+          )
+          .catch(() => {});
+        if (list && list.Contents?.length) {
+          console.log("found", list.Contents?.length, "stacks");
+          for (const obj of list.Contents || []) {
+            console.log("processing", obj.Key);
+            const stackID = obj.Key?.split("/").pop()!.split(".")[1];
+            const result = await s3
+              .send(
+                new GetObjectCommand({
+                  Key: obj.Key!,
+                  Bucket: v2bootstrap.bucket,
+                }),
+              )
+              .catch((err) => {
+                if (err.name === "AccessDenied") return;
+                if (err.name === "NoSuchBucket") return;
+                if (err.name === "NoSuchKey") return;
+                throw err;
+              });
+            if (!result) continue;
+            const body = await result
+              .Body!.transformToString()
+              .then((x) => JSON.parse(x));
+            const r = [];
+            body.push({
+              type: "Stack",
+              id: stackID,
+              addr: stackID,
+              data: {},
+            });
+            for (let res of body) {
+              const enrichment =
+                res.type in Enrichers
+                  ? await Enrichers[res.type as keyof typeof Enrichers](
+                      res,
+                      input.config.credentials,
+                      input.config.region,
+                    ).catch(() => ({}))
+                  : {};
+              r.push({
+                ...res,
+                stackID,
+                enrichment,
+              });
+              const type = `sstv2:aws:${res.type}`;
+              const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${stackID}$${type}::${res.id}`;
+              resourceInserts.push({
+                workspaceID,
+                type,
+                urn,
+                id: createId(),
+                custom: true,
+                inputs: {
+                  addr: res.addr,
+                  stackID: stackID,
+                },
+                outputs: {
+                  ...res.data,
+                  enrichment,
+                },
+                stageID: input.config.stageID,
+                updateID: "",
+              });
+            }
+          }
+        }
       }
 
       await createTransaction(
@@ -1114,6 +1142,19 @@ export module State {
           if (!resourceInserts.length) {
             await Stage.remove(input.config.stageID);
           }
+          if (resourceInserts.length) {
+            await tx
+              .update(stage)
+              .set({
+                timeDeleted: null,
+              })
+              .where(
+                and(
+                  eq(stage.id, input.config.stageID),
+                  eq(stage.workspaceID, workspaceID),
+                ),
+              );
+          }
           await createTransactionEffect(() =>
             bus.publish(SSTResource.Bus, State.Event.StateSynced, {
               stageID: input.config.stageID,
@@ -1125,6 +1166,152 @@ export module State {
           isolationLevel: "read uncommitted",
         },
       );
+    },
+  );
+
+  export const scan = zod(
+    z.object({
+      credentials: z.custom<Credentials>(),
+      awsAccountID: z.string().cuid2(),
+      region: z.string(),
+    }),
+    async (input) => {
+      console.log("scanning", input.awsAccountID, input.region);
+      const stages = [] as {
+        app: string;
+        stage: string;
+        version: "v2" | "v3";
+      }[];
+
+      const s3 = new S3Client({
+        ...input.credentials,
+        retryStrategy: RETRY_STRATEGY,
+        region: input.region,
+      });
+      const v2bootstrap = await AWS.Account.bootstrap(input);
+      if (v2bootstrap) {
+        console.log("scanning v2");
+        let token: string | undefined;
+        while (true) {
+          const list = await s3
+            .send(
+              new ListObjectsV2Command({
+                Prefix: "stackMetadata",
+                Bucket: v2bootstrap.bucket,
+                ContinuationToken: token,
+              }),
+            )
+            .catch(() => {});
+          if (!list) break;
+          for (const obj of list.Contents || []) {
+            const [, appHint, stageHint] = obj.Key!.split("/");
+            if (!appHint || !stageHint) continue;
+            const [, stageName] = stageHint.split(".");
+            const [, appName] = appHint.split(".");
+            if (!stageName || !appName) continue;
+            stages.push({
+              app: appName,
+              stage: stageName,
+              version: "v2",
+            });
+          }
+          if (!list.ContinuationToken) break;
+          token = list.ContinuationToken;
+        }
+      }
+      const v3bootstrap = await AWS.Account.bootstrapIon(input);
+      if (v3bootstrap) {
+        console.log("scanning v3");
+        let token: string | undefined;
+        while (true) {
+          const list = await s3
+            .send(
+              new ListObjectsV2Command({
+                Prefix: "app/",
+                Bucket: v3bootstrap.bucket,
+                ContinuationToken: token,
+              }),
+            )
+            .catch((err) => {
+              console.error(err);
+            });
+          if (!list) break;
+          for (const obj of list.Contents || []) {
+            const splits = obj.Key!.split("/");
+            const appName = splits.at(-2);
+            const stageName = splits.at(-1)?.split(".").at(0);
+            if (!appName || !stageName) continue;
+            stages.push({
+              app: appName,
+              stage: stageName,
+              version: "v3",
+            });
+          }
+          if (!list.ContinuationToken) break;
+          token = list.ContinuationToken;
+        }
+      }
+      const apps = pipe(
+        stages,
+        map((x) => x.app),
+        unique(),
+      );
+      const workspaceID = useWorkspace();
+      if (!apps.length) return;
+      const toResync = await useTransaction(async (tx) => {
+        await tx
+          .insert(app)
+          .values(
+            apps.map((app) => ({
+              id: createId(),
+              name: app,
+              workspaceID,
+            })),
+          )
+          .onDuplicateKeyUpdate({
+            set: {
+              timeDeleted: null,
+            },
+          });
+        const allApps = await tx
+          .select({ id: app.id, name: app.name })
+          .from(app)
+          .where(eq(app.workspaceID, workspaceID))
+          .execute()
+          .then((rows) => new Map(rows.map((row) => [row.name, row.id])));
+        await tx
+          .insert(stage)
+          .ignore()
+          .values(
+            stages.map((item) => ({
+              id: createId(),
+              appID: allApps.get(item.app)!,
+              workspaceID,
+              name: item.stage,
+              region: input.region,
+              awsAccountID: input.awsAccountID,
+            })),
+          );
+        const allStages = await tx
+          .select({ id: stage.id })
+          .from(stage)
+          .where(
+            and(
+              eq(stage.workspaceID, workspaceID),
+              eq(stage.awsAccountID, input.awsAccountID),
+              eq(stage.region, input.region),
+            ),
+          )
+          .execute();
+        return allStages;
+      });
+      await queue(25, toResync, async (item) => {
+        const config = await Stage.assumeRole(item.id);
+        if (!config) return;
+        await State.refreshState({
+          config,
+        });
+      });
     },
   );
 }

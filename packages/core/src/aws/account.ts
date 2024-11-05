@@ -1,17 +1,12 @@
 export * as Account from "./account";
-
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { zod } from "../util/zod";
 import { createId } from "@paralleldrive/cuid2";
-import {
-  createTransaction,
-  createTransactionEffect,
-  useTransaction,
-} from "../util/transaction";
+import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { awsAccount } from "./aws.sql";
 import { useWorkspace } from "../actor";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Credentials } from ".";
 import {
   CloudFormationClient,
@@ -26,9 +21,6 @@ import {
 import {
   S3Client,
   PutBucketNotificationConfigurationCommand,
-  ListObjectsV2Command,
-  NoSuchBucket,
-  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import {
   CreateRoleCommand,
@@ -243,7 +235,6 @@ export const bootstrapIon = zod(
         )
         .catch(() => {});
       if (!param?.Parameter?.Value) return;
-      console.log("found ion bucket", param.Parameter.Value);
       const parsed = JSON.parse(param.Parameter.Value);
       return {
         bucket: parsed.state,
@@ -258,11 +249,9 @@ export const bootstrapIon = zod(
 );
 
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
-import { App, Stage } from "../app";
 import { Replicache } from "../replicache";
 import { db } from "../drizzle";
-import { app, stage } from "../app/app.sql";
-import { createPipe, groupBy, mapValues } from "remeda";
+import { stage } from "../app/app.sql";
 import { RETRY_STRATEGY } from "../util/aws";
 import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 import { Resource } from "sst";
@@ -443,176 +432,11 @@ export const integrate = zod(
         }),
       );
       console.log(region, "created eventbus rule");
-
-      let token: string | undefined;
-      const existing = await useTransaction((tx) =>
-        tx
-          .select({
-            stageName: stage.name,
-            stageID: stage.id,
-            appName: app.name,
-          })
-          .from(stage)
-          .innerJoin(app, eq(stage.appID, app.id))
-          .where(
-            and(
-              eq(stage.awsAccountID, account.id),
-              eq(stage.region, region),
-              eq(stage.workspaceID, useWorkspace()),
-              isNull(stage.timeDeleted),
-            ),
-          ),
-      ).then(
-        createPipe(
-          groupBy((r) => r.appName),
-          mapValues((rows) =>
-            rows.map((r) => [r.stageName, r.stageID] as const),
-          ),
-          mapValues((rows) => new Map(rows)),
-        ),
-      );
-
-      const stages = [] as {
-        app: string;
-        stage: string;
-      }[];
-      for (const b of bootstrapBuckets) {
-        console.log("scanning", b.bucket);
-        while (true) {
-          if (b.version === "v2") {
-            const list = await s3
-              .send(
-                new ListObjectsV2Command({
-                  Prefix: "stackMetadata",
-                  Bucket: b.bucket,
-                  ContinuationToken: token,
-                }),
-              )
-              .catch((err) => {
-                if (err instanceof NoSuchBucket) {
-                  console.log("couldn't find this bucket");
-                  return;
-                }
-                throw err;
-              });
-            if (!list) break;
-            const distinct = new Set(
-              list.Contents?.filter((item) => item.Key).map((item) =>
-                item.Key!.split("/").slice(0, 3).join("/"),
-              ) || [],
-            );
-
-            console.log("found", b.version, distinct);
-            for (const item of distinct) {
-              const [, appHint, stageHint] = item.split("/") || [];
-              if (!appHint || !stageHint) continue;
-              const [, stageName] = stageHint?.split(".");
-              const [, appName] = appHint?.split(".");
-              if (!stageName || !appName) continue;
-              stages.push({
-                app: appName,
-                stage: stageName,
-              });
-              console.log(region, "found", stageName, appName);
-            }
-
-            if (!list.ContinuationToken) break;
-            token = list.ContinuationToken;
-          }
-
-          if (b.version === "v3") {
-            const list = await s3
-              .send(
-                new ListObjectsV2Command({
-                  Prefix: "app/",
-                  Bucket: b.bucket,
-                  ContinuationToken: token,
-                }),
-              )
-              .catch((err) => {
-                if (err instanceof NoSuchBucket) {
-                  console.log("couldn't find this bucket");
-                  return;
-                }
-                throw err;
-              });
-            if (!list) break;
-            for (const item of list.Contents || []) {
-              const key = item.Key;
-              if (!key) continue;
-              if (!key.endsWith(".json")) continue;
-              const splits = key.split("/");
-              const appName = splits.at(-2);
-              const stageName = splits.at(-1)?.split(".").at(0);
-              if (!appName || !stageName) continue;
-              const state = await s3
-                .send(
-                  new GetObjectCommand({
-                    Bucket: b.bucket,
-                    Key: key,
-                  }),
-                )
-                .then(
-                  async (result) =>
-                    JSON.parse(await result.Body!.transformToString())
-                      .checkpoint.latest || {},
-                )
-                .catch(() => {});
-              if (!state) continue;
-              if (!state.resources) continue;
-              if (state.resources.length === 0) continue;
-
-              stages.push({
-                app: appName!,
-                stage: stageName!,
-              });
-            }
-            if (!list.ContinuationToken) break;
-            token = list.ContinuationToken;
-          }
-        }
-      }
-      for (const item of stages) {
-        console.log("found stage", item);
-        existing[item.app]?.delete(item.stage);
-        await createTransaction(async (tx) => {
-          let app = await App.fromName(item.app).then((a) => a?.id);
-          if (!app) {
-            console.log("creating app", item.app);
-            app = await App.create({
-              name: item.app,
-            });
-          }
-          let stage = await App.Stage.fromName({
-            appID: app,
-            name: item.stage,
-            region,
-            awsAccountID: input.awsAccountID,
-          }).then((s) => s?.id);
-          if (!stage) {
-            console.log("connecting stage", item.app, item.stage);
-            stage = await App.Stage.connect({
-              name: item.stage,
-              appID: app,
-              region: config.region,
-              awsAccountID: account.id,
-            });
-            await Replicache.poke();
-          }
-
-          if (stage) {
-            await bus.publish(Resource.Bus, Stage.Events.Updated, {
-              stageID: stage,
-            });
-          }
-        });
-      }
-      for (const [appName, stages] of Object.entries(existing)) {
-        for (const [stageName, stageID] of stages) {
-          console.log("could not find", appName, stageName, stageID);
-          await App.Stage.remove(stageID);
-        }
-      }
+      await State.scan({
+        awsAccountID: input.awsAccountID,
+        credentials: input.credentials,
+        region,
+      });
     }
     await db
       .update(awsAccount)
