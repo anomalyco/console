@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
-import { useWorkspace } from "../context";
+import { useApi, useWorkspace } from "../context";
 import { utility } from "$/ui/utility";
 import { Toggle } from "$/ui/switch";
 import { IconLogosSlack, IconLogosGitHub } from "$/ui/icons/custom";
@@ -127,6 +127,7 @@ export function Settings() {
       .map((usage) => usage.invocations)
       .reduce((a, b) => a + b, 0),
   );
+  const api = useApi();
   console.log("usages", usages().length);
   const auth = useAuth2();
   const workspace = useWorkspace();
@@ -143,30 +144,24 @@ export function Settings() {
   let checkoutLink: Promise<Response> | undefined;
 
   function generatePortalLink() {
-    return fetch(
-      import.meta.env.VITE_API_URL + "/rest/create_customer_portal_session",
-      {
-        method: "POST",
-        body: JSON.stringify({ return_url: window.location.href }),
-        headers: {
-          "x-sst-workspace": workspace().id,
-          Authorization: rep().auth,
-        },
+    return fetch(import.meta.env.VITE_API_URL + "/billing/portal", {
+      method: "POST",
+      body: JSON.stringify({ return_url: window.location.href }),
+      headers: {
+        "x-sst-workspace": workspace().id,
+        Authorization: rep().auth,
       },
-    );
+    });
   }
   function generateCheckoutLink() {
-    return fetch(
-      import.meta.env.VITE_API_URL + "/rest/create_checkout_session",
-      {
-        method: "POST",
-        body: JSON.stringify({ return_url: window.location.href }),
-        headers: {
-          "x-sst-workspace": workspace().id,
-          Authorization: rep().auth,
-        },
+    return fetch(import.meta.env.VITE_API_URL + "/billing/checkout", {
+      method: "POST",
+      body: JSON.stringify({ return_url: window.location.href }),
+      headers: {
+        "x-sst-workspace": workspace().id,
+        Authorization: rep().auth,
       },
-    );
+    });
   }
 
   function handleHoverManageSubscription() {

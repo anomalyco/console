@@ -6,7 +6,8 @@ import { user } from "@console/core/user/user.sql";
 
 export async function handler(event: any) {
   const token = event.authorizationToken;
-  const session = await sessions.verify(token);
+  const session = await sessions.verify(token).catch(() => undefined);
+  if (!session) return { isAuthorized: false };
   if (session.type !== "account") return { isAuthorized: false };
   if (event.requestContext.operation === "EVENT_CONNECT") {
     await db

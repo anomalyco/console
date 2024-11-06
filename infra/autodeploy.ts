@@ -1,6 +1,6 @@
 import fs from "fs";
 import { createHash } from "crypto";
-import { storage, storageAccess } from "./storage";
+import { storage } from "./storage";
 import { database } from "./planetscale";
 import { secret } from "./secret";
 import { bus } from "./bus";
@@ -41,18 +41,12 @@ function createBuildScript() {
   const bucket = storage.name;
   const content = fs.readFileSync("packages/build/buildspec/index.mjs", "utf8");
   const version = createHash("sha256").update(content).digest("hex");
-  new aws.s3.BucketObjectv2(
-    "AutodeployBuildspec",
-    {
-      bucket,
-      key: `buildspec/${version}/index.mjs`,
-      acl: "public-read",
-      content,
-    },
-    {
-      dependsOn: [storageAccess],
-    },
-  );
+  new aws.s3.BucketObjectv2("AutodeployBuildspec", {
+    bucket,
+    key: `buildspec/${version}/index.mjs`,
+    acl: "public-read",
+    content,
+  });
   return { bucket, version };
 }
 
