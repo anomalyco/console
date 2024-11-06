@@ -23,7 +23,6 @@ import {
   S3Client,
   GetObjectCommand,
   ListObjectsV2Command,
-  NoSuchBucket,
 } from "@aws-sdk/client-s3";
 import { RETRY_STRATEGY } from "../util/aws";
 import { AWS, Credentials } from "../aws";
@@ -31,26 +30,13 @@ import { Replicache } from "../replicache";
 import { app, stage } from "../app/app.sql";
 import { bus } from "sst/aws/bus";
 import { Resource as SSTResource } from "sst";
-import { Account } from "../account";
-import { fromEntries, map, pipe, unique, uniqueBy } from "remeda";
+import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
 import { Issue } from "../issue";
 
 export module State {
   export const Event = {
-    LockCreated: createEvent(
-      "state.lock.created",
-      z.object({ stageID: z.string(), versionID: z.string().optional() }),
-    ),
-    LockRemoved: createEvent(
-      "state.lock.removed",
-      z.object({ stageID: z.string(), versionID: z.string().optional() }),
-    ),
-    SummaryCreated: createEvent(
-      "state.summary.created",
-      z.object({ stageID: z.string(), updateID: z.string() }),
-    ),
     UpdateCreated: createEvent(
       "state.update.created",
       z.object({ stageID: z.string(), updateID: z.string() }),
@@ -63,7 +49,22 @@ export module State {
       "state.updated",
       z.object({ stageID: z.string() }),
     ),
-    StateSynced: createEvent("state.synced", z.object({ stageID: z.string() })),
+    /** @deprecated */
+    LockCreated: createEvent(
+      "state.lock.created",
+      z.object({ stageID: z.string(), versionID: z.string().optional() }),
+    ),
+    /** @deprecated */
+    LockRemoved: createEvent(
+      "state.lock.removed",
+      z.object({ stageID: z.string(), versionID: z.string().optional() }),
+    ),
+    /** @deprecated */
+    SummaryCreated: createEvent(
+      "state.summary.created",
+      z.object({ stageID: z.string(), updateID: z.string() }),
+    ),
+    /** @deprecated */
     HistoryCreated: createEvent(
       "state.history.created",
       z.object({
@@ -72,6 +73,7 @@ export module State {
         initial: z.boolean().optional(),
       }),
     ),
+    /** @deprecated */
     HistorySynced: createEvent(
       "state.history.synced",
       z.object({ stageID: z.string(), updateID: z.string() }),

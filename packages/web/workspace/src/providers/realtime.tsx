@@ -51,7 +51,7 @@ export function RealtimeProvider() {
 
     if (msg.type === "data") {
       const evt = JSON.parse(msg.event);
-      bus.emit(evt.type, evt.properties)
+      bus.emit(evt.type, evt.properties);
     }
   };
 

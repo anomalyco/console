@@ -4,7 +4,7 @@ import { bus } from "./bus";
 import { domain } from "./dns";
 import { email } from "./email";
 import { database } from "./planetscale";
-import { secret } from "./secret";
+import { allSecrets, secret } from "./secret";
 import { storage } from "./storage";
 import { websocket } from "./websocket";
 
@@ -19,10 +19,8 @@ const api = new sst.aws.Function("Api", {
     bus,
     email,
     autodeploy,
-    secret.GithubAppID,
-    secret.GithubPrivateKey,
-    secret.GithubWebhookSecret,
     websocket,
+    ...allSecrets,
   ],
   nodejs: {
     install: ["source-map"],
