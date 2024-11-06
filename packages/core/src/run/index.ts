@@ -785,8 +785,6 @@ export module Run {
     }),
     async (input) =>
       useTransaction(async (tx) => {
-        // TODO remove
-        console.log("markRunStarted 1", input);
         await tx
           .update(runTable)
           .set({
@@ -804,8 +802,6 @@ export module Run {
             )
           )
           .execute();
-        // TODO remove
-        console.log("markRunStarted 2");
         await createTransactionEffect(() => Replicache.poke());
       })
   );
