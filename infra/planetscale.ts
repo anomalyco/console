@@ -22,9 +22,6 @@ const branch =
         production: $app.stage === "production",
       });
 
-const testB = planetscale.Branch.get("DatabaseTest", "sst,sst,production");
-testB.parentBranch.apply(console.log);
-
 const password = new planetscale.Password("DatabasePassword", {
   database: mysql.name,
   organization: mysql.organization,

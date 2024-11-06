@@ -1,11 +1,4 @@
-export const storage = new sst.aws.Bucket("Storage", {
-  transform: {
-    bucket: (input, opts) => {
-      opts.import = "console-production-storage-wudntfmd";
-      opts.ignoreChanges = ["*"];
-    },
-  },
-});
+export const storage = new sst.aws.Bucket("Storage");
 
 new aws.s3.BucketOwnershipControls("ownership-controls", {
   bucket: storage.name,
