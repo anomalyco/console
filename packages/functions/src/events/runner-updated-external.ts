@@ -83,7 +83,6 @@ export const codebuildHandler = async (evt: Payload) => {
       await Run.complete({
         runID: runnerEvent.runID,
         error: "Runner failed",
-        ignoreIfCompleted: true,
       });
     }
   );
