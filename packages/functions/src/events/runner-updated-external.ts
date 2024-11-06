@@ -64,7 +64,6 @@ type Payload = {
 export const codebuildHandler = async (evt: Payload) => {
   console.log(evt);
 
-  if (evt.detail["build-status"] !== "FAILED") return;
   if (!evt.detail["project-name"].startsWith("sst-runner-")) return;
 
   const runnerEnv = evt.detail["additional-information"]["environment"][
@@ -79,9 +78,15 @@ export const codebuildHandler = async (evt: Payload) => {
       properties: { workspaceID: runnerEvent.workspaceID },
     },
     async () => {
+      const status = evt.detail["build-status"];
       await Run.complete({
         runID: runnerEvent.runID,
-        error: "Runner failed",
+        error:
+          status === "TIMED_OUT"
+            ? "CodeBuild run timed out"
+            : status === "STOPPED"
+            ? "CodeBuild run stopped"
+            : "CodeBuild run failed",
       });
     }
   );
