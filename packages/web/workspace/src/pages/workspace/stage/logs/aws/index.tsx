@@ -21,7 +21,6 @@ import {
   Show,
   Switch,
 } from "solid-js";
-import { LogLoadingIndicatorIconSvg } from "../detail";
 import {
   useResourcesContext,
   useStageContext,
@@ -64,6 +63,24 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   timeZone: "UTC",
   year: "numeric",
 };
+
+export const LogLoadingIndicator = styled("div", {
+  base: {
+    ...utility.row(0),
+    height: 52,
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: `0 ${theme.space[3]} 0 ${theme.space[3]}`,
+    borderStyle: "solid",
+    borderWidth: `1px 1px 1px 1px`,
+    borderColor: theme.color.divider.base,
+    backgroundColor: theme.color.background.surface,
+    borderRadius: `${theme.borderRadius} ${theme.borderRadius} 0 0`,
+    ":last-child": {
+      borderRadius: theme.borderRadius,
+    },
+  },
+});
 
 const Root = styled("div", {
   base: {

@@ -1,5 +1,5 @@
-const PRODUCTION = "next.console.sst.dev";
-const DEV = "next.dev.console.sst.dev";
+const PRODUCTION = "console.sst.dev";
+const DEV = "dev.console.sst.dev";
 
 export const { zone, domain } = (() => {
   if ($app.stage === "production")

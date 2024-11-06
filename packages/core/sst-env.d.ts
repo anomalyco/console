@@ -10,52 +10,9 @@ declare module "sst" {
       "arn": string
       "type": "sst.aws.SnsTopic"
     }
-    "Api": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "ApiRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
     "Auth": {
       "publicKey": string
       "type": "sst.aws.Auth"
-    }
-    "AuthAuthenticator": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "AuthRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
-    "AutodeployConfig": {
-      "buildImage": string
-      "buildspecBucketName": string
-      "buildspecVersion": string
-      "configParserFunctionArn": string
-      "runnerRemoverFunctionArn": string
-      "runnerRemoverScheduleGroupName": string
-      "runnerRemoverScheduleRoleArn": string
-      "timeoutMonitorFunctionArn": string
-      "timeoutMonitorScheduleGroupName": string
-      "timeoutMonitorScheduleRoleArn": string
-      "type": "sst.sst.Linkable"
-    }
-    "AutodeployConfigParser": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployRunnerRemover": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployTimeoutMonitor": {
-      "name": string
-      "type": "sst.aws.Function"
     }
     "BotpoisonSecretKey": {
       "type": "sst.sst.Secret"
@@ -66,10 +23,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bus"
     }
-    "Connect": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "Database": {
       "database": string
       "host": string
@@ -77,16 +30,6 @@ declare module "sst" {
       "port": number
       "type": "sst.sst.Linkable"
       "username": string
-    }
-    "Email": {
-      "configSet": string
-      "sender": string
-      "type": "sst.aws.Email"
-    }
-    "Error": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
     }
     "GithubAppID": {
       "type": "sst.sst.Secret"
@@ -118,27 +61,15 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "Storage": {
-      "name": string
-      "type": "sst.aws.Bucket"
-    }
     "Websocket": {
       "http": string
       "realtime": string
       "token": string
       "type": "sst.sst.Linkable"
     }
-    "WebsocketAuthorizer": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "WebsocketToken": {
       "type": "sst.sst.Secret"
       "value": string
-    }
-    "Workspace": {
-      "type": "sst.aws.StaticSite"
-      "url": string
     }
   }
 }

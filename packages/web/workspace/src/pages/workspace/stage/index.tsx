@@ -25,7 +25,6 @@ import {
   HeaderProvider,
   useHeaderContext,
 } from "../header";
-import { Local } from "./local";
 import { IconExclamationTriangle } from "$/ui/icons";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
@@ -262,7 +261,6 @@ export function Inner() {
               <Route path="autodeploy/*" component={Autodeploy} />
               <Route path="issues/*" component={Issues} />
               <Route path="logs/*" component={Logs} />
-              <Route path="local/*" component={Local} />
               <Route path="" element={<Navigate href="resources" />} />
               <Route path="*" element={<NotFound inset="header-tabs" />} />
             </Routes>
