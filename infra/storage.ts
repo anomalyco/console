@@ -1,4 +1,13 @@
-export const storage = new sst.aws.Bucket("Storage");
+export const storage = new sst.aws.Bucket("Storage", {
+  transform: {
+    publicAccessBlock: {
+      blockPublicAcls: false,
+      blockPublicPolicy: false,
+      ignorePublicAcls: false,
+      restrictPublicBuckets: false,
+    },
+  },
+});
 
 new aws.s3.BucketOwnershipControls("ownership-controls", {
   bucket: storage.name,
@@ -7,16 +16,16 @@ new aws.s3.BucketOwnershipControls("ownership-controls", {
   },
 });
 
-export const storageAccess = new aws.s3.BucketPublicAccessBlock(
-  "StorageAccess",
-  {
-    bucket: storage.name,
-    blockPublicAcls: false,
-    blockPublicPolicy: false,
-    ignorePublicAcls: false,
-    restrictPublicBuckets: false,
-  },
-);
+// export const storageAccess = new aws.s3.BucketPublicAccessBlock(
+//   "StorageAccess",
+//   {
+//     bucket: storage.name,
+//     blockPublicAcls: false,
+//     blockPublicPolicy: false,
+//     ignorePublicAcls: false,
+//     restrictPublicBuckets: false,
+//   },
+// );
 
 new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
   bucket: storage.name,

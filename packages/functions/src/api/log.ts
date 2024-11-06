@@ -309,6 +309,39 @@ export const LogRoute = new Hono()
         invocations: entries,
       });
     },
+  )
+  .get(
+    "/aws/scan",
+    zValidator(
+      "query",
+      z.object({
+        stageID: z.string(),
+        requestID: z.string().optional(),
+        timestamp: z.number({ coerce: true }).optional(),
+        logGroup: z.string(),
+        logStream: z.string(),
+      }),
+    ),
+    async (c) => {
+      const body = c.req.valid("query");
+      let start = Date.now() - 2 * 60 * 1000;
+      console.log("tailing from", start);
+      const config = await Stage.assumeRole(body.stageID);
+      if (!config)
+        return {
+          statusCode: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ error: "Failed to assume role" }),
+        };
+      const logs = await Log.scan({
+        ...body,
+        timestamp: body.timestamp || undefined,
+        config,
+      });
+      return c.json(logs);
+    },
   );
 
 function delay(iteration: number) {

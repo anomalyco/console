@@ -250,7 +250,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           )
           .then((rows) =>
             rows
-              .filter((row) => parseInt(row.rowNumber) < 100)
+              .filter((row) => parseInt(row.rowNumber) <= 50)
               .map((row) => row.id),
           );
 
@@ -258,7 +258,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           .select({
             id: runTable.id,
             rowNumber:
-              sql<string>`ROW_NUMBER() OVER (PARTITION BY ${runTable.stageID} ORDER BY ${runTable.timeCompleted} DESC)`.as(
+              sql<string>`ROW_NUMBER() OVER (PARTITION BY ${runTable.stageID} ORDER BY ${runTable.timeCreated} DESC)`.as(
                 "row_number",
               ),
           })
@@ -273,7 +273,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           )
           .then((rows) =>
             rows
-              .filter((row) => parseInt(row.rowNumber) < 100)
+              .filter((row) => parseInt(row.rowNumber) <= 50)
               .map((row) => row.id),
           );
         const tableFilters = {

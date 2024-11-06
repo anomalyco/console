@@ -37,7 +37,7 @@ export const handler = async (evt: Payload) => {
   const region = evt.region;
 
   if (
-    evt.detail.object.key.startsWith("update") &&
+    evt.detail.object.key.startsWith("update/") &&
     evt["detail-type"] === "Object Created"
   ) {
     let [, appHint, stageHint] = evt.detail.object.key.split("/");
@@ -95,7 +95,7 @@ export const handler = async (evt: Payload) => {
 
   if (
     evt["detail-type"] === "Object Created" &&
-    evt.detail.object.key.startsWith("snapshot")
+    evt.detail.object.key.startsWith("snapshot/")
   ) {
     let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
     updateID = updateID!.split(".")[0]!;
@@ -120,7 +120,7 @@ export const handler = async (evt: Payload) => {
 
   if (
     evt["detail-type"] === "Object Created" &&
-    evt.detail.object.key.startsWith("app")
+    evt.detail.object.key.startsWith("app/")
   ) {
     let [, appHint, stageHint] = evt.detail.object.key.split("/");
     stageHint = stageHint!.split(".")[0];
@@ -143,7 +143,7 @@ export const handler = async (evt: Payload) => {
   }
 
   // this is legacy now :(
-  if (evt.detail.object.key.startsWith("lock")) {
+  if (evt.detail.object.key.startsWith("lock/")) {
     if (evt["detail-type"] === "Object Created") {
       console.log("lock created");
       await useTransaction(async (tx) => {
@@ -202,7 +202,7 @@ export const handler = async (evt: Payload) => {
   }
 
   // this is legacy now :(
-  if (evt.detail.object.key.startsWith("summary")) {
+  if (evt.detail.object.key.startsWith("summary/")) {
     let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
     updateID = updateID!.split(".")[0];
     const stages = await findStages(stageHint!, appHint!, evt.account, region);
@@ -227,7 +227,7 @@ export const handler = async (evt: Payload) => {
   // this is legacy now :(
   if (
     evt["detail-type"] === "Object Created" &&
-    evt.detail.object.key.startsWith("history")
+    evt.detail.object.key.startsWith("history/")
   ) {
     let [, appHint, stageHint, updateID] = evt.detail.object.key.split("/");
     updateID = updateID!.split(".")[0];
@@ -255,7 +255,7 @@ export const handler = async (evt: Payload) => {
     evt["detail-type"] === "Object Created" ||
     evt["detail-type"] === "Object Deleted"
   ) {
-    if (!evt.detail.object.key.startsWith("stackMetadata")) {
+    if (!evt.detail.object.key.startsWith("stackMetadata/")) {
       console.log("skipping", evt.detail.object.key);
       return;
     }
@@ -285,7 +285,7 @@ export const handler = async (evt: Payload) => {
               row.appID = createId();
               await tx.insert(app).values({
                 workspaceID: row.workspaceID,
-                name: appHint!,
+                name: appName!,
                 id: row.appID,
               });
             }
@@ -293,7 +293,7 @@ export const handler = async (evt: Payload) => {
               row.stageID = createId();
               await tx.insert(stage).values({
                 appID: row.appID!,
-                name: stageHint!,
+                name: stageName!,
                 id: row.stageID,
                 region: evt.region,
                 workspaceID: row.workspaceID,

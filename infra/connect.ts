@@ -1,6 +1,6 @@
 import { bus } from "./bus";
 import { database } from "./planetscale";
-import { storage, storageAccess } from "./storage";
+import { storage } from "./storage";
 import { websocket } from "./websocket";
 
 export const identity = aws.getCallerIdentityOutput();
@@ -17,96 +17,90 @@ new aws.lambda.Permission("ConnectInvoke", {
   function: connect.name,
 });
 
-new aws.s3.BucketObjectv2(
-  "ConnectTemplateFile",
-  {
-    bucket: storage.name,
-    key: "connect/template.json",
-    acl: "public-read",
-    content: $jsonStringify({
-      AWSTemplateFormatVersion: "2010-09-09",
-      Description: "Connect your AWS account to access the SST Console.",
-      Parameters: {
-        workspaceID: {
-          Type: "String",
-          Description:
-            "This is the ID of your SST Console workspace, do not edit.",
-        },
+new aws.s3.BucketObjectv2("ConnectTemplateFile", {
+  bucket: storage.name,
+  key: "connect/template.json",
+  acl: "public-read",
+  content: $jsonStringify({
+    AWSTemplateFormatVersion: "2010-09-09",
+    Description: "Connect your AWS account to access the SST Console.",
+    Parameters: {
+      workspaceID: {
+        Type: "String",
+        Description:
+          "This is the ID of your SST Console workspace, do not edit.",
       },
-      Outputs: {},
-      Resources: {
-        SSTRole: {
-          Type: "AWS::IAM::Role",
-          Properties: {
-            RoleName: {
-              "Fn::Join": [
-                "-",
-                [
-                  "sst",
-                  {
-                    Ref: "workspaceID",
-                  },
-                ],
-              ],
-            },
-            AssumeRolePolicyDocument: {
-              Version: "2012-10-17",
-              Statement: [
+    },
+    Outputs: {},
+    Resources: {
+      SSTRole: {
+        Type: "AWS::IAM::Role",
+        Properties: {
+          RoleName: {
+            "Fn::Join": [
+              "-",
+              [
+                "sst",
                 {
-                  Effect: "Allow",
-                  Principal: {
-                    AWS: identity.accountId,
-                  },
-                  Action: "sts:AssumeRole",
-                  Condition: {
-                    StringEquals: {
-                      "sts:ExternalId": {
-                        Ref: "workspaceID",
-                      },
+                  Ref: "workspaceID",
+                },
+              ],
+            ],
+          },
+          AssumeRolePolicyDocument: {
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Effect: "Allow",
+                Principal: {
+                  AWS: identity.accountId,
+                },
+                Action: "sts:AssumeRole",
+                Condition: {
+                  StringEquals: {
+                    "sts:ExternalId": {
+                      Ref: "workspaceID",
                     },
                   },
                 },
-              ],
-            },
-            ManagedPolicyArns: ["arn:aws:iam::aws:policy/AdministratorAccess"],
-          },
-        },
-        SSTConnect: {
-          Type: "Custom::SSTConnect",
-          Properties: {
-            ServiceToken: connect.nodes.function.arn,
-            accountID: {
-              Ref: "AWS::AccountId",
-            },
-            region: {
-              Ref: "AWS::Region",
-            },
-            role: {
-              "Fn::GetAtt": ["SSTRole", "Arn"],
-            },
-            workspaceID: {
-              Ref: "workspaceID",
-            },
-          },
-        },
-      },
-      Rules: {
-        testRegion: {
-          Assertions: [
-            {
-              Assert: {
-                "Fn::Equals": [{ Ref: "AWS::Region" }, "us-east-1"],
               },
-              AssertDescription: "This stack needs to be deployed to us-east-1",
-            },
-          ],
+            ],
+          },
+          ManagedPolicyArns: ["arn:aws:iam::aws:policy/AdministratorAccess"],
         },
       },
-    }),
-  },
-  {
-    dependsOn: [storageAccess],
-  },
-);
+      SSTConnect: {
+        Type: "Custom::SSTConnect",
+        Properties: {
+          ServiceToken: connect.nodes.function.arn,
+          accountID: {
+            Ref: "AWS::AccountId",
+          },
+          region: {
+            Ref: "AWS::Region",
+          },
+          role: {
+            "Fn::GetAtt": ["SSTRole", "Arn"],
+          },
+          workspaceID: {
+            Ref: "workspaceID",
+          },
+        },
+      },
+    },
+    Rules: {
+      testRegion: {
+        Assertions: [
+          {
+            Assert: {
+              "Fn::Equals": [{ Ref: "AWS::Region" }, "us-east-1"],
+            },
+            AssertDescription: "This stack needs to be deployed to us-east-1",
+          },
+        ],
+      },
+    },
+  }),
+});
 
 export const connectTemplateUrl = $interpolate`https://${storage.nodes.bucket.bucketRegionalDomainName}/connect/template.json`;

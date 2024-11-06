@@ -26,6 +26,7 @@ import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
 import { Alert } from "$/ui/alert";
 import { Invocation } from "@console/core/log";
+import { useApi } from "../../context";
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -156,13 +157,14 @@ export function Detail() {
     if (issue()?.timeResolved) return "resolved";
     return "active";
   });
+  const api = useApi();
 
   createEffect(async () => {
     if (!issue()) return;
     if (issue()?.invocation) return;
     await fetch(
       import.meta.env.VITE_API_URL +
-        "/rest/log?" +
+        "/log?" +
         new URLSearchParams({
           pointer: JSON.stringify(issue()!.pointer),
           stageID: issue()!.stageID,

@@ -476,7 +476,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         if (!log) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-            "/rest/log/scan?" +
+            "/log/aws/scan?" +
             new URLSearchParams(
               log.engine === "lambda"
                 ? {
