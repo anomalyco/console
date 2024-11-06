@@ -203,7 +203,7 @@ export function Run({ stack, app }: StackContext) {
   bus.addRules(stack, {
     "runner.started": {
       pattern: {
-        source: ["sst.external"],
+        source: ["sst.runner"],
         detailType: ["runner.started"],
       },
       targets: {
@@ -218,7 +218,7 @@ export function Run({ stack, app }: StackContext) {
     },
     "runner.completed": {
       pattern: {
-        source: ["sst.external"],
+        source: ["sst.runner"],
         detailType: ["runner.completed"],
       },
       targets: {

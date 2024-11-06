@@ -180,20 +180,20 @@ export module Run {
       "run.created",
       z.object({
         stageID: z.string().min(1),
-      }),
+      })
     ),
     CreateFailed: createEvent(
       "run.create-failed",
       z.object({
         runID: z.string().min(1),
-      }),
+      })
     ),
     Completed: createEvent(
       "run.completed",
       z.object({
         runID: z.string().min(1),
         stageID: z.string().min(1),
-      }),
+      })
     ),
     RunnerStarted: createEvent(
       "runner.started",
@@ -205,7 +205,7 @@ export module Run {
         logStream: z.string().min(1),
         awsRequestId: z.string().min(1).optional(),
         timestamp: z.number().int(),
-      }),
+      })
     ),
     RunnerCompleted: createEvent(
       "runner.completed",
@@ -213,7 +213,7 @@ export module Run {
         workspaceID: z.string().min(1),
         runID: z.string().min(1),
         error: z.string().min(1).optional(),
-      }),
+      })
     ),
   };
 
@@ -257,18 +257,18 @@ export module Run {
         ? input.error
           ? "error"
           : input.timeStarted
-            ? "updated"
-            : "skipped"
+          ? "updated"
+          : "skipped"
         : input.error
-          ? input.error.type === "config_branch_remove_skipped" ||
-            input.error.type === "config_tag_skipped" ||
-            input.error.type === "config_target_returned_undefined" ||
-            input.error.type === "target_not_matched"
-            ? "skipped"
-            : "error"
-          : input.active
-            ? "updating"
-            : "queued",
+        ? input.error.type === "config_branch_remove_skipped" ||
+          input.error.type === "config_tag_skipped" ||
+          input.error.type === "config_target_returned_undefined" ||
+          input.error.type === "target_not_matched"
+          ? "skipped"
+          : "error"
+        : input.active
+        ? "updating"
+        : "queued",
     };
   }
 
@@ -310,14 +310,14 @@ export module Run {
                     .replace(/^-/g, "")
                     .replace(/-$/g, "")
                 : input.trigger.type === "tag"
-                  ? input.trigger.tag
-                      .replace(/[^a-zA-Z0-9-]/g, "-")
-                      .replace(/-+/g, "-")
-                      .replace(/^-/g, "")
-                      .replace(/-$/g, "")
-                  : `pr-${input.trigger.number}`,
+                ? input.trigger.tag
+                    .replace(/[^a-zA-Z0-9-]/g, "-")
+                    .replace(/-+/g, "-")
+                    .replace(/^-/g, "")
+                    .replace(/-$/g, "")
+                : `pr-${input.trigger.number}`,
           } satisfies ConfigParserEvent),
-        }),
+        })
       );
 
       const payload = ret.FunctionError
@@ -327,7 +327,7 @@ export module Run {
       return payload.error
         ? SstConfigParseError.parse(payload)
         : SstConfig.parse(payload);
-    },
+    }
   );
 
   export const create = zod(
@@ -375,7 +375,7 @@ export module Run {
                 })
                 .execute();
               await createTransactionEffect(() =>
-                bus.publish(SSTResource.Bus, Event.CreateFailed, { runID }),
+                bus.publish(SSTResource.Bus, Event.CreateFailed, { runID })
               );
             });
 
@@ -432,7 +432,7 @@ export module Run {
               const allEnv = await RunConfig.list(appID);
               if (!allEnv.length) return { type: "target_not_found" as const };
               const env = allEnv.find((row) =>
-                minimatch(stageName, row.stagePattern),
+                minimatch(stageName, row.stagePattern)
               );
               if (!env)
                 return {
@@ -445,7 +445,7 @@ export module Run {
                   properties: { target: env.stagePattern },
                 };
               const awsAccount = await AWS.Account.fromExternalID(
-                env.awsAccountExternalID,
+                env.awsAccountExternalID
               );
               if (!awsAccount)
                 return {
@@ -472,7 +472,7 @@ export module Run {
                     awsAccountID: awsAccount.id,
                     workspaceID: useWorkspace(),
                     appID,
-                  }),
+                  })
                 );
               }
 
@@ -491,14 +491,14 @@ export module Run {
                   .execute();
 
                 await createTransactionEffect(() =>
-                  bus.publish(SSTResource.Bus, Event.Created, { stageID }),
+                  bus.publish(SSTResource.Bus, Event.Created, { stageID })
                 );
               });
             }
-          },
+          }
         );
       }
-    },
+    }
   );
 
   export const orchestrate = zod(z.string().cuid2(), async (stageID) => {
@@ -511,11 +511,11 @@ export module Run {
           and(
             eq(runTable.workspaceID, useWorkspace()),
             eq(runTable.stageID, stageID),
-            isNull(runTable.timeCompleted),
-          ),
+            isNull(runTable.timeCompleted)
+          )
         )
         .orderBy(runTable.timeCreated)
-        .execute(),
+        .execute()
     );
     if (!runs.length) return;
     if (runs.some((r) => r.active)) return;
@@ -532,9 +532,9 @@ export module Run {
           .where(
             and(
               eq(runTable.workspaceID, useWorkspace()),
-              eq(runTable.id, run.id),
-            ),
-          ),
+              eq(runTable.id, run.id)
+            )
+          )
       );
     } catch (e: any) {
       // A run is already active
@@ -555,12 +555,12 @@ export module Run {
               eq(runTable.workspaceID, useWorkspace()),
               inArray(
                 runTable.id,
-                runsToSkip.map((r) => r.id),
+                runsToSkip.map((r) => r.id)
               ),
-              isNull(runTable.timeCompleted),
-            ),
+              isNull(runTable.timeCompleted)
+            )
           )
-          .execute(),
+          .execute()
       );
     }
 
@@ -612,7 +612,7 @@ export module Run {
 
       // Get run env
       const env = (await RunConfig.list(stage.appID)).find((row) =>
-        minimatch(stage.name, row.stagePattern),
+        minimatch(stage.name, row.stagePattern)
       );
       if (!env) throw new Error("AWS Account ID is not set in Run Env");
 
@@ -660,8 +660,8 @@ export module Run {
           .where(
             and(
               eq(runnerTable.id, runnerID),
-              eq(runnerTable.workspaceID, useWorkspace()),
-            ),
+              eq(runnerTable.workspaceID, useWorkspace())
+            )
           )
           .execute();
 
@@ -714,7 +714,7 @@ export module Run {
           } satisfies RunTimeoutMonitorEvent),
         },
         ActionAfterCompletion: "DELETE",
-      }),
+      })
     );
   });
 
@@ -733,11 +733,11 @@ export module Run {
             and(
               eq(runTable.id, runID),
               eq(runTable.workspaceID, useWorkspace()),
-              isNull(runTable.timeCompleted),
-            ),
+              isNull(runTable.timeCompleted)
+            )
           )
           .execute()
-          .then((x) => x[0]),
+          .then((x) => x[0])
       );
       if (!run) return;
       if (run.timeCompleted && ignoreIfCompleted) return;
@@ -760,8 +760,8 @@ export module Run {
             and(
               eq(runTable.id, runID),
               eq(runTable.workspaceID, useWorkspace()),
-              isNull(runTable.timeCompleted),
-            ),
+              isNull(runTable.timeCompleted)
+            )
           )
           .execute();
 
@@ -769,10 +769,10 @@ export module Run {
           bus.publish(SSTResource.Bus, Event.Completed, {
             runID,
             stageID: run.stageID!,
-          }),
+          })
         );
       });
-    },
+    }
   );
 
   export const markRunStarted = zod(
@@ -799,12 +799,12 @@ export module Run {
           .where(
             and(
               eq(runTable.id, input.runID),
-              eq(runTable.workspaceID, useWorkspace()),
-            ),
+              eq(runTable.workspaceID, useWorkspace())
+            )
           )
           .execute();
         await createTransactionEffect(() => Replicache.poke());
-      }),
+      })
   );
 
   export const getRunnerByID = zod(z.string().cuid2(), async (runnerID) => {
@@ -815,11 +815,11 @@ export module Run {
         .where(
           and(
             eq(runnerTable.workspaceID, useWorkspace()),
-            eq(runnerTable.id, runnerID),
-          ),
+            eq(runnerTable.id, runnerID)
+          )
         )
         .execute()
-        .then((x) => x[0]),
+        .then((x) => x[0])
     );
   });
 
@@ -837,7 +837,7 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}`;
+      const type = `${engine}-${architecture}-${image}-${compute}.v2`;
       return await useTransaction((tx) =>
         tx
           .select()
@@ -849,13 +849,13 @@ export module Run {
               eq(runnerTable.appRepoID, input.appRepoID),
               eq(runnerTable.region, input.region),
               eq(runnerTable.engine, engine),
-              eq(runnerTable.type, type),
-            ),
+              eq(runnerTable.type, type)
+            )
           )
           .execute()
-          .then((x) => x[0]),
+          .then((x) => x[0])
       );
-    },
+    }
   );
 
   export const createRunner = zod(
@@ -877,7 +877,7 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}`;
+      const type = `${engine}-${architecture}-${image}-${compute}.v2`;
       const runnerSuffix =
         architecture +
         "-" +
@@ -902,7 +902,7 @@ export module Run {
               engine,
               type,
             })
-            .execute(),
+            .execute()
         );
 
         // Create resources
@@ -917,7 +917,7 @@ export module Run {
         });
 
         // Create bus target to forward two types of events to SST Console
-        // - "sst.external" events: events fired from within the runner
+        // - "sst.runner" events: events fired from within the runner
         // - "aws.codebuild" events: events fired by AWS CodeBuild
         const suffix =
           SSTResource.App.stage !== "production"
@@ -930,7 +930,7 @@ export module Run {
           const roleRet = await iam.send(
             new GetRoleCommand({
               RoleName: "SSTConsolePublisher" + suffix,
-            }),
+            })
           );
           roleArn = roleRet.Role?.Arn!;
           return roleArn;
@@ -941,19 +941,19 @@ export module Run {
           retryStrategy: RETRY_STRATEGY,
         });
 
-        // Create "sst.external" forwarder
+        // Create "sst.runner" forwarder
         await (async () => {
           const ruleName = "SSTConsoleExternal" + suffix;
-          const ruleSource = "sst.external";
+          const ruleSource = "sst.runner";
           const targetId = "SSTConsoleExternal";
           try {
             const rule = await eb.send(
-              new DescribeRuleCommand({ Name: ruleName }),
+              new DescribeRuleCommand({ Name: ruleName })
             );
             const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
             if (eventPattern.source?.includes(ruleSource)) return;
             await eb.send(
-              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] }),
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
             );
             await eb.send(new DeleteRuleCommand({ Name: ruleName }));
           } catch (e) {
@@ -964,7 +964,7 @@ export module Run {
               Name: ruleName,
               State: "ENABLED",
               EventPattern: JSON.stringify({ source: [ruleSource] }),
-            }),
+            })
           );
           await eb.send(
             new PutTargetsCommand({
@@ -976,7 +976,7 @@ export module Run {
                   RoleArn: await useRoleArn(),
                 },
               ],
-            }),
+            })
           );
         })();
 
@@ -988,7 +988,7 @@ export module Run {
           const targetId = "SSTConsoleCodebuild";
           try {
             const rule = await eb.send(
-              new DescribeRuleCommand({ Name: ruleName }),
+              new DescribeRuleCommand({ Name: ruleName })
             );
             const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
             if (
@@ -997,7 +997,7 @@ export module Run {
             )
               return;
             await eb.send(
-              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] }),
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
             );
             await eb.send(new DeleteRuleCommand({ Name: ruleName }));
           } catch (e) {
@@ -1014,7 +1014,7 @@ export module Run {
                   "build-status": ["FAILED"],
                 },
               }),
-            }),
+            })
           );
           await eb.send(
             new PutTargetsCommand({
@@ -1026,7 +1026,7 @@ export module Run {
                   RoleArn: await useRoleArn(),
                 },
               ],
-            }),
+            })
           );
         })();
 
@@ -1038,10 +1038,10 @@ export module Run {
             .where(
               and(
                 eq(runnerTable.id, runnerID),
-                eq(runnerTable.workspaceID, useWorkspace()),
-              ),
+                eq(runnerTable.workspaceID, useWorkspace())
+              )
             )
-            .execute(),
+            .execute()
         );
       } catch (e) {
         // Remove from db
@@ -1051,10 +1051,10 @@ export module Run {
             .where(
               and(
                 eq(runnerTable.id, runnerID),
-                eq(runnerTable.workspaceID, useWorkspace()),
-              ),
+                eq(runnerTable.workspaceID, useWorkspace())
+              )
             )
-            .execute(),
+            .execute()
         );
         throw e;
       }
@@ -1062,7 +1062,7 @@ export module Run {
       await scheduleRunnerRemover(runnerID);
 
       return { id: runnerID, region, engine, resource };
-    },
+    }
   );
 
   export const removeRunner = zod(
@@ -1089,12 +1089,12 @@ export module Run {
           .where(
             and(
               eq(runnerTable.id, runner.id),
-              eq(runnerTable.workspaceID, useWorkspace()),
-            ),
+              eq(runnerTable.workspaceID, useWorkspace())
+            )
           )
-          .execute(),
+          .execute()
       );
-    },
+    }
   );
 
   export const scheduleRunnerRemover = zod(
@@ -1135,9 +1135,9 @@ export module Run {
             } satisfies RunnerRemoverEvent),
           },
           ActionAfterCompletion: "DELETE",
-        }),
+        })
       );
-    },
+    }
   );
 
   export const alert = zod(Run.shape.id, async (runID) => {
@@ -1152,13 +1152,13 @@ export module Run {
         .innerJoin(workspace, eq(workspace.id, runTable.workspaceID))
         .innerJoin(
           app,
-          and(eq(app.id, runTable.appID), eq(app.workspaceID, useWorkspace())),
+          and(eq(app.id, runTable.appID), eq(app.workspaceID, useWorkspace()))
         )
         .where(
-          and(eq(runTable.workspaceID, useWorkspace()), eq(runTable.id, runID)),
+          and(eq(runTable.workspaceID, useWorkspace()), eq(runTable.id, runID))
         )
         .execute()
-        .then((x) => x[0]),
+        .then((x) => x[0])
     );
     console.log("FOUND RUN!!", run);
     if (!run) return;
@@ -1173,11 +1173,11 @@ export module Run {
               .where(
                 and(
                   eq(stageTable.id, run.stageID!),
-                  eq(stageTable.workspaceID, useWorkspace()),
-                ),
+                  eq(stageTable.workspaceID, useWorkspace())
+                )
               )
               .execute()
-              .then((x) => x[0]),
+              .then((x) => x[0])
           );
 
     const { appName, workspaceSlug } = run;
@@ -1274,7 +1274,7 @@ export module Run {
               consoleUrl,
               runUrl,
               workspace: run.workspaceSlug,
-            }),
+            })
           ),
           plain: message,
           replyToAddress: `alert+autodeploy@${SSTResource.Email.sender}`,
