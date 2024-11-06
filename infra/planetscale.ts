@@ -1,15 +1,4 @@
-const mysql =
-  $app.stage === "production"
-    ? new planetscale.Database(
-        "Database",
-        {
-          organization: "sst",
-        },
-        {
-          import: "sst,sst",
-        },
-      )
-    : planetscale.Database.get("Database", "sst,sst");
+const mysql = planetscale.Database.get("Database", "sst,sst");
 
 const branch =
   $app.stage === "production"
@@ -27,7 +16,7 @@ const password = new planetscale.Password("DatabasePassword", {
   organization: mysql.organization,
   branch: branch.name,
   role: "admin",
-  name: `${$app.name}-${$app.stage}-credentials`,
+  name: `${$app.name}-${$app.stage}-password`,
 });
 
 export const database = new sst.Linkable("Database", {

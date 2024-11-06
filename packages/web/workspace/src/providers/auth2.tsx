@@ -155,7 +155,9 @@ export const { use: useAuth2, provider: AuthProvider2 } =
         );
       },
       get ready() {
-        return Boolean(!accessToken() && store.current);
+        return Boolean(
+          !accessToken() && store.current && store.accounts[store.current],
+        );
       },
     };
     return result;

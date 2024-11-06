@@ -2,14 +2,13 @@ export * as Issue from "./index";
 export * from "./extract";
 
 import { useActor, useWorkspace } from "../actor";
-import { and, db, eq, inArray, lt, not, sql } from "../drizzle";
+import { and, db, eq, inArray, lt, sql } from "../drizzle";
 import {
   issue,
   issueAlertLimit,
   issueCount as issueCount,
   issueSubscriber,
 } from "./issue.sql";
-import { createId } from "@paralleldrive/cuid2";
 import { zod } from "../util/zod";
 import { createSelectSchema } from "drizzle-zod";
 import {
@@ -21,10 +20,8 @@ import {
   PutSubscriptionFilterCommand,
   ResourceAlreadyExistsException,
   ResourceNotFoundException,
-  DeleteDestinationCommand,
   DeleteSubscriptionFilterCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
-import { Resource } from "../app/resource";
 import { Resource as SSTResource } from "sst";
 import { z } from "zod";
 import { RETRY_STRATEGY } from "../util/aws";
@@ -34,8 +31,7 @@ import { Warning } from "../warning";
 import { createTransaction, useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
-import * as Send from "./send";
-import { filter, map, pipe, uniq, unique } from "remeda";
+import { filter, map, pipe, unique } from "remeda";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -204,6 +200,7 @@ export const subscribeIon = zod(
   async (config) => {
     const uniqueIdentifier = destinationIdentifier(config);
     console.log("subscribing", uniqueIdentifier);
+    await connectStage(config);
     const destination =
       SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
       uniqueIdentifier;

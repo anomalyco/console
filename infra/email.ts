@@ -7,6 +7,12 @@ export const email = new sst.aws.Email("Email", {
   }),
 });
 
+// export const email = new sst.Linkable("Email", {
+//   properties: {
+//     sender: domain,
+//   },
+// });
+
 // new aws.route53.Record("MX", {
 //   name: domain,
 //   zoneId: zone.zoneId,

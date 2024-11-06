@@ -4,9 +4,16 @@ const DEV = "dev.console.sst.dev";
 export const { zone, domain } = (() => {
   if ($app.stage === "production")
     return {
-      zone: new aws.route53.Zone("Zone", {
-        name: PRODUCTION,
-      }),
+      zone: new aws.route53.Zone(
+        "Zone",
+        {
+          name: PRODUCTION,
+        },
+        {
+          retainOnDelete: true,
+          import: "Z001790632MKQEXQUOINJ",
+        },
+      ),
       domain: PRODUCTION,
     };
 
