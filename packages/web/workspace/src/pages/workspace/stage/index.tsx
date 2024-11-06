@@ -247,7 +247,7 @@ export function Inner() {
               <Link href="logs">
                 <TabTitle size="sm">Logs</TabTitle>
               </Link>
-              <Show when={ctx.connected}>
+              <Show when={ctx.connected && false}>
                 <Link href="local">
                   <TabTitle size="sm">Local</TabTitle>
                 </Link>
