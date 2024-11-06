@@ -6,7 +6,7 @@ export const handler = bus.subscriber(
   [Run.Event.RunnerStarted, Run.Event.RunnerCompleted],
   async (evt) => {
     const { workspaceID } = evt.properties;
-    withActor(
+    await withActor(
       {
         type: "system",
         properties: { workspaceID },
@@ -63,7 +63,6 @@ type Payload = {
 
 export const codebuildHandler = async (evt: Payload) => {
   console.log(evt);
-  const region = evt.region;
 
   if (evt.detail["build-status"] !== "FAILED") return;
   if (!evt.detail["project-name"].startsWith("sst-runner-")) return;
@@ -74,7 +73,7 @@ export const codebuildHandler = async (evt: Payload) => {
   if (!runnerEnv) return;
 
   const runnerEvent = JSON.parse(runnerEnv.value);
-  withActor(
+  await withActor(
     {
       type: "system",
       properties: { workspaceID: runnerEvent.workspaceID },
