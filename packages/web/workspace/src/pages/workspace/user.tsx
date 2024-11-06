@@ -8,7 +8,6 @@ import { useReplicache } from "$/providers/replicache";
 import { useNavigate } from "@solidjs/router";
 import { Header } from "./header";
 import {
-  FormError,
   createForm,
   setError,
   submit,
