@@ -53,7 +53,7 @@ export type DummyMode =
   | "overview:base;usage:overage;resources:base;workspace:gated;subscription:overdue";
 
 export function* generateData(
-  mode: DummyMode
+  mode: DummyMode,
 ): Generator<DummyData, void, unknown> {
   console.log("generating for", mode);
 
@@ -629,7 +629,7 @@ function* appsFull(): Generator<DummyData, void, unknown> {
     appID: APP_ID_LONG,
     status: "error",
     error: unknownRunError(
-      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside"
+      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside",
     ),
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
@@ -795,7 +795,7 @@ function* stageIonBase(): Generator<DummyData, void, unknown> {
 }
 
 function* stageIonUpdateLinks(
-  parent: string
+  parent: string,
 ): Generator<DummyData, void, unknown> {
   const UPDATE_1 = 1;
   const UPDATE_2 = 2;
@@ -898,7 +898,7 @@ function* stageIonUpdateLinks(
 }
 
 function* stageIonBaseIconCase(
-  parent: string
+  parent: string,
 ): Generator<DummyData, void, unknown> {
   yield stateResource({
     parent,
@@ -3333,6 +3333,7 @@ function func({
       missingSourcemap,
     },
     enrichment: {
+      logGroup: "",
       size: size || 2048,
       live: live || false,
       // @ts-ignore
@@ -3426,18 +3427,18 @@ function invocation({
       duration === undefined
         ? duration
         : {
-          duration,
-          memory: 128,
-          size: 2048,
-          xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
-        },
+            duration,
+            memory: 128,
+            size: 2048,
+            xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
+          },
     start: startTime.valueOf(),
     logs: messages
       ? messages.map((message, i) => ({
-        message,
-        id: `log-${INVOCATION_COUNT}-${i}`,
-        timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
-      }))
+          message,
+          id: `log-${INVOCATION_COUNT}-${i}`,
+          timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
+        }))
       : [],
   };
 }

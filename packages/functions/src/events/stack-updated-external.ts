@@ -1,5 +1,4 @@
 import { withActor } from "@console/core/actor";
-import { App, Stage } from "@console/core/app";
 import { app, stage } from "@console/core/app/app.sql";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import { State } from "@console/core/state";
