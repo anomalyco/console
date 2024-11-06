@@ -126,10 +126,10 @@ export const handler = bus.subscriber(
         }
 
         case Run.Event.Completed.type: {
-          await Run.complete(evt.properties);
+          await Run.orchestrate(evt.properties.stageID);
           await Run.alert(evt.properties.runID);
           break;
         }
       }
-    }),
+    })
 );

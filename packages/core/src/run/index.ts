@@ -722,9 +722,8 @@ export module Run {
     z.object({
       runID: z.string().cuid2(),
       error: z.string().min(1).optional(),
-      ignoreIfCompleted: z.boolean().optional(),
     }),
-    async ({ runID, error, ignoreIfCompleted }) => {
+    async ({ runID, error }) => {
       const run = await useTransaction((tx) =>
         tx
           .select()
@@ -740,7 +739,7 @@ export module Run {
           .then((x) => x[0])
       );
       if (!run) return;
-      if (run.timeCompleted && ignoreIfCompleted) return;
+      if (run.timeCompleted) return;
 
       await createTransaction(async (tx) => {
         await tx
