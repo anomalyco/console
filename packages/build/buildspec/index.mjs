@@ -130,16 +130,7 @@ export async function handler(event, context) {
 
   async function installSst() {
     // Check if SST is installed locally
-    let searchPath = path.resolve(APP_PATH);
-    while (true) {
-      const sstPath = path.join(searchPath, "node_modules/.bin/sst");
-      if (fs.existsSync(sstPath)) {
-        console.log("Using locally installed SST binary at", sstPath);
-        return sstPath;
-      }
-      if (searchPath === path.resolve(REPO_PATH)) break;
-      searchPath = path.resolve(searchPath, "..");
-    }
+    if (findLocalSstBinary()) return;
 
     // Install SST globally
     const { stage } = event;
@@ -166,10 +157,8 @@ export async function handler(event, context) {
       sstConfig.console?.autodeploy?.workflow ??
       (async (context) => {
         install();
-        const sstPath = await installSst();
-        context.trigger.action === "removed"
-          ? remove(sstPath)
-          : deploy(sstPath);
+        await installSst();
+        context.trigger.action === "removed" ? remove() : deploy();
       });
 
     await workflow(context);
@@ -194,13 +183,11 @@ export async function handler(event, context) {
     else if (findUp("package.json")) shell("npm install");
   }
 
-  /**
-   * @param {string} sstPath
-   */
-  function deploy(sstPath) {
+  function deploy() {
     process.chdir(APP_PATH);
 
     const { stage, credentials, runID } = event;
+    const sstPath = findLocalSstBinary() ?? "sst";
     shell(`${sstPath} deploy --stage ${stage}`, {
       env: {
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,
@@ -212,13 +199,11 @@ export async function handler(event, context) {
     });
   }
 
-  /**
-   * @param {string} sstPath
-   */
-  function remove(sstPath) {
+  function remove() {
     process.chdir(APP_PATH);
 
     const { stage, credentials, runID } = event;
+    const sstPath = findLocalSstBinary() ?? "sst";
     shell(`${sstPath} remove --stage ${stage}`, {
       env: {
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,
@@ -289,6 +274,19 @@ export async function handler(event, context) {
       if (fs.existsSync(path.join(dir, filename))) return dir;
       if (dir === REPO_PATH) break;
       dir = path.resolve(dir, "..");
+    }
+  }
+
+  function findLocalSstBinary() {
+    let searchPath = path.resolve(APP_PATH);
+    while (true) {
+      const sstPath = path.join(searchPath, "node_modules/.bin/sst");
+      if (fs.existsSync(sstPath)) {
+        console.log("Using locally installed SST binary at", sstPath);
+        return sstPath;
+      }
+      if (searchPath === path.resolve(REPO_PATH)) break;
+      searchPath = path.resolve(searchPath, "..");
     }
   }
 }

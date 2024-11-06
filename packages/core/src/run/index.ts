@@ -836,7 +836,7 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}.v2`;
+      const type = `${engine}-${architecture}-${image}-${compute}.20241106`;
       return await useTransaction((tx) =>
         tx
           .select()
@@ -876,7 +876,7 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}.v2`;
+      const type = `${engine}-${architecture}-${image}-${compute}.20241106`;
       const runnerSuffix =
         architecture +
         "-" +
@@ -992,7 +992,11 @@ export module Run {
             const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
             if (
               eventPattern.source?.includes(ruleSource) &&
-              eventPattern["detail-type"]?.includes(ruleDetailType)
+              eventPattern["detail-type"]?.includes(ruleDetailType) &&
+              eventPattern.detail?.["build-status"]?.includes("FAILED") &&
+              eventPattern.detail?.["build-status"]?.includes("FAULT") &&
+              eventPattern.detail?.["build-status"]?.includes("STOPPED") &&
+              eventPattern.detail?.["build-status"]?.includes("TIMED_OUT")
             )
               return;
             await eb.send(
@@ -1010,7 +1014,7 @@ export module Run {
                 source: [ruleSource],
                 "detail-type": [ruleDetailType],
                 detail: {
-                  "build-status": ["FAILED"],
+                  "build-status": ["FAILED", "FAULT", "STOPPED", "TIMED_OUT"],
                 },
               }),
             })
