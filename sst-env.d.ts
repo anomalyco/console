@@ -136,5 +136,9 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "Workspace": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
   }
 }

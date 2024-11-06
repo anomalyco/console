@@ -24,7 +24,12 @@ export const auth: MiddlewareHandler = async (c, next) => {
     );
   }
   const bearerToken = match[1];
-  let result = await sessions.verify(bearerToken!);
+  let result = await sessions.verify(bearerToken!).catch(() => undefined);
+  if (!result) {
+    throw new HTTPException(401, {
+      message: "Unauthorized",
+    });
+  }
 
   if (result.type === "public") {
     return withActor({ type: "public", properties: {} }, next);

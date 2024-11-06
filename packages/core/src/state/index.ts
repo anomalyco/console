@@ -1097,7 +1097,7 @@ export module State {
       }[];
 
       const s3 = new S3Client({
-        ...input.credentials,
+        credentials: input.credentials,
         retryStrategy: RETRY_STRATEGY,
         region: input.region,
       });
@@ -1218,12 +1218,22 @@ export module State {
           .execute();
         return allStages;
       });
-      await queue(25, toResync, async (item) => {
-        const config = await Stage.assumeRole(item.id);
-        if (!config) return;
-        await State.refreshState({
-          config,
-        });
+      await queue(5, toResync, async (item) => {
+        let retries = 0;
+        while (true) {
+          try {
+            const config = await Stage.assumeRole(item.id);
+            if (!config) return;
+            await State.refreshState({
+              config,
+            });
+            break;
+          } catch (ex) {
+            console.log("failed to refresh state for " + item.id, ex);
+            retries++;
+            if (retries > 3) break;
+          }
+        }
       });
     },
   );

@@ -14,6 +14,7 @@ import { DebugRoute } from "./debug";
 import { LogRoute } from "./log";
 import { LambdaRoute } from "./lambda";
 import { SlackRoute } from "./slack";
+import { HTTPException } from "hono/http-exception";
 
 export const app = new Hono()
   .use(logger())
@@ -31,6 +32,14 @@ export const app = new Hono()
           message: error.message,
         },
         400,
+      );
+    }
+    if (error instanceof HTTPException) {
+      return c.json(
+        {
+          message: error.message,
+        },
+        error.status,
       );
     }
     console.error(error);

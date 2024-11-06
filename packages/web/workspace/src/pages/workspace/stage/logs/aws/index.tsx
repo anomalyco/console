@@ -21,11 +21,7 @@ import {
   Show,
   Switch,
 } from "solid-js";
-import {
-  useResourcesContext,
-  useStageContext,
-  useStateResources,
-} from "../../context";
+import { useStageContext, useStateResources } from "../../context";
 import { DateTime } from "luxon";
 import { DATETIME_LONG } from "$/common/format";
 import { Dropdown } from "$/ui/dropdown";
@@ -33,7 +29,6 @@ import { Invoke, InvokeControl } from "../invoke";
 import { TextButton, IconButton } from "$/ui/button";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
 import { InvocationRow } from "$/common/invocation";
 import { useApi } from "$/pages/workspace/context";
 import { IconArrowPathSpin } from "$/ui/icons/custom";
@@ -47,7 +42,7 @@ import {
   isLog,
   useLocalLogs,
 } from "$/providers/invocation";
-import { Stack, DivSpacer } from "$/ui/layout";
+import { DivSpacer } from "$/ui/layout";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -64,7 +59,7 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-export const LogLoadingIndicator = styled("div", {
+const LogLoadingIndicator = styled("div", {
   base: {
     ...utility.row(0),
     height: 52,
@@ -81,7 +76,40 @@ export const LogLoadingIndicator = styled("div", {
     },
   },
 });
+const LogLoadingIndicatorIcon = styled("div", {
+  base: {
+    padding: 2,
+    width: 20,
+    height: 20,
+    opacity: theme.iconOpacity,
+  },
+  variants: {
+    pulse: {
+      true: {},
+      false: {},
+    },
+    glow: {
+      true: {
+        color: theme.color.accent,
+      },
+      false: {
+        color: theme.color.icon.secondary,
+      },
+    },
+  },
+  defaultVariants: {
+    pulse: true,
+    glow: false,
+  },
+});
 
+const LogLoadingIndicatorIconSvg = style({
+  selectors: {
+    [`${LogLoadingIndicatorIcon.selector({ pulse: true })} &`]: {
+      animation: "glow-pulse 1.7s linear infinite alternate",
+    },
+  },
+});
 const Root = styled("div", {
   base: {
     padding: theme.space[4],

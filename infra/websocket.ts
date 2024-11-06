@@ -7,11 +7,19 @@ const websocketAuthorizer = new sst.aws.Function("WebsocketAuthorizer", {
 });
 
 export const websocket = new sst.Linkable("Websocket", {
-  properties: {
-    http: "oyq6tqbrczd5xfovlyvcsd3xtu.appsync-api.us-east-1.amazonaws.com",
-    realtime:
-      "oyq6tqbrczd5xfovlyvcsd3xtu.appsync-realtime-api.us-east-1.amazonaws.com",
-    token: new sst.Secret("WebsocketToken").value,
-  },
+  properties:
+    $app.stage === "production"
+      ? {
+          http: "il74c3crpfbydaoqjni56kv6ky.appsync-api.us-east-1.amazonaws.com",
+          realtime:
+            "il74c3crpfbydaoqjni56kv6ky.appsync-realtime-api.us-east-1.amazonaws.com",
+          token: new sst.Secret("WebsocketToken").value,
+        }
+      : {
+          http: "oyq6tqbrczd5xfovlyvcsd3xtu.appsync-api.us-east-1.amazonaws.com",
+          realtime:
+            "oyq6tqbrczd5xfovlyvcsd3xtu.appsync-realtime-api.us-east-1.amazonaws.com",
+          token: new sst.Secret("WebsocketToken").value,
+        },
 });
 export {};
