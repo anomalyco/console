@@ -13,6 +13,7 @@ import { compress } from "hono/compress";
 import { DebugRoute } from "./debug";
 import { LogRoute } from "./log";
 import { LambdaRoute } from "./lambda";
+import { SlackRoute } from "./slack";
 
 export const app = new Hono()
   .use(logger())
@@ -60,6 +61,7 @@ export const app = new Hono()
   .route("/account", AccountRoute)
   .route("/debug", DebugRoute)
   .route("/lambda", LambdaRoute)
+  .route("/slack", SlackRoute)
   .route("/log", LogRoute);
 
 export const handler = handle(app);

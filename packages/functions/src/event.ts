@@ -18,7 +18,6 @@ export const handler = bus.subscriber(
     State.Event.HistorySynced,
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
-    State.Event.StateSynced,
     State.Event.UpdateCreated,
     Stage.Events.ResourcesUpdated,
     Issue.Events.RateLimited,
@@ -60,15 +59,6 @@ export const handler = bus.subscriber(
           break;
         }
 
-        case Stage.Events.ResourcesUpdated.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) {
-            return;
-          }
-          await Issue.subscribe(config);
-          break;
-        }
-
         case State.Event.HistoryCreated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
@@ -76,13 +66,6 @@ export const handler = bus.subscriber(
             key: evt.properties.key,
             config,
           });
-          break;
-        }
-
-        case State.Event.HistorySynced.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) return;
-          await Issue.subscribeIon(config);
           break;
         }
 
@@ -114,13 +97,6 @@ export const handler = bus.subscriber(
           await State.refreshState({
             config,
           });
-          break;
-        }
-
-        case State.Event.StateSynced.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) return;
-          await Issue.subscribeIon(config);
           break;
         }
 

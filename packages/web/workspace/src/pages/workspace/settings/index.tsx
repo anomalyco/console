@@ -445,8 +445,8 @@ function Integrations() {
             </Stack>
           </Row>
           <form
-            action={import.meta.env.VITE_AUTH_URL + "/connect"}
-            method="post"
+            action={import.meta.env.VITE_API_URL + "/slack/authorize"}
+            method="get"
             target="newWindow"
           >
             <Toggle
@@ -460,9 +460,12 @@ function Integrations() {
                 e.currentTarget.closest("form")?.submit();
               }}
             />
-            <input type="hidden" name="provider" value="slack" />
+            <input
+              type="hidden"
+              name="authorization"
+              value={"Bearer " + auth.current.token}
+            />
             <input type="hidden" name="workspaceID" value={workspace().id} />
-            <input type="hidden" name="token" value={auth.current.token} />
           </form>
         </Row>
         <Row space="3.5" horizontal="between" vertical="center" id="github">

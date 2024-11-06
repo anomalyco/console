@@ -33,6 +33,7 @@
     "fast-jwt": "^2.2.1",
     "hono": "4.6.5",
     "luxon": "^3.3.0",
+    "oauth4webapi": "^3.1.2",
     "octokit": "^4.0.2",
     "remeda": "^1.17.1",
     "replicache": "^14.2.2",

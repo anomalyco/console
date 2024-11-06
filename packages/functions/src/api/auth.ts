@@ -31,7 +31,8 @@ export const auth: MiddlewareHandler = async (c, next) => {
   }
 
   if (result.type === "account") {
-    const workspaceID = c.req.header("x-sst-workspace");
+    const workspaceID =
+      c.req.header("x-sst-workspace") || c.req.query("workspaceID");
     if (!workspaceID) return withActor(result, next);
     const email = result.properties.email;
     return withActor(
