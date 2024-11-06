@@ -267,7 +267,7 @@ export async function handler(event, context) {
       new PutEventsCommand({
         Entries: [
           {
-            Source: "sst.external",
+            Source: "sst.runner",
             DetailType: type,
             Detail: JSON.stringify({
               properties: {
