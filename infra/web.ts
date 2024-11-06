@@ -10,11 +10,15 @@ new sst.aws.StaticSite("Workspace", {
     output: "./dist",
     command: "pnpm build",
   },
-  domain,
+  domain: {
+    name: domain,
+    dns: sst.aws.dns({
+      override: true,
+    }),
+  },
   environment: {
     VITE_API_URL: apiRouter.url,
     VITE_AUTH_URL: authRouter.url,
-    VITE_IOT_HOST: aws.iot.getEndpointOutput().endpointAddress,
     VITE_STAGE: $app.stage,
     VITE_CONNECT_URL: connectTemplateUrl,
     VITE_WEBSOCKET_HTTP: websocket.properties.http,

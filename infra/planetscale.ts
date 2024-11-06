@@ -11,13 +11,19 @@ const mysql =
       )
     : planetscale.Database.get("Database", "sst,sst");
 
-const branch = new planetscale.Branch("DatabaseBranch", {
-  database: mysql.name,
-  organization: mysql.organization,
-  name: $app.stage,
-  parentBranch: "production",
-  production: $app.stage === "production",
-});
+const branch =
+  $app.stage === "production"
+    ? planetscale.Branch.get("DatabaseBranch", "sst,sst,production")
+    : new planetscale.Branch("DatabaseBranch", {
+        database: mysql.name,
+        organization: mysql.organization,
+        name: $app.stage,
+        parentBranch: "production",
+        production: $app.stage === "production",
+      });
+
+const testB = planetscale.Branch.get("DatabaseTest", "sst,sst,production");
+testB.parentBranch.apply(console.log);
 
 const password = new planetscale.Password("DatabasePassword", {
   database: mysql.name,
