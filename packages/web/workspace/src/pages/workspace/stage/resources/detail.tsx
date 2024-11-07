@@ -199,12 +199,17 @@ export function Detail() {
     () => [ctx.stage.id],
     (res) => res.find((res) => res.urn === decodeURIComponent(params.urn)),
   );
+  createEffect(() => {
+    if (resource()) {
+      console.log("Resource", resource());
+    }
+  });
   const outputs = createMemo(() =>
     resource() && Object.keys(resource()!.outputs).length
       ? Object.keys(resource()!.outputs).map((key) => ({
-          key,
-          value: resource()!.outputs[key],
-        }))
+        key,
+        value: resource()!.outputs[key],
+      }))
       : [],
   );
 
@@ -212,13 +217,13 @@ export function Detail() {
     return [
       ...(resource()?.parent
         ? [
-            NavigationAction({
-              category: "Resource",
-              title: "Go to parent",
-              nav,
-              path: "../" + encodeURIComponent(resource()!.parent!),
-            }),
-          ]
+          NavigationAction({
+            category: "Resource",
+            title: "Go to parent",
+            nav,
+            path: "../" + encodeURIComponent(resource()!.parent!),
+          }),
+        ]
         : []),
       {
         icon: IconClipboard,
@@ -302,107 +307,159 @@ export function Detail() {
             </Stack>
           </Content>
           <Sidebar>
-            <Stack space="7">
-              <Stack space="2">
-                <PanelTitle>Created</PanelTitle>
-                <PanelValue>
-                  <Show
-                    when={resource()!.time.stateCreated}
-                    fallback={<PanelValueEmpty>—</PanelValueEmpty>}
-                  >
-                    <Show
-                      when={resource()!.update.createdID}
-                      fallback={
+            <Switch>
+              <Match when={isV2Resource(resource()!.type)}>
+                <Stack space="7">
+                  <Stack space="2">
+                    <PanelTitle>Created</PanelTitle>
+                    <PanelValue>
+                      <Show
+                        when={resource()!.time.created}
+                        fallback={<PanelValueEmpty>—</PanelValueEmpty>}
+                      >
                         <span
                           title={DateTime.fromISO(
-                            resource()!.time.stateCreated!,
+                            resource()!.time.created!,
                           ).toLocaleString(DateTime.DATETIME_FULL)}
                         >
                           {formatSinceTime(
                             DateTime.fromISO(
+                              resource()!.time.created!,
+                            ).toSQL()!,
+                            true,
+                          )}
+                        </span>
+                      </Show>
+                    </PanelValue>
+                  </Stack>
+                  <Stack space="2">
+                    <PanelTitle>Modified</PanelTitle>
+                    <PanelValue>
+                      <Show
+                        when={resource()!.time.updated}
+                        fallback={<PanelValueEmpty>—</PanelValueEmpty>}
+                      >
+                        <span
+                          title={DateTime.fromISO(
+                            resource()!.time.updated!,
+                          ).toLocaleString(DateTime.DATETIME_FULL)}
+                        >
+                          {formatSinceTime(
+                            DateTime.fromISO(
+                              resource()!.time.updated!,
+                            ).toSQL()!,
+                            true,
+                          )}
+                        </span>
+                      </Show>
+                    </PanelValue>
+                  </Stack>
+                </Stack>
+              </Match>
+              <Match when={true}>
+                <Stack space="7">
+                  <Stack space="2">
+                    <PanelTitle>Created</PanelTitle>
+                    <PanelValue>
+                      <Show
+                        when={resource()!.time.stateCreated}
+                        fallback={<PanelValueEmpty>—</PanelValueEmpty>}
+                      >
+                        <Show
+                          when={resource()!.update.createdID}
+                          fallback={
+                            <span
+                              title={DateTime.fromISO(
+                                resource()!.time.stateCreated!,
+                              ).toLocaleString(DateTime.DATETIME_FULL)}
+                            >
+                              {formatSinceTime(
+                                DateTime.fromISO(
+                                  resource()!.time.stateCreated!,
+                                ).toSQL()!,
+                                true,
+                              )}
+                            </span>
+                          }
+                        >
+                          <Link
+                            href={`../updates/${resource()!.update.createdID}`}
+                            title={DateTime.fromISO(
                               resource()!.time.stateCreated!,
-                            ).toSQL()!,
-                            true,
-                          )}
-                        </span>
-                      }
-                    >
-                      <Link
-                        href={`../updates/${resource()!.update.createdID}`}
-                        title={DateTime.fromISO(
-                          resource()!.time.stateCreated!,
-                        ).toLocaleString(DateTime.DATETIME_FULL)}
+                            ).toLocaleString(DateTime.DATETIME_FULL)}
+                          >
+                            {formatSinceTime(
+                              DateTime.fromISO(
+                                resource()!.time.stateCreated!,
+                              ).toSQL()!,
+                              true,
+                            )}
+                          </Link>
+                        </Show>
+                      </Show>
+                    </PanelValue>
+                  </Stack>
+                  <Stack space="2">
+                    <PanelTitle>Modified</PanelTitle>
+                    <PanelValue>
+                      <Show
+                        when={
+                          resource()!.time.stateModified &&
+                          resource()!.time.stateCreated !==
+                          resource()!.time.stateModified
+                        }
+                        fallback={<PanelValueEmpty>—</PanelValueEmpty>}
                       >
-                        {formatSinceTime(
-                          DateTime.fromISO(
-                            resource()!.time.stateCreated!,
-                          ).toSQL()!,
-                          true,
-                        )}
-                      </Link>
-                    </Show>
-                  </Show>
-                </PanelValue>
-              </Stack>
-              <Stack space="2">
-                <PanelTitle>Modified</PanelTitle>
-                <PanelValue>
-                  <Show
-                    when={
-                      resource()!.time.stateModified &&
-                      resource()!.time.stateCreated !==
-                        resource()!.time.stateModified
-                    }
-                    fallback={<PanelValueEmpty>—</PanelValueEmpty>}
-                  >
-                    <Show
-                      when={resource()!.update.modifiedID}
-                      fallback={
-                        <span
-                          title={DateTime.fromISO(
-                            resource()!.time.stateModified!,
-                          ).toLocaleString(DateTime.DATETIME_FULL)}
+                        <Show
+                          when={resource()!.update.modifiedID}
+                          fallback={
+                            <span
+                              title={DateTime.fromISO(
+                                resource()!.time.stateModified!,
+                              ).toLocaleString(DateTime.DATETIME_FULL)}
+                            >
+                              {formatSinceTime(
+                                DateTime.fromISO(
+                                  resource()!.time.stateModified!,
+                                ).toSQL()!,
+                                true,
+                              )}
+                            </span>
+                          }
                         >
-                          {formatSinceTime(
-                            DateTime.fromISO(
+                          <Link
+                            href={`../updates/${resource()!.update.modifiedID!}`}
+                            title={DateTime.fromISO(
                               resource()!.time.stateModified!,
-                            ).toSQL()!,
-                            true,
-                          )}
-                        </span>
-                      }
+                            ).toLocaleString(DateTime.DATETIME_FULL)}
+                          >
+                            {formatSinceTime(
+                              DateTime.fromISO(
+                                resource()!.time.stateModified!,
+                              ).toSQL()!,
+                              true,
+                            )}
+                          </Link>
+                        </Show>
+                      </Show>
+                    </PanelValue>
+                  </Stack>
+                  <Stack space="2">
+                    <PanelTitle>Parent</PanelTitle>
+                    <Show
+                      when={resource()!.parent}
+                      fallback={<PanelValueEmpty>—</PanelValueEmpty>}
                     >
-                      <Link
-                        href={`../updates/${resource()!.update.modifiedID!}`}
-                        title={DateTime.fromISO(
-                          resource()!.time.stateModified!,
-                        ).toLocaleString(DateTime.DATETIME_FULL)}
+                      <PanelValueMonoLink
+                        href={`../${encodeURIComponent(resource()!.parent!)}`}
                       >
-                        {formatSinceTime(
-                          DateTime.fromISO(
-                            resource()!.time.stateModified!,
-                          ).toSQL()!,
-                          true,
-                        )}
-                      </Link>
+                        {getResourceName(resource()!.parent!)}
+                      </PanelValueMonoLink>
                     </Show>
-                  </Show>
-                </PanelValue>
-              </Stack>
-              <Stack space="2">
-                <PanelTitle>Parent</PanelTitle>
-                <Show
-                  when={resource()!.parent}
-                  fallback={<PanelValueEmpty>—</PanelValueEmpty>}
-                >
-                  <PanelValueMonoLink
-                    href={`../${encodeURIComponent(resource()!.parent!)}`}
-                  >
-                    {getResourceName(resource()!.parent!)}
-                  </PanelValueMonoLink>
-                </Show>
-              </Stack>
-            </Stack>
+                  </Stack>
+                </Stack>
+              </Match>
+            </Switch>
           </Sidebar>
         </Container>
       </Match>
@@ -412,4 +469,8 @@ export function Detail() {
 
 function getResourceName(urn: string) {
   return urn.split("::").at(-1);
+}
+
+function isV2Resource(type: string) {
+  return type.startsWith("sstv2");
 }

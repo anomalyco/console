@@ -18,13 +18,16 @@ import { Fullscreen, Row, Stack } from "$/ui/layout";
 import {
   IconApi,
   IconRDS,
+  IconJob,
   IconAuth,
   IconCron,
   IconStack,
   IconTable,
   IconTopic,
   IconQueue,
+  IconScript,
   IconBucket,
+  IconConfig,
   IconAppSync,
   IconCognito,
   IconEventBus,
@@ -36,7 +39,10 @@ import {
   IconStaticSite,
   IconWebSocketApi,
   IconSvelteKitSite,
+  IconKinesisStream,
   IconSolidStartSite,
+  IconApiGatewayV1Api,
+  IconContainerRuntime,
 } from "$/ui/icons/custom";
 import { Resource } from "@console/core/app/resource";
 import type { State } from "@console/core/state";
@@ -51,7 +57,7 @@ import {
 import { UpdateStatusIcon } from "./updates/list";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
-import {} from "@solid-primitives/keyboard";
+import { } from "@solid-primitives/keyboard";
 import { formatSinceTime } from "$/common/format";
 import { ResourceIcon } from "$/common/resource-icon";
 import { createSubscription } from "$/providers/replicache";
@@ -89,6 +95,34 @@ const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:aws:ApiGatewayWebSocket": IconWebSocketApi,
   // "sst:aws:ApiGatewayV1Api": IconApiGatewayV1Api,
   "pulumi:pulumi:Stack": IconStack,
+
+  "sstv2:aws:Job": IconJob,
+  "sstv2:aws:Api": IconApi,
+  "sstv2:aws:RDS": IconRDS,
+  "sstv2:aws:Auth": IconAuth,
+  "sstv2:aws:Cron": IconCron,
+  "sstv2:aws:Queue": IconQueue,
+  "sstv2:aws:Table": IconTable,
+  "sstv2:aws:Topic": IconTopic,
+  "sstv2:aws:Stack": IconStack,
+  "sstv2:aws:Bucket": IconBucket,
+  "sstv2:aws:Config": IconConfig,
+  "sstv2:aws:Secret": IconConfig,
+  "sstv2:aws:Script": IconScript,
+  "sstv2:aws:Cognito": IconCognito,
+  "sstv2:aws:EventBus": IconEventBus,
+  "sstv2:aws:Function": IconFunction,
+  "sstv2:aws:AppSyncApi": IconAppSync,
+  "sstv2:aws:AstroSite": IconAstroSite,
+  "sstv2:aws:RemixSite": IconRemixSite,
+  "sstv2:aws:NextjsSite": IconNextjsSite,
+  "sstv2:aws:StaticSite": IconStaticSite,
+  "sstv2:aws:Service": IconContainerRuntime,
+  "sstv2:aws:WebSocketApi": IconWebSocketApi,
+  "sstv2:aws:KinesisStream": IconKinesisStream,
+  "sstv2:aws:SvelteKitSite": IconSvelteKitSite,
+  "sstv2:aws:SolidStartSite": IconSolidStartSite,
+  "sstv2:aws:ApiGatewayV1Api": IconApiGatewayV1Api,
 };
 
 const Content = styled("div", {
@@ -651,10 +685,7 @@ export function List() {
 
   function renderStateOutputs() {
     return (
-      <Show
-        when={stateOutputs().length}
-        fallback={<OutputsEmpty>No outputs</OutputsEmpty>}
-      >
+      <Show when={stateOutputs().length}>
         <Card>
           <HeaderRoot>
             <HeaderTitle>Outputs</HeaderTitle>
@@ -715,7 +746,7 @@ export function List() {
                 <Dynamic component={ION_ICON_MAP[resource.type]} />
               </Show>
             </HeaderIcon>
-            <HeaderTitle>{resource.type}</HeaderTitle>
+            <HeaderTitle>{formatResourceType(resource.type)}</HeaderTitle>
             <HeaderTitleTaglineLink href={encodeURIComponent(resource.urn)}>
               {resource.name}
             </HeaderTitleTaglineLink>
@@ -840,4 +871,10 @@ export function List() {
       </Match>
     </Switch>
   );
+}
+
+function formatResourceType(type: string) {
+  return type.startsWith("sstv2")
+    ? type.replace(/^sstv2:aws:/, '')
+    : type;
 }
