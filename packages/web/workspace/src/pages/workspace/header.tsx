@@ -194,17 +194,6 @@ const JumpToButtonCopy = styled("span", {
   },
 });
 
-export const PageHeader = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    padding: `0 ${theme.space[4]}`,
-    justifyContent: "space-between",
-    height: theme.headerHeight.stage,
-    borderBottom: `1px solid ${theme.color.divider.base}`,
-  },
-});
-
 const LogoutButton = styled(TextButton, {
   base: {
     ...utility.text.label,

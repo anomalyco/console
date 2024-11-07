@@ -28,6 +28,7 @@ import {
   IconScript,
   IconBucket,
   IconConfig,
+  IconConnect,
   IconAppSync,
   IconCognito,
   IconEventBus,
@@ -67,35 +68,79 @@ import { TextButton } from "$/ui/button";
 import { Text } from "$/ui/text";
 
 const ION_ICON_MAP: { [key: string]: Component } = {
+  "sst:aws:Cdn": IconApi,
+  "sst:aws:Efs": IconRDS,
+  "sst:aws:Redis": IconRDS,
   "sst:aws:Auth": IconAuth,
   "sst:aws:Cron": IconCron,
   "sst:aws:Router": IconApi,
   // "sst:aws:Job": IconJob,
+
   "sst:aws:Queue": IconQueue,
+  "sst:aws:QueueLambdaSubscriber": IconFunction,
+
+  "sst:aws:Vector": IconRDS,
   "sst:aws:Postgres": IconRDS,
+  "sst:aws:Postgres.v1": IconRDS,
+
   "sst:aws:Dynamo": IconTable,
+  "sst:aws:DynamoLambdaSubscriber": IconFunction,
+
   "sst:aws:Bus": IconEventBus,
+
   "sst:aws:Bucket": IconBucket,
+  "sst:aws:BucketLambdaSubscriber": IconFunction,
+
   "sst:aws:SnsTopic": IconTopic,
+  "sst:aws:SnsTopicQueueSubscriber": IconQueue,
+  "sst:aws:SnsTopicLambdaSubscriber": IconFunction,
+
   "sst:aws:Astro": IconAstroSite,
   "sst:aws:Nuxt": IconStaticSite,
   "sst:aws:Remix": IconRemixSite,
+  "sst:aws:Analog": IconStaticSite,
+
   "sst:aws:AppSync": IconAppSync,
+  "sst:aws:AppSyncResolver": IconAppSync,
+  "sst:aws:AppSyncFunction": IconFunction,
+  "sst:aws:AppSyncDataSource": IconAppSync,
+
   "sst:aws:ApiGatewayV2": IconApi,
+  "sst:aws:ApiGatewayV2UrlRoute": IconApi,
+  "sst:aws:ApiGatewayV2Authorizer": IconApi,
+  "sst:aws:ApiGatewayV2LambdaRoute": IconApi,
+
+  "sst:aws:ApiGatewayV1": IconApiGatewayV1Api,
+  "sst:aws:ApiGatewayV1Authorizer": IconApiGatewayV1Api,
+  "sst:aws:ApiGatewayV1LambdaRoute": IconApiGatewayV1Api,
+  "sst:aws:ApiGatewayV1IntegrationRoute": IconApiGatewayV1Api,
+
   // "sst:aws:Script": IconScript,
+  "sst:sst:Secret": IconConfig,
+  "sst:sst:LinkRef": IconConnect,
   "sst:aws:Function": IconFunction,
   "sst:aws:Nextjs": IconNextjsSite,
+  "sst:aws:Service": IconContainerRuntime,
+  "sst:aws:Cluster": IconContainerRuntime,
+  "sst:aws:Cluster.v1": IconContainerRuntime,
+
   "sst:aws:Realtime": IconWebSocketApi,
+  "sst:aws:RealtimeLambdaSubscriber": IconFunction,
+
   "sst:aws:StaticSite": IconStaticSite,
   "sst:aws:SvelteKit": IconSvelteKitSite,
   "sst:aws:CognitoUserPool": IconCognito,
   "sst:aws:SolidStart": IconSolidStartSite,
   "sst:aws:CognitoIdentityPool": IconCognito,
-  // "sst:aws:KinesisStream": IconKinesisStream,
+  "sst:aws:CognitoUserPoolClient": IconCognito,
+
+  "sst:aws:KinesisStream": IconKinesisStream,
+  "sst:aws:KinesisStreamLambdaSubscriber": IconFunction,
+
   "sst:aws:ApiGatewayWebSocket": IconWebSocketApi,
-  // "sst:aws:ApiGatewayV1Api": IconApiGatewayV1Api,
   "pulumi:pulumi:Stack": IconStack,
 
+  // V2 Resources
   "sstv2:aws:Job": IconJob,
   "sstv2:aws:Api": IconApi,
   "sstv2:aws:RDS": IconRDS,
@@ -485,43 +530,74 @@ function stateResourcePriority(resource: SortedStateResource) {
     case "sst:aws:Remix":
     case "sst:aws:Astro":
     case "sst:aws:Nextjs":
+    case "sst:aws:Analog":
     case "sst:aws:SvelteKit":
     case "sst:aws:SolidStart":
+    case "sstv2:aws:RemixSite":
+    case "sstv2:aws:AstroSite":
+    case "sstv2:aws:NextjsSite":
+    case "sstv2:aws:SvelteKitSite":
+    case "sstv2:aws:SolidStartSite":
       return 1;
     case "sst:aws:StaticSite":
+    case "sstv2:aws:StaticSite":
       return 2;
     case "sst:aws:Auth":
+    case "sstv2:aws:Api":
+    case "sstv2:aws:Auth":
     case "sst:aws:Router":
     case "sst:aws:Realtime":
+    case "sst:aws:Cluster":
+    case "sstv2:aws:Service":
+    case "sst:aws:Cluster.v1":
     case "sst:aws:ApiGatewayV2":
       return 3;
     case "sst:aws:Function":
+    case "sstv2:aws:Function":
       return 4;
+    case "sst:sst:Secret":
+    case "sstv2:aws:Config":
+    case "sstv2:aws:Secret":
     case "sst:aws:Bucket":
+    case "sstv2:aws:Bucket":
       return 5;
+    case "sstv2:aws:RDS":
     case "sst:aws:Dynamo":
+    case "sstv2:aws:Table":
     case "sst:aws:Postgres":
+    case "sst:aws:Postgres.v1":
       return 6;
     case "sst:aws:Cron":
+    case "sstv2:aws:Cron":
       return 7;
     case "sst:aws:Bus":
+    case "sstv2:aws:EventBus":
       return 8;
     case "sst:aws:Queue":
+    case "sstv2:aws:Queue":
+    case "sstv2:aws:Topic":
     case "sst:aws:SnsTopic":
+    case "sst:aws:KinesisStream":
+    case "sstv2:aws:KinesisStream":
       return 9;
     case "sst:aws:AppSync":
+    case "sstv2:aws:AppSyncApi":
+    case "sstv2:aws:WebSocketApi":
     case "sst:aws:ApiGatewayWebSocket":
       return 10;
+    case "sstv2:aws:Cognito":
     case "sst:aws:CognitoUserPool":
     case "sst:aws:CognitoIdentityPool":
       return 11;
+    case "sst:sst:LinkRef":
+      return 102;
     case "pulumi:pulumi:Stack":
-      return 101;
+      return 103;
     default:
       if (resource.type.startsWith("pulumi:providers:")) {
-        return 101;
+        return 104;
       } else {
-        return 100;
+        return 101;
       }
   }
 }

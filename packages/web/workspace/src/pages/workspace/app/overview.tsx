@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { For, Show, Match, Switch } from "solid-js";
 import { RunStore, StateUpdateStore } from "$/data/app";
-import { Header, PageHeader } from "../header";
+import { PageHeader } from "./header";
 import { Link } from "@solidjs/router";
 import { useAppContext } from "./context";
 import { styled } from "@macaron-css/solid";
@@ -15,7 +15,6 @@ import { AWS } from "$/data/aws";
 import { githubCommit, githubRepo } from "$/common/url-builder";
 import { sortBy } from "remeda";
 import { IconTag } from "$/ui/icons";
-import { TabTitle } from "$/ui/button";
 import { Row, Stack } from "$/ui/layout";
 import { Tag } from "$/ui/tag";
 import { theme } from "$/ui/theme";
@@ -224,17 +223,6 @@ export function Overview() {
       [(stage) => stage.timeUpdated, "desc"],
     );
   });
-  const latestRunError = createSubscription(async (tx) => {
-    const runs = await RunStore.all(tx);
-    const run = runs
-      .filter((run) => run.appID === app.app.id)
-      .sort(
-        (a, b) =>
-          DateTime.fromISO(b.time.created).toMillis() -
-          DateTime.fromISO(a.time.created).toMillis(),
-      )[0];
-    return run?.status === "error";
-  });
 
   function Card(props: { stage: Stage.Info }) {
     const latest = createSubscription(async (tx) => {
@@ -376,22 +364,7 @@ export function Overview() {
 
   return (
     <>
-      <Header app={app.app.name} />
-      <PageHeader>
-        <Row space="5" vertical="center">
-          <Link href="">
-            <TabTitle size="sm">Stages</TabTitle>
-          </Link>
-          <Link href="autodeploy">
-            <TabTitle size="sm" count={latestRunError.value ? "•" : ""}>
-              Autodeploy
-            </TabTitle>
-          </Link>
-          <Link href="settings">
-            <TabTitle size="sm">Settings</TabTitle>
-          </Link>
-        </Row>
-      </PageHeader>
+      <PageHeader />
       <Root>
         <Stages>
           <For each={stages.value}>{(stage) => <Card stage={stage} />}</For>

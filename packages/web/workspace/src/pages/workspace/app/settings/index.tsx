@@ -1,5 +1,4 @@
 import {
-  RunStore,
   AppRepoStore,
   RunConfigStore,
   GithubOrgStore,
@@ -13,8 +12,7 @@ import {
   PANEL_HEADER_SPACE,
   PANEL_CONTENT_SPACE,
 } from "../../settings";
-import { DateTime } from "luxon";
-import { Header, PageHeader } from "../../header";
+import { PageHeader } from "../header";
 import { Link } from "@solidjs/router";
 import { style } from "@macaron-css/core";
 import type { RunConfig } from "@console/core/run/config";
@@ -30,7 +28,6 @@ import {
   Match,
   Show,
   Switch,
-  createEffect,
   createMemo,
   createSignal,
 } from "solid-js";
@@ -454,17 +451,6 @@ export function Settings() {
     active: boolean;
   }>({
     active: false,
-  });
-  const latestRunError = createSubscription(async (tx) => {
-    const runs = await RunStore.all(tx);
-    const run = runs
-      .filter((run) => run.appID === app.app.id)
-      .sort(
-        (a, b) =>
-          DateTime.fromISO(b.time.created).toMillis() -
-          DateTime.fromISO(a.time.created).toMillis(),
-      )[0];
-    return run?.status === "error";
   });
 
   const [editingRepo, setEditingRepo] = createStore<{
@@ -955,22 +941,7 @@ export function Settings() {
 
   return (
     <>
-      <Header app={app.app.name} />
-      <PageHeader>
-        <Row space="5" vertical="center">
-          <Link href="../">
-            <TabTitle size="sm">Stages</TabTitle>
-          </Link>
-          <Link href="../autodeploy">
-            <TabTitle size="sm" count={latestRunError.value ? "•" : ""}>
-              Autodeploy
-            </TabTitle>
-          </Link>
-          <Link href="">
-            <TabTitle size="sm">Settings</TabTitle>
-          </Link>
-        </Row>
-      </PageHeader>
+      <PageHeader />
       <SettingsRoot>
         <Stack space={PANEL_HEADER_SPACE}>
           <Text size="xl" weight="medium">
