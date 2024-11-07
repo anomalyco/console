@@ -6,7 +6,7 @@ import { auth } from "./auth";
 import { WebhookRoute } from "./webhook";
 import { GithubRoute } from "./github";
 import { BillingRoute } from "./billing";
-import { handle } from "hono/aws-lambda";
+import { handle, streamHandle } from "hono/aws-lambda";
 import { AccountRoute } from "./account";
 import { logger } from "hono/logger";
 import { compress } from "hono/compress";
@@ -73,4 +73,4 @@ export const app = new Hono()
   .route("/slack", SlackRoute)
   .route("/log", LogRoute);
 
-export const handler = handle(app);
+export const handler = process.env.SST_DEV ? handle(app) : streamHandle(app);
