@@ -236,6 +236,7 @@ const TargetFormHeaderRight = styled("div", {
 const TargetFormHeaderCopy = styled("div", {
   base: {
     ...utility.text.line,
+    lineHeight: "normal",
     fontWeight: theme.font.weight.medium,
   },
   variants: {
@@ -1040,7 +1041,7 @@ export function Settings() {
                                     {info.value!.repo.name}
                                   </GitRepoLink>
                                   <GitRepoPath>
-                                    Deploying: {appRepo.value!.path}
+                                    Deploying path: {appRepo.value!.path}
                                   </GitRepoPath>
                                 </Stack>
                               </Row>

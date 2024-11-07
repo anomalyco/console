@@ -205,6 +205,17 @@ const LogoutButton = styled(TextButton, {
   },
 });
 
+export const PageHeader = styled("div", {
+  base: {
+    display: "flex",
+    alignItems: "center",
+    padding: `0 ${theme.space[4]}`,
+    justifyContent: "space-between",
+    height: theme.headerHeight.stage,
+    borderBottom: `1px solid ${theme.color.divider.base}`,
+  },
+});
+
 function isMac() {
   return navigator.userAgent.toUpperCase().indexOf("MAC") !== -1;
 }
