@@ -1071,8 +1071,10 @@ export module State {
                   eq(stage.workspaceID, workspaceID),
                 ),
               );
+            await createTransactionEffect(() =>
+              Issue.subscribeIon(input.config),
+            );
           }
-          await createTransactionEffect(() => Issue.subscribeIon(input.config));
           await createTransactionEffect(() => Replicache.poke());
         },
         {
