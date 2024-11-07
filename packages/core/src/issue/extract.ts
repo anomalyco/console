@@ -45,17 +45,6 @@ export const extract = zod(
       .toUTC()
       .toSQL({ includeOffset: false })!;
 
-    console.log("checking rate limit for", input.logGroup);
-    const count = await db
-      .select({
-        total: sql<number>`SUM(${issueCount.count})`,
-      })
-      .from(issueCount)
-      .where(
-        and(eq(issueCount.logGroup, input.logGroup), eq(issueCount.hour, hour)),
-      )
-      .execute()
-      .then((rows) => rows.at(0)?.total || 0);
     console.log("rate limit for", input.logGroup, count, hour);
 
     const workspaces = await db
@@ -93,6 +82,23 @@ export const extract = zod(
       console.log("no matching workspaces");
       return;
     }
+
+    console.log("checking rate limit for", input.logGroup);
+    const count = await db
+      .select({
+        total: sql<number>`SUM(${issueCount.count})`,
+      })
+      .from(issueCount)
+      .where(
+        and(
+          eq(issueCount.workspaceID, workspaces[0]!.workspaceID),
+          eq(issueCount.stageID, workspaces[0]!.stageID),
+          eq(issueCount.logGroup, input.logGroup),
+          eq(issueCount.hour, hour),
+        ),
+      )
+      .execute()
+      .then((rows) => rows.at(0)?.total || 0);
 
     if (count > 10_000) {
       await Promise.all(

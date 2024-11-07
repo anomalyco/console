@@ -232,11 +232,12 @@ export function List() {
               child.parent === r.urn,
           );
           const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
+          const dev = lambda?.outputs?.description?.includes("live");
           return [
             {
               name,
               title: r.outputs?._metadata.handler,
-              link: r.outputs?._metadata.dev
+              link: dev
                 ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
                 : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
               type: r.type,

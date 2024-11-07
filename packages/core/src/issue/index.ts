@@ -200,7 +200,6 @@ export const subscribeIon = zod(
   async (config) => {
     const uniqueIdentifier = destinationIdentifier(config);
     console.log("subscribing", uniqueIdentifier);
-    await connectStage(config);
     const destination =
       SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
       uniqueIdentifier;
@@ -241,7 +240,8 @@ export const subscribeIon = zod(
         filter(Boolean),
         unique(),
       );
-
+      if (!groups.length) return;
+      await connectStage(config);
       for (const group of groups) {
         await subscribe(group as string);
       }

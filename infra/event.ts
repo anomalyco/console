@@ -33,13 +33,13 @@ bus.subscribe(
       secret.GithubPrivateKey,
       websocket,
     ],
-    timeout: "5 minute",
+    timeout: "15 minute",
   },
   {
     pattern: {
       source: [`console.${$app.stage}`],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -52,7 +52,7 @@ bus.subscribe(
     pattern: {
       source: ["aws.s3"],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -66,7 +66,7 @@ bus.subscribe(
     pattern: {
       source: ["sst.runner"],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -81,5 +81,5 @@ bus.subscribe(
     pattern: {
       source: ["aws.codebuild"],
     },
-  }
+  },
 );
