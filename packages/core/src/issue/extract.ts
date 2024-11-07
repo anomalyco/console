@@ -45,8 +45,6 @@ export const extract = zod(
       .toUTC()
       .toSQL({ includeOffset: false })!;
 
-    console.log("rate limit for", input.logGroup, count, hour);
-
     const workspaces = await db
       .select({
         accountID: awsAccount.id,
@@ -99,6 +97,7 @@ export const extract = zod(
       )
       .execute()
       .then((rows) => rows.at(0)?.total || 0);
+    console.log("rate limit for", input.logGroup, count, hour);
 
     if (count > 10_000) {
       await Promise.all(
