@@ -4,15 +4,13 @@ import { RunStore, StateUpdateStore } from "$/data/app";
 import { NavigationAction, useCommandBar } from "$/pages/workspace/command-bar";
 import { createSubscription, useReplicache } from "$/providers/replicache";
 import {
-  useOutdated,
   StageContext,
   IssuesProvider,
   useStageContext,
-  MINIMUM_VERSION,
   useIssuesContext,
-  ResourcesProvider,
   createStageContext,
   StateResourcesProvider,
+  LogsProvider,
 } from "./context";
 import { Logs } from "./logs";
 import { Issues } from "./issues";
@@ -30,7 +28,7 @@ import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
 import { DateTime } from "luxon";
 import { TabTitle } from "$/ui/button";
-import { Stack, Fullscreen, Row } from "$/ui/layout";
+import { Stack, Row } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 
@@ -42,13 +40,13 @@ export function Stage() {
       <Match when={stageContext.app && stageContext.stage}>
         <StageContext.Provider value={stageContext}>
           <StateResourcesProvider>
-            <ResourcesProvider>
+            <LogsProvider>
               <IssuesProvider>
                 <HeaderProvider>
                   <Inner />
                 </HeaderProvider>
               </IssuesProvider>
-            </ResourcesProvider>
+            </LogsProvider>
           </StateResourcesProvider>
         </StageContext.Provider>
       </Match>
@@ -125,13 +123,6 @@ export function Inner() {
   );
   const updates = StateUpdateStore.forStage.watch(rep, () => [ctx.stage.id]);
   const header = useHeaderContext();
-  const outdated = useOutdated();
-  const minVersion = createMemo(
-    () =>
-      outdated()
-        .map((r) => r.type === "Stack" && r.enrichment.version)
-        .sort()[0],
-  );
   const latestRunError = createSubscription(async (tx) => {
     const runs = await RunStore.forStage(tx, ctx.stage.id);
     const run = runs.sort(
@@ -179,7 +170,7 @@ export function Inner() {
         icon: IconSubRight,
         title: "View logs...",
         run: (control) => {
-          control.show("resource");
+          control.show("logs-switcher");
         },
         category: ctx.stage.name,
       },
@@ -198,26 +189,6 @@ export function Inner() {
     <>
       <Header app={ctx.app.name} stage={ctx.stage.name} />
       <Switch>
-        <Match when={ctx.stage.unsupported}>
-          <Fullscreen inset="header">
-            <Warning
-              title={
-                <>
-                  Unsupported SST version
-                  {minVersion() ? " v" + minVersion() : ""}
-                </>
-              }
-              description={
-                <>
-                  To use the SST Console,{" "}
-                  <a target="_blank" href="https://github.com/sst/sst/releases">
-                    upgrade to v{MINIMUM_VERSION}
-                  </a>
-                </>
-              }
-            />
-          </Fullscreen>
-        </Match>
         <Match when={ctx.stage.timeDeleted}>
           <NotFound inset="header" message="Stage has been removed" />
         </Match>

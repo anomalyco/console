@@ -4,7 +4,7 @@ import { IconCheck, IconNoSymbol, IconExclamationTriangle } from "$/ui/icons";
 import { inputFocusStyles, SplitOptions, SplitOptionsOption } from "$/ui/form";
 import { IconCaretRight, IconSubRight } from "$/ui/icons/custom";
 import { formatSinceTime, parseTime } from "$/common/format";
-import { Link, useNavigate, useSearchParams } from "@solidjs/router";
+import { Link, useSearchParams } from "@solidjs/router";
 import { theme } from "$/ui/theme";
 import type { Issue } from "@console/core/issue";
 import {
@@ -16,11 +16,7 @@ import {
   createMemo,
   createSignal,
 } from "solid-js";
-import {
-  useIssuesContext,
-  useResourcesContext,
-  useStageContext,
-} from "../context";
+import { useIssuesContext, useStageContext } from "../context";
 import { useReplicache } from "$/providers/replicache";
 import { HeaderSlot } from "../../header";
 import { DateTime, Interval } from "luxon";
@@ -371,7 +367,6 @@ export function List() {
     (warnings) =>
       warnings.filter((warning) => warning.type === "issue_rate_limited"),
   );
-  const resources = useResourcesContext();
 
   const [selected, setSelected] = createSignal<string[]>([]);
   const [warningExpanded, setWarningExpanded] = createSignal(false);
@@ -447,10 +442,7 @@ export function List() {
                       each={rateWarnings()
                         .map((item) => {
                           if (item.type === "issue_rate_limited") {
-                            const logInfo = createMemo(() =>
-                              getLogInfo(resources(), item.target),
-                            );
-                            return logInfo()?.name;
+                            return item.target;
                           }
                         })
                         .filter(Boolean)}
@@ -704,15 +696,12 @@ export function List() {
                 <KeyboardNavigator value={navigator}>
                   <For each={filtered()}>
                     {(issue, i) => {
-                      const logInfo = createMemo(() =>
-                        getLogInfo(resources(), issue.pointer?.logGroup),
-                      );
                       return (
                         <IssueRow
                           issue={issue}
                           unread={view() === "active"}
                           last={i() === filtered().length - 1}
-                          logName={logInfo()?.name || ""}
+                          logName={issue.pointer?.logGroup || ""}
                         />
                       );
                     }}

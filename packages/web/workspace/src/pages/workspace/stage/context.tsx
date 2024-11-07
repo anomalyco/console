@@ -7,7 +7,7 @@ import {
   createMemo,
   useContext,
 } from "solid-js";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { StageStore } from "$/data/stage";
 import { AppStore, StateResourceStore } from "$/data/app";
 import { Resource } from "@console/core/app/resource";
@@ -19,7 +19,17 @@ import { createInitializedContext } from "$/common/context";
 import { IssueStore } from "$/data/issue";
 import { ResourceStore } from "$/data/resource";
 import { UsageStore } from "$/data/usage";
-import { sumBy } from "remeda";
+import {
+  flatMap,
+  groupBy,
+  map,
+  mapValues,
+  pipe,
+  sortBy,
+  sumBy,
+  values,
+} from "remeda";
+import { useWorkspace } from "../context";
 
 export const StageContext =
   createContext<ReturnType<typeof createStageContext>>();
@@ -76,272 +86,6 @@ export function useStageContext() {
   return context;
 }
 
-function createResourcesContext() {
-  const ctx = useStageContext();
-
-  const rep = useReplicache();
-  const resources = ResourceStore.forStage.watch(rep, () => [ctx.stage.id]);
-
-  return resources;
-}
-
-const ResourcesContext = createContext<Accessor<Resource.Info[]>>();
-
-export function ResourcesProvider(props: ParentProps) {
-  const resources = createResourcesContext();
-  const functions = createFunctionsContext(resources);
-  const params = useParams();
-  const nav = useNavigate();
-  const bar = useCommandBar();
-
-  bar.register("resource", async (filter, global) => {
-    if (global && !filter) return [];
-    const splits = location.pathname.split("/");
-    const appName = splits[2];
-    const stageName = splits[3];
-    if (!stageName || !appName) return [];
-    return [...functions().entries()].flatMap(([fnId, refs]) => {
-      const fn = resources().find((r) => r.id === fnId) as Extract<
-        Resource.Info,
-        { type: "Function" }
-      >;
-      if (!fn) return [];
-      const run = (control: any) => {
-        nav(
-          `/${params.workspaceSlug}/${appName}/${stageName}/resources/logs/${fn.id}`,
-        );
-        control.hide();
-      };
-      if (!refs.length)
-        return [
-          {
-            icon: IconFunction,
-            category: `Function`,
-            title: `${fn.metadata.handler}`,
-            run,
-          },
-        ];
-      return refs.flatMap((resource) => {
-        switch (resource.type) {
-          case "NextjsSite":
-            return (
-              resource.metadata.routes?.data?.map((item: any) => ({
-                icon: IconNextjsSite,
-                category: "NextJS Routes",
-                title: `${item.route}`,
-                run(control: any) {
-                  nav(
-                    `/${
-                      params.workspaceSlug
-                    }/${appName}/${stageName}/resources/logs/${
-                      fn.id
-                    }?logGroup=${
-                      resource.metadata.routes!.logGroupPrefix +
-                      item.logGroupPath
-                    }`,
-                  );
-                  control.hide();
-                },
-              })) || []
-            );
-          case "Api":
-            return [
-              {
-                icon: IconApi,
-                category: "API Routes",
-                title: `${
-                  resource.metadata.routes.find(
-                    (r: any) => r.fn?.node === fn.addr,
-                  )?.route
-                }`,
-                run,
-              },
-            ];
-          default:
-            return {
-              icon: ResourceIcon[resource.type] || IconFunction,
-              category: `${resource.type}`,
-              title: `${fn.metadata.handler}`,
-              run,
-            };
-        }
-      });
-    });
-  });
-
-  return (
-    <Show when={resources.ready && resources()}>
-      {(val) => (
-        <ResourcesContext.Provider value={val}>
-          <FunctionsContext.Provider value={functions}>
-            {props.children}
-          </FunctionsContext.Provider>
-        </ResourcesContext.Provider>
-      )}
-    </Show>
-  );
-}
-
-export function useResourcesContext() {
-  const context = useContext(ResourcesContext);
-  if (!context) throw new Error("No resources context");
-  return context;
-}
-
-export const MINIMUM_VERSION = "2.19.2";
-function parseVersion(input: string) {
-  return input
-    .split(".")
-    .map((item) => parseInt(item))
-    .reduce((acc, val, i) => acc + val * Math.pow(1000, 2 - i), 0);
-}
-export function useOutdated() {
-  const resources = useResourcesContext();
-  const stacks = createMemo(() =>
-    resources().filter((r) => r.type === "Stack"),
-  );
-  return createMemo(() =>
-    stacks().filter(
-      (r) =>
-        r.type === "Stack" &&
-        r.enrichment.version &&
-        parseVersion(r.enrichment.version) < parseVersion(MINIMUM_VERSION) &&
-        !r.enrichment.version?.startsWith("0.0.0"),
-    ),
-  );
-}
-
-function createFunctionsContext(resources: () => Resource.Info[] | undefined) {
-  return createMemo(() => {
-    const all = resources() || [];
-    const result = new Map<string, Resource.Info[]>();
-
-    function push(resource: Resource.Info, fn?: { node: string } | string) {
-      if (!fn) return;
-      const match = all.find(
-        (r) =>
-          r.type === "Function" &&
-          ((typeof fn !== "string" && r.addr === fn.node) ||
-            r.metadata.arn === fn),
-      ) as Extract<Resource.Info, { type: "Function" }> | undefined;
-      if (!match) return;
-
-      let arr = result.get(match.id);
-      if (!arr) result.set(match.id, (arr = []));
-      arr.push(resource);
-    }
-
-    for (const resource of all) {
-      switch (resource.type) {
-        case "Function":
-          if (!result.get(resource.id)) result.set(resource.id, []);
-          break;
-        case "Api":
-          resource.metadata.routes.forEach((route: any) =>
-            push(resource, route.fn),
-          );
-          break;
-        case "WebSocketApi":
-          resource.metadata.routes.forEach((route: any) =>
-            push(resource, route.fn),
-          );
-          break;
-        case "ApiGatewayV1Api":
-          resource.metadata.routes.forEach((route: any) =>
-            push(resource, route.fn),
-          );
-          break;
-        case "Cron":
-          push(resource, resource.metadata.job);
-          break;
-        case "Auth":
-          break;
-        case "Job":
-          break;
-        case "Table":
-          resource.metadata.consumers.forEach((consumer: any) =>
-            push(resource, consumer.fn),
-          );
-          break;
-        case "RDS":
-          push(resource, resource.metadata.migrator);
-          break;
-        case "Queue":
-          push(resource, resource.metadata.consumer);
-          break;
-        case "Topic":
-          resource.metadata.subscribers.forEach((item: any) =>
-            push(resource, item),
-          );
-          break;
-        case "Bucket":
-          resource.metadata.notifications.forEach((item: any) =>
-            push(resource, item),
-          );
-          break;
-        case "Script":
-          push(resource, resource.metadata.createfn);
-          push(resource, resource.metadata.deletefn);
-          push(resource, resource.metadata.updatefn);
-          break;
-        case "Cognito":
-          resource.metadata.triggers.forEach((item: any) =>
-            push(resource, item.fn),
-          );
-          break;
-        case "AppSync":
-          resource.metadata.dataSources.forEach((item: any) =>
-            push(resource, item.fn),
-          );
-          break;
-        case "EventBus":
-          resource.metadata.rules.forEach((item: any) =>
-            item.targets.forEach((t: any) => push(resource, t)),
-          );
-          break;
-        case "Service":
-          push(resource, resource.metadata.devFunction);
-          break;
-        case "AstroSite":
-          push(resource, resource.metadata.server);
-          break;
-        case "RemixSite":
-          push(resource, resource.metadata.server);
-          break;
-        case "StaticSite":
-          break;
-        case "NextjsSite":
-          push(resource, resource.metadata.server);
-          break;
-        case "SvelteKitSite":
-          push(resource, resource.metadata.server);
-          break;
-        case "SolidStartSite":
-          push(resource, resource.metadata.server);
-          break;
-        case "KinesisStream":
-          resource.metadata.consumers.forEach((item: any) =>
-            push(resource, item.fn),
-          );
-          break;
-        case "SlsNextjsSite":
-          break;
-      }
-    }
-
-    return result;
-  });
-}
-
-const FunctionsContext =
-  createContext<ReturnType<typeof createFunctionsContext>>();
-
-export function useFunctionsContext() {
-  const context = useContext(FunctionsContext);
-  if (!context) throw new Error("No resources context");
-  return context;
-}
-
 export const { use: useIssuesContext, provider: IssuesProvider } =
   createInitializedContext("Issues", () => {
     const rep = useReplicache();
@@ -372,4 +116,134 @@ export const { use: useStateResources, provider: StateResourcesProvider } =
       );
     });
     return resources;
+  });
+
+export const { use: useLogsContext, provider: LogsProvider } =
+  createInitializedContext("Logs", () => {
+    const resources = useStateResources();
+    const nav = useNavigate();
+    const workspace = useWorkspace();
+    const stage = useStageContext();
+    const logs = createMemo(() =>
+      pipe(
+        resources(),
+        flatMap((r) => {
+          const name = r.urn.split("::").at(-1)!;
+          if (r.type === "aws:cloudwatch/logGroup:LogGroup")
+            return [
+              {
+                name,
+                title: r.outputs?.id,
+                link: `logGroup=${r.outputs?.id}&view=past&hint=normal`,
+                type: r.type,
+                logGroup: r.outputs?.id,
+                priority: 1,
+                icon: "construct",
+              },
+            ];
+
+          if (r.type === "aws:lambda/function:Function") {
+            const logGroup = r.outputs?.loggingConfig?.logGroup;
+            return [
+              {
+                name,
+                title: name,
+                link: `functionID=${r.urn}&view=past&hint=lambda`,
+                type: r.type,
+                logGroup,
+                priority: 2,
+                icon: "function",
+              },
+            ];
+          }
+          if (r.type === "sst:aws:Function") {
+            const lambda = resources().find(
+              (child) =>
+                child.type === "aws:lambda/function:Function" &&
+                child.parent === r.urn,
+            );
+            const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
+            const dev = lambda?.outputs?.description?.includes("live");
+            return [
+              {
+                name,
+                title: r.outputs?._metadata.handler,
+                link: dev
+                  ? `functionID=${r.urn}&view=local&hint=lambda`
+                  : `logGroup=${logGroup}&view=past&hint=lambda`,
+                type: r.type,
+                logGroup,
+                priority: 3,
+                icon: "function",
+              },
+            ];
+          }
+          if (r.type === "sstv2:aws:Function") {
+            console.log(r);
+            const logGroup = r.outputs?.enrichment?.logGroup;
+            const live = r.outputs?.enrichment?.live;
+            return [
+              {
+                name,
+                title: r.outputs?.handler,
+                link: live
+                  ? `functionID=${r.urn}&view=local&hint=lambda`
+                  : `logGroup=${logGroup}&view=past&hint=lambda`,
+                type: r.type,
+                logGroup,
+                priority: 3,
+                icon: "function",
+              },
+            ];
+          }
+          if (r.type === "sst:aws:Service") {
+            const logGroup = resources().find(
+              (child) =>
+                child.type === "aws:cloudwatch/logGroup:LogGroup" &&
+                child.parent === r.urn,
+            )?.outputs?.id;
+
+            return [
+              {
+                name,
+                title: name,
+                link: `logGroup=${logGroup}&view=past&hint=normal`,
+                type: r.type,
+                logGroup: logGroup,
+                priority: 3,
+                icon: "container",
+              },
+            ];
+          }
+          return [];
+        }),
+        groupBy((item) => item.logGroup),
+        mapValues((items) => sortBy(items, (item) => item.priority).at(-1)!),
+        values(),
+        sortBy((item) => item.title),
+        map((item) => ({
+          ...item,
+          link:
+            `/${workspace().slug}/${stage.app.name}/${stage.stage.name}/logs/aws/logs?` +
+            item.link,
+        })),
+      ),
+    );
+
+    const bar = useCommandBar();
+    bar.register("logs-switcher", async (input, global) => {
+      if (!input && global) return [];
+      return logs().map((item) =>
+        NavigationAction({
+          nav,
+          path: item.link,
+          title: item.title,
+          category: "logs",
+        }),
+      );
+    });
+
+    const result = () => logs();
+    result.ready = true;
+    return result;
   });

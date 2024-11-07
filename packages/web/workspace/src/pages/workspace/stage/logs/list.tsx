@@ -1,12 +1,4 @@
-import {
-  For,
-  Show,
-  Match,
-  Switch,
-  createMemo,
-  createSignal,
-  createEffect,
-} from "solid-js";
+import { For, Match, Switch, createMemo } from "solid-js";
 import {
   IconFunction,
   IconConstruct,
@@ -15,19 +7,12 @@ import {
 import { flatMap, groupBy, mapValues, pipe, sortBy, values } from "remeda";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
-import { Dropdown } from "$/ui/dropdown";
 import { styled } from "@macaron-css/solid";
-import { useStageContext } from "../context";
+import { useLogsContext, useStageContext } from "../context";
 import { StateResourceStore } from "$/data/app";
-import type { State } from "@console/core/state";
-import { Link, useNavigate } from "@solidjs/router";
-import { Text } from "$/ui/text";
+import { Link } from "@solidjs/router";
 import { Row, Stack, Fullscreen } from "$/ui/layout";
 import { useReplicache } from "$/providers/replicache";
-import { IconCheck, IconEllipsisVertical } from "$/ui/icons";
-import { formatBytes, formatDuration } from "$/common/format";
-import { Tag } from "$/ui/tag";
-import { createEvent } from "@console/core/event";
 
 const Content = styled("div", {
   base: {
@@ -187,112 +172,7 @@ const EmptyResourcesCopy = styled("span", {
 });
 
 export function List() {
-  const rep = useReplicache();
-  const ctx = useStageContext();
-  const resources = StateResourceStore.forStage.watch(rep, () => [
-    ctx.stage.id,
-  ]);
-
-  const logs = createMemo(() =>
-    pipe(
-      resources(),
-      flatMap((r) => {
-        const name = r.urn.split("::").at(-1)!;
-        if (r.type === "aws:cloudwatch/logGroup:LogGroup")
-          return [
-            {
-              name,
-              title: r.outputs?.id,
-              link: `aws/logs?logGroup=${r.outputs?.id}&view=past&hint=normal`,
-              type: r.type,
-              logGroup: r.outputs?.id,
-              priority: 1,
-              icon: "construct",
-            },
-          ];
-
-        if (r.type === "aws:lambda/function:Function") {
-          const logGroup = r.outputs?.loggingConfig?.logGroup;
-          return [
-            {
-              name,
-              title: name,
-              link: `aws/logs?functionID=${r.urn}&view=past&hint=lambda`,
-              type: r.type,
-              logGroup,
-              priority: 2,
-              icon: "function",
-            },
-          ];
-        }
-        if (r.type === "sst:aws:Function") {
-          const lambda = resources().find(
-            (child) =>
-              child.type === "aws:lambda/function:Function" &&
-              child.parent === r.urn,
-          );
-          const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
-          const dev = lambda?.outputs?.description?.includes("live");
-          return [
-            {
-              name,
-              title: r.outputs?._metadata.handler,
-              link: dev
-                ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
-                : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
-              type: r.type,
-              logGroup,
-              priority: 3,
-              icon: "function",
-            },
-          ];
-        }
-        if (r.type === "sstv2:aws:Function") {
-          console.log(r);
-          const logGroup = r.outputs?.enrichment?.logGroup;
-          const live = r.outputs?.enrichment?.live;
-          return [
-            {
-              name,
-              title: r.outputs?.handler,
-              link: live
-                ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
-                : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
-              type: r.type,
-              logGroup,
-              priority: 3,
-              icon: "function",
-            },
-          ];
-        }
-        if (r.type === "sst:aws:Service") {
-          const logGroup = resources().find(
-            (child) =>
-              child.type === "aws:cloudwatch/logGroup:LogGroup" &&
-              child.parent === r.urn,
-          )?.outputs?.id;
-
-          return [
-            {
-              name,
-              title: name,
-              link: `aws/logs?logGroup=${logGroup}&view=past&hint=normal`,
-              type: r.type,
-              logGroup: logGroup,
-              priority: 3,
-              icon: "container",
-            },
-          ];
-        }
-        return [];
-      }),
-      groupBy((item) => item.logGroup),
-      mapValues((items) => sortBy(items, (item) => item.priority).at(-1)!),
-      values(),
-      sortBy((item) => item.title),
-    ),
-  );
-
+  const logs = useLogsContext();
   return (
     <Switch>
       <Match when={logs().length}>

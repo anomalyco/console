@@ -11,10 +11,9 @@ import { DateTime, Interval } from "luxon";
 import { StackTrace } from "../logs/error";
 import { Log, LogTime, LogMessage } from "$/common/invocation";
 import { fromEntries } from "remeda";
-import { useResourcesContext, useStageContext } from "../context";
+import { useStageContext } from "../context";
 import { useLocalLogs } from "$/providers/invocation";
 import { useCommandBar } from "../../command-bar";
-import { getLogInfo } from "./common";
 import { useReplicacheStatus } from "$/providers/replicache-status";
 import { NotFound } from "$/pages/not-found";
 import { ButtonGroup } from "$/ui/button";
@@ -188,15 +187,6 @@ export function Detail() {
       (issue()?.invocation || invocations.get(issue()?.id).at(0)) as Invocation,
   );
 
-  const resources = useResourcesContext();
-  const logInfo = createMemo(() =>
-    getLogInfo(resources(), issue()?.pointer?.logGroup),
-  );
-
-  createEffect(() => {
-    console.log("logInfo", logInfo());
-  });
-
   const min = DateTime.now()
     .startOf("hour")
     .minus({ hours: 24 })
@@ -294,16 +284,11 @@ export function Detail() {
                   <Text break leading="loose">
                     {issue().message}
                   </Text>
-                  <FunctionLink href={`../../resources/logs/${logInfo()?.uri}`}>
-                    {logInfo()?.name}
-                  </FunctionLink>
                 </Stack>
               </Stack>
               <Stack space="2">
                 <PanelTitle>Stack Trace</PanelTitle>
-                <Show
-                  when={issue().stack?.length && logInfo()?.missingSourcemap}
-                >
+                <Show when={false}>
                   <Alert level="info">
                     Enable source maps to view the original stack trace.{" "}
                     <a
