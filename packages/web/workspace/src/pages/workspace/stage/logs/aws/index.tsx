@@ -388,9 +388,10 @@ export function AWS() {
   });
   const local = createMemo(() => {
     if (search.view !== "local") return [];
+    console.log(fn());
     const functionID =
       fn()?.type === "sstv2:aws:Function"
-        ? fn()?.outputs.functionID
+        ? fn()?.outputs.localId
         : search.functionID;
     return localLogs.get(functionID);
   });
