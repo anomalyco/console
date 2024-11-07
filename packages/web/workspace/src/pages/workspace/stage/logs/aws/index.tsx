@@ -557,7 +557,13 @@ export function AWS() {
             <TextButton
               onClick={() => {
                 if (search.view === "live") tailed.clear();
-                if (search.view === "local") localLogs.clear(search.functionID);
+                if (search.view === "local") {
+                  const functionID =
+                    fn()?.type === "sstv2:aws:Function"
+                      ? fn()?.outputs.localId
+                      : search.functionID;
+                  localLogs.clear(functionID);
+                }
               }}
             >
               Clear
