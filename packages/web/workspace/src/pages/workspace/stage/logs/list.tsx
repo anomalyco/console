@@ -255,7 +255,7 @@ export function List() {
               name,
               title: r.outputs?.handler,
               link: live
-                ? `aws/logs?functionID=${r.outputs?.localId}&view=local&hint=lambda`
+                ? `aws/logs?functionID=${r.urn}&view=local&hint=lambda`
                 : `aws/logs?logGroup=${logGroup}&view=past&hint=lambda`,
               type: r.type,
               logGroup,

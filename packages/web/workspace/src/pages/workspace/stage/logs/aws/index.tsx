@@ -371,9 +371,28 @@ export function AWS() {
   const localLogs = useLocalLogs();
   const tailed = createLogStore(-1);
   const past = createLogStore(-1);
+  const resources = useStateResources();
+  const fn = createMemo(() => {
+    if (search.view === "local") {
+      const match = resources().find((r) => r.urn === search.functionID);
+      return match;
+    }
+    if (search.hint === "lambda") {
+      const match = resources().find(
+        (r) => r.outputs?.loggingConfig?.logGroup === search.logGroup,
+      );
+      if (match?.type === "sstv2:aws:Function") return match;
+      const fn = resources().find((r) => r.urn === match?.parent);
+      return fn;
+    }
+  });
   const local = createMemo(() => {
     if (search.view !== "local") return [];
-    return localLogs.get(search.functionID);
+    const functionID =
+      fn()?.type === "sstv2:aws:Function"
+        ? fn()?.outputs.functionID
+        : search.functionID;
+    return localLogs.get(functionID);
   });
 
   const tailer = setInterval(() => {
@@ -459,38 +478,20 @@ export function AWS() {
     list.onKeyDown(e);
   });
 
-  const resources = useStateResources();
   const description = createMemo(() => {
-    if (search.view === "local")
-      return resources().find((r) => r.urn === search.functionID)?.outputs
-        ?._metadata.handler;
-    if (search.hint === "lambda") {
-      const lambda = resources().find(
-        (r) => r.outputs?.loggingConfig?.logGroup === search.logGroup,
-      );
-      const fn = resources().find((r) => r.urn === lambda?.parent);
-      return fn?.outputs?._metadata.handler;
-    }
-
-    return search.logGroup;
+    if (fn())
+      return fn()?.outputs?._metadata?.handler || fn()?.outputs?.handler;
+    if (search.view !== "local") return search.logGroup;
   });
 
-  const fn = createMemo(() => {
-    if (search.view === "local") {
-      const match = resources().find(
-        (r) =>
-          r.parent === search.functionID &&
-          r.type === "aws:lambda/function:Function",
-      );
-      return match;
-    }
-
-    if (search.hint === "lambda") {
-      const match = resources().find(
-        (r) => r.outputs?.loggingConfig?.logGroup === search.logGroup,
-      );
-      return match;
-    }
+  const lambdaARN = createMemo(() => {
+    const f = fn();
+    if (!f) return;
+    if (f?.type === "sstv2:aws:Function") return f.outputs.arn;
+    const child = resources().find(
+      (r) => r.parent === f.urn && r.type === "aws:lambda/function:Function",
+    );
+    return child?.outputs.arn;
   });
 
   const [scrollEnd, setScrollEnd] = createSignal(false);
@@ -627,9 +628,9 @@ export function AWS() {
           </Show>
         </HeaderRight>
       </Header>
-      <Show when={fn()}>
+      <Show when={lambdaARN()}>
         <Invoke
-          arn={fn()?.outputs.arn}
+          arn={lambdaARN()!}
           control={(c) => (invokeControl = c)}
           onExpand={() => {
             if (search.view === "past")
@@ -648,7 +649,7 @@ export function AWS() {
                 json: {
                   stageID: stage.stage.id,
                   payload,
-                  functionARN: fn()?.outputs.arn,
+                  functionARN: lambdaARN()!,
                 },
               })
               .then((r) => r.json());
@@ -660,7 +661,7 @@ export function AWS() {
                 cold: false,
                 input: payload,
                 errors: [],
-                source: fn()?.outputs.arn,
+                source: lambdaARN()!,
               },
             ]);
           }}
@@ -700,15 +701,15 @@ export function AWS() {
                           invokeControl.savePayload(invocation()?.input!);
                         }}
                         onReplay={async () => {
-                          if (!fn()) return;
+                          if (!lambdaARN()) return;
                           await api.client.lambda.invoke.$post({
                             json: {
                               stageID: stage.stage.id,
-                              functionARN: fn()?.outputs?.arn!,
+                              functionARN: lambdaARN()!,
                               payload: invocation()?.input,
                             },
                           });
-                          console.log(fn);
+                          console.log(lambdaARN);
                         }}
                         local={search.view === "local"}
                       />
