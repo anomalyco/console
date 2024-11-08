@@ -103,6 +103,58 @@ export const fromName = zod(
     ),
 );
 
+export const put = zod(
+  z.object({
+    stageName: z.string(),
+    appName: z.string(),
+    region: z.string(),
+    awsAccountID: z.string().cuid2(),
+  }),
+  (input) =>
+    useTransaction(async (tx) => {
+      const workspaceID = useWorkspace();
+      let appID = createId();
+      await tx.insert(app).values({
+        workspaceID,
+        name: input.appName,
+        id: appID,
+      });
+      appID = await tx
+        .select({ id: app.id })
+        .from(app)
+        .where(
+          and(eq(app.workspaceID, workspaceID), eq(app.name, input.appName)),
+        )
+        .execute()
+        .then((x) => x.at(0)!.id);
+      let stageID = createId();
+      await tx.insert(stage).values({
+        workspaceID,
+        appID,
+        name: input.stageName,
+        region: input.region,
+        id: stageID,
+        awsAccountID: input.awsAccountID,
+      });
+      stageID = await tx
+        .select({ id: stage.id })
+        .from(stage)
+        .where(
+          and(
+            eq(stage.workspaceID, workspaceID),
+            eq(stage.appID, appID),
+            eq(stage.name, input.stageName),
+            eq(stage.region, input.region),
+            eq(stage.awsAccountID, input.awsAccountID),
+          ),
+        )
+        .execute()
+        .then((x) => x.at(0)!.id);
+
+      return { appID, stageID };
+    }),
+);
+
 export const list = zod(
   z.object({
     cursor: z.string().min(1).optional(),
