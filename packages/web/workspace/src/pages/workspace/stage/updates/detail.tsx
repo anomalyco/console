@@ -5,7 +5,7 @@ import { RunStore, StateUpdateStore, StateEventStore } from "$/data/app";
 import { State } from "@console/core/state";
 import { DateTime } from "luxon";
 import { Dropdown } from "$/ui/dropdown";
-import { useStageContext } from "../../context";
+import { useStageContext } from "../context";
 import { CMD_MAP, STATUS_MAP, errorCountCopy, UpdateStatusIcon } from "./list";
 import { NotFound } from "$/pages/not-found";
 import { inputFocusStyles } from "$/ui/form";
@@ -34,7 +34,7 @@ import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
 
-const AVATAR_SIZE = 36;
+const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
 const RES_LEFT_BORDER = "4px";
 
@@ -256,7 +256,7 @@ const GitAvatar = styled("div", {
   },
 });
 
-const GitLink = styled("a", {
+const GitBranch = styled("p", {
   base: {
     ...utility.row(1),
     alignItems: "center",
@@ -267,64 +267,19 @@ const GitIcon = styled("div", {
   base: {
     flex: "0 0 auto",
     lineHeight: 0,
+    width: 14,
+    height: 14,
     color: theme.color.icon.secondary,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${GitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
-      },
-    },
-  },
-  variants: {
-    size: {
-      sm: {
-        marginInline: 1,
-        width: 12,
-        height: 12,
-        color: theme.color.icon.dimmed,
-        selectors: {
-          [`${GitLink}:hover &`]: {
-            color: theme.color.icon.secondary,
-          },
-        },
-      },
-      md: {
-        width: 14,
-        height: 14,
-      },
-    },
   },
 });
 
-const GitCommit = styled("span", {
-  base: {
-    lineHeight: "normal",
-    fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_base,
-    color: theme.color.text.secondary.base,
-    fontWeight: theme.font.weight.medium,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${GitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
-      },
-    },
-  },
-});
-
-const GitBranch = styled("span", {
+const GitBranchLink = styled(Link, {
   base: {
     ...utility.text.line,
     maxWidth: SIDEBAR_WIDTH - AVATAR_SIZE - 24,
     lineHeight: "normal",
-    fontSize: theme.font.size.sm,
-    color: theme.color.text.dimmed.base,
+    color: theme.color.text.secondary.base,
     transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${GitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
-      },
-    },
   },
 });
 
@@ -444,60 +399,32 @@ export function Detail() {
                     <img
                       width={AVATAR_SIZE}
                       height={AVATAR_SIZE}
-                      src={`https://avatars.githubusercontent.com/u/${
-                        runInfo()!.trigger.sender.id
-                      }?s=${2 * AVATAR_SIZE}&v=4`}
+                      src={`https://avatars.githubusercontent.com/u/${runInfo()!.trigger.sender.id
+                        }?s=${2 * AVATAR_SIZE}&v=4`}
                     />
                   </GitAvatar>
-                  <Stack space="0.5">
-                    <GitLink
-                      target="_blank"
-                      rel="noreferrer"
-                      href={githubCommit(
-                        repoURL(),
-                        runInfo()!.trigger.commit.id,
-                      )}
-                    >
-                      <GitIcon size="md">
-                        <IconCommit />
-                      </GitIcon>
-                      <GitCommit>
-                        {shortenCommit(runInfo()!.trigger.commit.id)}
-                      </GitCommit>
-                    </GitLink>
-                    <GitLink
-                      target="_blank"
-                      rel="noreferrer"
-                      href={runInfo()!.uri}
-                    >
-                      <GitIcon size="sm">
-                        <Switch>
-                          <Match
-                            when={runInfo()!.trigger.type === "pull_request"}
-                          >
-                            <IconPr />
-                          </Match>
-                          <Match when={runInfo()!.trigger.type === "tag"}>
-                            <IconTag />
-                          </Match>
-                          <Match when={true}>
-                            <IconGit />
-                          </Match>
-                        </Switch>
-                      </GitIcon>
-                      <GitBranch>{runInfo()!.branch}</GitBranch>
-                    </GitLink>
-                  </Stack>
+                  <GitBranch>
+                    <GitIcon>
+                      <Switch>
+                        <Match
+                          when={runInfo()!.trigger.type === "pull_request"}
+                        >
+                          <IconPr />
+                        </Match>
+                        <Match when={runInfo()!.trigger.type === "tag"}>
+                          <IconTag />
+                        </Match>
+                        <Match when={true}>
+                          <IconGit />
+                        </Match>
+                      </Switch>
+                    </GitIcon>
+                    <GitBranchLink href={`../../../autodeploy/${run.value!.id}`}>
+                      {runInfo()!.branch}
+                    </GitBranchLink>
+                  </GitBranch>
                 </Row>
               </GitInfo>
-              <Link href={`../../../autodeploy/${run.value!.id}`}>
-                <Button size="sm" color="secondary">
-                  View deploy logs
-                  <AutodeployLinkIcon>
-                    <IconChevronRight width="10" height="10" />
-                  </AutodeployLinkIcon>
-                </Button>
-              </Link>
             </AutodeployInfo>
           </Show>
           <Stack space="7">
@@ -508,16 +435,16 @@ export function Detail() {
                 title={
                   update.value!.time.started
                     ? DateTime.fromISO(
-                        update.value!.time.started!,
-                      ).toLocaleString(DateTime.DATETIME_FULL)
+                      update.value!.time.started!,
+                    ).toLocaleString(DateTime.DATETIME_FULL)
                     : undefined
                 }
               >
                 {update.value!.time.started
                   ? formatSinceTime(
-                      DateTime.fromISO(update.value!.time.started!).toSQL()!,
-                      true,
-                    )
+                    DateTime.fromISO(update.value!.time.started!).toSQL()!,
+                    true,
+                  )
                   : "—"}
               </Text>
             </Stack>
@@ -533,11 +460,11 @@ export function Detail() {
               >
                 {update.value!.time.started && update.value!.time.completed
                   ? formatDuration(
-                      DateTime.fromISO(update.value!.time.completed!)
-                        .diff(DateTime.fromISO(update.value!.time.started!))
-                        .as("milliseconds"),
-                      true,
-                    )
+                    DateTime.fromISO(update.value!.time.completed!)
+                      .diff(DateTime.fromISO(update.value!.time.started!))
+                      .as("milliseconds"),
+                    true,
+                  )
                   : "—"}
               </Text>
             </Stack>

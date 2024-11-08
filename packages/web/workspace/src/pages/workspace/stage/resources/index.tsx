@@ -3,7 +3,6 @@ import { useStageContext } from "$/pages/workspace/stage/context";
 import { Route, Routes, useNavigate } from "@solidjs/router";
 import { IconSubRight } from "$/ui/icons/custom";
 import { NotFound } from "../../../not-found";
-import { Updates } from "./updates";
 import { Detail } from "./detail";
 import { List } from "./list";
 
@@ -26,7 +25,6 @@ export function Resources() {
   return (
     <Routes>
       <Route path="" element={<List />} />
-      <Route path="updates/*" component={Updates} />
       <Route path=":urn" component={Detail} />
       <Route path="*" element={<NotFound inset="header-tabs" />} />
     </Routes>

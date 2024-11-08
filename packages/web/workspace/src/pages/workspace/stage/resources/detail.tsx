@@ -383,7 +383,7 @@ export function Detail() {
                           }
                         >
                           <Link
-                            href={`../updates/${resource()!.update.createdID}`}
+                            href={`../../updates/${resource()!.update.createdID}`}
                             title={DateTime.fromISO(
                               resource()!.time.stateCreated!,
                             ).toLocaleString(DateTime.DATETIME_FULL)}
@@ -428,7 +428,7 @@ export function Detail() {
                           }
                         >
                           <Link
-                            href={`../updates/${resource()!.update.modifiedID!}`}
+                            href={`../../updates/${resource()!.update.modifiedID!}`}
                             title={DateTime.fromISO(
                               resource()!.time.stateModified!,
                             ).toLocaleString(DateTime.DATETIME_FULL)}

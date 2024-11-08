@@ -1,5 +1,5 @@
 import { Route, Routes } from "@solidjs/router";
-import { NotFound } from "../../../../not-found";
+import { NotFound } from "../../../not-found";
 import { Detail } from "./detail";
 import { List } from "./list";
 

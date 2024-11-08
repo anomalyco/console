@@ -55,7 +55,7 @@ import {
   IconEllipsisVertical,
   IconDocumentDuplicate,
 } from "$/ui/icons";
-import { UpdateStatusIcon } from "./updates/list";
+import { UpdateStatusIcon } from "../updates/list";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
 import { } from "@solid-primitives/keyboard";
@@ -916,7 +916,7 @@ export function List() {
                     </Switch>
                     <TitleText>{ctx.stage.name}</TitleText>
                   </TitleRow>
-                  <TitleDescLink href={`updates/${latestUpdate.value!.id}`}>
+                  <TitleDescLink href={`../updates/${latestUpdate.value!.id}`}>
                     Updated{" "}
                     {formatSinceTime(
                       DateTime.fromISO(
@@ -926,7 +926,7 @@ export function List() {
                     )}
                   </TitleDescLink>
                 </Stack>
-                <Link href="updates">
+                <Link href="../updates">
                   <TextButton>
                     <Row space="0.5" horizontal="center">
                       View history

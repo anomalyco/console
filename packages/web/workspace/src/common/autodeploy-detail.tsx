@@ -362,47 +362,49 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
     return (
       <SidebarRoot>
         <Stack space="7">
-          <GitInfo>
-            <Row space="1.5" vertical="center">
-              <GitAvatar title={trigger.sender.username}>
-                <img
-                  width={AVATAR_SIZE}
-                  height={AVATAR_SIZE}
-                  src={`https://avatars.githubusercontent.com/u/${
-                    trigger.sender.id
-                  }?s=${2 * AVATAR_SIZE}&v=4`}
-                />
-              </GitAvatar>
-              <Stack space="0.5">
-                <GitLink
-                  target="_blank"
-                  rel="noreferrer"
-                  href={githubCommit(repoURL(), trigger.commit.id)}
-                >
-                  <GitIcon size="md">
-                    <IconCommit />
-                  </GitIcon>
-                  <GitCommit>{formatCommit(trigger.commit.id)}</GitCommit>
-                </GitLink>
-                <GitLink target="_blank" rel="noreferrer" href={runInfo()!.uri}>
-                  <GitIcon size="sm">
-                    <Switch>
-                      <Match when={trigger.type === "pull_request"}>
-                        <IconPr />
-                      </Match>
-                      <Match when={trigger.type === "tag"}>
-                        <IconTag />
-                      </Match>
-                      <Match when={true}>
-                        <IconGit />
-                      </Match>
-                    </Switch>
-                  </GitIcon>
-                  <GitBranch>{runInfo()!.branch}</GitBranch>
-                </GitLink>
-              </Stack>
-            </Row>
-          </GitInfo>
+          <Stack space="1.5">
+            <PanelTitle>Commit</PanelTitle>
+            <GitInfo>
+              <Row space="1.5" vertical="center">
+                <GitAvatar title={trigger.sender.username}>
+                  <img
+                    width={AVATAR_SIZE}
+                    height={AVATAR_SIZE}
+                    src={`https://avatars.githubusercontent.com/u/${trigger.sender.id
+                      }?s=${2 * AVATAR_SIZE}&v=4`}
+                  />
+                </GitAvatar>
+                <Stack space="0.5">
+                  <GitLink
+                    target="_blank"
+                    rel="noreferrer"
+                    href={githubCommit(repoURL(), trigger.commit.id)}
+                  >
+                    <GitIcon size="md">
+                      <IconCommit />
+                    </GitIcon>
+                    <GitCommit>{formatCommit(trigger.commit.id)}</GitCommit>
+                  </GitLink>
+                  <GitLink target="_blank" rel="noreferrer" href={runInfo()!.uri}>
+                    <GitIcon size="sm">
+                      <Switch>
+                        <Match when={trigger.type === "pull_request"}>
+                          <IconPr />
+                        </Match>
+                        <Match when={trigger.type === "tag"}>
+                          <IconTag />
+                        </Match>
+                        <Match when={true}>
+                          <IconGit />
+                        </Match>
+                      </Switch>
+                    </GitIcon>
+                    <GitBranch>{runInfo()!.branch}</GitBranch>
+                  </GitLink>
+                </Stack>
+              </Row>
+            </GitInfo>
+          </Stack>
           <Show when={data.value!.stage}>
             <Stack space="1.5">
               <PanelTitle>Stage</PanelTitle>
@@ -415,8 +417,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             <Stack space="1.5">
               <PanelTitle>Update</PanelTitle>
               <PanelValueLink
-                href={`${appPath}/${data.value!.stage!
-                  .name!}/resources/updates/${data.value!.update!.id}`}
+                href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id}`}
               >
                 #{data.value!.update!.index}
               </PanelValueLink>
@@ -429,16 +430,16 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               title={
                 data.value!.run.time.started
                   ? DateTime.fromISO(
-                      data.value!.run.time.started!,
-                    ).toLocaleString(DateTime.DATETIME_FULL)
+                    data.value!.run.time.started!,
+                  ).toLocaleString(DateTime.DATETIME_FULL)
                   : undefined
               }
             >
               {data.value!.run.time.started
                 ? formatSinceTime(
-                    DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
-                    true,
-                  )
+                  DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
+                  true,
+                )
                 : "—"}
             </Text>
           </Stack>
@@ -454,11 +455,11 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             >
               {data.value!.run.time.started && data.value!.run.time.completed
                 ? formatDuration(
-                    DateTime.fromISO(data.value!.run.time.completed!)
-                      .diff(DateTime.fromISO(data.value!.run.time.started!))
-                      .as("milliseconds"),
-                    true,
-                  )
+                  DateTime.fromISO(data.value!.run.time.completed!)
+                    .diff(DateTime.fromISO(data.value!.run.time.started!))
+                    .as("milliseconds"),
+                  true,
+                )
                 : "—"}
             </Text>
           </Stack>
@@ -476,22 +477,22 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         if (!log) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-            "/log/aws/scan?" +
-            new URLSearchParams(
-              log.engine === "lambda"
-                ? {
-                    stageID: data.value!.stage!.id,
-                    timestamp: log.timestamp.toString(),
-                    logStream: log.logStream,
-                    logGroup: log.logGroup,
-                    requestID: log.requestID,
-                  }
-                : {
-                    stageID: data.value!.stage!.id,
-                    logStream: log.logStream,
-                    logGroup: log.logGroup,
-                  },
-            ).toString(),
+          "/log/aws/scan?" +
+          new URLSearchParams(
+            log.engine === "lambda"
+              ? {
+                stageID: data.value!.stage!.id,
+                timestamp: log.timestamp.toString(),
+                logStream: log.logStream,
+                logGroup: log.logGroup,
+                requestID: log.requestID,
+              }
+              : {
+                stageID: data.value!.stage!.id,
+                logStream: log.logStream,
+                logGroup: log.logGroup,
+              },
+          ).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,

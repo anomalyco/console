@@ -14,7 +14,7 @@ import {
 } from "./context";
 import { Logs } from "./logs";
 import { Issues } from "./issues";
-import { Autodeploy } from "./autodeploy";
+import { Updates } from "./updates";
 import { Resources } from "./resources";
 import { IconSubRight } from "$/ui/icons/custom";
 import {
@@ -199,10 +199,8 @@ export function Inner() {
                 <TabTitle size="sm">Resources</TabTitle>
               </Link>
               <Show when={updates().length > 0}>
-                <Link href="autodeploy">
-                  <TabTitle size="sm" count={latestRunError.value ? "•" : ""}>
-                    Autodeploy
-                  </TabTitle>
+                <Link href="updates">
+                  <TabTitle size="sm">Updates</TabTitle>
                 </Link>
               </Show>
               <Show when={!ctx.stage.timeDeleted}>
@@ -229,7 +227,7 @@ export function Inner() {
           <div>
             <Routes>
               <Route path="resources/*" component={Resources} />
-              <Route path="autodeploy/*" component={Autodeploy} />
+              <Route path="updates/*" component={Updates} />
               <Route path="issues/*" component={Issues} />
               <Route path="logs/*" component={Logs} />
               <Route path="" element={<Navigate href="resources" />} />
