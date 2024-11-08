@@ -392,7 +392,7 @@ export function Detail() {
         <Stack space={runInfo() ? "7" : "0"}>
           <Show when={runInfo()} fallback={<SidebarSpacer />}>
             <AutodeployInfo>
-              <PanelTitle>Autodeployed</PanelTitle>
+              <PanelTitle>Autodeploy</PanelTitle>
               <GitInfo>
                 <Row space="1.5" vertical="center">
                   <GitAvatar title={runInfo()!.trigger.sender.username}>
