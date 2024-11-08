@@ -14,6 +14,21 @@ export default $config({
       },
     };
   },
+  console: {
+    autodeploy: {
+      target(input) {
+        if (input.type === "branch") {
+          return {
+            stage: input.branch,
+            runner: {
+              engine: "codebuild",
+              compute: "medium",
+            },
+          };
+        }
+      },
+    },
+  },
   async run() {
     await import("./infra/dns");
     await import("./infra/planetscale");
