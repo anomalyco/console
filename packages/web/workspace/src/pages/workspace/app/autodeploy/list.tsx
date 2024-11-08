@@ -71,12 +71,12 @@ export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   }
 }
 
-export const STATUS_MAP = {
+const STATUS_MAP = {
   queued: "Queued",
   skipped: "Skipped",
   updated: "Deployed",
   error: "Failed",
-  updating: "In Progress",
+  updating: "Deploying",
 };
 
 const Content = styled("div", {
@@ -157,26 +157,27 @@ const RunRoot = styled("div", {
   },
 });
 
-const RunLeftCol = styled("div", {
+const RunBlockLink = styled(Link, {
   base: {
-    ...utility.row(2),
-    flexShrink: 1,
-    minWidth: 0,
-    alignItems: "center",
-    justifyContent: "space-between",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 1,
   },
 });
 
-const RunStatus = styled("div", {
+const RunCol1 = styled("div", {
   base: {
     ...utility.row(3),
     flex: "0 0 auto",
-    width: 120,
+    width: 220,
     alignItems: "center",
   },
 });
 
-export const RunStatusIcon = styled("div", {
+const RunCircleIcon = styled("div", {
   base: {
     width: 12,
     height: 12,
@@ -184,17 +185,13 @@ export const RunStatusIcon = styled("div", {
   },
   variants: {
     status: {
+      error: {},
+      updated: {},
       skipped: {
         backgroundColor: theme.color.divider.base,
       },
       queued: {
         backgroundColor: theme.color.divider.base,
-      },
-      updated: {
-        backgroundColor: `hsla(${theme.color.base.blue}, 100%)`,
-      },
-      error: {
-        backgroundColor: `hsla(${theme.color.base.red}, 100%)`,
       },
       updating: {
         backgroundColor: `hsla(${theme.color.base.yellow}, 100%)`,
@@ -219,30 +216,13 @@ globalKeyframes("glow-pulse-status", {
   },
 });
 
-const RunLink = styled(Link, {
-  base: {
-    fontWeight: theme.font.weight.medium,
-  },
-  variants: {
-    error: {
-      true: {
-        color: theme.color.text.danger.base,
-        ":hover": {
-          color: `hsla(${theme.color.red.d1}, 90%)`,
-        },
-      },
-    },
-  },
-});
-
-const RunMessage = styled("div", {
+const RunCol2 = styled("div", {
   base: {
     ...utility.row(0),
     flex: "1 1 auto",
     minWidth: 0,
-    gap: 5,
+    gap: 8,
     alignItems: "center",
-    maxWidth: 300,
   },
 });
 
@@ -252,6 +232,13 @@ const RunMessageIcon = styled("div", {
     opacity: theme.iconOpacity,
     color: theme.color.text.secondary.base,
   },
+  variants: {
+    error: {
+      true: {
+        color: theme.color.text.danger.base,
+      },
+    },
+  },
 });
 
 const RunMessageCopy = styled("p", {
@@ -259,30 +246,49 @@ const RunMessageCopy = styled("p", {
     ...utility.text.line,
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
-    color: theme.color.text.secondary.base,
+    color: theme.color.text.danger.base,
+  },
+});
+
+const RunStatusCopy = styled("p", {
+  base: {
+    lineHeight: "normal",
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.dimmed.base,
   },
 });
 
 const RunMessageLink = styled(Link, {
   base: {
     ...utility.text.line,
-    fontSize: theme.font.size.sm,
+    zIndex: 2,
+    color: theme.color.text.secondary.base,
+    ":hover": {
+      color: theme.color.text.primary.base,
+    },
   },
 });
 
 const RunGit = styled("div", {
   base: {
     ...utility.row(2),
-    flex: "1 1 auto",
+    flex: "0 0 auto",
     alignItems: "center",
-    width: 460,
     minWidth: 0,
+  },
+});
+
+const RunGitEvent = styled("span", {
+  base: {
+    ...utility.row(1),
+    alignItems: "center",
   },
 });
 
 const RunGitLink = styled("a", {
   base: {
     ...utility.row(1),
+    zIndex: 2,
     alignItems: "center",
   },
 });
@@ -290,13 +296,8 @@ const RunGitLink = styled("a", {
 const RunGitIcon = styled("span", {
   base: {
     lineHeight: 0,
-    color: theme.color.icon.secondary,
+    color: theme.color.icon.primary,
     transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${RunGitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
-      },
-    },
   },
   variants: {
     size: {
@@ -311,6 +312,7 @@ const RunGitIcon = styled("span", {
         },
       },
       md: {
+        lineHeight: "normal",
         width: 14,
         height: 14,
       },
@@ -318,19 +320,14 @@ const RunGitIcon = styled("span", {
   },
 });
 
-const RunGitBranch = styled("span", {
+const RunGitBranch = styled(Link, {
   base: {
     ...utility.text.line,
-    maxWidth: 140,
+    zIndex: 2,
+    maxWidth: 150,
     lineHeight: "normal",
-    fontSize: theme.font.size.sm,
-    color: theme.color.text.dimmed.base,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${RunGitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
-      },
-    },
+    fontWeight: theme.font.weight.medium,
+    color: theme.color.text.primary.base,
   },
 });
 
@@ -338,9 +335,8 @@ const RunGitCommit = styled("span", {
   base: {
     lineHeight: "normal",
     fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_base,
+    fontSize: theme.font.size.mono_sm,
     color: theme.color.text.secondary.base,
-    fontWeight: theme.font.weight.medium,
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${RunGitLink}:hover &`]: {
@@ -350,23 +346,13 @@ const RunGitCommit = styled("span", {
   },
 });
 
-const RunGitMessage = styled("p", {
+const RunGitMessage = styled("span", {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
-    maxWidth: 260,
+    width: 180,
     fontSize: theme.font.size.xs,
     color: theme.color.text.dimmed.base,
-  },
-});
-
-const RunRightCol = styled("div", {
-  base: {
-    ...utility.row(10),
-    flexShrink: 1,
-    minWidth: 0,
-    alignItems: "center",
-    justifyContent: "space-between",
   },
 });
 
@@ -374,6 +360,7 @@ const RunTime = styled("div", {
   base: {
     ...utility.text.line,
     flex: "0 0 auto",
+    zIndex: 2,
     width: 120,
     textAlign: "right",
     fontSize: theme.font.size.sm,
@@ -421,89 +408,85 @@ function RunItem({ run }: { run: Run.Run }) {
 
   return (
     <RunRoot>
-      <RunLeftCol>
-        <RunStatus>
-          <RunStatusIcon status={run.status} />
-          <RunLink href={run.id} error={run.status === "error"}>
-            {STATUS_MAP[run.status]}
-          </RunLink>
-        </RunStatus>
-        <RunMessage>
-          <Switch>
-            <Match when={run.error}>
-              <>
-                <RunMessageIcon>
-                  <IconExclamationTriangle width="14" height="14" />
-                </RunMessageIcon>
-                <RunMessageCopy>{ERROR_MAP(run.error!)}</RunMessageCopy>
-              </>
-            </Match>
-            <Match when={stage.value}>
-              <RunMessageIcon>
-                <IconArrowLongRight width="12" height="12" />
-              </RunMessageIcon>
-              <RunMessageLink href={`../${stage.value?.name!}`}>
-                {stage.value?.name}
-              </RunMessageLink>
-            </Match>
-          </Switch>
-        </RunMessage>
-      </RunLeftCol>
-      <RunRightCol>
-        <RunGit>
-          <RunSenderAvatar title={runInfo()!.trigger.sender.username}>
-            <img
-              width="24"
-              height="24"
-              src={`https://avatars.githubusercontent.com/u/${
-                runInfo()!.trigger.sender.id
+      <RunBlockLink href={run.id} />
+      <RunCol1>
+        <RunSenderAvatar title={runInfo()!.trigger.sender.username}>
+          <img
+            width="24"
+            height="24"
+            src={`https://avatars.githubusercontent.com/u/${runInfo()!.trigger.sender.id
               }?s=48&v=4`}
-            />
-          </RunSenderAvatar>
-          <RunGitLink
-            target="_blank"
-            href={githubCommit(
-              runInfo()!.repoURL,
-              runInfo()!.trigger.commit.id,
-            )}
-          >
-            <RunGitIcon size="md">
-              <IconCommit />
-            </RunGitIcon>
-            <RunGitCommit>
-              {formatCommit(runInfo()!.trigger.commit.id)}
-            </RunGitCommit>
-          </RunGitLink>
-          <RunGitLink target="_blank" href={runInfo()!.uri}>
-            <RunGitIcon size="sm">
-              <Switch>
-                <Match when={runInfo()!.trigger.type === "pull_request"}>
-                  <IconPr />
-                </Match>
-                <Match when={runInfo()!.trigger.type === "tag"}>
-                  <IconTag />
-                </Match>
-                <Match when={true}>
-                  <IconGit />
-                </Match>
-              </Switch>
-            </RunGitIcon>
-            <RunGitBranch>{runInfo()!.branch}</RunGitBranch>
-          </RunGitLink>
-          <Show when={runInfo()!.trigger.commit.message}>
-            <RunGitMessage>{runInfo()!.trigger.commit.message}</RunGitMessage>
-          </Show>
-        </RunGit>
-        <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
-          <RunTime
-            title={DateTime.fromISO(run.time.created!).toLocaleString(
-              DateTime.DATETIME_FULL,
-            )}
-          >
-            {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}
-          </RunTime>
+          />
+        </RunSenderAvatar>
+        <RunGitEvent>
+          <RunGitIcon size="md">
+            <Switch>
+              <Match when={runInfo()!.trigger.type === "pull_request"}>
+                <IconPr />
+              </Match>
+              <Match when={runInfo()!.trigger.type === "tag"}>
+                <IconTag />
+              </Match>
+              <Match when={true}>
+                <IconGit />
+              </Match>
+            </Switch>
+          </RunGitIcon>
+          <RunGitBranch href={run.id}>{runInfo()!.branch}</RunGitBranch>
+        </RunGitEvent>
+      </RunCol1>
+      <RunCol2>
+        <Switch>
+          <Match when={run.error}>
+            <RunMessageIcon error>
+              <IconExclamationTriangle width="14" height="14" />
+            </RunMessageIcon>
+            <RunMessageCopy>{ERROR_MAP(run.error!)}</RunMessageCopy>
+          </Match>
+          <Match when={
+            run.status === "queued" || run.status === "updating" || run.status === "skipped"
+          }>
+            <RunCircleIcon status={run.status} />
+            <RunStatusCopy>{STATUS_MAP[run.status]}</RunStatusCopy>
+          </Match>
+          <Match when={stage.value}>
+            <RunMessageIcon>
+              <IconArrowLongRight width="14" height="14" />
+            </RunMessageIcon>
+            <RunMessageLink href={`../${stage.value?.name!}`}>
+              {stage.value?.name}
+            </RunMessageLink>
+          </Match>
+        </Switch>
+      </RunCol2>
+      <RunGit>
+        <RunGitLink
+          target="_blank"
+          href={githubCommit(
+            runInfo()!.repoURL,
+            runInfo()!.trigger.commit.id,
+          )}
+        >
+          <RunGitIcon size="sm">
+            <IconCommit />
+          </RunGitIcon>
+          <RunGitCommit>
+            {formatCommit(runInfo()!.trigger.commit.id)}
+          </RunGitCommit>
+        </RunGitLink>
+        <Show when={runInfo()!.trigger.commit.message}>
+          <RunGitMessage>{runInfo()!.trigger.commit.message}</RunGitMessage>
         </Show>
-      </RunRightCol>
+      </RunGit>
+      <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
+        <RunTime
+          title={DateTime.fromISO(run.time.created!).toLocaleString(
+            DateTime.DATETIME_FULL,
+          )}
+        >
+          {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}
+        </RunTime>
+      </Show>
     </RunRoot>
   );
 }
