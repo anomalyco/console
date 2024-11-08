@@ -114,7 +114,7 @@ export const put = zod(
     useTransaction(async (tx) => {
       const workspaceID = useWorkspace();
       let appID = createId();
-      await tx.insert(app).values({
+      await tx.insert(app).ignore().values({
         workspaceID,
         name: input.appName,
         id: appID,
@@ -128,7 +128,7 @@ export const put = zod(
         .execute()
         .then((x) => x.at(0)!.id);
       let stageID = createId();
-      await tx.insert(stage).values({
+      await tx.insert(stage).ignore().values({
         workspaceID,
         appID,
         name: input.stageName,
@@ -150,7 +150,6 @@ export const put = zod(
         )
         .execute()
         .then((x) => x.at(0)!.id);
-
       return { appID, stageID };
     }),
 );

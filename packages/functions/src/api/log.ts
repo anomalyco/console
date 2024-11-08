@@ -328,19 +328,13 @@ export const LogRoute = new Hono()
       console.log("tailing from", start);
       const config = await Stage.assumeRole(body.stageID);
       if (!config)
-        return {
-          statusCode: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ error: "Failed to assume role" }),
-        };
+        throw new HTTPException(500, { message: "Failed to assume role" });
       const logs = await Log.scan({
         ...body,
         timestamp: body.timestamp || undefined,
         config,
       });
-      return c.json(logs);
+      c.json(logs);
     },
   );
 
