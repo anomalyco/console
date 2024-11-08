@@ -133,7 +133,7 @@ export const LogRoute = new Hono()
         streams.push(stream.logStreamName || "");
         if (streams.length === 100) break;
       }
-      if (!streams.length) return;
+      if (!streams.length) return c.json([]);
       if (!start) start = Date.now() - 2 * 60 * 1000;
 
       console.log("fetching since", new Date(start).toLocaleString());
@@ -334,7 +334,7 @@ export const LogRoute = new Hono()
         timestamp: body.timestamp || undefined,
         config,
       });
-      c.json(logs);
+      return c.json(logs);
     },
   );
 
