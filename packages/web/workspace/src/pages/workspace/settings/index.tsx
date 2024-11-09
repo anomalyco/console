@@ -320,8 +320,8 @@ export function Settings() {
             <Show when={!stripe()?.subscriptionID}>
               <Button
                 color="primary"
-                onMouseEnter={handleHoverSubscribe}
                 onClick={handleClickSubscribe}
+                onMouseEnter={handleHoverSubscribe}
               >
                 Add Billing Details
               </Button>

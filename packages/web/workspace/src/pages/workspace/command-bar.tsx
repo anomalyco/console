@@ -79,7 +79,7 @@ const Root = styled("div", {
     pointerEvents: "none",
     transition: "200ms opacity",
     paddingTop: "10vh",
-    zIndex: 1,
+    zIndex: 10,
   },
   variants: {
     show: {

@@ -11,6 +11,7 @@ import {
 } from "solid-js";
 import { useStageContext, useStateResources } from "../context";
 import { styled } from "@macaron-css/solid";
+import { style } from "@macaron-css/core";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Dropdown } from "$/ui/dropdown";
@@ -204,15 +205,21 @@ const TitleDescLink = styled(Link, {
     marginLeft: `calc(${theme.space[3]} + 12px)`,
     fontSize: theme.font.size.sm,
     color: theme.color.text.dimmed.base,
-    ":hover": {
-      color: theme.color.text.secondary.base,
-    },
   },
 });
 
-const TitleDescIcon = styled("div", {
+const TitleHistoryLink = styled(Link, {
   base: {
-    top: 2,
+    ...utility.row(0.5),
+    alignItems: "center",
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.secondary.base,
+  },
+});
+
+const TitleDescIcon = styled("span", {
+  base: {
+    top: 1,
     position: "relative",
     opacity: theme.iconOpacity,
   },
@@ -244,9 +251,21 @@ const Card = styled("div", {
   },
 });
 
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+});
+
 const HeaderRoot = styled("div", {
   base: {
     display: "flex",
+    position: "relative",
     alignItems: "center",
     justifyContent: "space-between",
     padding: `0 ${theme.space[3]}`,
@@ -291,10 +310,12 @@ const HeaderTitle = styled("span", {
 const HeaderTitleTaglineLink = styled(Link, {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     minWidth: 0,
     fontFamily: theme.font.family.code,
     fontSize: theme.font.size.mono_base,
     lineHeight: "normal",
+    color: theme.color.text.secondary.base,
   },
 });
 
@@ -318,6 +339,7 @@ const HeaderDescription = styled("span", {
 const HeaderDescriptionLink = styled("a", {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     minWidth: 0,
     maxWidth: 500,
     lineHeight: "normal",
@@ -365,6 +387,7 @@ const OutputsEmpty = styled("div", {
 export const Child = styled("div", {
   base: {
     padding: `${theme.space[4]} 0`,
+    position: "relative",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -505,11 +528,17 @@ const ChildKey = styled("span", {
 const ChildKeyLink = styled(Link, {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     fontFamily: theme.font.family.code,
     fontSize: theme.font.size.mono_base,
+    color: theme.color.text.primary.base,
     lineHeight: "normal",
     minWidth: "33%",
   },
+});
+
+const childDropdown = style({
+  zIndex: 2,
 });
 
 function isValidHttpUrl(string: string): boolean {
@@ -813,6 +842,7 @@ export function List() {
     return (
       <Card outline>
         <HeaderRoot>
+          <BlockLink href={encodeURIComponent(resource.urn)}></BlockLink>
           <Row space="2" vertical="center">
             <HeaderIcon outline>
               <Show
@@ -848,6 +878,7 @@ export function List() {
               const [copying, setCopying] = createSignal(false);
               return (
                 <Child outline>
+                  <BlockLink href={encodeURIComponent(child.urn)}></BlockLink>
                   <ChildKeyLink href={encodeURIComponent(child.urn)}>
                     {child.name}
                   </ChildKeyLink>
@@ -856,6 +887,7 @@ export function List() {
                     <Dropdown
                       size="sm"
                       disabled={copying()}
+                      triggerClass={childDropdown}
                       icon={
                         copying() ? (
                           <IconCheck width={16} height={16} />
@@ -926,16 +958,10 @@ export function List() {
                     )}
                   </TitleDescLink>
                 </Stack>
-                <Link href="../updates">
-                  <TextButton>
-                    <Row space="0.5" horizontal="center">
-                      View history
-                      <TitleDescIcon>
-                        <IconChevronRight width="13" height="13" />
-                      </TitleDescIcon>
-                    </Row>
-                  </TextButton>
-                </Link>
+                <TitleHistoryLink href="../updates">
+                  View history
+                  <TitleDescIcon><IconChevronRight width="12" height="12" /></TitleDescIcon>
+                </TitleHistoryLink>
               </TitleRoot>
             </Show>
             <Stack space="5">

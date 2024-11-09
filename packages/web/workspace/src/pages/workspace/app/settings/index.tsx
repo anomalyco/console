@@ -48,7 +48,7 @@ import { array, minLength, object, optional, string } from "valibot";
 import { AWS } from "$/data/aws";
 import { createStore } from "solid-js/store";
 import { fromEntries, map, pipe, sortBy, filter } from "remeda";
-import { LinkButton, TabTitle, ButtonIcon } from "$/ui/button";
+import { TextButton, TabTitle, ButtonIcon } from "$/ui/button";
 import { FormField, Input } from "$/ui/form";
 import { Grower, Row, Stack } from "$/ui/layout";
 import { Tag } from "$/ui/tag";
@@ -321,7 +321,7 @@ const TargetFormFieldCol = styled("div", {
   },
 });
 
-const TargetAddVarLink = styled(LinkButton, {
+const TargetAddVarLink = styled(TextButton, {
   base: {
     fontSize: theme.font.size.sm,
     fontFamily: theme.font.family.body,
@@ -765,9 +765,9 @@ export function Settings() {
             </TargetFormFieldStack>
           </TargetFormRow>
           <TargetFormRowControls>
-            <LinkButton onClick={() => setEditing("active", false)}>
+            <TextButton onClick={() => setEditing("active", false)}>
               Cancel
-            </LinkButton>
+            </TextButton>
             <Switch>
               <Match when={props.new}>
                 <Button type="submit" color="primary">
@@ -911,7 +911,7 @@ export function Settings() {
           </SelectRepoFields>
           <Show when={expanded()}>
             <SelectRepoControls>
-              <LinkButton
+              <TextButton
                 onClick={() => {
                   reset(repoForm, {
                     initialValues: repoFormInitialValues,
@@ -922,7 +922,7 @@ export function Settings() {
                 }}
               >
                 Cancel
-              </LinkButton>
+              </TextButton>
               <Switch>
                 <Match when={props.new}>
                   <Button type="submit">Select</Button>
@@ -1136,7 +1136,7 @@ export function Settings() {
                           <Show when={!editing.active || editing.id}>
                             <TargetsEmpty>
                               <Row>
-                                <LinkButton
+                                <TextButton
                                   onClick={() => {
                                     addBranchConfig();
                                   }}
@@ -1145,7 +1145,7 @@ export function Settings() {
                                     <IconAdd width="10" height="10" />
                                   </TargetsEmptyIcon>
                                   Branch environment
-                                </LinkButton>
+                                </TextButton>
                                 <Show
                                   when={
                                     !runConfigs.value.find((c) =>
@@ -1154,7 +1154,7 @@ export function Settings() {
                                   }
                                 >
                                   <TargetsEmptySeparator />
-                                  <LinkButton
+                                  <TextButton
                                     onClick={() => {
                                       addPrConfig();
                                     }}
@@ -1163,7 +1163,7 @@ export function Settings() {
                                       <IconAdd width="10" height="10" />
                                     </TargetsEmptyIcon>
                                     PR environment
-                                  </LinkButton>
+                                  </TextButton>
                                 </Show>
                               </Row>
                             </TargetsEmpty>

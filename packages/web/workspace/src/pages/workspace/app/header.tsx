@@ -39,9 +39,6 @@ const RepoLink = styled("a", {
     gap: 5,
     color: theme.color.text.secondary.base,
     fontSize: theme.font.size.sm,
-    ":hover": {
-      color: theme.color.text.primary.base,
-    },
   },
 });
 
@@ -73,7 +70,7 @@ const RepoLinkSeparator = styled("span", {
     fontSize: theme.font.size.xs,
     selectors: {
       [`${RepoLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
+        color: theme.color.link.primary.hover
       },
     },
   },

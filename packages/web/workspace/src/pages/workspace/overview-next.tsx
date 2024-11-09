@@ -48,6 +48,17 @@ const Root = styled("div", {
   },
 });
 
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+});
+
 const Announcement = styled("div", {
   base: {
     backgroundColor: theme.color.background.surface,
@@ -116,6 +127,7 @@ const Card = styled("div", {
 const CardHeader = styled("div", {
   base: {
     ...utility.row(3),
+    position: "relative",
     height: 54,
     alignItems: "center",
     justifyContent: "space-between",
@@ -127,6 +139,7 @@ const CardHeader = styled("div", {
 const CardTitle = styled(Link, {
   base: {
     ...utility.row(2),
+    zIndex: 2,
     overflow: "hidden",
     alignItems: "center",
     fontSize: theme.font.size.base,
@@ -134,6 +147,12 @@ const CardTitle = styled(Link, {
     color: theme.color.text.primary.base,
     lineHeight: "normal",
     transition: `color ${theme.colorFadeDuration} ease-out`,
+  },
+});
+
+const CardTitleErrorLink = styled(Link, {
+  base: {
+    zIndex: 2,
   },
 });
 
@@ -173,6 +192,7 @@ const RepoLink = styled("a", {
     ...utility.row(0),
     gap: 4,
     height: 26,
+    zIndex: 2,
     padding: "0 10px",
     alignItems: "center",
     color: theme.color.text.secondary.surface,
@@ -404,6 +424,7 @@ export function OverviewNext() {
     return (
       <Card>
         <CardHeader>
+          <BlockLink href={props.app.name}></BlockLink>
           <CardTitle href={props.app.name}>
             <CardTitleIcon>
               <IconApp width="20" height="20" />
@@ -411,15 +432,14 @@ export function OverviewNext() {
             <CardTitleText>{props.app.name}</CardTitleText>
           </CardTitle>
           <Show when={repo.value && latestRunError.value}>
-            <Link href={`${props.app.name}/autodeploy`}>
-              <Tag level="danger" style="outline">
-                Error
-              </Tag>
-            </Link>
+            <CardTitleErrorLink href={`${props.app.name}/autodeploy`}>
+              <Tag level="danger" style="outline">Error</Tag>
+            </CardTitleErrorLink>
           </Show>
           <Show when={repo.value && !latestRunError.value}>
             <RepoLink
               target="_blank"
+              rel="noreferrer noopener"
               href={githubRepo(repo.value!.org.login, repo.value!.repo.name)}
             >
               <RepoLinkIcon>
@@ -611,6 +631,7 @@ const StageRoot = styled("div", {
   base: {
     ...utility.row(3),
     height: 52,
+    position: "relative",
     alignItems: "center",
     padding: `0 ${theme.space[4]}`,
     justifyContent: "space-between",
@@ -635,6 +656,7 @@ const StageCardLeft = styled("div", {
 const StageLink = styled(Link, {
   base: {
     ...utility.row(2.5),
+    zIndex: 2,
     minWidth: 0,
     alignItems: "center",
     color: theme.color.text.primary.base,
@@ -689,6 +711,12 @@ const StageLinkText = styled("span", {
   },
 });
 
+const StageCardLink = styled(Link, {
+  base: {
+    zIndex: 2,
+  },
+});
+
 const StageCardRight = styled("div", {
   base: {
     ...utility.row(3),
@@ -702,6 +730,7 @@ const StageGitLink = styled("a", {
   base: {
     ...utility.row(1),
     alignItems: "center",
+    zIndex: 2,
   },
 });
 
@@ -788,7 +817,7 @@ function StageCard(props: StageCardProps) {
     });
     return (
       <Show when={repoUrl.value}>
-        <StageGitLink target="_blank" href={repoUrl.value!.url}>
+        <StageGitLink target="_blank" href={repoUrl.value!.url} rel="noreferrer noopener">
           <StageGitIcon>
             <IconCommit />
           </StageGitIcon>
@@ -800,6 +829,7 @@ function StageCard(props: StageCardProps) {
 
   return (
     <StageRoot>
+      <BlockLink href={stageUri()}></BlockLink>
       <StageCardLeft>
         <StageLink
           href={stageUri()}
@@ -838,25 +868,21 @@ function StageCard(props: StageCardProps) {
               app()?.name === local()?.app
             }
           >
-            <Link href={`${stageUri()}/local`}>
-              <Tag level="tip" style="outline">
-                Local
-              </Tag>
-            </Link>
+            <StageCardLink href={`${stageUri()}/local`}>
+              <Tag level="tip" style="outline">Local</Tag>
+            </StageCardLink>
           </Match>
           <Match when={latestUpdate.value?.errors.length}>
-            <Link
+            <StageCardLink
               href={`${stageUri()}/resources/updates/${latestUpdate.value?.id}`}
             >
               <Tag style="outline" level="danger">
                 Error
               </Tag>
-            </Link>
+            </StageCardLink>
           </Match>
           <Match when={props.stage.unsupported}>
-            <Link href={stageUri()}>
-              <Tag style="outline">Upgrade</Tag>
-            </Link>
+            <Tag style="outline">Upgrade</Tag>
           </Match>
         </Switch>
       </StageCardLeft>

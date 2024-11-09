@@ -263,9 +263,6 @@ const RunMessageLink = styled(Link, {
     ...utility.text.line,
     zIndex: 2,
     color: theme.color.text.secondary.base,
-    ":hover": {
-      color: theme.color.text.primary.base,
-    },
   },
 });
 
@@ -340,7 +337,7 @@ const RunGitCommit = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${RunGitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },

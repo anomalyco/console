@@ -42,7 +42,7 @@ import {
   createForm,
 } from "@modular-forms/solid";
 import { WarningStore } from "$/data/warning";
-import { LinkButton } from "$/ui/button";
+import { TextButton } from "$/ui/button";
 import { FormField, Input } from "$/ui/form";
 import { Stack, Row, Grower } from "$/ui/layout";
 import { theme } from "$/ui/theme";
@@ -465,7 +465,7 @@ export function Alerts() {
                     color={field.error ? "danger" : "primary"}
                     hint={
                       getValue(putForm, "destination.type") === "slack" &&
-                      !slackTeam() ? (
+                        !slackTeam() ? (
                         <span>
                           <a href="#slack">Connect your Slack</a> workspace{" "}
                           below.
@@ -724,9 +724,9 @@ export function Alerts() {
           </AlertsPanelRowEditingField>
         </Stack>
         <Row space="4" vertical="center" horizontal="end">
-          <LinkButton onClick={() => setEditing("active", false)}>
+          <TextButton onClick={() => setEditing("active", false)}>
             Cancel
-          </LinkButton>
+          </TextButton>
           <Button
             type="submit"
             onClick={async () => {
@@ -750,19 +750,19 @@ export function Alerts() {
                 destination:
                   cloned.destination!.type === "slack"
                     ? {
-                        type: "slack",
-                        properties: {
-                          channel: cloned.destination!.slack?.channel!,
-                        },
-                      }
-                    : {
-                        type: "email",
-                        properties: {
-                          users: cloned.destination!.email!.users!.includes("*")
-                            ? "*"
-                            : cloned.destination!.email!.users!,
-                        },
+                      type: "slack",
+                      properties: {
+                        channel: cloned.destination!.slack?.channel!,
                       },
+                    }
+                    : {
+                      type: "email",
+                      properties: {
+                        users: cloned.destination!.email!.users!.includes("*")
+                          ? "*"
+                          : cloned.destination!.email!.users!,
+                      },
+                    },
                 event: cloned.event!,
               });
               setEditing("active", false);
@@ -886,7 +886,7 @@ export function Alerts() {
                                     alert.source.stage.join(", ")}
                                 </AlertsPanelFromKeyword>{" "}
                                 {alert.source.app !== "*" &&
-                                alert.source.app.length === 1
+                                  alert.source.app.length === 1
                                   ? "stage"
                                   : "stages"}
                               </>
@@ -912,16 +912,16 @@ export function Alerts() {
                                       {destination().properties.users === "*"
                                         ? "To all users in the workspace"
                                         : (
-                                            destination().properties
-                                              .users as string[]
+                                          destination().properties
+                                            .users as string[]
+                                        )
+                                          .map(
+                                            (id) =>
+                                              users.value.find(
+                                                (u) => u.id === id,
+                                              )?.email,
                                           )
-                                            .map(
-                                              (id) =>
-                                                users.value.find(
-                                                  (u) => u.id === id,
-                                                )?.email,
-                                            )
-                                            .join(", ")}
+                                          .join(", ")}
                                     </AlertsPanelToLabel>
                                   </>
                                 )}
@@ -1031,14 +1031,11 @@ export function Alerts() {
                 <AlertsPanelRowIcon>
                   <IconEllipsisHorizontal width={18} height={18} />
                 </AlertsPanelRowIcon>
-                <LinkButton
-                  size="sm"
-                  code={false}
-                  weight="regular"
+                <TextButton
                   onClick={() => createAlert()}
                 >
                   Add a new alert
-                </LinkButton>
+                </TextButton>
               </AlertsPanelRow>
             </Show>
           </AlertsPanel>

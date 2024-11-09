@@ -35,11 +35,23 @@ const Stages = styled("div", {
 const CardRoot = styled("div", {
   base: {
     ...utility.row(10),
+    position: "relative",
     alignItems: "center",
     justifyContent: "space-between",
     borderRadius: theme.borderRadius,
     border: `1px solid ${theme.color.divider.base}`,
     padding: `${theme.space[3]} ${theme.space[4]} ${theme.space[4]} ${theme.space[4]}`,
+  },
+});
+
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
 });
 
@@ -61,9 +73,16 @@ const CardTitle = styled("div", {
 const CardTitleText = styled(Link, {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     lineHeight: "26px",
     color: theme.color.text.primary.base,
     fontWeight: theme.font.weight.medium,
+  },
+});
+
+const CardInternalLink = styled(Link, {
+  base: {
+    zIndex: 2,
   },
 });
 
@@ -134,6 +153,7 @@ const CardGit = styled("div", {
 const CardGitLink = styled("a", {
   base: {
     ...utility.row(1),
+    zIndex: 2,
     alignItems: "center",
   },
 });
@@ -180,7 +200,7 @@ const CardGitBranch = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${CardGitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },
@@ -196,7 +216,7 @@ const CardGitCommit = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${CardGitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },
@@ -249,6 +269,7 @@ export function Overview() {
     );
     return (
       <CardRoot>
+        <BlockLink href={props.stage.name}></BlockLink>
         <CardBodyLeft>
           <CardTitle>
             <Switch>
@@ -283,20 +304,20 @@ export function Overview() {
                   app.app.name === local().app
                 }
               >
-                <Link href={`${props.stage.name}/local`}>
+                <CardInternalLink href={`${props.stage.name}/local`}>
                   <Tag level="tip" style="outline">
                     Local
                   </Tag>
-                </Link>
+                </CardInternalLink>
               </Show>
               <Show when={latest.value?.update.errors.length}>
-                <Link
+                <CardInternalLink
                   href={`${props.stage.name}/updates/${latest.value?.update.id}`}
                 >
                   <Tag level="danger" style="outline">
                     Error
                   </Tag>
-                </Link>
+                </CardInternalLink>
               </Show>
             </Row>
           </CardTitle>
