@@ -200,6 +200,7 @@ type SourcemapCache = ReturnType<typeof createSourcemapCache>;
 
 export function createProcessor(input: {
   sourcemapKey?: string;
+  logGroup?: string;
   group: string;
   config: StageCredentials;
 }) {
@@ -220,6 +221,7 @@ export function createProcessor(input: {
     ? createSourcemapCache({
         key: input.sourcemapKey,
         config: input.config,
+        logGroup: input.logGroup,
       })
     : undefined;
 

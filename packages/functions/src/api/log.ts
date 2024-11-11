@@ -152,6 +152,7 @@ export const LogRoute = new Hono()
       if (query.hint === "lambda") {
         const processor = Log.createProcessor({
           sourcemapKey,
+          logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
           group: query.logGroup + "-tail",
           config,
         });
@@ -221,6 +222,7 @@ export const LogRoute = new Hono()
           sourcemapKey:
             `arn:aws:lambda:${config.region}:${config.awsAccountID}:function:` +
             query.logGroup.split("/").slice(3, 5).join("/"),
+          logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
           group: query.logGroup,
           config,
         });
