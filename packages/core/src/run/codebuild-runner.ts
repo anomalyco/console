@@ -50,12 +50,13 @@ export module CodebuildRunner {
       architecture,
       compute,
     }): Promise<Resource> => {
-      if (architecture === "arm64") {
-        if (compute !== "small" && compute !== "large")
-          throw new RunnerError(
-            `AWS CodeBuild does not support "${compute}" compute size for ARM architecture`
-          );
-      }
+      // TODO apply this logic to Windows runners
+      // if (architecture === "arm64") {
+      //   if (compute !== "small" && compute !== "large")
+      //     throw new RunnerError(
+      //       `AWS CodeBuild does not support "${compute}" compute size for ARM architecture`
+      //     );
+      // }
 
       const sdkConfig = {
         credentials,
@@ -173,6 +174,7 @@ export module CodebuildRunner {
                   medium: "BUILD_GENERAL1_MEDIUM" as const,
                   large: "BUILD_GENERAL1_LARGE" as const,
                   xlarge: "BUILD_GENERAL1_XLARGE" as const,
+                  "2xlarge": "BUILD_GENERAL1_2XLARGE" as const,
                 }[compute] as ComputeType,
                 image,
                 type:

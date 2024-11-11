@@ -60,7 +60,7 @@ export { RunConfig } from "./config";
 export module Run {
   const DEFAULT_ENGINE = "codebuild";
   const DEFAULT_ARCHITECTURE = "x86_64";
-  const DEFAULT_COMPUTE = "small";
+  const DEFAULT_COMPUTE = "medium";
   const RUNNER_INACTIVE_TIME = 604800000; // 1 week
   const ERROR_STATUS_MAP = (error: RunError | null) => {
     if (!error) return "succeeded";

@@ -27,7 +27,13 @@ export const Resource = z.discriminatedUnion("engine", [
 export type Resource = z.infer<typeof Resource>;
 export const Engine = ["codebuild"] as const;
 export const Architecture = ["x86_64", "arm64"] as const;
-export const Compute = ["small", "medium", "large", "xlarge"] as const;
+export const Compute = [
+  "small",
+  "medium",
+  "large",
+  "xlarge",
+  "2xlarge",
+] as const;
 type RunErrors = {
   config_not_found: { path?: string };
   config_build_failed: {};
