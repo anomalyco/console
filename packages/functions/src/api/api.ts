@@ -73,4 +73,4 @@ export const app = new Hono()
   .route("/slack", SlackRoute)
   .route("/log", LogRoute);
 
-export const handler = true ? handle(app) : streamHandle(app);
+export const handler = process.env.SST_DEV ? handle(app) : streamHandle(app);

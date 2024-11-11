@@ -22,6 +22,7 @@ const api = new sst.aws.Function("Api", {
     websocket,
     ...allSecrets,
   ],
+  streaming: true,
   nodejs: {
     install: ["source-map"],
   },
