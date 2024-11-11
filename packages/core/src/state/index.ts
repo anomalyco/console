@@ -34,6 +34,7 @@ import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
 import { Issue } from "../issue";
+import { db } from "../drizzle";
 
 export module State {
   export const Event = {
@@ -869,26 +870,26 @@ export module State {
                   inArray(stateResourceTable.urn, resourceDeletes),
                 ),
               );
-          await tx
-            .update(stage)
-            .set({
-              timeUpdated: sql`CURRENT_TIMESTAMP(6)`,
-              timeDeleted:
-                existing.command === "remove" && state.resources.length === 0
-                  ? sql`CURRENT_TIMESTAMP(6)`
-                  : null,
-            })
-            .where(
-              and(
-                eq(stage.workspaceID, useWorkspace()),
-                eq(stage.id, input.config.stageID),
-              ),
-            );
         },
         {
           isolationLevel: "read uncommitted",
         },
       );
+      await db
+        .update(stage)
+        .set({
+          timeUpdated: sql`CURRENT_TIMESTAMP(6)`,
+          timeDeleted:
+            existing.command === "remove" && state.resources.length === 0
+              ? sql`CURRENT_TIMESTAMP(6)`
+              : null,
+        })
+        .where(
+          and(
+            eq(stage.workspaceID, useWorkspace()),
+            eq(stage.id, input.config.stageID),
+          ),
+        );
     },
   );
 
