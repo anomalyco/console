@@ -43,7 +43,7 @@ export const handler = auth.authorizer({
               );
             }
 
-            if (!process.env.IS_LOCAL && !process.env.SST_DEV) {
+            if (Resource.App.stage === "production") {
               const botpoison = new Botpoison({
                 secretKey: Resource.BotpoisonSecretKey.value,
               });
