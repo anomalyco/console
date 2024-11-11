@@ -231,7 +231,7 @@ const GitCommit = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${GitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },
@@ -247,7 +247,7 @@ const GitBranch = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${GitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },
