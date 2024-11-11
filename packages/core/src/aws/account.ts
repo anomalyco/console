@@ -238,6 +238,7 @@ export const bootstrapIon = zod(
       const parsed = JSON.parse(param.Parameter.Value);
       return {
         bucket: parsed.state,
+        asset: parsed.asset,
         version: "v3" as const,
       };
     } catch {

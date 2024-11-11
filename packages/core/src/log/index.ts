@@ -106,12 +106,12 @@ export function createSourcemapCache(input: {
 
   const getBootstrap = lazy(() => AWS.Account.bootstrap(input.config));
   const getBootstrapV3 = lazy(() => AWS.Account.bootstrapIon(input.config));
-  const results = [] as {
-    bucket: string;
-    key: string;
-    created: number;
-  }[];
   const sourcemapsMeta = lazy(async () => {
+    const results = [] as {
+      bucket: string;
+      key: string;
+      created: number;
+    }[];
     const bootstrap = await getBootstrap();
     if (bootstrap) {
       const result = await s3bootstrap
@@ -122,13 +122,14 @@ export function createSourcemapCache(input: {
           }),
         )
         .catch(() => {});
-      if (!result) return [];
-      const maps = (result.Contents || []).map((item) => ({
-        bucket: bootstrap.bucket,
-        key: item.Key!,
-        created: item.LastModified!.getTime(),
-      }));
-      results.push(...maps);
+      if (result) {
+        const maps = (result.Contents || []).map((item) => ({
+          bucket: bootstrap.bucket,
+          key: item.Key!,
+          created: item.LastModified!.getTime(),
+        }));
+        results.push(...maps);
+      }
     }
 
     const bootstrapV3 = await getBootstrapV3();
@@ -136,20 +137,20 @@ export function createSourcemapCache(input: {
       const result = await s3bootstrap
         .send(
           new ListObjectsV2Command({
-            Bucket: bootstrapV3.bucket,
-            Prefix: `sourcemap` + input.logGroup,
+            Bucket: bootstrapV3.asset,
+            Prefix: `sourcemap/` + input.logGroup,
           }),
         )
         .catch(() => {});
-      if (!result) return [];
-      const maps = (result.Contents || []).map((item) => ({
-        bucket: bootstrapV3.bucket,
-        key: item.Key!,
-        created: item.LastModified!.getTime(),
-      }));
-      results.push(...maps);
+      if (result) {
+        const maps = (result.Contents || []).map((item) => ({
+          bucket: bootstrapV3.asset,
+          key: item.Key!,
+          created: item.LastModified!.getTime(),
+        }));
+        results.push(...maps);
+      }
     }
-    console.log("results", results);
     return results;
   });
 
@@ -174,10 +175,13 @@ export function createSourcemapCache(input: {
         }),
       );
       try {
-        let bytes = await content.Body!.transformToByteArray();
         const isV3 = match.bucket.includes("sst-asset");
         const raw = JSON.parse(
-          isV3 ? bytes.toString() : zlib.unzipSync(bytes).toString(),
+          isV3
+            ? await content.Body!.transformToString()
+            : zlib
+                .unzipSync(await content.Body!.transformToByteArray())
+                .toString(),
         );
         raw.sources = raw.sources.map((item: string) =>
           item.replaceAll("../", "").replaceAll("webpack://", ""),
@@ -185,7 +189,7 @@ export function createSourcemapCache(input: {
         sourcemapCache.set(match.key, raw);
         const consumer = await new SourceMapConsumer(raw);
         return consumer;
-      } catch {
+      } catch (ex) {
         return;
       }
     },
@@ -217,13 +221,14 @@ export function createProcessor(input: {
       requestID?: string;
     }
   >();
-  const sourcemapCache = input.sourcemapKey
-    ? createSourcemapCache({
-        key: input.sourcemapKey,
-        config: input.config,
-        logGroup: input.logGroup,
-      })
-    : undefined;
+  const sourcemapCache =
+    input.sourcemapKey || input.logGroup
+      ? createSourcemapCache({
+          key: input.sourcemapKey || "",
+          config: input.config,
+          logGroup: input.logGroup,
+        })
+      : undefined;
 
   const { group } = input;
 
