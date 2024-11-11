@@ -10,6 +10,9 @@ bus.subscribe(
   "EventSubscriber",
   {
     handler: "packages/functions/src/event.handler",
+    nodejs: {
+      install: ["source-map"],
+    },
     permissions: [
       {
         actions: ["sts:*", "logs:*", "ses:*", "iot:*", "s3:*"],
