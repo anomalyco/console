@@ -140,6 +140,7 @@ export const extract = zod(
 
         const sourcemapCache = Log.createSourcemapCache({
           key: sourcemapKey,
+          logGroup: `arn:aws:logs:${region}:${accountID}:log-group:${input.logGroup}`,
           config: {
             credentials: credentials,
             stageID: workspaces[0]!.stageID,

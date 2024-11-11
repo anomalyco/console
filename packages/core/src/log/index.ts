@@ -95,6 +95,7 @@ export type Processor = ReturnType<typeof createProcessor>;
 
 export function createSourcemapCache(input: {
   config: StageCredentials;
+  logGroup?: string;
   key: string;
 }) {
   const s3bootstrap = new S3Client({
@@ -104,23 +105,52 @@ export function createSourcemapCache(input: {
   const sourcemapCache = new Map<string, any>();
 
   const getBootstrap = lazy(() => AWS.Account.bootstrap(input.config));
+  const getBootstrapV3 = lazy(() => AWS.Account.bootstrapIon(input.config));
+  const results = [] as {
+    bucket: string;
+    key: string;
+    created: number;
+  }[];
   const sourcemapsMeta = lazy(async () => {
     const bootstrap = await getBootstrap();
-    if (!bootstrap) return [];
-    const result = await s3bootstrap
-      .send(
-        new ListObjectsV2Command({
-          Bucket: bootstrap.bucket,
-          Prefix: `sourcemap/${input.config.app}/${input.config.stage}/${input.key}`,
-        }),
-      )
-      .catch(() => {});
-    if (!result) return [];
-    const maps = (result.Contents || []).map((item) => ({
-      key: item.Key!,
-      created: item.LastModified!.getTime(),
-    }));
-    return maps;
+    if (bootstrap) {
+      const result = await s3bootstrap
+        .send(
+          new ListObjectsV2Command({
+            Bucket: bootstrap.bucket,
+            Prefix: `sourcemap/${input.config.app}/${input.config.stage}/${input.key}`,
+          }),
+        )
+        .catch(() => {});
+      if (!result) return [];
+      const maps = (result.Contents || []).map((item) => ({
+        bucket: bootstrap.bucket,
+        key: item.Key!,
+        created: item.LastModified!.getTime(),
+      }));
+      results.push(...maps);
+    }
+
+    const bootstrapV3 = await getBootstrapV3();
+    if (bootstrapV3 && input.logGroup) {
+      const result = await s3bootstrap
+        .send(
+          new ListObjectsV2Command({
+            Bucket: bootstrapV3.bucket,
+            Prefix: `sourcemap` + input.logGroup,
+          }),
+        )
+        .catch(() => {});
+      if (!result) return [];
+      const maps = (result.Contents || []).map((item) => ({
+        bucket: bootstrapV3.bucket,
+        key: item.Key!,
+        created: item.LastModified!.getTime(),
+      }));
+      results.push(...maps);
+    }
+    console.log("results", results);
+    return results;
   });
 
   return {
@@ -137,16 +167,17 @@ export function createSourcemapCache(input: {
       if (sourcemapCache.has(match.key)) {
         return await new SourceMapConsumer(sourcemapCache.get(match.key)!);
       }
-      const bootstrap = await getBootstrap();
       const content = await s3bootstrap.send(
         new GetObjectCommand({
-          Bucket: bootstrap!.bucket,
+          Bucket: match.bucket,
           Key: match.key,
         }),
       );
       try {
+        let bytes = await content.Body!.transformToByteArray();
+        const isV3 = match.bucket.includes("sst-asset");
         const raw = JSON.parse(
-          zlib.unzipSync(await content.Body!.transformToByteArray()).toString(),
+          isV3 ? bytes.toString() : zlib.unzipSync(bytes).toString(),
         );
         raw.sources = raw.sources.map((item: string) =>
           item.replaceAll("../", "").replaceAll("webpack://", ""),
