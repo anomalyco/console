@@ -9,6 +9,7 @@ import {
 import { db } from "../drizzle";
 import { ExtractTablesWithRelations } from "drizzle-orm";
 import { createContext } from "../context";
+import { DatabaseError } from "@planetscale/database";
 
 export type Transaction = MySqlTransaction<
   PlanetscaleQueryResultHKT,
@@ -58,7 +59,24 @@ export async function createTransaction<T>(
         const result = await TransactionContext.with(
           { tx, effects },
           async () => {
-            return callback(tx);
+            let i = 0;
+            while (true) {
+              try {
+                i++;
+                const result = await callback(tx);
+                return result;
+              } catch (ex: any) {
+                if (
+                  i < 3 &&
+                  ex instanceof DatabaseError &&
+                  ex.message.includes("try restarting transaction")
+                ) {
+                  console.log("deadlock detected, retrying", i);
+                  continue;
+                }
+                throw ex;
+              }
+            }
           },
         );
         return result;
