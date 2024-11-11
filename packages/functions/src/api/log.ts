@@ -71,7 +71,6 @@ export const LogRoute = new Hono()
 
       async function* fetchStreams(logGroup: string) {
         let nextToken: string | undefined;
-        console.log("fetching streams for", logGroup);
 
         while (true) {
           try {
@@ -104,7 +103,6 @@ export const LogRoute = new Hono()
         streams: string[],
       ) {
         let nextToken: string | undefined;
-        console.log("fetching logs for", streams.length, "streams");
 
         while (true) {
           const response = await client.send(
@@ -136,7 +134,6 @@ export const LogRoute = new Hono()
       if (!streams.length) return c.json([]);
       if (!start) start = Date.now() - 2 * 60 * 1000;
 
-      console.log("fetching since", new Date(start).toLocaleString());
       if (query.hint === "normal") {
         const events = [];
         for await (const event of fetchEvents(query.logGroup, start, streams)) {
@@ -216,7 +213,6 @@ export const LogRoute = new Hono()
         let iteration = 0;
 
         if (!start) return;
-        console.log("start", start.toLocaleString(DateTime.DATETIME_SHORT));
 
         const processor = Log.createProcessor({
           sourcemapKey:
@@ -228,12 +224,6 @@ export const LogRoute = new Hono()
         });
 
         while (true) {
-          console.log(
-            "scanning from",
-            start.toLocaleString(DateTime.DATETIME_SHORT),
-            "to",
-            end.toLocaleString(DateTime.DATETIME_SHORT),
-          );
           const result = await client
             .send(
               new StartQueryCommand({
@@ -245,7 +235,6 @@ export const LogRoute = new Hono()
             )
             .catch((ex) => {});
           if (!result) return true;
-          console.log("created query", result.queryId);
 
           while (true) {
             const response = await client.send(
@@ -254,7 +243,6 @@ export const LogRoute = new Hono()
               }),
             );
             const results = response.results || [];
-            console.log("log insights results", results.length);
             results.sort((a, b) => a[0]!.value!.localeCompare(b[0]!.value!));
 
             if (response.status === "Complete") {
