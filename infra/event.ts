@@ -3,7 +3,7 @@ import { bus } from "./bus";
 import { email } from "./email";
 import { issues } from "./issues";
 import { database } from "./planetscale";
-import { secret } from "./secret";
+import { secret, allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
 bus.subscribe(
@@ -26,16 +26,7 @@ bus.subscribe(
         ],
       },
     ],
-    link: [
-      database,
-      bus,
-      issues,
-      email,
-      autodeploy,
-      secret.GithubAppID,
-      secret.GithubPrivateKey,
-      websocket,
-    ],
+    link: [database, bus, issues, email, autodeploy, ...allSecrets, websocket],
     timeout: "15 minute",
   },
   {

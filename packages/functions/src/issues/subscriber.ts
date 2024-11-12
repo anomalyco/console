@@ -27,7 +27,7 @@ export const handler = async (event: KinesisStreamEvent) =>
         );
         if (
           Date.now() - record.kinesis.approximateArrivalTimestamp * 1000 >
-          1000 * 60 * 60
+          1000 * 60 * 5
         ) {
           incomplete.pop();
           console.log("too old");
