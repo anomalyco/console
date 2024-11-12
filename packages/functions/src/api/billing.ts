@@ -3,6 +3,7 @@ import { notPublic } from "./auth";
 import { Billing } from "@console/core/billing";
 import { stripe } from "@console/core/stripe";
 import { DateTime } from "luxon";
+import { Resource } from "sst";
 
 export const BillingRoute = new Hono()
   .use(notPublic)
