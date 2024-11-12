@@ -79,7 +79,8 @@ export async function createTransaction<T>(
         if (
           i < 3 &&
           ex instanceof DatabaseError &&
-          ex.message.includes("try restarting transaction")
+          (ex.message.includes("try restarting transaction") ||
+            ex.message.includes("exceeded timeout"))
         ) {
           console.log("deadlock detected, retrying", i);
           continue;
