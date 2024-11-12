@@ -18,8 +18,7 @@ export const BillingRoute = new Hono()
       mode: "subscription",
       line_items: [
         {
-          // TODO: add stripe price id
-          price: "",
+          price: Resource.StripePriceID.value,
         },
       ],
       customer: item.customerID,

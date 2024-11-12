@@ -1,7 +1,6 @@
 import { Resource } from "sst";
 import { Stripe } from "stripe";
 
-// TODO: add stripe secret
-export const stripe = new Stripe("", {
+export const stripe = new Stripe(Resource.StripeSecretKey.value, {
   apiVersion: "2024-06-20",
 });

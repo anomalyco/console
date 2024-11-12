@@ -2,6 +2,7 @@ import { withActor } from "@console/core/actor";
 import { Billing } from "@console/core/billing";
 import { stripe } from "@console/core/stripe";
 import { Hono } from "hono";
+import { Resource } from "sst";
 
 export const WebhookRoute = new Hono();
 
@@ -10,8 +11,7 @@ WebhookRoute.post("/stripe", async (c) => {
   const body = stripe.webhooks.constructEvent(
     await c.req.text(),
     c.req.header("stripe-signature")!,
-    // TODO: add signing secret
-    "",
+    Resource.StripeWebhookSigningSecret.value,
   );
 
   console.log(body.type, body);

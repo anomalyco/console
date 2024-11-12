@@ -122,6 +122,18 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bucket"
     }
+    "StripePriceID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "StripeSecretKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "StripeWebhookSigningSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Websocket": {
       "http": string
       "realtime": string

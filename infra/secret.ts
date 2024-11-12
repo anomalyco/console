@@ -1,4 +1,7 @@
 export const secret = {
+  StripeSecretKey: new sst.Secret("StripeSecretKey"),
+  StripeWebhookSigningSecret: new sst.Secret("StripeWebhookSigningSecret"),
+  StripePriceID: new sst.Secret("StripePriceID"),
   SlackClientID: new sst.Secret("SlackClientID"),
   SlackClientSecret: new sst.Secret("SlackClientSecret"),
   GithubAppID: new sst.Secret("GithubAppID"),
