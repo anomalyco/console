@@ -549,7 +549,7 @@ function Level(props: { level?: string }) {
   return (
     <Tag
       size="small"
-      style={props.level === "error" ? "outline" : "solid"}
+      type={props.level === "error" ? "outline" : "solid"}
       level={
         props.level === "fail" || props.level === "error" ? "danger" : "info"
       }

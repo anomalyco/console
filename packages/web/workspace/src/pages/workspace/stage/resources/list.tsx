@@ -52,7 +52,7 @@ import { Link } from "@solidjs/router";
 import { Syncing } from "$/ui/loader";
 import {
   IconCheck,
-  IconChevronRight,
+  IconEnvelope,
   IconEllipsisVertical,
   IconDocumentDuplicate,
 } from "$/ui/icons";
@@ -65,7 +65,7 @@ import { ResourceIcon } from "$/common/resource-icon";
 import { createSubscription } from "$/providers/replicache";
 import { StateUpdateStore } from "$/data/app";
 import { DateTime } from "luxon";
-import { TextButton } from "$/ui/button";
+import { ChevronLink } from "$/ui/button";
 import { Text } from "$/ui/text";
 
 const ION_ICON_MAP: { [key: string]: Component } = {
@@ -76,6 +76,7 @@ const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:aws:Cron": IconCron,
   "sst:aws:Router": IconApi,
   // "sst:aws:Job": IconJob,
+  "sst:aws:Email": IconEnvelope,
 
   "sst:aws:Queue": IconQueue,
   "sst:aws:QueueLambdaSubscriber": IconFunction,
@@ -88,6 +89,7 @@ const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:aws:DynamoLambdaSubscriber": IconFunction,
 
   "sst:aws:Bus": IconEventBus,
+  "sst:aws:BusLambdaSubscriber": IconFunction,
 
   "sst:aws:Bucket": IconBucket,
   "sst:aws:BucketLambdaSubscriber": IconFunction,
@@ -205,23 +207,6 @@ const TitleDescLink = styled(Link, {
     marginLeft: `calc(${theme.space[3]} + 12px)`,
     fontSize: theme.font.size.sm,
     color: theme.color.text.dimmed.base,
-  },
-});
-
-const TitleHistoryLink = styled(Link, {
-  base: {
-    ...utility.row(0.5),
-    alignItems: "center",
-    fontSize: theme.font.size.sm,
-    color: theme.color.text.secondary.base,
-  },
-});
-
-const TitleDescIcon = styled("span", {
-  base: {
-    top: 1,
-    position: "relative",
-    opacity: theme.iconOpacity,
   },
 });
 
@@ -600,6 +585,7 @@ function stateResourcePriority(resource: SortedStateResource) {
     case "sstv2:aws:Cron":
       return 7;
     case "sst:aws:Bus":
+    case "sst:aws:Email":
     case "sstv2:aws:EventBus":
       return 8;
     case "sst:aws:Queue":
@@ -958,10 +944,7 @@ export function List() {
                     )}
                   </TitleDescLink>
                 </Stack>
-                <TitleHistoryLink href="../updates">
-                  View history
-                  <TitleDescIcon><IconChevronRight width="12" height="12" /></TitleDescIcon>
-                </TitleHistoryLink>
+                <ChevronLink href="../updates" size="sm">View history</ChevronLink>
               </TitleRoot>
             </Show>
             <Stack space="5">

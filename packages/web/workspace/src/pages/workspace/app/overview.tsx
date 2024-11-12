@@ -4,6 +4,7 @@ import { RunStore, StateUpdateStore } from "$/data/app";
 import { PageHeader } from "./header";
 import { Link } from "@solidjs/router";
 import { useAppContext } from "./context";
+import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import type { Stage } from "@console/core/app";
 import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
@@ -118,6 +119,7 @@ const CardIcon = styled("div", {
 
 const CardUpdatedTime = styled("span", {
   base: {
+    zIndex: 2,
     marginLeft: `calc(${theme.space[3]} + 12px)`,
     fontSize: theme.font.size.xs,
     color: theme.color.text.dimmed.base,
@@ -140,6 +142,12 @@ const CardRegion = styled("span", {
     fontSize: theme.font.size.xs,
     color: theme.color.text.dimmed.base,
   },
+});
+
+const cardAccountId = style({
+  zIndex: 2,
+  userSelect: "text",
+  WebkitUserSelect: "text",
 });
 
 const CardGit = styled("div", {
@@ -305,18 +313,14 @@ export function Overview() {
                 }
               >
                 <CardInternalLink href={`${props.stage.name}/local`}>
-                  <Tag level="tip" style="outline">
-                    Local
-                  </Tag>
+                  <Tag level="tip" type="outline">Local</Tag>
                 </CardInternalLink>
               </Show>
               <Show when={latest.value?.update.errors.length}>
                 <CardInternalLink
                   href={`${props.stage.name}/updates/${latest.value?.update.id}`}
                 >
-                  <Tag level="danger" style="outline">
-                    Error
-                  </Tag>
+                  <Tag level="danger" type="outline">Error</Tag>
                 </CardInternalLink>
               </Show>
             </Row>
@@ -376,7 +380,7 @@ export function Overview() {
           </Show>
           <Stack space="px">
             <CardRegion>{props.stage.region}</CardRegion>
-            <Tag title="AWS Account ID">{aws.value?.accountID}</Tag>
+            <Tag class={cardAccountId} title="AWS Account ID">{aws.value?.accountID}</Tag>
           </Stack>
         </CardBodyRight>
       </CardRoot>

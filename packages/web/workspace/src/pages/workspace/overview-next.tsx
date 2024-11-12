@@ -35,7 +35,7 @@ import { Tag } from "$/ui/tag";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { Button, ChevronLink } from "$/ui/button";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -89,14 +89,6 @@ const PageHeader = styled("div", {
     ...utility.stack(0),
     height: 42,
     justifyContent: "space-between",
-  },
-});
-
-const ManageIcon = styled("div", {
-  base: {
-    top: 2,
-    position: "relative",
-    opacity: theme.iconOpacity,
   },
 });
 
@@ -193,7 +185,7 @@ const RepoLink = styled("a", {
     gap: 4,
     height: 26,
     zIndex: 2,
-    padding: "0 10px",
+    padding: "0 9px",
     alignItems: "center",
     color: theme.color.text.secondary.surface,
     backgroundColor: theme.color.background.surface,
@@ -433,7 +425,7 @@ export function OverviewNext() {
           </CardTitle>
           <Show when={repo.value && latestRunError.value}>
             <CardTitleErrorLink href={`${props.app.name}/autodeploy`}>
-              <Tag level="danger" style="outline">Error</Tag>
+              <Tag level="danger" type="outline">Error</Tag>
             </CardTitleErrorLink>
           </Show>
           <Show when={repo.value && !latestRunError.value}>
@@ -536,19 +528,8 @@ export function OverviewNext() {
               <Stack space="4">
                 <Row space="5" vertical="center" horizontal="between">
                   <PageHeader>
-                    <Text size="lg" weight="medium">
-                      Overview
-                    </Text>
-                    <Link href="settings">
-                      <TextButton>
-                        <Row space="0.5" horizontal="center">
-                          Manage workspace
-                          <ManageIcon>
-                            <IconChevronRight width="13" height="13" />
-                          </ManageIcon>
-                        </Row>
-                      </TextButton>
-                    </Link>
+                    <Text size="lg" weight="medium">Overview</Text>
+                    <ChevronLink href="settings" size="sm">Manage workspace</ChevronLink>
                   </PageHeader>
                   <Row space="4" vertical="center">
                     <Link href="account">
@@ -779,6 +760,7 @@ const StageRegion = styled("span", {
 const StageUpdatedTime = styled("span", {
   base: {
     minWidth: 44,
+    zIndex: 2,
     textAlign: "right",
     color: theme.color.text.dimmed.base,
     fontSize: theme.font.size.xs,
@@ -869,20 +851,18 @@ function StageCard(props: StageCardProps) {
             }
           >
             <StageCardLink href={`${stageUri()}/local`}>
-              <Tag level="tip" style="outline">Local</Tag>
+              <Tag level="tip" type="outline">Local</Tag>
             </StageCardLink>
           </Match>
           <Match when={latestUpdate.value?.errors.length}>
             <StageCardLink
-              href={`${stageUri()}/resources/updates/${latestUpdate.value?.id}`}
+              href={`${stageUri()}/updates/${latestUpdate.value?.id}`}
             >
-              <Tag style="outline" level="danger">
-                Error
-              </Tag>
+              <Tag type="outline" level="danger">Error</Tag>
             </StageCardLink>
           </Match>
           <Match when={props.stage.unsupported}>
-            <Tag style="outline">Upgrade</Tag>
+            <Tag type="outline">Upgrade</Tag>
           </Match>
         </Switch>
       </StageCardLeft>

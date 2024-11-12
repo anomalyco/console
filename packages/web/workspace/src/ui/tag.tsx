@@ -40,7 +40,7 @@ export const Tag = styled("div", {
         color: `hsla(${theme.color.red.l2}, 100%)`,
       },
     },
-    style: {
+    type: {
       solid: {
         padding: "0 9px",
         fontWeight: 500,
@@ -67,7 +67,7 @@ export const Tag = styled("div", {
     {
       variants: {
         level: "info",
-        style: "outline",
+        type: "outline",
       },
       style: {
         color: theme.color.text.dimmed.base,
@@ -77,7 +77,7 @@ export const Tag = styled("div", {
     {
       variants: {
         level: "danger",
-        style: "outline",
+        type: "outline",
       },
       style: {
         color: `hsla(${theme.color.base.red}, 100%)`,
@@ -86,7 +86,7 @@ export const Tag = styled("div", {
     {
       variants: {
         level: "tip",
-        style: "outline",
+        type: "outline",
       },
       style: {
         color: `hsla(${theme.color.base.blue}, 100%)`,
@@ -95,7 +95,7 @@ export const Tag = styled("div", {
     {
       variants: {
         level: "caution",
-        style: "outline",
+        type: "outline",
       },
       style: {
         color: `hsla(${theme.color.base.brand}, 100%)`,
@@ -105,6 +105,6 @@ export const Tag = styled("div", {
   defaultVariants: {
     size: "auto",
     level: "info",
-    style: "solid",
+    type: "solid",
   },
 });

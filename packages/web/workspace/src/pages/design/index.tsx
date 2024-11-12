@@ -26,6 +26,7 @@ import {
   TextButton,
   ButtonIcon,
   ButtonGroup,
+  ChevronLink,
 } from "$/ui/button";
 import { utility } from "$/ui/utility";
 import { IconGitHub } from "$/ui/icons/custom";
@@ -461,6 +462,22 @@ export function Design() {
           </TextContainer>
         </Variant>
       </ComponentType>
+      <ComponentType name="ChevronLink">
+        <Variant name="Base">
+          <TextContainer>
+            <Row space="4">
+              <ChevronLink href="/">Button</ChevronLink>
+            </Row>
+          </TextContainer>
+        </Variant>
+        <Variant name="Small">
+          <TextContainer>
+            <Row space="4">
+              <ChevronLink size="sm" href="/">Button</ChevronLink>
+            </Row>
+          </TextContainer>
+        </Variant>
+      </ComponentType>
       <ComponentType name="Forms">
         <Variant name="Default">
           <Grower>
@@ -566,44 +583,44 @@ export function Design() {
       </ComponentType>
       <ComponentType name="Tag">
         <Variant name="Solid">
-          <Tag style="solid" level="info">
+          <Tag type="solid" level="info">
             Tag
           </Tag>
-          <Tag style="solid" level="tip">
+          <Tag type="solid" level="tip">
             Tag
           </Tag>
-          <Tag style="solid" level="caution">
+          <Tag type="solid" level="caution">
             Tag
           </Tag>
-          <Tag style="solid" level="danger">
+          <Tag type="solid" level="danger">
             Tag
           </Tag>
         </Variant>
         <Variant name="Outline">
-          <Tag style="outline" level="info">
+          <Tag type="outline" level="info">
             Tag
           </Tag>
-          <Tag style="outline" level="tip">
+          <Tag type="outline" level="tip">
             Tag
           </Tag>
-          <Tag style="outline" level="caution">
+          <Tag type="outline" level="caution">
             Tag
           </Tag>
-          <Tag style="outline" level="danger">
+          <Tag type="outline" level="danger">
             Tag
           </Tag>
         </Variant>
         <Variant name="Icon">
-          <Tag style="outline" level="info">
+          <Tag type="outline" level="info">
             <IconCheck width="11" height="11" />
           </Tag>
-          <Tag style="outline" level="tip">
+          <Tag type="outline" level="tip">
             <IconCheck width="11" height="11" />
           </Tag>
-          <Tag style="outline" level="caution">
+          <Tag type="outline" level="caution">
             <IconCheck width="11" height="11" />
           </Tag>
-          <Tag style="outline" level="danger">
+          <Tag type="outline" level="danger">
             <IconCheck width="11" height="11" />
           </Tag>
         </Variant>

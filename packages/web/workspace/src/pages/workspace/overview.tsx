@@ -263,7 +263,7 @@ export function Overview() {
         stages().filter((stage) => stage.awsAccountID === account.id),
         (c) =>
           apps().find((app) => app.id === c.appID)?.name === local().app &&
-          c.name === local().stage
+            c.name === local().stage
             ? 0
             : 1,
         (c) => (c.unsupported ? 1 : 0),
@@ -559,9 +559,8 @@ function StageCard(props: StageCardProps) {
   const local = useLocalContext();
   return (
     <StageRoot
-      href={`${app()?.name}/${
-        props.ambiguous ? props.stage.id : props.stage.name
-      }`}
+      href={`${app()?.name}/${props.ambiguous ? props.stage.id : props.stage.name
+        }`}
     >
       <Row space="2" vertical="center">
         <StageIcon dimmed={props.stage.unsupported || false}>
@@ -597,14 +596,12 @@ function StageCard(props: StageCardProps) {
             props.stage.name === local()?.stage && app()?.name === local()?.app
           }
         >
-          <Tag level="tip" style="outline">
-            Local
-          </Tag>
+          <Tag level="tip" type="outline">Local</Tag>
         </Show>
         <Show when={props.stage.unsupported}>
-          <Tag style="outline">Upgrade</Tag>
+          <Tag type="outline">Upgrade</Tag>
         </Show>
-        <Tag style="outline">{props.stage.region}</Tag>
+        <Tag type="outline">{props.stage.region}</Tag>
       </StageCardTags>
     </StageRoot>
   );

@@ -23,7 +23,7 @@ import { Show, createEffect, createMemo } from "solid-js";
 import { createScan2 } from "$/data/store";
 import { useApi, useWorkspace } from "../../context";
 import { bus } from "$/providers/bus";
-import { LinkButton, IconButton } from "$/ui/button";
+import { LinkButton, TextButton, IconButton } from "$/ui/button";
 import { Row } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
@@ -93,7 +93,7 @@ const InvokeControlsLeft = styled("div", {
   },
 });
 
-const InvokeControlsCancel = styled(LinkButton, {
+const InvokeControlsCancel = styled(TextButton, {
   base: {
     display: "none",
     selectors: {

@@ -1,9 +1,11 @@
+import { Link } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { JSX, Show, ComponentProps } from "solid-js";
 import { theme } from "./theme";
 import { Tag } from "$/ui/tag";
 import { Row } from "$/ui/layout";
-import { IconCheck } from "$/ui/icons";
+import { utility } from "$/ui/utility";
+import { IconCheck, IconChevronRight } from "$/ui/icons";
 import { CSSProperties } from "@macaron-css/core";
 
 const activeBase: CSSProperties = {
@@ -587,5 +589,55 @@ export function TabTitle(props: TabTitleProps) {
         </Show>
       </Row>
     </TabTitleRoot>
+  );
+}
+
+const ChevronLinkRoot = styled(Link, {
+  base: {
+    ...utility.row(0),
+    gap: 1,
+    alignItems: "center",
+    color: theme.color.text.secondary.base,
+  },
+  variants: {
+    size: {
+      sm: {
+        fontSize: theme.font.size.sm,
+      },
+    },
+    base: {
+      fontSize: theme.font.size.base,
+    },
+  },
+});
+
+const ChevronLinkIcon = styled("span", {
+  base: {
+    flex: "0 0 auto",
+    lineHeight: 0,
+    opacity: theme.iconOpacity,
+  },
+  variants: {
+    size: {
+      sm: {},
+    },
+    base: {},
+  },
+});
+
+
+type ChevronLinkProps = ComponentProps<typeof ChevronLinkRoot> & {
+  size?: "sm" | "base";
+};
+
+export function ChevronLink(props: ChevronLinkProps) {
+  const iconSize = props.size === "sm" ? 12 : 14;
+  return (
+    <ChevronLinkRoot {...props}>
+      {props.children}
+      <ChevronLinkIcon size={props.size}>
+        <IconChevronRight width={iconSize} height={iconSize} />
+      </ChevronLinkIcon>
+    </ChevronLinkRoot>
   );
 }
