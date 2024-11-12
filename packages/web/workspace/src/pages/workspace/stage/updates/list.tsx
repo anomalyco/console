@@ -163,8 +163,9 @@ const UpdateLink = styled(Link, {
 const UpdateLinkPrefix = styled("span", {
   base: {
     marginRight: 1,
+    fontSize: theme.font.size.mono_sm,
+    fontFamily: theme.font.family.code,
     fontWeight: theme.font.weight.regular,
-    fontSize: theme.font.size.sm,
   },
 });
 
@@ -297,6 +298,7 @@ const UpdateSource = styled("div", {
 const UpdateTime = styled("span", {
   base: {
     width: 120,
+    zIndex: 2,
     textAlign: "right",
     fontSize: theme.font.size.sm,
     color: theme.color.text.dimmed.base,

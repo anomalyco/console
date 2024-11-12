@@ -740,7 +740,7 @@ const StageGitCommit = styled("span", {
     transition: `color ${theme.colorFadeDuration} ease-out`,
     selectors: {
       [`${StageGitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
+        color: theme.color.link.primary.hover,
       },
     },
   },

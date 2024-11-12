@@ -343,13 +343,17 @@ const RunGitCommit = styled("span", {
   },
 });
 
-const RunGitMessage = styled("span", {
+const RunGitMessage = styled("a", {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     lineHeight: "normal",
     width: 180,
     fontSize: theme.font.size.xs,
     color: theme.color.text.dimmed.base,
+    ":hover": {
+      color: theme.color.text.dimmed.base,
+    },
   },
 });
 
@@ -459,6 +463,7 @@ function RunItem({ run }: { run: Run.Run }) {
       <RunGit>
         <RunGitLink
           target="_blank"
+          rel="noreferrer noopener"
           href={githubCommit(
             runInfo()!.repoURL,
             runInfo()!.trigger.commit.id,
@@ -472,7 +477,16 @@ function RunItem({ run }: { run: Run.Run }) {
           </RunGitCommit>
         </RunGitLink>
         <Show when={runInfo()!.trigger.commit.message}>
-          <RunGitMessage>{runInfo()!.trigger.commit.message}</RunGitMessage>
+          <RunGitMessage
+            target="_blank"
+            rel="noreferrer noopener"
+            href={githubCommit(
+              runInfo()!.repoURL,
+              runInfo()!.trigger.commit.id,
+            )}
+          >
+            {runInfo()!.trigger.commit.message}
+          </RunGitMessage>
         </Show>
       </RunGit>
       <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>

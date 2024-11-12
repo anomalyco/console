@@ -14,11 +14,10 @@ import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
 import { formatDuration, formatSinceTime } from "$/common/format";
 import { useReplicacheStatus } from "$/providers/replicache-status";
 import {
+  IconTag,
   IconCheck,
   IconXCircle,
-  IconChevronRight,
   IconEllipsisVertical,
-  IconTag,
 } from "$/ui/icons";
 import {
   githubPr,
@@ -102,8 +101,8 @@ const PageTitlePrefix = styled("span", {
   base: {
     marginRight: 1,
     fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_lg,
-    fontWeight: theme.font.weight.medium,
+    fontSize: theme.font.size.mono_base,
+    fontWeight: theme.font.weight.regular,
   },
 });
 
