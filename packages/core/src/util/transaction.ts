@@ -80,7 +80,8 @@ export async function createTransaction<T>(
           i < 3 &&
           ex instanceof DatabaseError &&
           (ex.message.includes("try restarting transaction") ||
-            ex.message.includes("exceeded timeout"))
+            ex.message.includes("exceeded timeout") ||
+            ex.message.includes("unlocked closed connection"))
         ) {
           console.log("deadlock detected, retrying", i);
           continue;
