@@ -169,13 +169,7 @@ export const extract = zod(
               err.stack.every((frame) => !frame.context) &&
               (await sourcemapCache.meta()).length
             ) {
-              console.log(
-                "failed to apply sourcemap",
-                extracted,
-                err,
-                event.timestamp,
-                await sourcemapCache.meta(),
-              );
+              // ???
             }
 
             if (!err.error || !err.message) {
