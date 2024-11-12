@@ -3263,7 +3263,7 @@ interface StripeProps {
 }
 function stripe({ standing }: StripeProps): DummyData {
   return {
-    _type: "stripeTable",
+    _type: "stripe",
     id: "123",
     customerID: "cus_123",
     subscriptionID: "sub_123",
@@ -3427,18 +3427,18 @@ function invocation({
       duration === undefined
         ? duration
         : {
-            duration,
-            memory: 128,
-            size: 2048,
-            xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
-          },
+          duration,
+          memory: 128,
+          size: 2048,
+          xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
+        },
     start: startTime.valueOf(),
     logs: messages
       ? messages.map((message, i) => ({
-          message,
-          id: `log-${INVOCATION_COUNT}-${i}`,
-          timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
-        }))
+        message,
+        id: `log-${INVOCATION_COUNT}-${i}`,
+        timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
+      }))
       : [],
   };
 }
