@@ -53,40 +53,39 @@ export async function createTransaction<T>(
     const { tx } = TransactionContext.use();
     return callback(tx);
   } catch {
-    const effects: (() => void | Promise<void>)[] = [];
-    const result = await db.transaction(
-      async (tx) => {
-        const result = await TransactionContext.with(
-          { tx, effects },
-          async () => {
-            let i = 0;
-            while (true) {
-              try {
-                i++;
-                const result = await callback(tx);
-                return result;
-              } catch (ex: any) {
-                if (
-                  i < 3 &&
-                  ex instanceof DatabaseError &&
-                  ex.message.includes("try restarting transaction")
-                ) {
-                  console.log("deadlock detected, retrying", i);
-                  continue;
-                }
-                throw ex;
-              }
-            }
+    let i = 0;
+    while (true) {
+      i++;
+      const effects: (() => void | Promise<void>)[] = [];
+      try {
+        const result = await db.transaction(
+          async (tx) => {
+            const result = await TransactionContext.with(
+              { tx, effects },
+              async () => {
+                return callback(tx);
+              },
+            );
+            return result;
+          },
+          {
+            isolationLevel: "repeatable read",
+            ...config,
           },
         );
+        await Promise.all(effects.map((x) => x()));
         return result;
-      },
-      {
-        isolationLevel: "repeatable read",
-        ...config,
-      },
-    );
-    await Promise.all(effects.map((x) => x()));
-    return result;
+      } catch (ex: any) {
+        if (
+          i < 3 &&
+          ex instanceof DatabaseError &&
+          ex.message.includes("try restarting transaction")
+        ) {
+          console.log("deadlock detected, retrying", i);
+          continue;
+        }
+        throw ex;
+      }
+    }
   }
 }
