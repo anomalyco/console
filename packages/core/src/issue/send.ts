@@ -23,7 +23,7 @@ import { render } from "@jsx-email/render";
 import type { KnownBlock } from "@slack/web-api";
 import { Workspace } from "../workspace";
 import { Alert } from "../alert";
-import { useTransaction } from "../util/transaction";
+import { createTransaction } from "../util/transaction";
 import { Resource } from "sst";
 
 export const Limit = createSelectSchema(issueAlertLimit);
@@ -35,7 +35,7 @@ export const triggerIssue = zod(
   }),
   async (input) => {
     console.log("triggering issue", input);
-    const result = await useTransaction(async (tx) => {
+    const result = await createTransaction(async (tx) => {
       await tx
         .select()
         .from(issue)
