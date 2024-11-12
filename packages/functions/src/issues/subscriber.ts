@@ -15,12 +15,7 @@ export const handler = async (event: KinesisStreamEvent) =>
       const incomplete: string[] = event.Records.map(
         (r) => r.eventID,
       ).reverse();
-      let timeout = false;
-      setTimeout(() => {
-        timeout = true;
-      }, 1000 * 60);
       await queue(5, event.Records, async (record) => {
-        if (timeout) return;
         console.log(
           "arrival",
           new Date(

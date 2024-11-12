@@ -21,6 +21,7 @@ stream.subscribe(
         bisectBatchOnFunctionError: true,
         startingPosition: "TRIM_HORIZON",
         parallelizationFactor: 10,
+        batchSize: 10,
       },
     },
   },
