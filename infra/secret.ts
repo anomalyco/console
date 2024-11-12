@@ -1,7 +1,12 @@
 export const secret = {
   StripeSecretKey: new sst.Secret("StripeSecretKey"),
   StripeWebhookSigningSecret: new sst.Secret("StripeWebhookSigningSecret"),
-  StripePriceID: new sst.Secret("StripePriceID"),
+  StripePriceID: new sst.Secret(
+    "StripePriceID",
+    $app.stage === "production"
+      ? "price_1NlZmAEAHP8a0ogpglxmSac1"
+      : "price_1NgB4oEAHP8a0ogpxqUXHKee",
+  ),
   SlackClientID: new sst.Secret("SlackClientID"),
   SlackClientSecret: new sst.Secret("SlackClientSecret"),
   GithubAppID: new sst.Secret("GithubAppID"),
