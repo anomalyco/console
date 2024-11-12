@@ -6,6 +6,7 @@ import { useAuth2 } from "./auth2";
 export const { use: useFlags, provider: FlagsProvider } =
   createInitializedContext("FlagsContext", () => {
     const auth = useAuth2();
+    console.log(auth);
     const email = createMemo(() => auth.current.email);
     const [search] = useSearchParams();
     const internal = createMemo(

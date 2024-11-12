@@ -1,9 +1,14 @@
 import { withActor } from "@console/core/actor";
+import { Alert } from "@console/core/alert";
 import { App, Stage } from "@console/core/app";
 import { AWS } from "@console/core/aws";
+import { Billing } from "@console/core/billing";
+import { Stripe } from "@console/core/billing/stripe";
 import { Issue } from "@console/core/issue";
 import { Run } from "@console/core/run";
 import { State } from "@console/core/state";
+import { stripe } from "@console/core/stripe";
+import { Workspace } from "@console/core/workspace";
 import { bus } from "sst/aws/bus";
 
 export const handler = bus.subscriber(
@@ -19,6 +24,7 @@ export const handler = bus.subscriber(
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
     State.Event.UpdateCreated,
+    Workspace.Events.Created,
     Stage.Events.ResourcesUpdated,
     Issue.Events.RateLimited,
     Issue.Events.IssueDetected,
@@ -43,6 +49,26 @@ export const handler = bus.subscriber(
             awsAccountID: account.id,
             credentials,
           });
+          break;
+
+        case Workspace.Events.Created.type:
+          await Alert.put({
+            source: { app: "*", stage: "*" },
+            destination: {
+              type: "email",
+              properties: { users: "*" },
+            },
+            event: "issue",
+          });
+          await Alert.put({
+            source: { app: "*", stage: "*" },
+            destination: {
+              type: "email",
+              properties: { users: "*" },
+            },
+            event: "autodeploy",
+          });
+          await Stripe.createCustomer();
           break;
 
         case AWS.Account.Events.Removed.type:
@@ -131,5 +157,5 @@ export const handler = bus.subscriber(
           break;
         }
       }
-    })
+    }),
 );

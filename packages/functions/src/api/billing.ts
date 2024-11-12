@@ -32,7 +32,7 @@ export const BillingRoute = new Hono()
     });
 
     return c.json({
-      url: session.cancel_url,
+      url: session.url,
     });
   })
   .post("/portal", async (c) => {

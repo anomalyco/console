@@ -14,7 +14,7 @@ import {
   SQL,
 } from "drizzle-orm";
 import { workspace } from "@console/core/workspace/workspace.sql";
-import { stripe, usage } from "@console/core/billing/billing.sql";
+import { stripeTable, usage } from "@console/core/billing/billing.sql";
 import { app, appRepoTable, resource, stage } from "@console/core/app/app.sql";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import {
@@ -67,7 +67,7 @@ export const TABLES = {
   stateResource: stateResourceTable,
   stateEvent: stateEventTable,
   workspace,
-  stripe,
+  stripe: stripeTable,
   user,
   awsAccount,
   app,

@@ -187,6 +187,7 @@ export function Settings() {
     e.stopPropagation();
     const response = await (checkoutLink || generateCheckoutLink());
     const result = await response.json();
+    console.log(result.url);
     window.location.href = result.url;
   }
 

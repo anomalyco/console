@@ -1,15 +1,16 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { stripe } from "./billing.sql";
+import { stripeTable } from "./billing.sql";
 import { zod } from "../util/zod";
 import { useTransaction } from "../util/transaction";
 import { eq, and } from "drizzle-orm";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
+import { stripe } from "../stripe";
 
 export * as Stripe from "./stripe";
 
-export const Info = createSelectSchema(stripe, {
+export const Info = createSelectSchema(stripeTable, {
   customerID: (schema) => schema.customerID.trim().nonempty(),
   subscriptionID: (schema) => schema.subscriptionID.trim().nonempty(),
   subscriptionItemID: (schema) => schema.subscriptionItemID.trim().nonempty(),
@@ -20,10 +21,10 @@ export function get() {
   return useTransaction((tx) =>
     tx
       .select()
-      .from(stripe)
-      .where(eq(stripe.workspaceID, useWorkspace()))
+      .from(stripeTable)
+      .where(eq(stripeTable.workspaceID, useWorkspace()))
       .execute()
-      .then((rows) => rows.at(0))
+      .then((rows) => rows.at(0)),
   );
 }
 
@@ -35,20 +36,20 @@ export const setSubscription = zod(
   (input) =>
     useTransaction((tx) =>
       tx
-        .update(stripe)
+        .update(stripeTable)
         .set({
           subscriptionID: input.subscriptionID,
           subscriptionItemID: input.subscriptionItemID,
         })
-        .where(eq(stripe.workspaceID, useWorkspace()))
-        .execute()
-    )
+        .where(eq(stripeTable.workspaceID, useWorkspace()))
+        .execute(),
+    ),
 );
 
 export const setCustomerID = zod(Info.shape.customerID, (input) =>
   useTransaction((tx) =>
     tx
-      .insert(stripe)
+      .insert(stripeTable)
       .values({
         workspaceID: useWorkspace(),
         id: createId(),
@@ -61,19 +62,36 @@ export const setCustomerID = zod(Info.shape.customerID, (input) =>
           standing: "good",
         },
       })
-      .execute()
-  )
+      .execute(),
+  ),
 );
+
+export async function createCustomer() {
+  const workspaceID = useWorkspace();
+  const subscription = await get();
+  if (subscription?.customerID) {
+    console.log("Already has stripe customer ID");
+    return;
+  }
+  const customer = await stripe.customers.create({
+    //email: evt.properties.email,
+    metadata: {
+      workspaceID,
+    },
+  });
+
+  await setCustomerID(customer.id);
+}
 
 export const fromCustomerID = zod(z.string(), (input) =>
   useTransaction((tx) =>
     tx
       .select()
-      .from(stripe)
-      .where(and(eq(stripe.customerID, input)))
+      .from(stripeTable)
+      .where(and(eq(stripeTable.customerID, input)))
       .execute()
-      .then((rows) => rows.at(0))
-  )
+      .then((rows) => rows.at(0)),
+  ),
 );
 
 export const setStanding = zod(
@@ -84,25 +102,25 @@ export const setStanding = zod(
   (input) =>
     useTransaction((tx) =>
       tx
-        .update(stripe)
+        .update(stripeTable)
         .set({
           standing: input.standing,
         })
-        .where(and(eq(stripe.subscriptionID, input.subscriptionID!)))
-        .execute()
-    )
+        .where(and(eq(stripeTable.subscriptionID, input.subscriptionID!)))
+        .execute(),
+    ),
 );
 
 export const grantTrial = zod(z.string().nonempty(), (timeTrialEnded) =>
   useTransaction((tx) =>
     tx
-      .update(stripe)
+      .update(stripeTable)
       .set({
         timeTrialEnded: timeTrialEnded,
       })
-      .where(eq(stripe.workspaceID, useWorkspace()))
-      .execute()
-  )
+      .where(eq(stripeTable.workspaceID, useWorkspace()))
+      .execute(),
+  ),
 );
 
 export const removeSubscription = zod(
@@ -110,12 +128,12 @@ export const removeSubscription = zod(
   (stripeSubscriptionID) =>
     useTransaction((tx) =>
       tx
-        .update(stripe)
+        .update(stripeTable)
         .set({
           subscriptionItemID: null,
           subscriptionID: null,
         })
-        .where(and(eq(stripe.subscriptionID, stripeSubscriptionID)))
-        .execute()
-    )
+        .where(and(eq(stripeTable.subscriptionID, stripeSubscriptionID)))
+        .execute(),
+    ),
 );

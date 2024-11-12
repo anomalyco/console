@@ -22,7 +22,7 @@ const api = new sst.aws.Function("Api", {
     websocket,
     ...allSecrets,
   ],
-  streaming: true,
+  streaming: !$dev,
   nodejs: {
     install: ["source-map"],
   },

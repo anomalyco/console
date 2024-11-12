@@ -23,10 +23,10 @@ export const usage = mysqlTable(
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     stage: uniqueIndex("stage").on(table.workspaceID, table.stageID, table.day),
-  })
+  }),
 );
 
-export const stripe = mysqlTable(
+export const stripeTable = mysqlTable(
   "stripe",
   {
     ...workspaceID,
@@ -42,5 +42,5 @@ export const stripe = mysqlTable(
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     workspace: uniqueIndex("workspaceID").on(table.workspaceID),
-  })
+  }),
 );

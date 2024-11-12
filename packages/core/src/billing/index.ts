@@ -10,7 +10,6 @@ import { workspace } from "../workspace/workspace.sql";
 import { Stripe } from "./stripe";
 import { DateTime } from "luxon";
 import { Warning } from "../warning";
-
 export * as Billing from "./index";
 export { Stripe } from "./stripe";
 
@@ -41,8 +40,8 @@ export const createUsage = zod(
             invocations: input.invocations,
           },
         })
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export const countByStartAndEndDay = zod(
@@ -58,13 +57,13 @@ export const countByStartAndEndDay = zod(
         .where(
           and(
             eq(usage.workspaceID, useWorkspace()),
-            between(usage.day, input.startDay, input.endDay)
-          )
+            between(usage.day, input.startDay, input.endDay),
+          ),
         )
-        .execute()
+        .execute(),
     );
     return rows.reduce((acc, usage) => acc + usage.invocations, 0);
-  }
+  },
 );
 
 export const updateGatingStatus = zod(z.void(), async () => {
@@ -111,6 +110,6 @@ export const updateGatingStatus = zod(z.void(), async () => {
       .update(workspace)
       .set({ timeGated })
       .where(eq(workspace.id, useWorkspace()))
-      .execute()
+      .execute(),
   );
 });

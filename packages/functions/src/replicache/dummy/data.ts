@@ -3263,7 +3263,7 @@ interface StripeProps {
 }
 function stripe({ standing }: StripeProps): DummyData {
   return {
-    _type: "stripe",
+    _type: "stripeTable",
     id: "123",
     customerID: "cus_123",
     subscriptionID: "sub_123",
