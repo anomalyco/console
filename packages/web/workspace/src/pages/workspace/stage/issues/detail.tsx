@@ -163,12 +163,12 @@ export function Detail() {
     if (issue()?.invocation) return;
     await fetch(
       import.meta.env.VITE_API_URL +
-        "/log?" +
-        new URLSearchParams({
-          pointer: JSON.stringify(issue()!.pointer),
-          stageID: issue()!.stageID,
-          groupID: issue()!.group,
-        }),
+      "/log?" +
+      new URLSearchParams({
+        pointer: JSON.stringify(issue()!.pointer),
+        stageID: issue()!.stageID,
+        groupID: issue()!.group,
+      }),
       {
         headers: {
           authorization: rep().auth,
@@ -465,8 +465,12 @@ export function Detail() {
                   <Text size="sm" color="secondary">
                     Does something not look right?
                   </Text>{" "}
-                  <a href="https://sst.dev/discord" target="_blank">
-                    Send us a message in #console on Discord.
+                  <a
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    href="https://github.com/sst/console/issues/new"
+                  >
+                    Open an issue in GitHub.
                   </a>
                 </FeedbackCopy>
               </Stack>

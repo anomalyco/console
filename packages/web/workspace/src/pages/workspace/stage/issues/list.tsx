@@ -466,7 +466,7 @@ export function List() {
                       each={subWarnings()
                         .map((item) => {
                           if (item.type === "log_subscription") {
-                            const reason = (function () {
+                            const reason = (function() {
                               switch (item.data.error) {
                                 case "unknown":
                                   return "Unknown error: " + item.data.message;
@@ -716,7 +716,7 @@ export function List() {
   );
 }
 
-const IssueRoot = styled("label", {
+const IssueRoot = styled("div", {
   base: {
     ...utility.row(4),
     padding: theme.space[4],
@@ -737,13 +737,26 @@ const IssueRoot = styled("label", {
   },
 });
 
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+});
+
 const IssueError = styled(Link, {
   base: {
+    zIndex: 2,
     overflow: "hidden",
     lineHeight: "normal",
     whiteSpace: "nowrap",
     cursor: "pointer",
     textOverflow: "ellipsis",
+    color: theme.color.text.primary.base,
   },
   variants: {
     weight: {
@@ -765,6 +778,8 @@ const IssueError = styled(Link, {
 
 const IssueCheckbox = styled("input", {
   base: {
+    flex: "0 0 auto",
+    zIndex: 2,
     cursor: "pointer",
   },
 });
@@ -808,16 +823,17 @@ function IssueRow(props: IssueProps) {
   const navigator = useKeyboardNavigator();
 
   return (
-    <IssueRoot
-      data-element="issue"
-      data-focus={props.focus ? true : undefined}
-      onClick={(e) => {
-        navigator?.focus(e.currentTarget);
-      }}
-    >
-      <IssueCol>
-        <IssueCheckbox name="issue" value={props.issue.id} type="checkbox" />
-      </IssueCol>
+    <IssueRoot data-element="issue" data-focus={props.focus ? true : undefined}>
+      <BlockLink href={props.issue.id}></BlockLink>
+      <IssueCheckbox
+        name="issue"
+        type="checkbox"
+        value={props.issue.id}
+        onClick={(e) => {
+          navigator?.focus(e.currentTarget);
+          e.stopPropagation();
+        }}
+      />
       <IssueCol grow>
         <Stack space="2">
           <Row horizontal="start">

@@ -94,14 +94,21 @@ function getHourMarkers(currentTime: number) {
 
     let nextDisplayHour = displayHour + 1;
 
-    const marker = `${displayHour}:00 ${period} — ${
-      nextDisplayHour - 1
-    }:59 ${period}`;
+    const marker = `${displayHour}:00 ${period} — ${nextDisplayHour - 1
+      }:59 ${period}`;
     hourMarkers.push(marker);
   }
 
   return hourMarkers;
 }
+
+const HistogramRoot = styled("div", {
+  base: {
+    ...utility.row("px"),
+    zIndex: 2,
+    position: "relative",
+  },
+});
 
 interface HistogramProps {
   width: number;
@@ -138,7 +145,7 @@ export function Histogram(props: HistogramProps) {
   window.addEventListener("blur", () => setShowTooltip(undefined));
 
   return (
-    <Row space="px" style={{ position: "relative" }}>
+    <HistogramRoot>
       <For each={barData()}>
         {(bar, i) => (
           <Stack
@@ -180,6 +187,6 @@ export function Histogram(props: HistogramProps) {
           </HistogramTooltipValue>
         </HistogramTooltip>
       </Show>
-    </Row>
+    </HistogramRoot>
   );
 }

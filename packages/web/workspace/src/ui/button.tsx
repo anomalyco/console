@@ -552,7 +552,7 @@ export const TabTitleCount = styled("div", {
     display: "flex",
     flex: "0 0 auto",
     borderRadius: 50,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     userSelect: "none",
     padding: "5px 8px",
     textAlign: "center",
