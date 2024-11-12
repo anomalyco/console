@@ -6,7 +6,7 @@ import { State } from "@console/core/state";
 import { DateTime } from "luxon";
 import { Dropdown } from "$/ui/dropdown";
 import { useStageContext } from "../context";
-import { CMD_MAP, STATUS_MAP, errorCountCopy, UpdateStatusIcon } from "./list";
+import { CMD_MAP, STATUS_MAP, errorCountCopy } from "./list";
 import { NotFound } from "$/pages/not-found";
 import { inputFocusStyles } from "$/ui/form";
 import { styled } from "@macaron-css/solid";
@@ -57,6 +57,37 @@ const PageTitle = styled("div", {
     ...utility.row(3),
     paddingTop: theme.space[1.5],
     alignItems: "center",
+  },
+});
+
+export const PageStatusIcon = styled("div", {
+  base: {
+    width: 12,
+    height: 12,
+    borderRadius: "50%",
+  },
+  variants: {
+    status: {
+      skipped: {
+        backgroundColor: theme.color.divider.base,
+      },
+      queued: {
+        backgroundColor: theme.color.divider.base,
+      },
+      canceled: {
+        backgroundColor: theme.color.divider.base,
+      },
+      updated: {
+        backgroundColor: `hsla(${theme.color.base.blue}, 100%)`,
+      },
+      error: {
+        backgroundColor: `hsla(${theme.color.base.red}, 100%)`,
+      },
+      updating: {
+        backgroundColor: `hsla(${theme.color.base.yellow}, 100%)`,
+        animation: "glow-pulse-status 1.7s linear infinite alternate",
+      },
+    },
   },
 });
 
@@ -256,14 +287,15 @@ const GitAvatar = styled("div", {
   },
 });
 
-const GitBranch = styled("p", {
+const GitBranchLink = styled(Link, {
   base: {
     ...utility.row(1),
     alignItems: "center",
+    color: theme.color.text.secondary.base,
   },
 });
 
-const GitIcon = styled("div", {
+const GitIcon = styled("span", {
   base: {
     flex: "0 0 auto",
     lineHeight: 0,
@@ -273,13 +305,11 @@ const GitIcon = styled("div", {
   },
 });
 
-const GitBranchLink = styled(Link, {
+const GitBranch = styled("span", {
   base: {
     ...utility.text.line,
-    maxWidth: SIDEBAR_WIDTH - AVATAR_SIZE - 24,
     lineHeight: "normal",
-    color: theme.color.text.secondary.base,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
+    maxWidth: SIDEBAR_WIDTH - AVATAR_SIZE - 24,
   },
 });
 
@@ -403,7 +433,7 @@ export function Detail() {
                         }?s=${2 * AVATAR_SIZE}&v=4`}
                     />
                   </GitAvatar>
-                  <GitBranch>
+                  <GitBranchLink href={`../../../autodeploy/${run.value!.id}`}>
                     <GitIcon>
                       <Switch>
                         <Match
@@ -419,10 +449,8 @@ export function Detail() {
                         </Match>
                       </Switch>
                     </GitIcon>
-                    <GitBranchLink href={`../../../autodeploy/${run.value!.id}`}>
-                      {runInfo()!.branch}
-                    </GitBranchLink>
-                  </GitBranch>
+                    <GitBranch>{runInfo()!.branch}</GitBranch>
+                  </GitBranchLink>
                 </Row>
               </GitInfo>
             </AutodeployInfo>
@@ -483,7 +511,7 @@ export function Detail() {
       <>
         <Show when={deleted().length}>
           <Stack space="2">
-            <PanelTitle>Removed</PanelTitle>
+            <PanelTitle id="removed">Removed</PanelTitle>
             <ResourceRoot action="deleted">
               <For each={deleted()}>{(r) => <Resource {...r} />}</For>
             </ResourceRoot>
@@ -491,7 +519,7 @@ export function Detail() {
         </Show>
         <Show when={created().length}>
           <Stack space="2">
-            <PanelTitle>Added</PanelTitle>
+            <PanelTitle id="added">Added</PanelTitle>
             <ResourceRoot action="created">
               <For each={created()}>{(r) => <Resource {...r} />}</For>
             </ResourceRoot>
@@ -499,7 +527,7 @@ export function Detail() {
         </Show>
         <Show when={updated().length}>
           <Stack space="2">
-            <PanelTitle>Updated</PanelTitle>
+            <PanelTitle id="updated">Updated</PanelTitle>
             <ResourceRoot action="updated">
               <For each={updated()}>{(r) => <Resource {...r} />}</For>
             </ResourceRoot>
@@ -507,7 +535,7 @@ export function Detail() {
         </Show>
         <Show when={update.value!.resource.same! > 0}>
           <Stack space="2">
-            <PanelTitle>Unchanged</PanelTitle>
+            <PanelTitle id="unchanged">Unchanged</PanelTitle>
             <ResourceRoot action="same">
               <ResourceChildEmpty>
                 {countCopy(update.value!.resource.same!)} were not changed
@@ -523,7 +551,7 @@ export function Detail() {
     return (
       <Stack space="2.5">
         <PageTitle>
-          <UpdateStatusIcon status={status()} />
+          <PageStatusIcon status={status()} />
           <PageTitleCopy>
             Update <PageTitlePrefix>#</PageTitlePrefix>
             {update.value!.index}

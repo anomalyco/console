@@ -76,6 +76,17 @@ const UpdateRoot = styled("div", {
   },
 });
 
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+});
+
 const UpdateLeftCol = styled("div", {
   base: {
     ...utility.row(10),
@@ -87,15 +98,16 @@ const UpdateLeftCol = styled("div", {
 
 const UpdateStatus = styled("div", {
   base: {
-    ...utility.row(4),
+    ...utility.row(2.5),
     minWidth: 0,
     width: 120,
     alignItems: "center",
   },
 });
 
-export const UpdateStatusIcon = styled("div", {
+export const UpdateStatusIcon = styled(Link, {
   base: {
+    zIndex: 2,
     width: 12,
     height: 12,
     borderRadius: "50%",
@@ -142,7 +154,9 @@ globalKeyframes("glow-pulse-status", {
 
 const UpdateLink = styled(Link, {
   base: {
+    zIndex: 2,
     fontWeight: theme.font.weight.medium,
+    color: theme.color.text.primary.base,
   },
 });
 
@@ -161,90 +175,31 @@ const UpdateStatusCopy = styled("p", {
   },
 });
 
-const UpdateGit = styled("div", {
+const UpdateGitBranchLink = styled(Link, {
   base: {
-    ...utility.stack(0),
-    gap: 2,
-  },
-});
-
-const UpdateGitLink = styled("a", {
-  base: {
-    ...utility.row(1),
+    ...utility.row(0),
+    zIndex: 2,
+    gap: 3,
     alignItems: "center",
+    color: theme.color.text.secondary.base,
   },
 });
 
 const UpdateGitIcon = styled("span", {
   base: {
+    width: 14,
+    height: 14,
     lineHeight: 0,
     color: theme.color.icon.secondary,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${UpdateGitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
-      },
-    },
-  },
-  variants: {
-    size: {
-      sm: {
-        width: 12,
-        height: 12,
-        color: theme.color.icon.dimmed,
-        selectors: {
-          [`${UpdateGitLink}:hover &`]: {
-            color: theme.color.icon.secondary,
-          },
-        },
-      },
-      md: {
-        width: 14,
-        height: 14,
-      },
-    },
   },
 });
 
 const UpdateGitBranch = styled("span", {
   base: {
-    ...utility.text.line,
     maxWidth: 140,
     lineHeight: "normal",
-    fontSize: theme.font.size.xs,
-    color: theme.color.text.dimmed.base,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${UpdateGitLink}:hover &`]: {
-        color: theme.color.text.secondary.base,
-      },
-    },
-  },
-});
-
-const UpdateGitCommit = styled("span", {
-  base: {
-    lineHeight: "normal",
-    fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_sm,
-    color: theme.color.text.secondary.base,
-    fontWeight: theme.font.weight.medium,
-    transition: `color ${theme.colorFadeDuration} ease-out`,
-    selectors: {
-      [`${UpdateGitLink}:hover &`]: {
-        color: theme.color.text.primary.base,
-      },
-    },
-  },
-});
-
-const UpdateGitMessage = styled("span", {
-  base: {
     ...utility.text.line,
-    lineHeight: "normal",
-    maxWidth: 260,
-    fontSize: theme.font.size.xs,
-    color: theme.color.text.dimmed.base,
+    fontSize: theme.font.size.sm,
   },
 });
 
@@ -259,6 +214,7 @@ const UpdateRightCol = styled("div", {
 
 const UpdateCmd = styled("span", {
   base: {
+    width: 120,
     fontSize: theme.font.size.mono_sm,
     fontWeight: theme.font.weight.medium,
     fontFamily: theme.font.family.code,
@@ -291,8 +247,9 @@ const ChangeLegendRoot = styled("div", {
   },
 });
 
-const ChangeLegendTag = styled("div", {
+const ChangeLegendTag = styled(Link, {
   base: {
+    zIndex: 2,
     height: 16,
     lineHeight: 1,
     display: "flex",
@@ -439,20 +396,19 @@ function Update(props: UpdateProps) {
 
   return (
     <UpdateRoot>
+      <BlockLink href={props.id}></BlockLink>
       <UpdateLeftCol>
         <UpdateStatus>
-          <UpdateStatusIcon status={status()} />
-          <Stack space="2.5">
-            <UpdateLink href={props.id}>
-              <UpdateLinkPrefix>#</UpdateLinkPrefix>
-              {props.index}
-            </UpdateLink>
-            <UpdateStatusCopy>
-              {status() === "error"
-                ? errorCountCopy(errors())
-                : STATUS_MAP[status()!]}
-            </UpdateStatusCopy>
-          </Stack>
+          <UpdateStatusIcon
+            href={props.id}
+            title={status() === "error"
+              ? errorCountCopy(errors())
+              : STATUS_MAP[status()!]}
+            status={status()} />
+          <UpdateLink href={props.id}>
+            <UpdateLinkPrefix>#</UpdateLinkPrefix>
+            {props.index}
+          </UpdateLink>
         </UpdateStatus>
         <UpdateSource>
           <Switch>
@@ -473,58 +429,36 @@ function Update(props: UpdateProps) {
             </Match>
           </Switch>
           <Show when={runInfo()}>
-            <UpdateGit>
-              <Row space="1.5">
-                <UpdateGitLink
-                  target="_blank"
-                  href={githubCommit(
-                    runInfo()!.repoURL,
-                    runInfo()!.trigger.commit.id,
-                  )}
-                >
-                  <UpdateGitIcon size="md">
-                    <IconCommit />
-                  </UpdateGitIcon>
-                  <UpdateGitCommit>
-                    {formatCommit(runInfo()!.trigger.commit.id)}
-                  </UpdateGitCommit>
-                </UpdateGitLink>
-                <UpdateGitLink target="_blank" href={runInfo()!.uri}>
-                  <UpdateGitIcon size="sm">
-                    <Switch>
-                      <Match when={runInfo()!.trigger.type === "pull_request"}>
-                        <IconPr />
-                      </Match>
-                      <Match when={runInfo()!.trigger.type === "tag"}>
-                        <IconTag />
-                      </Match>
-                      <Match when={true}>
-                        <IconGit />
-                      </Match>
-                    </Switch>
-                  </UpdateGitIcon>
-                  <UpdateGitBranch>{runInfo()!.branch}</UpdateGitBranch>
-                </UpdateGitLink>
-              </Row>
-              <UpdateGitMessage>
-                <Show when={runInfo()!.trigger.commit.message} fallback="—">
-                  {runInfo()!.trigger.commit.message}
-                </Show>
-              </UpdateGitMessage>
-            </UpdateGit>
+            <UpdateGitBranchLink href={`../../autodeploy/${run.value!.id}`}>
+              <UpdateGitIcon>
+                <Switch>
+                  <Match when={runInfo()!.trigger.type === "pull_request"}>
+                    <IconPr />
+                  </Match>
+                  <Match when={runInfo()!.trigger.type === "tag"}>
+                    <IconTag />
+                  </Match>
+                  <Match when={true}>
+                    <IconGit />
+                  </Match>
+                </Switch>
+              </UpdateGitIcon>
+              <UpdateGitBranch>
+                {runInfo()!.branch}
+              </UpdateGitBranch>
+            </UpdateGitBranchLink>
           </Show>
         </UpdateSource>
       </UpdateLeftCol>
       <UpdateRightCol>
-        <Stack space="2.5">
-          <UpdateCmd>{CMD_MAP[props.command]}</UpdateCmd>
-          <ChangeLegend
-            same={props.same}
-            created={props.created}
-            updated={props.updated}
-            deleted={props.deleted}
-          />
-        </Stack>
+        <UpdateCmd>{CMD_MAP[props.command]}</UpdateCmd>
+        <ChangeLegend
+          href={props.id}
+          same={props.same}
+          created={props.created}
+          updated={props.updated}
+          deleted={props.deleted}
+        />
         <Show when={props.timeStarted} fallback={<UpdateTime>—</UpdateTime>}>
           <UpdateTime
             title={DateTime.fromISO(props.timeStarted!).toLocaleString(
@@ -540,6 +474,7 @@ function Update(props: UpdateProps) {
 }
 
 type ChangeLegendProps = {
+  href: string;
   same?: number;
   created?: number;
   updated?: number;
@@ -607,7 +542,8 @@ function ChangeLegend(props: ChangeLegendProps) {
       <Show when={deleted() !== 0}>
         <ChangeLegendTag
           type="deleted"
-          title={`${deleted()} deleted`}
+          title={`${deleted()} removed`}
+          href={`${props.href}#removed`}
           style={{ width: `${widths().deleted}px` }}
         />
       </Show>
@@ -615,6 +551,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         <ChangeLegendTag
           type="created"
           title={`${created()} added`}
+          href={`${props.href}#added`}
           style={{ width: `${widths().created}px` }}
         />
       </Show>
@@ -622,6 +559,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         <ChangeLegendTag
           type="updated"
           title={`${updated()} updated`}
+          href={`${props.href}#updated`}
           style={{ width: `${widths().updated}px` }}
         />
       </Show>
@@ -629,6 +567,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         <ChangeLegendTag
           type="same"
           title={`${same()} unchanged`}
+          href={`${props.href}#unchanged`}
           style={{ width: `${widths().same}px` }}
         />
       </Show>

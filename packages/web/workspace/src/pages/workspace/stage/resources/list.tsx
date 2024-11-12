@@ -56,7 +56,7 @@ import {
   IconEllipsisVertical,
   IconDocumentDuplicate,
 } from "$/ui/icons";
-import { UpdateStatusIcon } from "../updates/list";
+import { PageStatusIcon } from "../updates/detail";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
 import { } from "@solid-primitives/keyboard";
@@ -932,7 +932,7 @@ export function List() {
                   <TitleRow>
                     <Switch>
                       <Match when={!latestUpdate.value!.time.completed}>
-                        <UpdateStatusIcon status="updating" />
+                        <PageStatusIcon status="updating" />
                       </Match>
                       <Match
                         when={
@@ -940,10 +940,10 @@ export function List() {
                           latestUpdate.value?.errors.length === 0
                         }
                       >
-                        <UpdateStatusIcon status="updated" />
+                        <PageStatusIcon status="updated" />
                       </Match>
                       <Match when={latestUpdate.value?.errors.length}>
-                        <UpdateStatusIcon status="error" />
+                        <PageStatusIcon status="error" />
                       </Match>
                     </Switch>
                     <TitleText>{ctx.stage.name}</TitleText>
