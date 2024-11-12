@@ -4,31 +4,28 @@ import { database } from "./planetscale";
 import { storage } from "./storage";
 
 const stream = new sst.aws.KinesisStream("IssueStream");
-
-for (let i = 0; i < 5; i++) {
-  stream.subscribe(
-    "IssueStreamSubscriber" + i,
-    {
-      handler: "packages/functions/src/issues/subscriber.handler",
-      timeout: "15 minutes",
-      permissions: [{ actions: ["sts:*", "logs:*"], resources: ["*"] }],
-      nodejs: {
-        install: ["source-map"],
-      },
-      link: [bus, storage, database],
+stream.subscribe(
+  "IssueStreamSubscriber",
+  {
+    handler: "packages/functions/src/issues/subscriber.handler",
+    timeout: "15 minutes",
+    permissions: [{ actions: ["sts:*", "logs:*"], resources: ["*"] }],
+    nodejs: {
+      install: ["source-map"],
     },
-    {
-      transform: {
-        eventSourceMapping: {
-          bisectBatchOnFunctionError: true,
-          startingPosition: "TRIM_HORIZON",
-          parallelizationFactor: 10,
-          batchSize: 10,
-        },
+    link: [bus, storage, database],
+  },
+  {
+    transform: {
+      eventSourceMapping: {
+        bisectBatchOnFunctionError: true,
+        startingPosition: "TRIM_HORIZON",
+        parallelizationFactor: 10,
+        batchSize: 10,
       },
     },
-  );
-}
+  },
+);
 const regions = aws.getRegionsOutput();
 
 const role = new aws.iam.Role("IssueRole", {
