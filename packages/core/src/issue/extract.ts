@@ -24,12 +24,7 @@ export const extract = zod(
   z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
   async (input) => {
     // do not process self
-    if (
-      input.logGroup.startsWith(
-        "/aws/lambda/console-production-IssueStreamSubscriber",
-      )
-    )
-      return;
+    if (input.logGroup.includes("IssueStreamSubscriber")) return;
 
     const { logStream } = input;
     const [filter] = input.subscriptionFilters;
