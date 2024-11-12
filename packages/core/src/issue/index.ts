@@ -32,6 +32,7 @@ import { createTransaction, useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
 import { filter, map, pipe, unique } from "remeda";
+import { warning } from "../warning/warning.sql";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -210,6 +211,19 @@ export const subscribeIon = zod(
     });
 
     try {
+      const limited = await db
+        .select({
+          target: warning.target,
+        })
+        .from(warning)
+        .where(
+          and(
+            eq(warning.workspaceID, useWorkspace()),
+            eq(warning.stageID, config.stageID),
+            eq(warning.type, "issue_rate_limited"),
+          ),
+        )
+        .then((x) => new Set(x.map((x) => x.target)));
       const resources = await db
         .select()
         .from(stateResourceTable)
@@ -247,6 +261,9 @@ export const subscribeIon = zod(
       }
 
       async function subscribe(logGroup: string) {
+        if (limited.has(logGroup)) {
+          console.log("skipping", logGroup, "because it's rate limited");
+        }
         console.log("subscribing", logGroup);
         while (true) {
           try {
