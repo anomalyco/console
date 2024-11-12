@@ -4,15 +4,12 @@ import {
   IconConstruct,
   IconContainerRuntime,
 } from "$/ui/icons/custom";
-import { flatMap, groupBy, mapValues, pipe, sortBy, values } from "remeda";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { useLogsContext, useStageContext } from "../context";
-import { StateResourceStore } from "$/data/app";
 import { Link } from "@solidjs/router";
 import { Row, Stack, Fullscreen } from "$/ui/layout";
-import { useReplicache } from "$/providers/replicache";
 
 const Content = styled("div", {
   base: {
@@ -58,6 +55,7 @@ const Card = styled("div", {
 const Child = styled("div", {
   base: {
     ...utility.row(4),
+    position: "relative",
     padding: `${theme.space[4]} 0`,
     alignItems: "center",
     justifyContent: "left",
@@ -67,6 +65,17 @@ const Child = styled("div", {
         border: "none",
       },
     },
+  },
+});
+
+const BlockLink = styled(Link, {
+  base: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
 });
 
@@ -90,18 +99,12 @@ const ChildColContent = styled("div", {
   },
 });
 
-const ChildColRight = styled("div", {
-  base: {
-    ...utility.row(6),
-    flex: "0 0 auto",
-    alignItems: "center",
-  },
-});
-
 const ChildTitleLink = styled(Link, {
   base: {
     ...utility.text.line,
+    zIndex: 2,
     lineHeight: "normal",
+    color: theme.color.text.primary.base,
   },
 });
 
@@ -124,46 +127,6 @@ const ChildTagline = styled("p", {
   },
 });
 
-const ChildDetail = styled("div", {
-  base: {
-    ...utility.stack(1.5),
-    width: 100,
-  },
-});
-
-const ChildDetailLabel = styled("div", {
-  base: {
-    ...utility.text.label,
-    fontSize: theme.font.size.mono_sm,
-    color: theme.color.text.dimmed.base,
-  },
-});
-
-const ChildDetailValue = styled("div", {
-  base: {
-    ...utility.text.line,
-    display: "flex",
-    alignItems: "baseline",
-    color: theme.color.text.secondary.base,
-    fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.mono_base,
-    textAlign: "right",
-    lineHeight: "normal",
-  },
-});
-
-const ChildDetailValueUnit = styled("span", {
-  base: {
-    fontSize: theme.font.size.xs,
-  },
-});
-
-const ChildDetailLive = styled("div", {
-  base: {
-    width: 100,
-  },
-});
-
 const EmptyResourcesCopy = styled("span", {
   base: {
     fontSize: theme.font.size.lg,
@@ -179,13 +142,14 @@ export function List() {
         <Content>
           <PageHeader>
             <PageHeaderTitle>Logs</PageHeaderTitle>
-            <PageHeaderDesc>Service, function, and other logs</PageHeaderDesc>
+            <PageHeaderDesc>Function, container, and other logs</PageHeaderDesc>
           </PageHeader>
           <Stack space="4">
             <Card>
               <For each={logs()}>
                 {(log) => (
                   <Child>
+                    <BlockLink href={log?.link}></BlockLink>
                     <ChildIcon>
                       <Switch>
                         <Match when={log.icon === "construct"}>
