@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { createMemo, Show } from "solid-js";
+import { createMemo, Show, Suspense } from "solid-js";
 import { styled } from "@macaron-css/solid";
 import { Link } from "@solidjs/router";
 
@@ -114,51 +114,53 @@ export function PageHeader() {
   return (
     <>
       <Header app={ctx.app.name} />
-      <Show when={r.value!}>
-        <PageHeaderRoot>
-          <Row space="5" vertical="center">
-            <Link end href={appUrl()}>
-              <TabTitle size="sm">Stages</TabTitle>
-            </Link>
-            <Link href={`${appUrl()}/autodeploy`}>
-              <TabTitle size="sm" count={r.value!.latestRunError ? "•" : ""}>
-                Autodeploy
-              </TabTitle>
-            </Link>
-            <Link href={`${appUrl()}/settings`}>
-              <TabTitle size="sm">Settings</TabTitle>
-            </Link>
-          </Row>
-          <Show
-            when={r.value!.ghRepoOrg}
-            fallback={
-              <Link href={`${appUrl()}/settings#repo`}>
-                <Button color="github" size="sm">
-                  <ButtonIcon size="sm">
-                    <IconGitHub />
-                  </ButtonIcon>
-                  Connect Repo
-                </Button>
+      <PageHeaderRoot>
+        <Show when={r.value!}>
+          <Suspense>
+            <Row space="5" vertical="center">
+              <Link end href={appUrl()}>
+                <TabTitle size="sm">Stages</TabTitle>
               </Link>
-            }
-          >
-            <Stack space="2" horizontal="end">
-              <RepoLink
-                target="_blank"
-                href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
-                  }`}
-              >
-                <RepoLinkIcon><IconGitHub width="16" height="16" /></RepoLinkIcon>
-                <RepoLinkCopy>
-                  {r.value!.ghRepoOrg!.login}
-                  <RepoLinkSeparator>/</RepoLinkSeparator>
-                  {r.value!.ghRepo!.name}
-                </RepoLinkCopy>
-              </RepoLink>
-            </Stack>
-          </Show>
-        </PageHeaderRoot>
-      </Show>
+              <Link href={`${appUrl()}/autodeploy`}>
+                <TabTitle size="sm" count={r.value!.latestRunError ? "•" : ""}>
+                  Autodeploy
+                </TabTitle>
+              </Link>
+              <Link href={`${appUrl()}/settings`}>
+                <TabTitle size="sm">Settings</TabTitle>
+              </Link>
+            </Row>
+            <Show
+              when={r.value!.ghRepoOrg}
+              fallback={
+                <Link href={`${appUrl()}/settings#repo`}>
+                  <Button color="github" size="sm">
+                    <ButtonIcon size="sm">
+                      <IconGitHub />
+                    </ButtonIcon>
+                    Connect Repo
+                  </Button>
+                </Link>
+              }
+            >
+              <Stack space="2" horizontal="end">
+                <RepoLink
+                  target="_blank"
+                  href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
+                    }`}
+                >
+                  <RepoLinkIcon><IconGitHub width="16" height="16" /></RepoLinkIcon>
+                  <RepoLinkCopy>
+                    {r.value!.ghRepoOrg!.login}
+                    <RepoLinkSeparator>/</RepoLinkSeparator>
+                    {r.value!.ghRepo!.name}
+                  </RepoLinkCopy>
+                </RepoLink>
+              </Stack>
+            </Show>
+          </Suspense>
+        </Show>
+      </PageHeaderRoot>
     </>
   );
 }

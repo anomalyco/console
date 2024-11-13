@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal } from "solid-js";
+import { Show, createMemo, createSignal, Suspense } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
 import { useApi, useWorkspace } from "../context";
@@ -195,7 +195,7 @@ export function Settings() {
   const nav = useNavigate();
 
   return (
-    <>
+    <Suspense>
       <Header />
       <SettingsRoot>
         <Stack space={PANEL_HEADER_SPACE}>
@@ -375,7 +375,7 @@ export function Settings() {
           </Stack>
         </Stack>
       </SettingsRoot>
-    </>
+    </Suspense>
   );
 }
 

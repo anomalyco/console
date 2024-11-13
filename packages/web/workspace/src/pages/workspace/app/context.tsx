@@ -15,6 +15,9 @@ export function createAppContext() {
   );
 
   return {
+    get ready() {
+      return app.ready;
+    },
     get app() {
       return app()!;
     },

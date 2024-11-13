@@ -36,8 +36,8 @@ import { createStore, reconcile } from "solid-js/store";
 import { Splash } from "$/ui/splash";
 
 const mutators = new Client<ServerType>()
-  .mutation("app_stage_sync", async () => {})
-  .mutation("log_poller_subscribe", async () => {})
+  .mutation("app_stage_sync", async () => { })
+  .mutation("log_poller_subscribe", async () => { })
   .mutation("log_search", async (tx, input) => {
     console.log(input);
     await LogSearchStore.put(tx, [input.id], input);
@@ -54,7 +54,7 @@ const mutators = new Client<ServerType>()
       item.timeDeleted = DateTime.now().toUTC().toSQL({ includeOffset: false });
     });
   })
-  .mutation("function_invoke", async () => {})
+  .mutation("function_invoke", async () => { })
   .mutation("function_payload_save", async (tx, input) => {
     await LambdaPayloadStore.put(tx, [input.id!], {
       id: input.id!,
@@ -321,19 +321,22 @@ export function createSubscription<R>(
     if (subscription) {
       subscription();
     }
-    subscription = rep().subscribe((tx) => cb(tx), {
-      onData(result) {
-        setStore(
-          reconcile(
-            {
-              value: result,
-            },
-            {
-              merge: true,
-            }
-          )
-        );
-      },
+    return new Promise<void>((resolve) => {
+      subscription = rep().subscribe((tx) => cb(tx), {
+        onData(result) {
+          setStore(
+            reconcile(
+              {
+                value: result,
+              },
+              {
+                merge: true,
+              },
+            ),
+          );
+          resolve();
+        },
+      });
     });
   });
   return {

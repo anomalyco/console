@@ -22,7 +22,7 @@ import {
 } from "$/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
 import { Link, useNavigate, useSearchParams } from "@solidjs/router";
-import { For, Match, Show, Switch, createEffect, createMemo } from "solid-js";
+import { For, Match, Show, Switch, Suspense, createEffect, createMemo } from "solid-js";
 import { Header } from "./header";
 import { useLocalContext } from "$/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
@@ -316,20 +316,19 @@ export function OverviewNext() {
   const auth = useAuth2();
   const local = useLocalContext();
   const users = UserStore.list.watch(rep, () => []);
-  const activeStages = createSubscription(ActiveStages());
-  const stages = createMemo(() => activeStages.value || []);
-  const apps = createSubscription((tx) => AppStore.all(tx), [] as App.Info[]);
-  const cols = createMemo(() =>
-    splitCols(
+  const r = createSubscription(async (tx) => {
+    const stages = await ActiveStages()(tx);
+    const apps = await AppStore.all(tx);
+    const cols = splitCols(
       pipe(
-        apps.value,
-        filter((app) => stages().find((s) => s.appID === app.id) !== undefined),
+        apps,
+        filter((app) => stages.find((s) => s.appID === app.id) !== undefined),
         sortBy(
           (app) => (app.name === local().app ? 0 : 1),
           [
             (app) =>
               pipe(
-                stages(),
+                stages,
                 filter((s) => s.appID === app.id),
                 sortBy((s) => s.timeUpdated),
               ).at(-1)?.timeUpdated || "",
@@ -338,23 +337,27 @@ export function OverviewNext() {
           (app) => app.name,
         ),
       ),
-    ),
-  );
-  const nav = useNavigate();
-  const selfEmail = createMemo(() => auth.current.email);
-  const ambiguous = createMemo(() => {
-    const result = pipe(
-      stages(),
+    );
+    const ambiguous = new Set(pipe(
+      stages,
       groupBy(
-        (s) => `${apps.value.find((a) => a.id === s.appID)?.name}/${s.name}`,
+        (s) => `${apps.find((a) => a.id === s.appID)?.name}/${s.name}`,
       ),
       entries,
       filter(([, stages]) => stages.length > 1),
       flatMap(([_, stages]) => stages),
       map((s) => s.id),
-    );
-    return new Set(result);
+    ));
+
+    return {
+      apps,
+      cols,
+      stages,
+      ambiguous,
+    };
   });
+  const nav = useNavigate();
+  const selfEmail = createMemo(() => auth.current.email);
 
   const showApps = createMemo(() => {
     return (query.accounts || null)?.split(",") ?? [];
@@ -398,7 +401,7 @@ export function OverviewNext() {
   function AppCard(props: { app: App.Info }) {
     const children = createMemo(() => {
       return sortBy(
-        stages().filter((stage) => stage.appID === props.app.id),
+        r.value!.stages.filter((stage) => stage.appID === props.app.id),
         (c) =>
           props.app.name === local().app && c.name === local().stage ? 0 : 1,
         (c) => (c.unsupported ? 1 : 0),
@@ -470,7 +473,7 @@ export function OverviewNext() {
         <div>
           <For each={showOverflow() ? children() : childrenCapped()}>
             {(stage) => (
-              <StageCard ambiguous={ambiguous().has(stage.id)} stage={stage} />
+              <StageCard ambiguous={r.value!.ambiguous.has(stage.id)} stage={stage} />
             )}
           </For>
           <Show when={children().length === 0}>
@@ -504,7 +507,7 @@ export function OverviewNext() {
   }
 
   return (
-    <>
+    <Suspense>
       <Header />
       <Switch>
         <Match when={accounts.ready && accounts()?.length === 0}>
@@ -527,7 +530,7 @@ export function OverviewNext() {
             </Syncing>
           </Fullscreen>
         </Match>
-        <Match when={true}>
+        <Match when={r.value!}>
           <>
             <Show when={DateTime.now() < DateTime.fromISO("2024-07-31")}>
               <Announcement>
@@ -569,7 +572,7 @@ export function OverviewNext() {
                 <Row space="4">
                   <Col>
                     <Show
-                      when={cols()[0].length}
+                      when={r.value!.cols[0].length}
                       fallback={
                         <Card empty>
                           <CardStatus>
@@ -583,7 +586,7 @@ export function OverviewNext() {
                         </Card>
                       }
                     >
-                      <For each={cols()[0]}>
+                      <For each={r.value!.cols[0]}>
                         {(app) => <AppCard app={app} />}
                       </For>
                     </Show>
@@ -622,7 +625,7 @@ export function OverviewNext() {
                         </Show>
                       </div>
                     </Card>
-                    <For each={cols()[1]}>{(app) => <AppCard app={app} />}</For>
+                    <For each={r.value!.cols[1]}>{(app) => <AppCard app={app} />}</For>
                   </Col>
                 </Row>
               </Stack>
@@ -630,7 +633,7 @@ export function OverviewNext() {
           </>
         </Match>
       </Switch>
-    </>
+    </Suspense>
   );
 }
 

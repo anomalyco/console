@@ -36,24 +36,26 @@ export function Stage() {
   const stageContext = createStageContext();
 
   return (
-    <Switch>
-      <Match when={stageContext.app && stageContext.stage}>
-        <StageContext.Provider value={stageContext}>
-          <StateResourcesProvider>
-            <LogsProvider>
-              <IssuesProvider>
-                <HeaderProvider>
-                  <Inner />
-                </HeaderProvider>
-              </IssuesProvider>
-            </LogsProvider>
-          </StateResourcesProvider>
-        </StageContext.Provider>
-      </Match>
-      <Match when={!stageContext.stage}>
-        <NotFound header inset="header" message="Stage not found" />
-      </Match>
-    </Switch>
+    <Show when={stageContext.ready}>
+      <Switch>
+        <Match when={stageContext.app && stageContext.stage}>
+          <StageContext.Provider value={stageContext}>
+            <StateResourcesProvider>
+              <LogsProvider>
+                <IssuesProvider>
+                  <HeaderProvider>
+                    <Inner />
+                  </HeaderProvider>
+                </IssuesProvider>
+              </LogsProvider>
+            </StateResourcesProvider>
+          </StageContext.Provider>
+        </Match>
+        <Match when={!stageContext.stage}>
+          <NotFound header inset="header" message="Stage not found" />
+        </Match>
+      </Switch>
+    </Show>
   );
 }
 
@@ -123,15 +125,6 @@ export function Inner() {
   );
   const updates = StateUpdateStore.forStage.watch(rep, () => [ctx.stage.id]);
   const header = useHeaderContext();
-  const latestRunError = createSubscription(async (tx) => {
-    const runs = await RunStore.forStage(tx, ctx.stage.id);
-    const run = runs.sort(
-      (a, b) =>
-        DateTime.fromISO(b.time.created).toMillis() -
-        DateTime.fromISO(a.time.created).toMillis(),
-    )[0];
-    return run?.status === "error";
-  });
 
   const nav = useNavigate();
 

@@ -61,6 +61,9 @@ export function createStageContext() {
   );
 
   return {
+    get ready() {
+      return app.ready && stage.ready;
+    },
     get app() {
       return app()!;
     },

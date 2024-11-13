@@ -41,20 +41,24 @@ export function App() {
 
   return (
     <Show
-      when={appContext.app}
-      fallback={<NotFound header inset="header" message="App not found" />}
+      when={appContext.ready}
     >
-      <AppContext.Provider value={appContext}>
-        <HeaderProvider>
-          <Routes>
-            <Route path="settings" component={Settings} />
-            <Route path="autodeploy/*" component={Autodeploy} />
-            <Route path=":stageName/*" component={Stage} />
-            <Route path="" component={Overview} />
-            <Route path="*" element={<NotFound header />} />
-          </Routes>
-        </HeaderProvider>
-      </AppContext.Provider>
+      <Show
+        when={appContext.app}
+        fallback={<NotFound header inset="header" message="App not found" />}
+      >
+        <AppContext.Provider value={appContext}>
+          <HeaderProvider>
+            <Routes>
+              <Route path="settings" component={Settings} />
+              <Route path="autodeploy/*" component={Autodeploy} />
+              <Route path=":stageName/*" component={Stage} />
+              <Route path="" component={Overview} />
+              <Route path="*" element={<NotFound header />} />
+            </Routes>
+          </HeaderProvider>
+        </AppContext.Provider>
+      </Show>
     </Show>
   );
 }

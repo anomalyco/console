@@ -28,14 +28,17 @@ import {
   Match,
   Show,
   Switch,
+  Suspense,
   createMemo,
   createSignal,
+  createEffect,
 } from "solid-js";
 import { useReplicache, createSubscription } from "$/providers/replicache";
 import { githubRepo } from "$/common/url-builder";
 import {
   getValue,
   insert,
+  clearError,
   valiForm,
   createForm,
   setValue,
@@ -437,6 +440,9 @@ export function Settings() {
   const appRepo = createSubscription((tx) =>
     AppRepoStore.forApp(tx, app.app.id).then((repos) => repos[0]),
   );
+  createEffect(() => {
+    console.log("here", appRepo.value);
+  });
 
   const needsGithub = createSubscription(async (tx) => {
     const ghOrgs = await GithubOrgStore.all(tx);
@@ -971,222 +977,224 @@ export function Settings() {
             </Text>
           </Stack>
           <GitRepoRoot>
-            <Switch>
-              <Match when={!overrideGithub() && needsGithub.value}>
-                <GitOrgError danger={!!appRepo.value}>
-                  <GitOrgErrorCopy>
-                    <Show
-                      fallback="Reconnect your GitHub organization"
-                      when={!appRepo.value}
+            <Suspense>
+              <Switch>
+                <Match when={!overrideGithub() && needsGithub.value}>
+                  <GitOrgError danger={!!appRepo.value}>
+                    <GitOrgErrorCopy>
+                      <Show
+                        fallback="Reconnect your GitHub organization"
+                        when={!appRepo.value}
+                      >
+                        Start by connecting to your GitHub organization
+                      </Show>
+                    </GitOrgErrorCopy>
+                    <form
+                      action={import.meta.env.VITE_API_URL + "/github/connect"}
+                      method="get"
+                      target="newWindow"
                     >
-                      Start by connecting to your GitHub organization
-                    </Show>
-                  </GitOrgErrorCopy>
-                  <form
-                    action={import.meta.env.VITE_API_URL + "/github/connect"}
-                    method="get"
-                    target="newWindow"
-                  >
-                    <Button type="submit" color="github">
-                      <ButtonIcon>
-                        <IconGitHub />
-                      </ButtonIcon>
-                      Connect GitHub
-                    </Button>
-                    <input type="hidden" name="provider" value="github" />
-                    <input
-                      type="hidden"
-                      name="workspaceID"
-                      value={workspace().id}
-                    />
-                    <input
-                      type="hidden"
-                      name="token"
-                      value={auth.current.token}
-                    />
-                  </form>
-                </GitOrgError>
-              </Match>
+                      <Button type="submit" color="github">
+                        <ButtonIcon>
+                          <IconGitHub />
+                        </ButtonIcon>
+                        Connect GitHub
+                      </Button>
+                      <input type="hidden" name="provider" value="github" />
+                      <input
+                        type="hidden"
+                        name="workspaceID"
+                        value={workspace().id}
+                      />
+                      <input
+                        type="hidden"
+                        name="token"
+                        value={auth.current.token}
+                      />
+                    </form>
+                  </GitOrgError>
+                </Match>
 
-              <Match when={appRepo.value}>
-                {(_item) => {
-                  const info = createSubscription(async (tx) => {
-                    const repo = await GithubRepoStore.get(
-                      tx,
-                      appRepo.value!.repoID,
-                    );
-                    const org = await GithubOrgStore.get(tx, repo.githubOrgID);
-                    return {
-                      org,
-                      repo,
-                    };
-                  });
-                  return (
-                    <Show when={info.value}>
-                      <Switch>
-                        <Match when={editingRepo.active}>
-                          <RepoForm />
-                        </Match>
-                        <Match when={true}>
-                          <GitRepoPanel>
-                            <GitRepoPanelRow>
-                              <Row space="3" vertical="center">
-                                <GitRepoIcon>
-                                  <IconGitHub width="32" height="32" />
-                                </GitRepoIcon>
-                                <Stack space="1.5">
-                                  <GitRepoLink
-                                    target="_blank"
-                                    href={githubRepo(
-                                      info.value!.org.login,
-                                      info.value!.repo.name,
-                                    )}
-                                  >
-                                    {info.value!.org.login}
-                                    <GitRepoLinkSeparator>
-                                      /
-                                    </GitRepoLinkSeparator>
-                                    {info.value!.repo.name}
-                                  </GitRepoLink>
-                                  <GitRepoPath>
-                                    Deploying path: {appRepo.value!.path}
-                                  </GitRepoPath>
-                                </Stack>
-                              </Row>
-                              <GitRepoPanelRowRight>
-                                <Button
-                                  color="danger"
-                                  onClick={() => {
-                                    if (
-                                      !confirm(
-                                        "Are you sure you want to disconnect from this repo?",
+                <Match when={appRepo.value}>
+                  {(_item) => {
+                    const info = createSubscription(async (tx) => {
+                      const repo = await GithubRepoStore.get(
+                        tx,
+                        appRepo.value!.repoID,
+                      );
+                      const org = await GithubOrgStore.get(tx, repo.githubOrgID);
+                      return {
+                        org,
+                        repo,
+                      };
+                    });
+                    return (
+                      <Show when={info.value}>
+                        <Switch>
+                          <Match when={editingRepo.active}>
+                            <RepoForm />
+                          </Match>
+                          <Match when={true}>
+                            <GitRepoPanel>
+                              <GitRepoPanelRow>
+                                <Row space="3" vertical="center">
+                                  <GitRepoIcon>
+                                    <IconGitHub width="32" height="32" />
+                                  </GitRepoIcon>
+                                  <Stack space="1.5">
+                                    <GitRepoLink
+                                      target="_blank"
+                                      href={githubRepo(
+                                        info.value!.org.login,
+                                        info.value!.repo.name,
+                                      )}
+                                    >
+                                      {info.value!.org.login}
+                                      <GitRepoLinkSeparator>
+                                        /
+                                      </GitRepoLinkSeparator>
+                                      {info.value!.repo.name}
+                                    </GitRepoLink>
+                                    <GitRepoPath>
+                                      Deploying path: {appRepo.value!.path}
+                                    </GitRepoPath>
+                                  </Stack>
+                                </Row>
+                                <GitRepoPanelRowRight>
+                                  <Button
+                                    color="danger"
+                                    onClick={() => {
+                                      if (
+                                        !confirm(
+                                          "Are you sure you want to disconnect from this repo?",
+                                        )
                                       )
-                                    )
-                                      return;
-                                    rep().mutate.app_repo_disconnect(
-                                      appRepo.value!.id,
-                                    );
-                                    reset(repoForm, {
-                                      initialValues: repoFormInitialValues,
-                                    });
-                                  }}
-                                >
-                                  Disconnect
-                                </Button>
-                                <Dropdown
-                                  icon={
-                                    <IconEllipsisVertical
-                                      width={18}
-                                      height={18}
-                                    />
-                                  }
-                                >
-                                  <Dropdown.Item
-                                    onSelect={() => {
-                                      setEditingRepo("id", appRepo.value!.id);
-                                      setEditingRepo("active", true);
+                                        return;
+                                      rep().mutate.app_repo_disconnect(
+                                        appRepo.value!.id,
+                                      );
                                       reset(repoForm, {
-                                        initialValues: {
-                                          repo: appRepo.value!.repoID,
-                                          path: appRepo.value!.path,
-                                        },
+                                        initialValues: repoFormInitialValues,
                                       });
                                     }}
                                   >
-                                    Edit path
-                                  </Dropdown.Item>
-                                </Dropdown>
-                              </GitRepoPanelRowRight>
-                            </GitRepoPanelRow>
-                          </GitRepoPanel>
-                        </Match>
-                      </Switch>
-                      <TargetsRoot>
-                        <TargetHeader>
-                          <TargetHeaderCopy>Environments</TargetHeaderCopy>
-                          <TargetHeaderLink
-                            target="_blank"
-                            href="https://ion.sst.dev/docs/console/#environments"
-                          >
-                            Learn about environments
-                          </TargetHeaderLink>
-                        </TargetHeader>
-                        <div>
-                          <For
-                            each={pipe(
-                              runConfigs.value,
-                              sortBy((val) => val.stagePattern.length),
-                            )}
-                          >
-                            {(config) => (
-                              <>
-                                <Target config={config} />
-                                <Show
-                                  when={
-                                    editing.active && editing.id === config.id
-                                  }
-                                >
-                                  <TargetForm />
-                                </Show>
-                              </>
-                            )}
-                          </For>
-                          <Show when={editing.active && !editing.id}>
-                            <TargetFormRoot>
-                              <TargetFormHeader>
-                                <TargetFormHeaderCopy new>
-                                  Add new environment
-                                </TargetFormHeaderCopy>
-                              </TargetFormHeader>
-                            </TargetFormRoot>
-                            <TargetForm new />
-                          </Show>
-                          <Show when={!editing.active || editing.id}>
-                            <TargetsEmpty>
-                              <Row>
-                                <TextButton
-                                  onClick={() => {
-                                    addBranchConfig();
-                                  }}
-                                >
-                                  <TargetsEmptyIcon>
-                                    <IconAdd width="10" height="10" />
-                                  </TargetsEmptyIcon>
-                                  Branch environment
-                                </TextButton>
-                                <Show
-                                  when={
-                                    !runConfigs.value.find((c) =>
-                                      c.stagePattern.startsWith("pr-"),
-                                    )
-                                  }
-                                >
-                                  <TargetsEmptySeparator />
+                                    Disconnect
+                                  </Button>
+                                  <Dropdown
+                                    icon={
+                                      <IconEllipsisVertical
+                                        width={18}
+                                        height={18}
+                                      />
+                                    }
+                                  >
+                                    <Dropdown.Item
+                                      onSelect={() => {
+                                        setEditingRepo("id", appRepo.value!.id);
+                                        setEditingRepo("active", true);
+                                        reset(repoForm, {
+                                          initialValues: {
+                                            repo: appRepo.value!.repoID,
+                                            path: appRepo.value!.path,
+                                          },
+                                        });
+                                      }}
+                                    >
+                                      Edit path
+                                    </Dropdown.Item>
+                                  </Dropdown>
+                                </GitRepoPanelRowRight>
+                              </GitRepoPanelRow>
+                            </GitRepoPanel>
+                          </Match>
+                        </Switch>
+                        <TargetsRoot>
+                          <TargetHeader>
+                            <TargetHeaderCopy>Environments</TargetHeaderCopy>
+                            <TargetHeaderLink
+                              target="_blank"
+                              href="https://ion.sst.dev/docs/console/#environments"
+                            >
+                              Learn about environments
+                            </TargetHeaderLink>
+                          </TargetHeader>
+                          <div>
+                            <For
+                              each={pipe(
+                                runConfigs.value,
+                                sortBy((val) => val.stagePattern.length),
+                              )}
+                            >
+                              {(config) => (
+                                <>
+                                  <Target config={config} />
+                                  <Show
+                                    when={
+                                      editing.active && editing.id === config.id
+                                    }
+                                  >
+                                    <TargetForm />
+                                  </Show>
+                                </>
+                              )}
+                            </For>
+                            <Show when={editing.active && !editing.id}>
+                              <TargetFormRoot>
+                                <TargetFormHeader>
+                                  <TargetFormHeaderCopy new>
+                                    Add new environment
+                                  </TargetFormHeaderCopy>
+                                </TargetFormHeader>
+                              </TargetFormRoot>
+                              <TargetForm new />
+                            </Show>
+                            <Show when={!editing.active || editing.id}>
+                              <TargetsEmpty>
+                                <Row>
                                   <TextButton
                                     onClick={() => {
-                                      addPrConfig();
+                                      addBranchConfig();
                                     }}
                                   >
                                     <TargetsEmptyIcon>
                                       <IconAdd width="10" height="10" />
                                     </TargetsEmptyIcon>
-                                    PR environment
+                                    Branch environment
                                   </TextButton>
-                                </Show>
-                              </Row>
-                            </TargetsEmpty>
-                          </Show>
-                        </div>
-                      </TargetsRoot>
-                    </Show>
-                  );
-                }}
-              </Match>
+                                  <Show
+                                    when={
+                                      !runConfigs.value.find((c) =>
+                                        c.stagePattern.startsWith("pr-"),
+                                      )
+                                    }
+                                  >
+                                    <TargetsEmptySeparator />
+                                    <TextButton
+                                      onClick={() => {
+                                        addPrConfig();
+                                      }}
+                                    >
+                                      <TargetsEmptyIcon>
+                                        <IconAdd width="10" height="10" />
+                                      </TargetsEmptyIcon>
+                                      PR environment
+                                    </TextButton>
+                                  </Show>
+                                </Row>
+                              </TargetsEmpty>
+                            </Show>
+                          </div>
+                        </TargetsRoot>
+                      </Show>
+                    );
+                  }}
+                </Match>
 
-              <Match when={true}>
-                <RepoForm new />
-              </Match>
-            </Switch>
+                <Match when={true}>
+                  <RepoForm new />
+                </Match>
+              </Switch>
+            </Suspense>
           </GitRepoRoot>
         </Stack>
       </SettingsRoot>
