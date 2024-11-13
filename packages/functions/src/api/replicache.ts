@@ -12,6 +12,7 @@ import {
   SQLWrapper,
   sql,
   SQL,
+  or,
 } from "drizzle-orm";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { stripeTable, usage } from "@console/core/billing/billing.sql";
@@ -187,7 +188,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
       const oldCvr = await Replicache.CVR.get(
         req.clientGroupID,
-        req.cookie as number,
+        req.cookie as number
       );
 
       const cvr = oldCvr ?? {
@@ -214,7 +215,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
       const results: [
         string,
-        { id: string; version: string; key: string }[],
+        { id: string; version: string; key: string }[]
       ][] = [];
 
       if (actor.type === "user") {
@@ -226,8 +227,8 @@ ReplicacheRoute.post("/pull1", async (c) => {
           .where(
             and(
               isNotNull(stage.timeDeleted),
-              eq(stage.workspaceID, useWorkspace()),
-            ),
+              eq(stage.workspaceID, useWorkspace())
+            )
           )
           .then((rows) => rows.map((row) => row.id));
 
@@ -236,7 +237,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
             id: stateUpdateTable.id,
             rowNumber:
               sql<string>`ROW_NUMBER() OVER (PARTITION BY ${stateUpdateTable.stageID} ORDER BY ${stateUpdateTable.index} DESC)`.as(
-                "row_number",
+                "row_number"
               ),
           })
           .from(stateUpdateTable)
@@ -245,21 +246,21 @@ ReplicacheRoute.post("/pull1", async (c) => {
               eq(stateUpdateTable.workspaceID, useWorkspace()),
               deletedStages.length
                 ? notInArray(stateUpdateTable.stageID, deletedStages)
-                : undefined,
-            ),
+                : undefined
+            )
           )
           .then((rows) =>
             rows
               .filter((row) => parseInt(row.rowNumber) <= 50)
-              .map((row) => row.id),
+              .map((row) => row.id)
           );
 
         const runs = await tx
           .select({
             id: runTable.id,
             rowNumber:
-              sql<string>`ROW_NUMBER() OVER (PARTITION BY ${runTable.stageID} ORDER BY ${runTable.timeCreated} DESC)`.as(
-                "row_number",
+              sql<string>`ROW_NUMBER() OVER (PARTITION BY COALESCE(${runTable.stageID}, 'NULL') ORDER BY ${runTable.timeCreated} DESC)`.as(
+                "row_number"
               ),
           })
           .from(runTable)
@@ -267,20 +268,23 @@ ReplicacheRoute.post("/pull1", async (c) => {
             and(
               eq(runTable.workspaceID, useWorkspace()),
               deletedStages.length
-                ? notInArray(runTable.stageID, deletedStages)
-                : undefined,
-            ),
+                ? or(
+                    isNull(runTable.stageID),
+                    notInArray(runTable.stageID, deletedStages)
+                  )
+                : undefined
+            )
           )
           .then((rows) =>
             rows
               .filter((row) => parseInt(row.rowNumber) <= 50)
-              .map((row) => row.id),
+              .map((row) => row.id)
           );
         const tableFilters = {
           log_search: eq(log_search.userID, actor.properties.userID),
           usage: gte(
             usage.day,
-            DateTime.now().toUTC().startOf("month").toSQLDate()!,
+            DateTime.now().toUTC().startOf("month").toSQLDate()!
           ),
           issueCount: gte(
             issueCount.hour,
@@ -288,7 +292,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
               .toUTC()
               .startOf("hour")
               .minus({ day: 1 })
-              .toSQL({ includeOffset: false })!,
+              .toSQL({ includeOffset: false })!
           ),
           issue: isNull(issue.timeDeleted),
           ...(updates.length
@@ -325,13 +329,13 @@ ReplicacheRoute.post("/pull1", async (c) => {
               and(
                 eq(
                   "workspaceID" in table ? table.workspaceID : table.id,
-                  workspaceID,
+                  workspaceID
                 ),
                 ...(name === "stage" ? [] : [isNull(table.timeDeleted)]),
                 ...(name in tableFilters
                   ? [tableFilters[name as keyof typeof tableFilters]]
-                  : []),
-              ),
+                  : [])
+              )
             );
           log("getting updated from", name);
           const rows = await query.execute();
@@ -355,8 +359,8 @@ ReplicacheRoute.post("/pull1", async (c) => {
               and(
                 eq(user.email, actor.properties.email),
                 isNull(user.timeDeleted),
-                isNull(workspace.timeDeleted),
-              ),
+                isNull(workspace.timeDeleted)
+              )
             )
             .execute(),
         ]);
@@ -374,8 +378,8 @@ ReplicacheRoute.post("/pull1", async (c) => {
             and(
               eq(user.email, actor.properties.email),
               isNull(user.timeDeleted),
-              isNull(workspace.timeDeleted),
-            ),
+              isNull(workspace.timeDeleted)
+            )
           )
           .execute();
         results.push(["workspace", workspaces]);
@@ -396,7 +400,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
       log(
         "toPut",
-        mapValues(toPut, (value) => value.length),
+        mapValues(toPut, (value) => value.length)
       );
 
       log("toDel", cvr.data);
@@ -406,7 +410,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
         log(name);
         const ids = items.map((item) => item.id);
         const keys = Object.fromEntries(
-          items.map((item) => [item.id, item.key]),
+          items.map((item) => [item.id, item.key])
         );
 
         if (!ids.length) continue;
@@ -418,7 +422,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           const rows = await tx
             .select(
               TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
-                getTableColumns(table),
+                getTableColumns(table)
             )
             .from(table)
             .where(
@@ -426,8 +430,8 @@ ReplicacheRoute.post("/pull1", async (c) => {
                 "workspaceID" in table && actor.type === "user"
                   ? eq(table.workspaceID, useWorkspace())
                   : undefined,
-                inArray(table.id, group),
-              ),
+                inArray(table.id, group)
+              )
             )
             .execute();
           log(name, "got", rows.length, "in", Date.now() - now, "ms");
@@ -462,13 +466,13 @@ ReplicacheRoute.post("/pull1", async (c) => {
         .where(
           and(
             eq(replicache_client.clientGroupID, req.clientGroupID),
-            gt(replicache_client.clientVersion, cvr.clientVersion),
-          ),
+            gt(replicache_client.clientVersion, cvr.clientVersion)
+          )
         )
         .execute();
 
       const lastMutationIDChanges = Object.fromEntries(
-        clients.map((c) => [c.id, c.mutationID] as const),
+        clients.map((c) => [c.id, c.mutationID] as const)
       );
       if (patch.length > 0 || Object.keys(lastMutationIDChanges).length > 0) {
         log("inserting", req.clientGroupID);
@@ -500,7 +504,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
     },
     {
       isolationLevel: "repeatable read",
-    },
+    }
   );
 
   return c.json(resp);
@@ -533,7 +537,7 @@ ReplicacheRoute.post("/push1", async (c) => {
                 actor: actor,
                 cvrVersion: 0,
                 clientVersion: 0,
-              },
+              }
           );
 
         // if (!equals(group.actor, actor)) {
@@ -560,7 +564,7 @@ ReplicacheRoute.post("/push1", async (c) => {
                 clientGroupID: body.clientGroupID,
                 mutationID: 0,
                 clientVersion: 0,
-              },
+              }
           );
 
         const nextClientVersion = group.clientVersion + 1;
@@ -568,14 +572,14 @@ ReplicacheRoute.post("/push1", async (c) => {
 
         if (mutation.id < nextMutationID) {
           console.log(
-            `Mutation ${mutation.id} has already been processed - skipping`,
+            `Mutation ${mutation.id} has already been processed - skipping`
           );
           return c.status(200);
         }
 
         if (mutation.id > nextMutationID) {
           throw new Error(
-            `Mutation ${mutation.id} is from the future - aborting`,
+            `Mutation ${mutation.id} is from the future - aborting`
           );
         }
 
@@ -623,7 +627,7 @@ ReplicacheRoute.post("/push1", async (c) => {
       },
       {
         isolationLevel: "repeatable read",
-      },
+      }
     );
   }
 
