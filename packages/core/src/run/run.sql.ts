@@ -85,6 +85,7 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
+    force: z.boolean().optional(),
   }),
   z.object({
     type: z.enum(["tag"]),
@@ -104,6 +105,7 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
+    force: z.boolean().optional(),
   }),
   z.object({
     type: z.enum(["pull_request"]),
@@ -125,6 +127,7 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
+    force: z.boolean().optional(),
   }),
 ]);
 export type Trigger = z.infer<typeof Trigger>;

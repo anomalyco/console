@@ -3,6 +3,7 @@ import {
   CreateProjectCommand,
   DeleteProjectCommand,
   StartBuildCommand,
+  StopBuildCommand,
   CodeBuildClient,
   ComputeType,
 } from "@aws-sdk/client-codebuild";
@@ -331,6 +332,22 @@ export module CodebuildRunner {
         }
         throw e;
       }
+    }
+  );
+
+  export const cancel = zod(
+    z.object({
+      credentials: z.custom<Credentials>(),
+      region: z.string().min(1),
+      buildID: z.string().min(1),
+    }),
+    async ({ credentials, region, buildID }) => {
+      const codebuild = new CodeBuildClient({
+        credentials,
+        region,
+        retryStrategy: RETRY_STRATEGY,
+      });
+      await codebuild.send(new StopBuildCommand({ id: buildID }));
     }
   );
 }

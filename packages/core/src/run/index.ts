@@ -37,6 +37,7 @@ import {
   RunError,
   AutodeployConfigRunner,
   RunErrorType,
+  runConfigTable,
 } from "./run.sql";
 import { App, Stage } from "../app";
 import { RunConfig } from "./config";
@@ -47,13 +48,14 @@ import { Github } from "../git/github";
 import { CodebuildRunner } from "./codebuild-runner";
 import { Replicache } from "../replicache";
 import { minimatch } from "minimatch";
-import { app, stage, stage as stageTable } from "../app/app.sql";
+import { app, appRepoTable, stage, stage as stageTable } from "../app/app.sql";
 import { workspace } from "../workspace/workspace.sql";
 import { Alert } from "../alert";
 import { render } from "@jsx-email/render";
 import { AutodeployEmail } from "@console/mail/emails/templates/AutodeployEmail";
 import path from "path";
 import { bus } from "sst/aws/bus";
+import { githubOrgTable, githubRepoTable } from "../git/git.sql";
 
 export { RunConfig } from "./config";
 
@@ -330,20 +332,68 @@ export module Run {
     }
   );
 
-  export const create = zod(
+  export const triggerRedeploy = zod(
+    z.object({
+      id: z.string().cuid2(),
+      runID: z.string().cuid2(),
+      force: z.boolean().optional(),
+    }),
+    async ({ id, runID, force }) => {
+      const result = await useTransaction((tx) =>
+        tx
+          .select({
+            appID: runTable.appID,
+            trigger: runTable.trigger,
+            path: appRepoTable.path,
+            installationID: githubOrgTable.installationID,
+          })
+          .from(runTable)
+          .innerJoin(appRepoTable, eq(runTable.appID, appRepoTable.appID))
+          .innerJoin(
+            githubRepoTable,
+            eq(appRepoTable.repoID, githubRepoTable.id)
+          )
+          .innerJoin(
+            githubOrgTable,
+            and(
+              eq(githubOrgTable.workspaceID, useWorkspace()),
+              eq(githubRepoTable.githubOrgID, githubOrgTable.id)
+            )
+          )
+          .where(
+            and(
+              eq(runTable.id, runID),
+              eq(runTable.workspaceID, useWorkspace())
+            )
+          )
+          .execute()
+          .then((x) => x[0])
+      );
+      if (!result) return;
+
+      await createRun({
+        id,
+        octokit: await Github.useClient(result.installationID),
+        trigger: {
+          ...result.trigger,
+          force: (result.trigger.force || force) === true ? true : undefined,
+        },
+        appID: result.appID,
+        pathToConfig: result.path ?? undefined,
+      });
+    }
+  );
+
+  export const triggerGitDeploy = zod(
     z.object({
       octokit: z.custom<any>(),
       trigger: z.custom<Trigger>(),
     }),
     async ({ octokit, trigger }) => {
       const repoID = trigger.repo.id;
-      const commitID = trigger.commit.id;
-
-      // Get all apps connected to the repo
-      const appRepos = await Github.listAppReposByExternalRepoID(repoID);
-      if (appRepos.length === 0) return;
 
       // Loop through all apps connected to the repo
+      const appRepos = await Github.listAppReposByExternalRepoID(repoID);
       for (const appRepo of appRepos) {
         const appID = appRepo.appID;
         await withActor(
@@ -352,151 +402,170 @@ export module Run {
             properties: { workspaceID: appRepo.workspaceID },
           },
           async () => {
-            let error: RunError | undefined;
-            try {
-              error = await handler();
-            } catch (e: any) {
-              console.error(e);
-              error = { type: "unknown", properties: { message: e.message } };
-            }
-            if (!error) return;
-
-            // Create failed error
-            await useTransaction(async (tx) => {
-              const runID = createId();
-              await tx
-                .insert(runTable)
-                .values({
-                  id: runID,
-                  workspaceID: useWorkspace(),
-                  appID,
-                  trigger,
-                  error,
-                })
-                .execute();
-              await createTransactionEffect(() =>
-                bus.publish(SSTResource.Bus, Event.CreateFailed, { runID })
-              );
+            await createRun({
+              octokit,
+              trigger,
+              appID,
+              pathToConfig: appRepo.path ?? undefined,
             });
-
-            async function handler() {
-              // Get `sst.config.ts` file
-              let content;
-              try {
-                const file = await octokit.rest.repos.getContent({
-                  owner: trigger.repo.owner,
-                  repo: trigger.repo.repo,
-                  ref: commitID,
-                  path: path.join(appRepo.path ?? "", "sst.config.ts"),
-                });
-                content = file.data?.content;
-              } catch (e) {}
-              // sst.config.ts not found
-              if (!content)
-                return {
-                  type: "config_not_found" as const,
-                  properties: appRepo.path ? { path: appRepo.path } : undefined,
-                };
-
-              const sstConfig = await parseSstConfig({ content, trigger });
-
-              // Failed to parse Autodeploy config
-              if ("error" in sstConfig)
-                return {
-                  type: sstConfig.error,
-                };
-
-              const region =
-                sstConfig.app.providers?.aws?.region ?? "us-east-1";
-              const stageName = sstConfig.stage;
-
-              // Validate app name
-              const app = await App.fromID(appID);
-              if (app?.name !== sstConfig.app.name)
-                return {
-                  type: "config_app_name_mismatch" as const,
-                  properties: {
-                    name: sstConfig.app.name,
-                  },
-                };
-
-              // Do not remove branches with default `autodeploy` config
-              if (!sstConfig.console.autodeploy.target) {
-                if (trigger.type === "branch" && trigger.action === "removed")
-                  return { type: "config_branch_remove_skipped" as const };
-                if (trigger.type === "tag")
-                  return { type: "config_tag_skipped" as const };
-              }
-
-              // Get AWS Account ID from Run Env
-              const allEnv = await RunConfig.list(appID);
-              if (!allEnv.length) return { type: "target_not_found" as const };
-              const env = allEnv.find((row) =>
-                minimatch(stageName, row.stagePattern)
-              );
-              if (!env)
-                return {
-                  type: "target_not_matched" as const,
-                  properties: { stage: stageName },
-                };
-              if (!env.awsAccountExternalID)
-                return {
-                  type: "target_missing_aws_account" as const,
-                  properties: { target: env.stagePattern },
-                };
-              const awsAccount = await AWS.Account.fromExternalID(
-                env.awsAccountExternalID
-              );
-              if (!awsAccount)
-                return {
-                  type: "target_missing_workspace" as const,
-                  properties: { target: env.stagePattern },
-                };
-
-              // Create stage if stage not exist
-              let stageID = await App.Stage.fromName({
-                appID,
-                name: stageName,
-                region,
-                awsAccountID: awsAccount.id,
-              }).then((s) => s?.id!);
-
-              if (!stageID) {
-                console.log("creating stage", { appID, stageID });
-                stageID = createId();
-                await useTransaction((tx) =>
-                  tx.insert(stage).ignore().values({
-                    id: stageID,
-                    name: stageName,
-                    region,
-                    awsAccountID: awsAccount.id,
-                    workspaceID: useWorkspace(),
-                    appID,
-                  })
-                );
-              }
-
-              // Create Run
-              await useTransaction(async (tx) => {
-                await tx
-                  .insert(runTable)
-                  .values({
-                    id: createId(),
-                    workspaceID: useWorkspace(),
-                    appID,
-                    stageID,
-                    trigger,
-                    config: sstConfig.console.autodeploy,
-                  })
-                  .execute();
-
-                await createTransactionEffect(() =>
-                  bus.publish(SSTResource.Bus, Event.Created, { stageID })
-                );
-              });
-            }
           }
         );
+      }
+    }
+  );
+
+  const createRun = zod(
+    z.object({
+      id: z.string().cuid2().optional(),
+      octokit: z.custom<any>(),
+      trigger: z.custom<Trigger>(),
+      appID: z.string().cuid2(),
+      pathToConfig: z.string().min(1).optional(),
+    }),
+    async ({ id, octokit, trigger, appID, pathToConfig }) => {
+      const commitID = trigger.commit.id;
+      const runID = id ?? createId();
+
+      let error: RunError | undefined;
+      try {
+        error = await handler();
+      } catch (e: any) {
+        console.error(e);
+        error = { type: "unknown", properties: { message: e.message } };
+      }
+      if (!error) return;
+
+      // Create failed error
+      await useTransaction(async (tx) => {
+        await tx
+          .insert(runTable)
+          .values({
+            id: runID,
+            workspaceID: useWorkspace(),
+            appID,
+            trigger,
+            error,
+          })
+          .execute();
+        await createTransactionEffect(() =>
+          bus.publish(SSTResource.Bus, Event.CreateFailed, { runID })
+        );
+      });
+
+      async function handler() {
+        // Get `sst.config.ts` file
+        let content;
+        try {
+          const file = await octokit.rest.repos.getContent({
+            owner: trigger.repo.owner,
+            repo: trigger.repo.repo,
+            ref: commitID,
+            path: path.join(pathToConfig ?? "", "sst.config.ts"),
+          });
+          content = file.data?.content;
+        } catch (e) {}
+        // sst.config.ts not found
+        if (!content)
+          return {
+            type: "config_not_found" as const,
+            properties: pathToConfig ? { path: pathToConfig } : undefined,
+          };
+
+        const sstConfig = await parseSstConfig({ content, trigger });
+
+        // Failed to parse Autodeploy config
+        if ("error" in sstConfig)
+          return {
+            type: sstConfig.error,
+          };
+
+        const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
+        const stageName = sstConfig.stage;
+
+        // Validate app name
+        const app = await App.fromID(appID);
+        if (app?.name !== sstConfig.app.name)
+          return {
+            type: "config_app_name_mismatch" as const,
+            properties: {
+              name: sstConfig.app.name,
+            },
+          };
+
+        // Do not remove branches with default `autodeploy` config
+        if (!sstConfig.console.autodeploy.target) {
+          if (trigger.type === "branch" && trigger.action === "removed")
+            return { type: "config_branch_remove_skipped" as const };
+          if (trigger.type === "tag")
+            return { type: "config_tag_skipped" as const };
+        }
+
+        // Get AWS Account ID from Run Env
+        const allEnv = await RunConfig.list(appID);
+        if (!allEnv.length) return { type: "target_not_found" as const };
+        const env = allEnv.find((row) =>
+          minimatch(stageName, row.stagePattern)
+        );
+        if (!env)
+          return {
+            type: "target_not_matched" as const,
+            properties: { stage: stageName },
+          };
+        if (!env.awsAccountExternalID)
+          return {
+            type: "target_missing_aws_account" as const,
+            properties: { target: env.stagePattern },
+          };
+        const awsAccount = await AWS.Account.fromExternalID(
+          env.awsAccountExternalID
+        );
+        if (!awsAccount)
+          return {
+            type: "target_missing_workspace" as const,
+            properties: { target: env.stagePattern },
+          };
+
+        // Create stage if stage not exist
+        let stageID = await App.Stage.fromName({
+          appID,
+          name: stageName,
+          region,
+          awsAccountID: awsAccount.id,
+        }).then((s) => s?.id!);
+
+        if (!stageID) {
+          console.log("creating stage", { appID, stageID });
+          stageID = createId();
+          await useTransaction((tx) =>
+            tx.insert(stage).ignore().values({
+              id: stageID,
+              name: stageName,
+              region,
+              awsAccountID: awsAccount.id,
+              workspaceID: useWorkspace(),
+              appID,
+            })
+          );
+        }
+
+        // Create Run
+        await useTransaction(async (tx) => {
+          await tx
+            .insert(runTable)
+            .values({
+              id: runID,
+              workspaceID: useWorkspace(),
+              appID,
+              stageID,
+              trigger,
+              config: sstConfig.console.autodeploy,
+            })
+            .execute();
+
+          await createTransactionEffect(() =>
+            bus.publish(SSTResource.Bus, Event.Created, { stageID })
+          );
+        });
       }
     }
   );
@@ -678,7 +747,7 @@ export module Run {
           .execute();
       });
     } catch (e) {
-      await complete({
+      await markRunCompleted({
         runID: run.id,
         error:
           e instanceof CodebuildRunner.RunnerError
@@ -718,7 +787,50 @@ export module Run {
     );
   });
 
-  export const complete = zod(
+  export const cancelRun = zod(
+    z.object({
+      runID: z.string().cuid2(),
+    }),
+    async ({ runID }) => {
+      const run = await useTransaction((tx) =>
+        tx
+          .select({
+            stageID: runTable.stageID,
+            log: runTable.log,
+          })
+          .from(runTable)
+          .where(
+            and(
+              eq(runTable.id, runID),
+              eq(runTable.workspaceID, useWorkspace()),
+              isNull(runTable.timeCompleted)
+            )
+          )
+          .execute()
+          .then((x) => x[0])
+      );
+      if (!run) return;
+
+      // Stop CodeBuild job if running
+      if (run.stageID && run.log) {
+        const awsConfig = await Stage.assumeRole(run.stageID);
+        if (!awsConfig) throw new Error("Fail to assume AWS role");
+
+        await CodebuildRunner.cancel({
+          buildID: `${run.log.logGroup.split("/").pop()}:${run.log.logStream}`,
+          credentials: awsConfig.credentials,
+          region: awsConfig.region,
+        });
+      }
+
+      await markRunCompleted({
+        runID,
+        error: "Build cancelled",
+      });
+    }
+  );
+
+  export const markRunCompleted = zod(
     z.object({
       runID: z.string().cuid2(),
       error: z.string().min(1).optional(),

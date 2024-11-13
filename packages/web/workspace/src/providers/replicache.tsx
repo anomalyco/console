@@ -28,6 +28,7 @@ import {
   GithubOrgStore,
   AppRepoStore,
   RunConfigStore,
+  RunStore,
 } from "$/data/app";
 import { useReplicacheStatus } from "./replicache-status";
 import { useAuth2 } from "./auth2";
@@ -149,6 +150,27 @@ const mutators = new Client<ServerType>()
       item.path = input.path;
     });
   })
+  .mutation("run_redeploy", async (tx, input) => {
+    const run = (await RunStore.all(tx)).filter(
+      (run) => run.id === input.runID
+    )[0];
+    if (!run) return;
+
+    await tx.put(`/runs/${input.id}`, {
+      active: false,
+      id: input.id,
+      appID: run.appID,
+      status: "queued",
+      time: {
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      },
+      trigger: {
+        ...run.trigger,
+        force: (run.trigger.force || input.force) === true ? true : undefined,
+      },
+    });
+  })
   .mutation("run_config_put", async (tx, input) => {
     await RunConfigStore.put(tx, [input.appID, input.id!], {
       id: input.id,
@@ -238,7 +260,7 @@ function createReplicache(workspaceID: string, token: string) {
 }
 
 export function ReplicacheProvider(
-  props: ParentProps<{ workspaceID: string }>,
+  props: ParentProps<{ workspaceID: string }>
 ) {
   const auth = useAuth2();
   const rep = createMemo(() => {
@@ -275,19 +297,19 @@ export function useReplicache() {
 }
 
 export function createSubscription<R>(
-  cb: (tx: ReadTransaction) => Promise<R>,
+  cb: (tx: ReadTransaction) => Promise<R>
 ): {
   value: R | undefined;
 };
 export function createSubscription<R>(
   cb: (tx: ReadTransaction) => Promise<R>,
-  initial: R,
+  initial: R
 ): {
   value: R;
 };
 export function createSubscription<R>(
   cb: (tx: ReadTransaction) => Promise<R>,
-  initial?: R | undefined,
+  initial?: R | undefined
 ) {
   const [store, setStore] = createStore({
     value: initial,
@@ -308,8 +330,8 @@ export function createSubscription<R>(
             },
             {
               merge: true,
-            },
-          ),
+            }
+          )
         );
       },
     });

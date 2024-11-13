@@ -26,7 +26,7 @@ export const handler = bus.subscriber(
             });
             break;
           case Run.Event.RunnerCompleted.type:
-            await Run.complete({
+            await Run.markRunCompleted({
               runID: evt.properties.runID,
               error: evt.properties.error,
             });
@@ -79,7 +79,7 @@ export const codebuildHandler = async (evt: Payload) => {
     },
     async () => {
       const status = evt.detail["build-status"];
-      await Run.complete({
+      await Run.markRunCompleted({
         runID: runnerEvent.runID,
         error:
           status === "TIMED_OUT"

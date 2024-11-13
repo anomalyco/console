@@ -9,7 +9,7 @@ import {
   createEffect,
 } from "solid-js";
 import { createSubscription, useReplicache } from "$/providers/replicache";
-import { Link, useParams } from "@solidjs/router";
+import { Link, useNavigate, useParams } from "@solidjs/router";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
 import { DateTime } from "luxon";
@@ -50,6 +50,8 @@ import { utility } from "$/ui/utility";
 import { theme } from "$/ui/theme";
 import { Stack, Row } from "$/ui/layout";
 import { Text } from "$/ui/text";
+import { Button } from "$/ui/button";
+import { createId } from "@paralleldrive/cuid2";
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -153,6 +155,14 @@ const ErrorMessage = styled("div", {
     lineHeight: theme.font.lineHeight,
     whiteSpace: "pre-wrap",
     overflowWrap: "anywhere",
+  },
+});
+
+const ForceCheckbox = styled("input", {
+  base: {
+    flex: "0 0 auto",
+    zIndex: 2,
+    cursor: "pointer",
   },
 });
 
@@ -276,9 +286,10 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
   const params = useParams();
   const rep = useReplicache();
   const replicacheStatus = useReplicacheStatus();
+  const nav = useNavigate();
   const data = createSubscription(async (tx) => {
     const runs = (await RunStore.all(tx)).filter(
-      (run) => run.id === params.runID,
+      (run) => run.id === params.runID
     );
     if (!runs.length) return;
 
@@ -288,7 +299,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
     const stage = await StageStore.get(tx, run.stageID);
 
     const update = (await StateUpdateStore.forStage(tx, run.stageID)).find(
-      (update) => update.runID === run.id,
+      (update) => update.runID === run.id
     );
     return { run, stage, update };
   });
@@ -331,6 +342,39 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             </PageTitleMessage>
           </Match>
         </Switch>
+        <Show when={data.value!.run.status === "error"}>
+          <Row space="1.5" vertical="center">
+            <Button
+              onClick={async (e) => {
+                const force =
+                  e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
+                    "input[name='force']:checked"
+                  )?.value;
+
+                const id = createId();
+                await rep().mutate.run_redeploy({
+                  id,
+                  runID: data.value!.run.id,
+                  force: force === "true",
+                });
+                nav(`../${id}`);
+              }}
+              color="secondary"
+              size="sm"
+            >
+              Retry deploy
+            </Button>
+            <ForceCheckbox
+              name="force"
+              type="checkbox"
+              value="true"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+            <Text>Force (Do not use cache and unlock the stage if locked)</Text>
+          </Row>
+        </Show>
       </Stack>
     );
   }
@@ -340,21 +384,21 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
     const repoURL = createMemo(() =>
       trigger.source === "github"
         ? githubRepo(trigger.repo.owner, trigger.repo.repo)
-        : "",
+        : ""
     );
     const runInfo = createMemo(() => {
       const branch =
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-            ? trigger.tag
-            : trigger.branch;
+          ? trigger.tag
+          : trigger.branch;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-            ? githubTag(repoURL(), trigger.tag)
-            : githubBranch(repoURL(), trigger.branch);
+          ? githubTag(repoURL(), trigger.tag)
+          : githubBranch(repoURL(), trigger.branch);
 
       return { trigger, branch, uri };
     });
@@ -370,8 +414,9 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                   <img
                     width={AVATAR_SIZE}
                     height={AVATAR_SIZE}
-                    src={`https://avatars.githubusercontent.com/u/${trigger.sender.id
-                      }?s=${2 * AVATAR_SIZE}&v=4`}
+                    src={`https://avatars.githubusercontent.com/u/${
+                      trigger.sender.id
+                    }?s=${2 * AVATAR_SIZE}&v=4`}
                   />
                 </GitAvatar>
                 <Stack space="0.5">
@@ -385,7 +430,11 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     </GitIcon>
                     <GitCommit>{formatCommit(trigger.commit.id)}</GitCommit>
                   </GitLink>
-                  <GitLink target="_blank" rel="noreferrer" href={runInfo()!.uri}>
+                  <GitLink
+                    target="_blank"
+                    rel="noreferrer"
+                    href={runInfo()!.uri}
+                  >
                     <GitIcon size="sm">
                       <Switch>
                         <Match when={trigger.type === "pull_request"}>
@@ -417,7 +466,9 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             <Stack space="1.5">
               <PanelTitle>Update</PanelTitle>
               <PanelValueLink
-                href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id}`}
+                href={`${appPath}/${data.value!.stage!.name!}/updates/${
+                  data.value!.update!.id
+                }`}
               >
                 #{data.value!.update!.index}
               </PanelValueLink>
@@ -430,16 +481,16 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               title={
                 data.value!.run.time.started
                   ? DateTime.fromISO(
-                    data.value!.run.time.started!,
-                  ).toLocaleString(DateTime.DATETIME_FULL)
+                      data.value!.run.time.started!
+                    ).toLocaleString(DateTime.DATETIME_FULL)
                   : undefined
               }
             >
               {data.value!.run.time.started
                 ? formatSinceTime(
-                  DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
-                  true,
-                )
+                    DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
+                    true
+                  )
                 : "—"}
             </Text>
           </Stack>
@@ -455,11 +506,11 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             >
               {data.value!.run.time.started && data.value!.run.time.completed
                 ? formatDuration(
-                  DateTime.fromISO(data.value!.run.time.completed!)
-                    .diff(DateTime.fromISO(data.value!.run.time.started!))
-                    .as("milliseconds"),
-                  true,
-                )
+                    DateTime.fromISO(data.value!.run.time.completed!)
+                      .diff(DateTime.fromISO(data.value!.run.time.started!))
+                      .as("milliseconds"),
+                    true
+                  )
                 : "—"}
             </Text>
           </Stack>
@@ -477,28 +528,28 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         if (!log) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-          "/log/aws/scan?" +
-          new URLSearchParams(
-            log.engine === "lambda"
-              ? {
-                stageID: data.value!.stage!.id,
-                timestamp: log.timestamp.toString(),
-                logStream: log.logStream,
-                logGroup: log.logGroup,
-                requestID: log.requestID,
-              }
-              : {
-                stageID: data.value!.stage!.id,
-                logStream: log.logStream,
-                logGroup: log.logGroup,
-              },
-          ).toString(),
+            "/log/aws/scan?" +
+            new URLSearchParams(
+              log.engine === "lambda"
+                ? {
+                    stageID: data.value!.stage!.id,
+                    timestamp: log.timestamp.toString(),
+                    logStream: log.logStream,
+                    logGroup: log.logGroup,
+                    requestID: log.requestID,
+                  }
+                : {
+                    stageID: data.value!.stage!.id,
+                    logStream: log.logStream,
+                    logGroup: log.logGroup,
+                  }
+            ).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,
               Authorization: "Bearer " + auth.current.token,
             },
-          },
+          }
         ).then(
           (res) =>
             res.json() as Promise<
@@ -506,26 +557,21 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                 message: string;
                 timestamp: number;
               }[]
-            >,
+            >
         );
-        console.log("!! LENGTH AAA", results.length);
         return results;
       },
       {
         initialValue: [],
-      },
+      }
     );
-    createEffect(() => {
-      console.log("!! EFFECT", logs().length);
-    });
     const trimmedLogs = createMemo(() => {
-      console.log("!! LENGTH BBB", logs().length);
       return pipe(
         logs() || [],
         dropWhile((r) => !r.message.startsWith("[sst.deploy.start]")),
         drop(1),
         filter((r) => r.message.trim() != ""),
-        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]")),
+        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]"))
       );
     });
 
@@ -548,7 +594,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
           >
             Logs —{" "}
             {DateTime.fromMillis(trimmedLogs()![0].timestamp!).toLocaleString(
-              DATETIME_NO_TIME,
+              DATETIME_NO_TIME
             )}
           </PanelTitle>
         </Show>
@@ -562,7 +608,7 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     .toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}
                 >
                   {DateTime.fromMillis(entry.timestamp).toFormat(
-                    "HH:mm:ss.SSS",
+                    "HH:mm:ss.SSS"
                   )}
                 </LogTime>
                 <LogMessage>{entry.message}</LogMessage>

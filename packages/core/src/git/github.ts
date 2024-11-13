@@ -74,7 +74,7 @@ export module Github {
     octokit: Awaited<ReturnType<typeof createClient>>;
     installationID: number;
   };
-  async function useClient(installationID: number) {
+  export async function useClient(installationID: number) {
     if (client?.installationID !== installationID) {
       client = {
         octokit: await createClient(installationID),

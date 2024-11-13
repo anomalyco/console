@@ -93,7 +93,7 @@ app.webhooks.on(
       repo,
       ref: commitID,
     });
-    await Run.create({
+    await Run.triggerGitDeploy({
       octokit: event.octokit,
       trigger: {
         source: "github",
@@ -124,7 +124,7 @@ app.webhooks.on("push", async (event) => {
   const owner = event.payload.repository.owner!.login;
   const repo = event.payload.repository.name;
   const isTag = event.payload.ref.startsWith("refs/tags/");
-  await Run.create({
+  await Run.triggerGitDeploy({
     octokit: event.octokit,
     trigger: {
       source: "github",

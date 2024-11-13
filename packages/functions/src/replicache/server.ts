@@ -20,6 +20,7 @@ import { RunConfig } from "@console/core/run/config";
 import { Alert } from "@console/core/alert";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
+import { Run } from "@console/core/run";
 
 export const server = new Server()
   .expose("log_poller_subscribe", LogPoller.subscribe)
@@ -61,8 +62,8 @@ export const server = new Server()
           .where(
             and(
               eq(issueSubscriber.workspaceID, useWorkspace()),
-              eq(issueSubscriber.stageID, input.stageID),
-            ),
+              eq(issueSubscriber.stageID, input.stageID)
+            )
           )
           .execute();
         await tx
@@ -73,20 +74,20 @@ export const server = new Server()
               eq(warning.stageID, input.stageID),
               or(
                 eq(warning.type, "log_subscription"),
-                eq(warning.type, "issue_rate_limited"),
-              ),
-            ),
+                eq(warning.type, "issue_rate_limited")
+              )
+            )
           )
           .execute();
       });
       await bus.publish(Resource.Bus, Stage.Events.ResourcesUpdated, {
         stageID: input.stageID,
       });
-    },
+    }
   )
   .expose("aws_account_scan", AWS.Account.scan)
   .mutation("app_stage_sync", z.object({ stageID: z.string() }), (input) =>
-    bus.publish(Resource.Bus, App.Stage.Events.Updated, input),
+    bus.publish(Resource.Bus, App.Stage.Events.Updated, input)
   )
   .mutation("workspace_create", Workspace.create.schema, async (input) => {
     const actor = assertActor("account");
@@ -102,7 +103,7 @@ export const server = new Server()
         User.create({
           email: actor.properties.email,
           first: true,
-        }),
+        })
     );
   })
   .expose("user_create", User.create)
@@ -111,6 +112,7 @@ export const server = new Server()
   .expose("app_repo_connect", AppRepo.connect)
   .expose("app_repo_disconnect", AppRepo.disconnect)
   .expose("app_repo_path_put", AppRepo.putPath)
+  .expose("run_redeploy", Run.triggerRedeploy)
   .expose("run_config_put", RunConfig.put)
   .expose("run_config_remove", RunConfig.remove);
 

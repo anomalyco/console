@@ -11,7 +11,7 @@ export async function handler(evt: Run.RunTimeoutMonitorEvent) {
       },
     },
     async () => {
-      await Run.complete({
+      await Run.markRunCompleted({
         runID,
         error: "Build timed out",
       });

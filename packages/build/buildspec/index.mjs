@@ -158,6 +158,7 @@ export async function handler(event, context) {
       (async (context) => {
         install();
         await installSst();
+        if (trigger.force) unlock();
         context.trigger.action === "removed" ? remove() : deploy();
       });
 
@@ -181,6 +182,21 @@ export async function handler(event, context) {
       shell("bun install --frozen-lockfile");
     } else if (findUp("package-lock.json")) shell("npm ci");
     else if (findUp("package.json")) shell("npm install");
+  }
+
+  function unlock() {
+    process.chdir(APP_PATH);
+
+    const { stage, credentials } = event;
+    const sstPath = findLocalSstBinary() ?? "sst";
+    shell(`${sstPath} unlock --stage ${stage}`, {
+      env: {
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        SST_AWS_NO_PROFILE: "1",
+      },
+    });
   }
 
   function deploy() {
