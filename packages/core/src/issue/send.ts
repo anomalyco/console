@@ -25,6 +25,7 @@ import { Workspace } from "../workspace";
 import { Alert } from "../alert";
 import { createTransaction } from "../util/transaction";
 import { Resource } from "sst";
+import { workspaceID } from "../util/sql";
 
 export const Limit = createSelectSchema(issueAlertLimit);
 
@@ -77,6 +78,7 @@ export const triggerIssue = zod(
         )
         .where(
           and(
+            isNull(workspace.timeDeleted),
             eq(issue.workspaceID, useWorkspace()),
             eq(issue.stageID, input.stageID),
             eq(issue.group, input.group),

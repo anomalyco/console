@@ -397,17 +397,16 @@ export const disableLogGroup = zod(
     console.log("disabling", input.logGroup);
     const existing = await db
       .select()
-      .from(issueSubscriber)
+      .from(warning)
       .where(
         and(
-          eq(issueSubscriber.workspaceID, useWorkspace()),
-          eq(issueSubscriber.stageID, input.config.stageID),
-          eq(issueSubscriber.logGroup, input.logGroup),
+          eq(warning.workspaceID, useWorkspace()),
+          eq(warning.stageID, input.config.stageID),
+          eq(warning.target, input.logGroup),
+          eq(warning.type, "issue_rate_limited"),
         ),
       );
-    if (!existing.length) {
-      return;
-    }
+    if (existing.length) return;
     const cw = new CloudWatchLogsClient({
       region: input.config.region,
       credentials: input.config.credentials,
@@ -428,22 +427,11 @@ export const disableLogGroup = zod(
         throw e;
       });
     if (!deleted) return;
-    await createTransaction(async (tx) => {
-      await Warning.create({
-        target: input.logGroup,
-        type: "issue_rate_limited",
-        stageID: input.config.stageID,
-        data: {},
-      });
-      await tx
-        .delete(issueSubscriber)
-        .where(
-          and(
-            eq(issueSubscriber.workspaceID, useWorkspace()),
-            eq(issueSubscriber.stageID, input.config.stageID),
-            eq(issueSubscriber.logGroup, input.logGroup),
-          ),
-        );
+    await Warning.create({
+      target: input.logGroup,
+      type: "issue_rate_limited",
+      stageID: input.config.stageID,
+      data: {},
     });
   },
 );
