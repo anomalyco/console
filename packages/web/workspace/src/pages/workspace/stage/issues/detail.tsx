@@ -105,6 +105,14 @@ export const LogsLoading = styled("div", {
       },
     },
   },
+  variants: {
+    slim: {
+      true: {
+        padding: `${theme.space[3.5]} 0`,
+      },
+      false: {},
+    },
+  },
 });
 
 export const LogsLoadingIcon = styled("div", {

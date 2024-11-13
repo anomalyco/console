@@ -569,6 +569,14 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               </Log>
             )}
           </For>
+          <Show when={trimmedLogs()?.length && data.value!.run.status === "updating"}>
+            <LogsLoading slim>
+              <LogsLoadingIcon>
+                <IconArrowPathSpin />
+              </LogsLoadingIcon>
+              <PanelEmptyCopy>Running&hellip;</PanelEmptyCopy>
+            </LogsLoading>
+          </Show>
           <Show when={trimmedLogs()?.length === 0}>
             <Switch>
               <Match
