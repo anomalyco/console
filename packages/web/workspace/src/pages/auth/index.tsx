@@ -21,7 +21,7 @@ const Root = styled("div", {
   variants: {
     form: {
       email: {
-        ...utility.stack(5),
+        ...utility.stack(6),
       },
       code: {
         ...utility.stack(8),
@@ -36,7 +36,7 @@ const Form = styled("form", {
     ...utility.stack(5),
     selectors: {
       [`${Root.selector({ form: "email" })} &`]: {
-        paddingTop: theme.space[5],
+        paddingTop: theme.space[7],
         borderTop: `1px solid ${theme.color.divider.base}`,
       },
       [`${Root.selector({ form: "code" })} &`]: {},
@@ -75,6 +75,24 @@ const Announcement = styled("div", {
     paddingBlock: theme.space[3],
     textAlign: "center",
     lineHeight: 1.4,
+  },
+});
+
+const LegalLinks = styled("div", {
+  base: {
+    ...utility.row(0),
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+});
+
+
+const LegalLink = styled("a", {
+  base: {
+    fontSize: theme.font.size.xs,
+    lineHeight: "normal",
+    color: theme.color.text.dimmed.base,
   },
 });
 
@@ -144,12 +162,26 @@ export function Email() {
             <li>Git push to deploy your apps</li>
             <li>Get alerts for any issues in your apps</li>
             <li>
-              <a href="https://docs.sst.dev/console" target="_blank">
+              <a href="https://sst.dev/docs/console" target="_blank">
                 Learn more
               </a>{" "}
               about how the console works
             </li>
           </NewConsoleTips>
+          <LegalLinks>
+            <LegalLink
+              target="_blank"
+              href="https://sst.dev/legal/privacy-policy"
+            >
+              Privacy Policy
+            </LegalLink>
+            <LegalLink
+              target="_blank"
+              href="https://sst.dev/legal/terms-of-service"
+            >
+              Terms of Service
+            </LegalLink>
+          </LegalLinks>
         </Stack>
       </Stack>
       <Form
