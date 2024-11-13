@@ -100,6 +100,7 @@ const Content = styled(Kobalte.Content<"div">, {
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     boxShadow: theme.color.shadow.drop.medium,
+    zIndex: 10,
     width: 220,
   },
 });

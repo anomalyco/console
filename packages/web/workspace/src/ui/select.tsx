@@ -103,7 +103,7 @@ const DownIcon = styled(Kobalte.Icon<"span">, {
 const Content = styled(Kobalte.Content<"div">, {
   base: {
     marginTop: 0,
-    zIndex: 1,
+    zIndex: 10,
     padding: `${theme.space[1]} 0`,
     border: `1px solid ${theme.color.divider.base}`,
     borderRadius: theme.borderRadius,

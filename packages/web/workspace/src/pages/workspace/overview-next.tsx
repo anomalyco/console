@@ -179,6 +179,19 @@ const CardTitleText = styled("span", {
   },
 });
 
+const CardTitleRightCol = styled("div", {
+  base: {
+    ...utility.row(2),
+    alignItems: "center",
+  },
+});
+
+const CardTitleStatusLink = styled(Link, {
+  base: {
+    zIndex: 2,
+  },
+});
+
 const RepoLink = styled("a", {
   base: {
     ...utility.row(0),
@@ -401,7 +414,7 @@ export function OverviewNext() {
     const showOverflow = createMemo(() => {
       return showApps().includes(props.app.id);
     });
-    const latestRunError = createSubscription(async (tx) => {
+    const lastestRun = createSubscription(async (tx) => {
       const runs = await RunStore.all(tx);
       const run = runs
         .filter((run) => run.appID === props.app.id)
@@ -411,7 +424,7 @@ export function OverviewNext() {
             DateTime.fromISO(a.time.created).toMillis(),
         )[0];
       if (!run) return;
-      return !run.stageID && run.status === "error";
+      return run;
     });
     return (
       <Card>
@@ -423,22 +436,35 @@ export function OverviewNext() {
             </CardTitleIcon>
             <CardTitleText>{props.app.name}</CardTitleText>
           </CardTitle>
-          <Show when={repo.value && latestRunError.value}>
-            <CardTitleErrorLink href={`${props.app.name}/autodeploy`}>
-              <Tag level="danger" type="outline">Error</Tag>
-            </CardTitleErrorLink>
-          </Show>
-          <Show when={repo.value && !latestRunError.value}>
-            <RepoLink
-              target="_blank"
-              rel="noreferrer noopener"
-              href={githubRepo(repo.value!.org.login, repo.value!.repo.name)}
-            >
-              <RepoLinkIcon>
-                <IconGitHub width="14" height="14" />
-              </RepoLinkIcon>
-              <RepoLinkCopy>{repo.value!.repo.name}</RepoLinkCopy>
-            </RepoLink>
+          <Show when={repo.value}>
+            <CardTitleRightCol>
+              <Switch>
+                <Match when={lastestRun.value?.status === "error"}>
+                  <CardTitleStatusLink
+                    href={`${props.app.name}/autodeploy/${lastestRun.value?.id}`}
+                  >
+                    <StatusIcon status="error" />
+                  </CardTitleStatusLink>
+                </Match>
+                <Match when={lastestRun.value?.status === "updating"}>
+                  <CardTitleStatusLink
+                    href={`${props.app.name}/autodeploy/${lastestRun.value?.id}`}
+                  >
+                    <StatusIcon status="updating" />
+                  </CardTitleStatusLink>
+                </Match>
+              </Switch>
+              <RepoLink
+                target="_blank"
+                rel="noreferrer noopener"
+                href={githubRepo(repo.value!.org.login, repo.value!.repo.name)}
+              >
+                <RepoLinkIcon>
+                  <IconGitHub width="14" height="14" />
+                </RepoLinkIcon>
+                <RepoLinkCopy>{repo.value!.repo.name}</RepoLinkCopy>
+              </RepoLink>
+            </CardTitleRightCol>
           </Show>
         </CardHeader>
         <div>
@@ -652,7 +678,7 @@ const StageLink = styled(Link, {
   },
 });
 
-const StageIcon = styled("div", {
+const StatusIcon = styled("div", {
   base: {
     flex: "0 0 auto",
     marginInline: 5,
@@ -819,7 +845,7 @@ function StageCard(props: StageCardProps) {
         >
           <Switch>
             <Match when={props.stage.unsupported}>
-              <StageIcon status="unsupported" />
+              <StatusIcon status="unsupported" />
             </Match>
             <Match
               when={
@@ -827,18 +853,18 @@ function StageCard(props: StageCardProps) {
                 latestUpdate.value?.errors.length === 0
               }
             >
-              <StageIcon status="success" />
+              <StatusIcon status="success" />
             </Match>
             <Match when={latestUpdate.value?.errors.length}>
-              <StageIcon status="error" />
+              <StatusIcon status="error" />
             </Match>
             <Match
               when={latestUpdate.value && !latestUpdate.value.time.completed}
             >
-              <StageIcon status="updating" />
+              <StatusIcon status="updating" />
             </Match>
             <Match when={true}>
-              <StageIcon status="base" />
+              <StatusIcon status="base" />
             </Match>
           </Switch>
           <StageLinkText>{props.stage.name}</StageLinkText>
@@ -850,9 +876,7 @@ function StageCard(props: StageCardProps) {
               app()?.name === local()?.app
             }
           >
-            <StageCardLink href={`${stageUri()}/local`}>
-              <Tag level="tip" type="outline">Local</Tag>
-            </StageCardLink>
+            <Tag level="tip" type="outline">Local</Tag>
           </Match>
           <Match when={latestUpdate.value?.errors.length}>
             <StageCardLink

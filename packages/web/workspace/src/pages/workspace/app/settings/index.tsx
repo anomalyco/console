@@ -317,7 +317,7 @@ const TargetFormFieldCol = styled("div", {
   base: {
     ...utility.row(2),
     flex: 1,
-    alignItems: "flex-end",
+    alignItems: "flex-start",
   },
 });
 
@@ -339,6 +339,11 @@ const TargetAddVarIcon = styled("span", {
 
 const targetFormFieldDropdown = style({
   marginBlock: 4,
+});
+
+const targetFormFieldDropdownFirst = style({
+  marginTop: 29,
+  marginBottom: 4,
 });
 
 const targetFormFieldFlex = style({
@@ -721,7 +726,10 @@ export function Settings() {
                               </Field>
                               <Dropdown
                                 size="sm"
-                                triggerClass={targetFormFieldDropdown}
+                                triggerClass={index() === 0
+                                  ? targetFormFieldDropdownFirst
+                                  : targetFormFieldDropdown
+                                }
                                 icon={
                                   <IconEllipsisVertical
                                     width={18}
