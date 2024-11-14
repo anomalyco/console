@@ -232,11 +232,14 @@ export const subscribeIon = zod(
             inArray(stateResourceTable.type, [
               "aws:lambda/function:Function",
               "aws:cloudwatch/logGroup:LogGroup",
+              "sstv2:aws:Function",
             ]),
             eq(stateResourceTable.workspaceID, useWorkspace()),
             eq(stateResourceTable.stageID, config.stageID),
           ),
         );
+
+      if (!resources.length) return;
 
       const groups = pipe(
         resources,
@@ -249,6 +252,10 @@ export const subscribeIon = zod(
           }
           if (resource.type === "aws:cloudwatch/logGroup:LogGroup") {
             return resource.outputs.name;
+          }
+
+          if (resource.type === "sstv2:aws:Function") {
+            return resource.outputs.enrichment?.logGroup;
           }
         }),
         filter(Boolean),
