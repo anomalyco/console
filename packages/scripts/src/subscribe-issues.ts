@@ -14,30 +14,24 @@ const stages = await db
   .from(stage)
   .where(inArray(stage.workspaceID, await promptWorkspaces()))
   .execute();
-console.log("found", stages.length, "stages");
-await queue(100, stages, async (stage) =>
-  withActor(
-    {
-      type: "system",
-      properties: {
-        workspaceID: stage.workspaceID,
+console.log("found", stages, "stages");
+await queue(
+  1,
+  stages,
+  async (stage) =>
+    await withActor(
+      {
+        type: "system",
+        properties: {
+          workspaceID: stage.workspaceID,
+        },
       },
-    },
-    async () => {
-      withActor(
-        {
-          type: "system",
-          properties: {
-            workspaceID: stage.workspaceID,
-          },
-        },
-        async () => {
-          const config = await Stage.assumeRole(stage.id);
-          if (!config) return;
-          await Issue.subscribeIon(config);
-        },
-      );
-    },
-  ),
+      async () => {
+        const config = await Stage.assumeRole(stage.id);
+        if (!config) return;
+        await Issue.subscribeIon(config);
+        console.log("done");
+      },
+    ),
 );
-console.log("done");
+console.log("done with all");
