@@ -7,6 +7,7 @@ import { issueSubscriber } from "@console/core/issue/issue.sql";
 import { useTransaction } from "@console/core/util/transaction";
 import { warning } from "@console/core/warning/warning.sql";
 import { promptWorkspaces } from "./common";
+import { Issue } from "@console/core/issue";
 
 const stages = await db
   .select()
@@ -23,35 +24,20 @@ await queue(100, stages, async (stage) =>
       },
     },
     async () => {
-      await useTransaction(async (tx) => {
-        await tx
-          .delete(issueSubscriber)
-          .where(
-            and(
-              eq(issueSubscriber.workspaceID, useWorkspace()),
-              eq(issueSubscriber.stageID, stage.id)
-            )
-          )
-          .execute();
-        await tx
-          .delete(warning)
-          .where(
-            and(
-              eq(warning.workspaceID, useWorkspace()),
-              eq(warning.stageID, stage.id),
-              or(
-                eq(warning.type, "log_subscription"),
-                eq(warning.type, "issue_rate_limited")
-              )
-            )
-          )
-          .execute();
-      });
-      console.log(stage.id);
-      await Stage.Events.ResourcesUpdated.publish({
-        stageID: stage.id,
-      });
-    }
-  )
+      withActor(
+        {
+          type: "system",
+          properties: {
+            workspaceID: stage.workspaceID,
+          },
+        },
+        async () => {
+          const config = await Stage.assumeRole(stage.id);
+          if (!config) return;
+          await Issue.subscribeIon(config);
+        },
+      );
+    },
+  ),
 );
 console.log("done");
