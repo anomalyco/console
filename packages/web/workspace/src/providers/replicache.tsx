@@ -157,7 +157,6 @@ const mutators = new Client<ServerType>()
     if (!run) return;
 
     await tx.put(`/runs/${input.id}`, {
-      active: false,
       id: input.id,
       appID: run.appID,
       status: "queued",
@@ -165,11 +164,48 @@ const mutators = new Client<ServerType>()
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
       },
-      trigger: {
-        ...run.trigger,
-        force: (run.trigger.force || input.force) === true ? true : undefined,
-      },
+      trigger: run.trigger,
+      force: (run.force || input.force) === true ? true : undefined,
     });
+  })
+  .mutation("run_manual_deploy", async (tx, input) => {
+    await tx.put(`/runs/${input.id}`, {
+      id: input.id,
+      appID: input.appID,
+      status: "queued",
+      time: {
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      },
+      trigger: {
+        type: "user",
+        action: "deploy",
+        source: "github",
+        ref: input.ref,
+        stage: input.stageName,
+      },
+      force: input.force === true ? true : undefined,
+    });
+  })
+  .mutation("run_cancel", async (tx, input) => {
+    const run = (await RunStore.all(tx)).filter(
+      (run) => run.id === input.runID
+    )[0];
+    if (!run) return;
+
+    await tx.set(
+      run.stageID
+        ? `/runs/${run.stageID}/${input.runID}`
+        : `/runs/${input.runID}`,
+      {
+        ...run,
+        status: "error",
+        error: {
+          type: "run_failed",
+          properties: { message: "Build cancelled" },
+        },
+      }
+    );
   })
   .mutation("run_config_put", async (tx, input) => {
     await RunConfigStore.put(tx, [input.appID, input.id!], {

@@ -22,7 +22,7 @@ import {
   createTransactionEffect,
   useTransaction,
 } from "../util/transaction";
-import { useWorkspace, withActor } from "../actor";
+import { Actor, useActor, useWorkspace, withActor } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, getTableColumns, gt, inArray, isNull } from "../drizzle";
 import { createEvent } from "../event";
@@ -38,6 +38,7 @@ import {
   AutodeployConfigRunner,
   RunErrorType,
   runConfigTable,
+  GitTrigger,
 } from "./run.sql";
 import { App, Stage } from "../app";
 import { RunConfig } from "./config";
@@ -78,6 +79,8 @@ export module Run {
   };
   const ERROR_MESSAGE_MAP = (error: RunError) => {
     switch (error.type) {
+      case "manual_deploy_ref_not_found":
+        return "No git branch, tag, or commit found";
       case "config_not_found":
         return error.properties?.path
           ? `No sst.config.ts was found in ${error.properties.path}`
@@ -151,12 +154,14 @@ export module Run {
       sessionToken: string;
     };
     trigger: Trigger;
+    force?: boolean;
   };
 
   export type ConfigParserEvent = {
     content: string;
     trigger: Trigger;
-    defaultStage: string;
+    defaultStage?: string;
+    manualStage?: string;
   };
 
   export const SstConfig = z.object({
@@ -166,9 +171,8 @@ export module Run {
       providers: z.record(z.any()).optional(),
     }),
     stage: z.string(),
-    console: z.object({
-      autodeploy: AutodeployConfig,
-    }),
+    runner: AutodeployConfigRunner.optional(),
+    isDefaultStage: z.boolean(),
   });
   export type SstConfig = z.infer<typeof SstConfig>;
   export const SstConfigParseError = z.object({
@@ -190,23 +194,12 @@ export module Run {
         runID: z.string().min(1),
       })
     ),
-    Completed: createEvent(
-      "run.completed",
-      z.object({
-        runID: z.string().min(1),
-        stageID: z.string().min(1),
-      })
-    ),
     RunnerStarted: createEvent(
       "runner.started",
       z.object({
         workspaceID: z.string().min(1),
         engine: z.enum(Engine),
         runID: z.string().min(1),
-        logGroup: z.string().min(1),
-        logStream: z.string().min(1),
-        awsRequestId: z.string().min(1).optional(),
-        timestamp: z.number().int(),
       })
     ),
     RunnerCompleted: createEvent(
@@ -234,6 +227,8 @@ export module Run {
     log: Log.optional(),
     config: AutodeployConfig.optional(),
     trigger: Trigger,
+    retrier: Actor.optional(),
+    force: z.boolean().optional(),
     status: z.enum(["queued", "skipped", "updating", "updated", "error"]),
     error: z.custom<RunError>().optional(),
   });
@@ -254,6 +249,8 @@ export module Run {
       },
       log: input.log || undefined,
       trigger: input.trigger,
+      retrier: input.retrier || undefined,
+      force: input.force || undefined,
       error: input.error || undefined,
       status: input.timeCompleted
         ? input.error
@@ -294,6 +291,7 @@ export module Run {
     z.object({
       content: z.string().min(1),
       trigger: Trigger,
+      manualStage: z.string().min(1).optional(),
     }),
     async (input) => {
       const lambda = new LambdaClient({ retryStrategy: RETRY_STRATEGY });
@@ -317,7 +315,9 @@ export module Run {
                     .replace(/-+/g, "-")
                     .replace(/^-/g, "")
                     .replace(/-$/g, "")
-                : `pr-${input.trigger.number}`,
+                : input.trigger.type === "pull_request"
+                ? `pr-${input.trigger.number}`
+                : input.manualStage,
           } satisfies ConfigParserEvent),
         })
       );
@@ -332,7 +332,7 @@ export module Run {
     }
   );
 
-  export const triggerRedeploy = zod(
+  export const triggerRetry = zod(
     z.object({
       id: z.string().cuid2(),
       runID: z.string().cuid2(),
@@ -344,6 +344,7 @@ export module Run {
           .select({
             appID: runTable.appID,
             trigger: runTable.trigger,
+            force: runTable.force,
             path: appRepoTable.path,
             installationID: githubOrgTable.installationID,
           })
@@ -374,12 +375,11 @@ export module Run {
       await createRun({
         id,
         octokit: await Github.useClient(result.installationID),
-        trigger: {
-          ...result.trigger,
-          force: (result.trigger.force || force) === true ? true : undefined,
-        },
+        trigger: result.trigger,
         appID: result.appID,
         pathToConfig: result.path ?? undefined,
+        retrier: useActor(),
+        force: (result.force || force) === true ? true : undefined,
       });
     }
   );
@@ -387,7 +387,7 @@ export module Run {
   export const triggerGitDeploy = zod(
     z.object({
       octokit: z.custom<any>(),
-      trigger: z.custom<Trigger>(),
+      trigger: z.custom<GitTrigger>(),
     }),
     async ({ octokit, trigger }) => {
       const repoID = trigger.repo.id;
@@ -414,6 +414,86 @@ export module Run {
     }
   );
 
+  export const triggerManualDeploy = zod(
+    z.object({
+      id: z.string().cuid2(),
+      ref: z.string().min(1),
+      appID: z.string().cuid2(),
+      stageName: z.string().min(1),
+      force: z.boolean().optional(),
+    }),
+    async ({ id, ref, appID, stageName, force }) => {
+      const result = await useTransaction((tx) =>
+        tx
+          .select({
+            path: appRepoTable.path,
+            installationID: githubOrgTable.installationID,
+            owner: githubOrgTable.login,
+            repoID: githubRepoTable.externalRepoID,
+            repo: githubRepoTable.name,
+          })
+          .from(appRepoTable)
+          .innerJoin(
+            githubRepoTable,
+            eq(appRepoTable.repoID, githubRepoTable.id)
+          )
+          .innerJoin(
+            githubOrgTable,
+            and(
+              eq(githubOrgTable.workspaceID, useWorkspace()),
+              eq(githubRepoTable.githubOrgID, githubOrgTable.id)
+            )
+          )
+          .where(
+            and(
+              eq(appRepoTable.appID, appID),
+              eq(appRepoTable.workspaceID, useWorkspace())
+            )
+          )
+          .execute()
+          .then((x) => x[0])
+      );
+      if (!result) return;
+
+      // Get commit data
+      const octokit = await Github.useClient(result.installationID);
+      let commit;
+      try {
+        const commitData = await octokit.rest.repos.getCommit({
+          owner: result.owner,
+          repo: result.repo,
+          ref,
+        });
+        commit = {
+          id: commitData.data.sha,
+          message: commitData.data.commit.message?.substring(0, 100)!,
+        };
+      } catch (e) {}
+
+      await createRun({
+        id,
+        octokit,
+        trigger: {
+          type: "user",
+          action: "deploy",
+          source: "github",
+          repo: {
+            id: result.repoID,
+            owner: result.owner,
+            repo: result.repo,
+          },
+          ref,
+          commit,
+          actor: useActor(),
+        },
+        appID,
+        manualStageName: stageName,
+        pathToConfig: result.path ?? undefined,
+        force: force === true ? true : undefined,
+      });
+    }
+  );
+
   const createRun = zod(
     z.object({
       id: z.string().cuid2().optional(),
@@ -421,14 +501,152 @@ export module Run {
       trigger: z.custom<Trigger>(),
       appID: z.string().cuid2(),
       pathToConfig: z.string().min(1).optional(),
+      retrier: z.custom<Actor>().optional(),
+      force: z.boolean().optional(),
+      manualStageName: z.string().min(1).optional(),
     }),
-    async ({ id, octokit, trigger, appID, pathToConfig }) => {
-      const commitID = trigger.commit.id;
-      const runID = id ?? createId();
+    async (input) => {
+      const ref =
+        input.trigger.type === "user"
+          ? input.trigger.ref
+          : input.trigger.commit.id;
+      const runID = input.id ?? createId();
 
       let error: RunError | undefined;
       try {
-        error = await handler();
+        error = await (async () => {
+          // Handle no commit data
+          if (!input.trigger.commit)
+            return { type: "manual_deploy_ref_not_found" as const };
+
+          // Get `sst.config.ts` file
+          let content;
+          try {
+            const file = await input.octokit.rest.repos.getContent({
+              owner: input.trigger.repo.owner,
+              repo: input.trigger.repo.repo,
+              ref,
+              path: path.join(input.pathToConfig ?? "", "sst.config.ts"),
+            });
+            content = file.data?.content;
+          } catch (e) {}
+          if (!content)
+            return {
+              type: "config_not_found" as const,
+              properties: input.pathToConfig
+                ? { path: input.pathToConfig }
+                : undefined,
+            };
+
+          // Parse `sst.config.ts`
+          const sstConfig = await parseSstConfig({
+            content,
+            trigger: input.trigger,
+            manualStage: input.manualStageName,
+          });
+          if ("error" in sstConfig)
+            return {
+              type: sstConfig.error,
+            };
+
+          const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
+          const stageName = sstConfig.stage;
+
+          // Validate app name
+          const app = await App.fromID(input.appID);
+          if (app?.name !== sstConfig.app.name)
+            return {
+              type: "config_app_name_mismatch" as const,
+              properties: {
+                name: sstConfig.app.name,
+              },
+            };
+
+          // Do not remove branches with default `autodeploy` config
+          if (sstConfig.isDefaultStage) {
+            if (
+              input.trigger.type === "branch" &&
+              input.trigger.action === "removed"
+            )
+              return { type: "config_branch_remove_skipped" as const };
+            if (input.trigger.type === "tag")
+              return { type: "config_tag_skipped" as const };
+          }
+
+          // Get AWS Account ID from Run Env
+          const allEnv = await RunConfig.list(input.appID);
+          if (!allEnv.length) return { type: "target_not_found" as const };
+          const env = allEnv.find((row) =>
+            minimatch(stageName, row.stagePattern)
+          );
+          if (!env)
+            return {
+              type: "target_not_matched" as const,
+              properties: { stage: stageName },
+            };
+          if (!env.awsAccountExternalID)
+            return {
+              type: "target_missing_aws_account" as const,
+              properties: { target: env.stagePattern },
+            };
+          const awsAccount = await AWS.Account.fromExternalID(
+            env.awsAccountExternalID
+          );
+          if (!awsAccount)
+            return {
+              type: "target_missing_workspace" as const,
+              properties: { target: env.stagePattern },
+            };
+
+          // Create stage if stage not exist
+          let stageID = await App.Stage.fromName({
+            appID: input.appID,
+            name: stageName,
+            region,
+            awsAccountID: awsAccount.id,
+          }).then((s) => s?.id!);
+
+          if (!stageID) {
+            console.log("creating stage", { appID: input.appID, stageID });
+            stageID = createId();
+            await useTransaction((tx) =>
+              tx.insert(stage).ignore().values({
+                id: stageID,
+                name: stageName,
+                region,
+                awsAccountID: awsAccount.id,
+                workspaceID: useWorkspace(),
+                appID: input.appID,
+              })
+            );
+          }
+
+          // Create Run
+          await useTransaction(async (tx) => {
+            await tx
+              .insert(runTable)
+              .values({
+                id: runID,
+                workspaceID: useWorkspace(),
+                appID: input.appID,
+                stageID,
+                trigger: input.trigger,
+                retrier: input.retrier,
+                force: input.force,
+                config: {
+                  target: {
+                    stage: sstConfig.stage,
+                    runner: sstConfig.runner,
+                  },
+                },
+              })
+              .execute();
+
+            await createTransactionEffect(() =>
+              bus.publish(SSTResource.Bus, Event.Created, { stageID })
+            );
+          });
+        })();
       } catch (e: any) {
         console.error(e);
         error = { type: "unknown", properties: { message: e.message } };
@@ -442,8 +660,10 @@ export module Run {
           .values({
             id: runID,
             workspaceID: useWorkspace(),
-            appID,
-            trigger,
+            appID: input.appID,
+            trigger: input.trigger,
+            retrier: input.retrier,
+            force: input.force,
             error,
           })
           .execute();
@@ -451,122 +671,6 @@ export module Run {
           bus.publish(SSTResource.Bus, Event.CreateFailed, { runID })
         );
       });
-
-      async function handler() {
-        // Get `sst.config.ts` file
-        let content;
-        try {
-          const file = await octokit.rest.repos.getContent({
-            owner: trigger.repo.owner,
-            repo: trigger.repo.repo,
-            ref: commitID,
-            path: path.join(pathToConfig ?? "", "sst.config.ts"),
-          });
-          content = file.data?.content;
-        } catch (e) {}
-        // sst.config.ts not found
-        if (!content)
-          return {
-            type: "config_not_found" as const,
-            properties: pathToConfig ? { path: pathToConfig } : undefined,
-          };
-
-        const sstConfig = await parseSstConfig({ content, trigger });
-
-        // Failed to parse Autodeploy config
-        if ("error" in sstConfig)
-          return {
-            type: sstConfig.error,
-          };
-
-        const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
-        const stageName = sstConfig.stage;
-
-        // Validate app name
-        const app = await App.fromID(appID);
-        if (app?.name !== sstConfig.app.name)
-          return {
-            type: "config_app_name_mismatch" as const,
-            properties: {
-              name: sstConfig.app.name,
-            },
-          };
-
-        // Do not remove branches with default `autodeploy` config
-        if (!sstConfig.console.autodeploy.target) {
-          if (trigger.type === "branch" && trigger.action === "removed")
-            return { type: "config_branch_remove_skipped" as const };
-          if (trigger.type === "tag")
-            return { type: "config_tag_skipped" as const };
-        }
-
-        // Get AWS Account ID from Run Env
-        const allEnv = await RunConfig.list(appID);
-        if (!allEnv.length) return { type: "target_not_found" as const };
-        const env = allEnv.find((row) =>
-          minimatch(stageName, row.stagePattern)
-        );
-        if (!env)
-          return {
-            type: "target_not_matched" as const,
-            properties: { stage: stageName },
-          };
-        if (!env.awsAccountExternalID)
-          return {
-            type: "target_missing_aws_account" as const,
-            properties: { target: env.stagePattern },
-          };
-        const awsAccount = await AWS.Account.fromExternalID(
-          env.awsAccountExternalID
-        );
-        if (!awsAccount)
-          return {
-            type: "target_missing_workspace" as const,
-            properties: { target: env.stagePattern },
-          };
-
-        // Create stage if stage not exist
-        let stageID = await App.Stage.fromName({
-          appID,
-          name: stageName,
-          region,
-          awsAccountID: awsAccount.id,
-        }).then((s) => s?.id!);
-
-        if (!stageID) {
-          console.log("creating stage", { appID, stageID });
-          stageID = createId();
-          await useTransaction((tx) =>
-            tx.insert(stage).ignore().values({
-              id: stageID,
-              name: stageName,
-              region,
-              awsAccountID: awsAccount.id,
-              workspaceID: useWorkspace(),
-              appID,
-            })
-          );
-        }
-
-        // Create Run
-        await useTransaction(async (tx) => {
-          await tx
-            .insert(runTable)
-            .values({
-              id: runID,
-              workspaceID: useWorkspace(),
-              appID,
-              stageID,
-              trigger,
-              config: sstConfig.console.autodeploy,
-            })
-            .execute();
-
-          await createTransactionEffect(() =>
-            bus.publish(SSTResource.Bus, Event.Created, { stageID })
-          );
-        });
-      }
     }
   );
 
@@ -691,11 +795,32 @@ export module Run {
       if (!gitRepo) throw new Error("Github Repo not found");
       const cloneUrl = await Github.getCloneUrl(gitRepo);
 
+      // Check if build is cancelled
+      // Note: build can be cancelled by user while this function is running
+      //       (ie. the runner is being created)
+      const runCheck = await useTransaction((tx) =>
+        tx
+          .select()
+          .from(runTable)
+          .where(
+            and(
+              eq(runTable.workspaceID, useWorkspace()),
+              eq(runTable.id, run.id)
+            )
+          )
+          .execute()
+          .then((x) => x[0])
+      );
+      if (runCheck?.timeCompleted) {
+        await orchestrate(run.stageID);
+        return;
+      }
+
       // Run runner
       const timeoutInMinutes =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
         CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-      await CodebuildRunner.invoke({
+      const codebuildBuild = await CodebuildRunner.invoke({
         credentials: awsConfig.credentials,
         region: runner.region,
         resource: runner.resource,
@@ -715,6 +840,7 @@ export module Run {
           },
           credentials: awsConfig.credentials,
           trigger: run.trigger,
+          force: run.force ?? undefined,
         },
         timeoutInMinutes,
       });
@@ -723,6 +849,23 @@ export module Run {
       const now = new Date();
       const runnerID = runner.id;
       await useTransaction(async (tx) => {
+        await tx
+          .update(runTable)
+          .set({
+            log: {
+              engine: "codebuild",
+              logGroup: codebuildBuild.logGroup,
+              logStream: codebuildBuild.logStream,
+            },
+          })
+          .where(
+            and(
+              eq(runTable.id, run.id),
+              eq(runTable.workspaceID, useWorkspace())
+            )
+          )
+          .execute();
+
         await tx
           .update(runnerTable)
           .set({ timeRun: now })
@@ -875,14 +1018,10 @@ export module Run {
             )
           )
           .execute();
-
-        await createTransactionEffect(() =>
-          bus.publish(SSTResource.Bus, Event.Completed, {
-            runID,
-            stageID: run.stageID!,
-          })
-        );
       });
+
+      await orchestrate(run.stageID!);
+      await alert(runID);
     }
   );
 
@@ -890,23 +1029,12 @@ export module Run {
     z.object({
       engine: z.enum(Engine),
       runID: z.string().min(1),
-      awsRequestId: z.string().min(1).optional(),
-      logGroup: z.string().min(1),
-      logStream: z.string().min(1),
-      timestamp: z.number().int(),
     }),
     async (input) =>
       useTransaction(async (tx) => {
         await tx
           .update(runTable)
-          .set({
-            timeStarted: new Date(),
-            log: {
-              engine: "codebuild",
-              logGroup: input.logGroup,
-              logStream: input.logStream,
-            },
-          })
+          .set({ timeStarted: new Date() })
           .where(
             and(
               eq(runTable.id, input.runID),
@@ -1275,7 +1403,6 @@ export module Run {
         .execute()
         .then((x) => x[0])
     );
-    console.log("FOUND RUN!!", run);
     if (!run) return;
 
     const stage =
@@ -1320,8 +1447,14 @@ export module Run {
         message = ERROR_MESSAGE_MAP(run.error!);
       }
     }
-    const commit = run.trigger.commit.id.slice(0, 7);
-    const commitUrl = `https://github.com/${run.trigger.repo.owner}/${run.trigger.repo.repo}/commit/${run.trigger.commit.id}`;
+    const commit =
+      run.trigger.type === "user"
+        ? run.trigger.ref
+        : run.trigger.commit?.id.slice(0, 7);
+    const commitUrl =
+      run.trigger.type === "user"
+        ? `https://github.com/${run.trigger.repo.owner}/${run.trigger.repo.repo}/tree/${run.trigger.ref}`
+        : `https://github.com/${run.trigger.repo.owner}/${run.trigger.repo.repo}/commit/${run.trigger.commit.id}`;
     const consoleUrl = "https://console.sst.dev";
     const runUrl = stageName
       ? `https://console.sst.dev/${workspaceSlug}/${appName}/${stageName}/autodeploy/${runID}`

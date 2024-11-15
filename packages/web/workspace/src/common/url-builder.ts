@@ -6,14 +6,10 @@ export function githubCommit(repo: string, commit: string) {
   return `${repo}/commit/${commit}`;
 }
 
-export function githubBranch(repo: string, branch: string) {
-  return `${repo}/tree/${branch}`;
+export function githubRef(repo: string, ref: string) {
+  return `${repo}/tree/${ref}`;
 }
 
 export function githubPr(repo: string, pr: number) {
   return `${repo}/pull/${pr}`;
-}
-
-export function githubTag(repo: string, tag: string) {
-  return `${repo}/tree/${tag}`;
 }

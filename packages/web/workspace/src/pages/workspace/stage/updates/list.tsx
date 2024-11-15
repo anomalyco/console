@@ -14,9 +14,8 @@ import { createSubscription } from "$/providers/replicache";
 import {
   githubPr,
   githubRepo,
-  githubBranch,
+  githubRef,
   githubCommit,
-  githubTag,
 } from "$/common/url-builder";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
@@ -349,7 +348,7 @@ function Update(props: UpdateProps) {
   });
 
   const update = createSubscription((tx) =>
-    StateUpdateStore.get(tx, ctx.stage.id, props.id),
+    StateUpdateStore.get(tx, ctx.stage.id, props.id)
   );
 
   const runInfo = createMemo(() => {
@@ -364,16 +363,21 @@ function Update(props: UpdateProps) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.branch;
+        ? trigger.tag
+        : trigger.type === "branch"
+        ? trigger.branch
+        : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-          ? githubTag(repoURL, trigger.tag)
-          : githubBranch(repoURL, trigger.branch);
+        ? githubRef(repoURL, trigger.tag)
+        : trigger.type === "branch"
+        ? githubRef(repoURL, trigger.branch)
+        : githubRef(repoURL, trigger.ref);
+    const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-    return { trigger, repoURL, branch, uri };
+    return { trigger, repoURL, branch, uri, gitUser };
   });
 
   const status = createMemo(() => {
@@ -403,10 +407,13 @@ function Update(props: UpdateProps) {
         <UpdateStatus>
           <UpdateStatusIcon
             href={props.id}
-            title={status() === "error"
-              ? errorCountCopy(errors())
-              : STATUS_MAP[status()!]}
-            status={status()} />
+            title={
+              status() === "error"
+                ? errorCountCopy(errors())
+                : STATUS_MAP[status()!]
+            }
+            status={status()}
+          />
           <UpdateLink href={props.id}>
             <UpdateLinkPrefix>#</UpdateLinkPrefix>
             {props.index}
@@ -415,14 +422,17 @@ function Update(props: UpdateProps) {
         <UpdateSource>
           <Switch>
             <Match when={run.value!}>
-              <UpdateSenderAvatar title={runInfo()!.trigger.sender.username}>
-                <img
-                  width="24"
-                  height="24"
-                  src={`https://avatars.githubusercontent.com/u/${runInfo()!.trigger.sender.id
+              <Show when={runInfo()!.gitUser}>
+                <UpdateSenderAvatar title={runInfo()!.gitUser!.username}>
+                  <img
+                    width="24"
+                    height="24"
+                    src={`https://avatars.githubusercontent.com/u/${
+                      runInfo()!.gitUser!.id
                     }?s=48&v=4`}
-                />
-              </UpdateSenderAvatar>
+                  />
+                </UpdateSenderAvatar>
+              </Show>
             </Match>
             <Match when={!runID}>
               <UpdateSenderIcon title="From the CLI">
@@ -445,9 +455,7 @@ function Update(props: UpdateProps) {
                   </Match>
                 </Switch>
               </UpdateGitIcon>
-              <UpdateGitBranch>
-                {runInfo()!.branch}
-              </UpdateGitBranch>
+              <UpdateGitBranch>{runInfo()!.branch}</UpdateGitBranch>
             </UpdateGitBranchLink>
           </Show>
         </UpdateSource>
@@ -464,7 +472,7 @@ function Update(props: UpdateProps) {
         <Show when={props.timeStarted} fallback={<UpdateTime>—</UpdateTime>}>
           <UpdateTime
             title={DateTime.fromISO(props.timeStarted!).toLocaleString(
-              DateTime.DATETIME_FULL,
+              DateTime.DATETIME_FULL
             )}
           >
             {formatSinceTime(DateTime.fromISO(props.timeStarted!).toSQL()!)}
@@ -492,7 +500,7 @@ function ChangeLegend(props: ChangeLegendProps) {
 
   const widths = createMemo(() => {
     const nonZero = [same(), created(), updated(), deleted()].filter(
-      (n) => n !== 0,
+      (n) => n !== 0
     ).length;
 
     let sameWidth =
@@ -516,7 +524,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         sameWidth,
         createdWidth,
         updatedWidth,
-        deletedWidth,
+        deletedWidth
       );
       if (maxWidth === sameWidth) {
         sameWidth += widthDifference;
@@ -581,7 +589,7 @@ export function List() {
   const ctx = useStageContext();
   const updates = createSubscription(
     (tx) => StateUpdateStore.forStage(tx, ctx.stage.id),
-    [],
+    []
   );
 
   return (

@@ -18,9 +18,8 @@ import { createSubscription } from "$/providers/replicache";
 import {
   githubPr,
   githubRepo,
-  githubBranch,
+  githubRef,
   githubCommit,
-  githubTag,
 } from "$/common/url-builder";
 import { RunStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
@@ -30,6 +29,8 @@ import { utility } from "$/ui/utility";
 
 export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   switch (error.type) {
+    case "manual_deploy_ref_not_found":
+      return "No git commit found for the branch, tag, or commit hash";
     case "config_not_found":
       return error.properties?.path
         ? `No sst.config.ts was found in ${error.properties.path}`
@@ -392,20 +393,25 @@ function RunItem({ run }: { run: Run.Run }) {
       trigger.source === "github"
         ? githubRepo(trigger.repo.owner, trigger.repo.repo)
         : "";
-    const branch =
+    const ref =
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.branch;
+        ? trigger.tag
+        : trigger.type === "branch"
+        ? trigger.branch
+        : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-          ? githubTag(repoURL, trigger.tag)
-          : githubBranch(repoURL, trigger.branch);
+        ? githubRef(repoURL, trigger.tag)
+        : trigger.type === "branch"
+        ? githubRef(repoURL, trigger.branch)
+        : githubRef(repoURL, trigger.ref);
+    const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-    return { trigger, repoURL, branch, uri };
+    return { trigger, repoURL, ref, uri, gitUser };
   });
 
   return (
@@ -432,20 +438,22 @@ function RunItem({ run }: { run: Run.Run }) {
       </RunLeftCol>
       <RunRightCol>
         <RunGit>
-          <RunSenderAvatar title={runInfo()!.trigger.sender.username}>
-            <img
-              width="24"
-              height="24"
-              src={`https://avatars.githubusercontent.com/u/${
-                runInfo()!.trigger.sender.id
-              }?s=48&v=4`}
-            />
-          </RunSenderAvatar>
+          <Show when={runInfo()!.gitUser}>
+            <RunSenderAvatar title={runInfo()!.gitUser!.username}>
+              <img
+                width="24"
+                height="24"
+                src={`https://avatars.githubusercontent.com/u/${
+                  runInfo()!.gitUser!.id
+                }?s=48&v=4`}
+              />
+            </RunSenderAvatar>
+          </Show>
           <RunGitLink
             target="_blank"
             href={githubCommit(
               runInfo()!.repoURL,
-              runInfo()!.trigger.commit.id,
+              runInfo()!.trigger.commit.id
             )}
           >
             <RunGitIcon size="md">
@@ -469,7 +477,7 @@ function RunItem({ run }: { run: Run.Run }) {
                 </Match>
               </Switch>
             </RunGitIcon>
-            <RunGitBranch>{runInfo()!.branch}</RunGitBranch>
+            <RunGitBranch>{runInfo()!.ref}</RunGitBranch>
           </RunGitLink>
           <Show when={runInfo()!.trigger.commit.message}>
             <RunGitMessage>{runInfo()!.trigger.commit.message}</RunGitMessage>
@@ -478,7 +486,7 @@ function RunItem({ run }: { run: Run.Run }) {
         <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
           <RunTime
             title={DateTime.fromISO(run.time.created!).toLocaleString(
-              DateTime.DATETIME_FULL,
+              DateTime.DATETIME_FULL
             )}
           >
             {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}

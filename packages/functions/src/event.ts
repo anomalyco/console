@@ -30,7 +30,6 @@ export const handler = bus.subscriber(
     Issue.Events.IssueDetected,
     Run.Event.Created,
     Run.Event.CreateFailed,
-    Run.Event.Completed,
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
@@ -150,12 +149,6 @@ export const handler = bus.subscriber(
           await Run.alert(evt.properties.runID);
           break;
         }
-
-        case Run.Event.Completed.type: {
-          await Run.orchestrate(evt.properties.stageID);
-          await Run.alert(evt.properties.runID);
-          break;
-        }
       }
-    }),
+    })
 );

@@ -1,7 +1,7 @@
 import { pipe, filter, sortBy } from "remeda";
 import { DateTime } from "luxon";
 import { Row } from "$/ui/layout";
-import { Link } from "@solidjs/router";
+import { Link, useNavigate } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { useAppContext } from "../context";
 import {
@@ -9,27 +9,34 @@ import {
   IconExclamationTriangle,
   IconTag,
 } from "$/ui/icons";
-import { inputFocusStyles } from "$/ui/form";
+import { FormField, Input, inputFocusStyles } from "$/ui/form";
 import type { Run } from "@console/core/run";
 import { globalKeyframes } from "@macaron-css/core";
 import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
 import { formatCommit, formatSinceTime } from "$/common/format";
-import { createSubscription } from "$/providers/replicache";
+import { createSubscription, useReplicache } from "$/providers/replicache";
 import {
   githubPr,
   githubRepo,
-  githubBranch,
+  githubRef,
   githubCommit,
-  githubTag,
 } from "$/common/url-builder";
 import { RunStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
+import { Text } from "$/ui/text";
+import { useWorkspace } from "../../context";
+import { Button } from "$/ui/button";
+import { createId } from "@paralleldrive/cuid2";
+import { boolean, minLength, object, string } from "valibot";
+import { createForm, valiForm } from "@modular-forms/solid";
 
 export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   switch (error.type) {
+    case "manual_deploy_ref_not_found":
+      return "No git branch, tag, or commit found";
     case "config_not_found":
       return error.properties?.path
         ? `No sst.config.ts was found in ${error.properties.path}`
@@ -391,34 +398,42 @@ function RunItem({ run }: { run: Run.Run }) {
       trigger.source === "github"
         ? githubRepo(trigger.repo.owner, trigger.repo.repo)
         : "";
-    const branch =
+    const ref =
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.branch;
+        ? trigger.tag
+        : trigger.type === "branch"
+        ? trigger.branch
+        : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-          ? githubTag(repoURL, trigger.tag)
-          : githubBranch(repoURL, trigger.branch);
+        ? githubRef(repoURL, trigger.tag)
+        : trigger.type === "branch"
+        ? githubRef(repoURL, trigger.branch)
+        : githubRef(repoURL, trigger.ref);
+    const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-    return { trigger, repoURL, branch, uri };
+    return { trigger, repoURL, ref, uri, gitUser };
   });
 
   return (
     <RunRoot>
       <RunBlockLink href={run.id} />
       <RunCol1>
-        <RunSenderAvatar title={runInfo()!.trigger.sender.username}>
-          <img
-            width="24"
-            height="24"
-            src={`https://avatars.githubusercontent.com/u/${runInfo()!.trigger.sender.id
+        <Show when={runInfo()!.gitUser}>
+          <RunSenderAvatar title={runInfo()!.gitUser!.username}>
+            <img
+              width="24"
+              height="24"
+              src={`https://avatars.githubusercontent.com/u/${
+                runInfo()!.gitUser!.id
               }?s=48&v=4`}
-          />
-        </RunSenderAvatar>
+            />
+          </RunSenderAvatar>
+        </Show>
         <RunGitEvent>
           <RunGitIcon size="md">
             <Switch>
@@ -433,7 +448,7 @@ function RunItem({ run }: { run: Run.Run }) {
               </Match>
             </Switch>
           </RunGitIcon>
-          <RunGitBranch href={run.id}>{runInfo()!.branch}</RunGitBranch>
+          <RunGitBranch href={run.id}>{runInfo()!.ref}</RunGitBranch>
         </RunGitEvent>
       </RunCol1>
       <RunCol2>
@@ -444,9 +459,13 @@ function RunItem({ run }: { run: Run.Run }) {
             </RunMessageIcon>
             <RunMessageCopy>{ERROR_MAP(run.error!)}</RunMessageCopy>
           </Match>
-          <Match when={
-            run.status === "queued" || run.status === "updating" || run.status === "skipped"
-          }>
+          <Match
+            when={
+              run.status === "queued" ||
+              run.status === "updating" ||
+              run.status === "skipped"
+            }
+          >
             <RunCircleIcon status={run.status} />
             <RunStatusCopy>{STATUS_MAP[run.status]}</RunStatusCopy>
           </Match>
@@ -461,44 +480,126 @@ function RunItem({ run }: { run: Run.Run }) {
         </Switch>
       </RunCol2>
       <RunGit>
-        <RunGitLink
-          target="_blank"
-          rel="noreferrer noopener"
-          href={githubCommit(
-            runInfo()!.repoURL,
-            runInfo()!.trigger.commit.id,
-          )}
-        >
-          <RunGitIcon size="sm">
-            <IconCommit />
-          </RunGitIcon>
-          <RunGitCommit>
-            {formatCommit(runInfo()!.trigger.commit.id)}
-          </RunGitCommit>
-        </RunGitLink>
-        <Show when={runInfo()!.trigger.commit.message}>
-          <RunGitMessage
+        <Show when={runInfo()!.trigger.commit}>
+          <RunGitLink
             target="_blank"
             rel="noreferrer noopener"
             href={githubCommit(
               runInfo()!.repoURL,
-              runInfo()!.trigger.commit.id,
+              runInfo()!.trigger.commit!.id
             )}
           >
-            {runInfo()!.trigger.commit.message}
-          </RunGitMessage>
+            <RunGitIcon size="sm">
+              <IconCommit />
+            </RunGitIcon>
+            <RunGitCommit>
+              {formatCommit(runInfo()!.trigger.commit!.id)}
+            </RunGitCommit>
+          </RunGitLink>
+          <Show when={runInfo()!.trigger.commit!.message}>
+            <RunGitMessage
+              target="_blank"
+              rel="noreferrer noopener"
+              href={githubCommit(
+                runInfo()!.repoURL,
+                runInfo()!.trigger.commit!.id
+              )}
+            >
+              {runInfo()!.trigger.commit!.message}
+            </RunGitMessage>
+          </Show>
         </Show>
       </RunGit>
       <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
         <RunTime
           title={DateTime.fromISO(run.time.created!).toLocaleString(
-            DateTime.DATETIME_FULL,
+            DateTime.DATETIME_FULL
           )}
         >
           {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}
         </RunTime>
       </Show>
     </RunRoot>
+  );
+}
+
+function ManualDeploy() {
+  const ctx = useAppContext();
+  const workspace = useWorkspace();
+  const nav = useNavigate();
+  const rep = useReplicache();
+  const [form, { Form, Field }] = createForm({
+    validate: valiForm(
+      object({
+        ref: string([minLength(1, "Enter a branch, tag, or commit hash")]),
+        stage: string([minLength(1, "Enter a stage")]),
+        force: boolean(),
+      })
+    ),
+  });
+
+  return (
+    <Show when={workspace().slug === "frank"}>
+      <Form
+        onSubmit={async (data) => {
+          const id = createId();
+          await rep().mutate.run_manual_deploy({
+            id,
+            appID: ctx.app.id,
+            ref: data.ref,
+            stageName: data.stage,
+            force: data.force,
+          });
+          nav(`./${id}`);
+        }}
+      >
+        <Field name="ref">
+          {(field, props) => (
+            <FormField label={"Ref"}>
+              <Input
+                {...props}
+                autofocus
+                type="text"
+                placeholder="Enter a branch, tag, or commit hash"
+                value={field.value || ""}
+              />
+            </FormField>
+          )}
+        </Field>
+        <Field name="stage">
+          {(field, props) => (
+            <FormField label={"Stage"}>
+              <Input
+                {...props}
+                autofocus
+                type="text"
+                placeholder="Enter the name of the stage"
+                value={field.value || ""}
+              />
+            </FormField>
+          )}
+        </Field>
+        <Field name="force" type="boolean">
+          {(field, props) => (
+            <FormField label={"Force"}>
+              <Row>
+                <input
+                  type="checkbox"
+                  {...props}
+                  checked={field.value || false}
+                />
+                <Text>
+                  Force (Do not use cache and unlock the stage if locked)
+                </Text>
+              </Row>
+            </FormField>
+          )}
+        </Field>
+        <Button type="submit" color="success">
+          Manual deploy
+        </Button>
+      </Form>
+    </Show>
   );
 }
 
@@ -510,12 +611,13 @@ export function List() {
     return pipe(
       all,
       filter((run) => run.appID === ctx.app.id),
-      sortBy([(run) => run.time.created, "desc"]),
+      sortBy([(run) => run.time.created, "desc"])
     );
   });
 
   return (
     <Content>
+      <ManualDeploy />
       <Show when={runs.value && runs.value.length === 0}>
         <EmptyRunsSign>
           <EmptyRunsHelper>

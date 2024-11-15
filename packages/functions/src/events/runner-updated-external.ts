@@ -19,10 +19,6 @@ export const handler = bus.subscriber(
             await Run.markRunStarted({
               engine: evt.properties.engine,
               runID: evt.properties.runID,
-              awsRequestId: evt.properties.awsRequestId,
-              logGroup: evt.properties.logGroup,
-              logStream: evt.properties.logStream,
-              timestamp: evt.properties.timestamp,
             });
             break;
           case Run.Event.RunnerCompleted.type:

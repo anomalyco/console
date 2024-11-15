@@ -112,7 +112,9 @@ export const server = new Server()
   .expose("app_repo_connect", AppRepo.connect)
   .expose("app_repo_disconnect", AppRepo.disconnect)
   .expose("app_repo_path_put", AppRepo.putPath)
-  .expose("run_redeploy", Run.triggerRedeploy)
+  .expose("run_redeploy", Run.triggerRetry)
+  .expose("run_manual_deploy", Run.triggerManualDeploy)
+  .expose("run_cancel", Run.cancelRun)
   .expose("run_config_put", RunConfig.put)
   .expose("run_config_remove", RunConfig.remove);
 

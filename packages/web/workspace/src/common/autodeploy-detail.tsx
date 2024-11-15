@@ -38,9 +38,8 @@ import { useReplicacheStatus } from "$/providers/replicache-status";
 import {
   githubPr,
   githubRepo,
-  githubBranch,
+  githubRef,
   githubCommit,
-  githubTag,
 } from "$/common/url-builder";
 import { pipe, dropWhile, drop, takeWhile, filter } from "remeda";
 import { useWorkspace } from "../pages/workspace/context";
@@ -284,6 +283,7 @@ interface AutodeployDetailProps {
 }
 export function AutodeployDetail(props: AutodeployDetailProps) {
   const params = useParams();
+  const workspace = useWorkspace();
   const rep = useReplicache();
   const replicacheStatus = useReplicacheStatus();
   const nav = useNavigate();
@@ -342,38 +342,61 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             </PageTitleMessage>
           </Match>
         </Switch>
-        <Show when={data.value!.run.status === "error"}>
-          <Row space="1.5" vertical="center">
-            <Button
-              onClick={async (e) => {
-                const force =
-                  e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
-                    "input[name='force']:checked"
-                  )?.value;
 
-                const id = createId();
-                await rep().mutate.run_redeploy({
-                  id,
-                  runID: data.value!.run.id,
-                  force: force === "true",
-                });
-                nav(`../${id}`);
-              }}
-              color="secondary"
-              size="sm"
-            >
-              Retry deploy
-            </Button>
-            <ForceCheckbox
-              name="force"
-              type="checkbox"
-              value="true"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
-            <Text>Force (Do not use cache and unlock the stage if locked)</Text>
-          </Row>
+        <Show when={workspace().slug === "frank"}>
+          {/* Retry button */}
+          <Show when={data.value!.run.status === "error"}>
+            <Row space="1.5" vertical="center">
+              <Button
+                onClick={async (e) => {
+                  const force =
+                    e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
+                      "input[name='force']:checked"
+                    )?.value;
+
+                  const id = createId();
+                  await rep().mutate.run_redeploy({
+                    id,
+                    runID: data.value!.run.id,
+                    force: force === "true",
+                  });
+                  nav(`../${id}`);
+                }}
+                color="secondary"
+                size="sm"
+              >
+                Retry deploy
+              </Button>
+              <ForceCheckbox
+                name="force"
+                type="checkbox"
+                value="true"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              />
+              <Text>
+                Force (Do not use cache and unlock the stage if locked)
+              </Text>
+            </Row>
+          </Show>
+
+          {/* Cancel button */}
+          <Show when={["queued", "updating"].includes(data.value!.run.status)}>
+            <Row space="1.5" vertical="center">
+              <Button
+                onClick={async (e) => {
+                  await rep().mutate.run_cancel({
+                    runID: data.value!.run.id,
+                  });
+                }}
+                color="secondary"
+                size="sm"
+              >
+                Cancel deploy
+              </Button>
+            </Row>
+          </Show>
         </Show>
       </Stack>
     );
@@ -387,20 +410,25 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         : ""
     );
     const runInfo = createMemo(() => {
-      const branch =
+      const ref =
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
           ? trigger.tag
-          : trigger.branch;
+          : trigger.type === "branch"
+          ? trigger.branch
+          : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-          ? githubTag(repoURL(), trigger.tag)
-          : githubBranch(repoURL(), trigger.branch);
+          ? githubRef(repoURL(), trigger.tag)
+          : trigger.type === "branch"
+          ? githubRef(repoURL(), trigger.branch)
+          : githubRef(repoURL(), trigger.ref);
+      const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-      return { trigger, branch, uri };
+      return { trigger, ref, uri, gitUser };
     });
     const appPath = props.routeType === "app" ? "../.." : "../../..";
     return (
@@ -410,47 +438,51 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             <PanelTitle>Commit</PanelTitle>
             <GitInfo>
               <Row space="1.5" vertical="center">
-                <GitAvatar title={trigger.sender.username}>
-                  <img
-                    width={AVATAR_SIZE}
-                    height={AVATAR_SIZE}
-                    src={`https://avatars.githubusercontent.com/u/${
-                      trigger.sender.id
-                    }?s=${2 * AVATAR_SIZE}&v=4`}
-                  />
-                </GitAvatar>
-                <Stack space="0.5">
-                  <GitLink
-                    target="_blank"
-                    rel="noreferrer"
-                    href={githubCommit(repoURL(), trigger.commit.id)}
-                  >
-                    <GitIcon size="md">
-                      <IconCommit />
-                    </GitIcon>
-                    <GitCommit>{formatCommit(trigger.commit.id)}</GitCommit>
-                  </GitLink>
-                  <GitLink
-                    target="_blank"
-                    rel="noreferrer"
-                    href={runInfo()!.uri}
-                  >
-                    <GitIcon size="sm">
-                      <Switch>
-                        <Match when={trigger.type === "pull_request"}>
-                          <IconPr />
-                        </Match>
-                        <Match when={trigger.type === "tag"}>
-                          <IconTag />
-                        </Match>
-                        <Match when={true}>
-                          <IconGit />
-                        </Match>
-                      </Switch>
-                    </GitIcon>
-                    <GitBranch>{runInfo()!.branch}</GitBranch>
-                  </GitLink>
-                </Stack>
+                <Show when={runInfo()!.gitUser}>
+                  <GitAvatar title={runInfo()!.gitUser!.username}>
+                    <img
+                      width={AVATAR_SIZE}
+                      height={AVATAR_SIZE}
+                      src={`https://avatars.githubusercontent.com/u/${
+                        runInfo()!.gitUser!.id
+                      }?s=${2 * AVATAR_SIZE}&v=4`}
+                    />
+                  </GitAvatar>
+                </Show>
+                <Show when={trigger.commit}>
+                  <Stack space="0.5">
+                    <GitLink
+                      target="_blank"
+                      rel="noreferrer"
+                      href={githubCommit(repoURL(), trigger.commit!.id)}
+                    >
+                      <GitIcon size="md">
+                        <IconCommit />
+                      </GitIcon>
+                      <GitCommit>{formatCommit(trigger.commit!.id)}</GitCommit>
+                    </GitLink>
+                    <GitLink
+                      target="_blank"
+                      rel="noreferrer"
+                      href={runInfo()!.uri}
+                    >
+                      <GitIcon size="sm">
+                        <Switch>
+                          <Match when={trigger.type === "pull_request"}>
+                            <IconPr />
+                          </Match>
+                          <Match when={trigger.type === "tag"}>
+                            <IconTag />
+                          </Match>
+                          <Match when={true}>
+                            <IconGit />
+                          </Match>
+                        </Switch>
+                      </GitIcon>
+                      <GitBranch>{runInfo()!.ref}</GitBranch>
+                    </GitLink>
+                  </Stack>
+                </Show>
               </Row>
             </GitInfo>
           </Stack>
@@ -615,7 +647,11 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               </Log>
             )}
           </For>
-          <Show when={trimmedLogs()?.length && data.value!.run.status === "updating"}>
+          <Show
+            when={
+              trimmedLogs()?.length && data.value!.run.status === "updating"
+            }
+          >
             <LogsLoading slim>
               <LogsLoadingIcon>
                 <IconArrowPathSpin />

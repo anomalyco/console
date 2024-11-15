@@ -14,6 +14,8 @@ import { z } from "zod";
 import { app, appRepoTable, stage } from "../app/app.sql";
 import { workspaceIndexes } from "../workspace/workspace.sql";
 import { awsAccount } from "../aws/aws.sql";
+import { user } from "../user/user.sql";
+import { Actor } from "../actor";
 
 export const Resource = z.discriminatedUnion("engine", [
   z.object({
@@ -35,6 +37,7 @@ export const Compute = [
   "2xlarge",
 ] as const;
 type RunErrors = {
+  manual_deploy_ref_not_found: {};
   config_not_found: { path?: string };
   config_build_failed: {};
   config_parse_failed: {};
@@ -66,7 +69,7 @@ export const Log = z.discriminatedUnion("engine", [
 ]);
 export type Log = z.infer<typeof Log>;
 
-export const Trigger = z.discriminatedUnion("type", [
+export const GitTrigger = z.discriminatedUnion("type", [
   z.object({
     type: z.enum(["branch"]),
     action: z.enum(["pushed", "removed"]),
@@ -85,7 +88,6 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
-    force: z.boolean().optional(),
   }),
   z.object({
     type: z.enum(["tag"]),
@@ -105,7 +107,6 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
-    force: z.boolean().optional(),
   }),
   z.object({
     type: z.enum(["pull_request"]),
@@ -127,7 +128,28 @@ export const Trigger = z.discriminatedUnion("type", [
       id: z.number(),
       username: z.string().min(1),
     }),
-    force: z.boolean().optional(),
+  }),
+]);
+export type GitTrigger = z.infer<typeof GitTrigger>;
+export const Trigger = z.discriminatedUnion("type", [
+  ...GitTrigger.options,
+  z.object({
+    type: z.enum(["user"]),
+    action: z.enum(["deploy", "remove"]),
+    source: z.enum(["github"]),
+    repo: z.object({
+      id: z.number(),
+      owner: z.string().min(1),
+      repo: z.string().min(1),
+    }),
+    ref: z.string().min(1),
+    commit: z
+      .object({
+        id: z.string().min(1),
+        message: z.string().max(100).min(1),
+      })
+      .optional(),
+    actor: z.custom<Actor>(),
   }),
 ]);
 export type Trigger = z.infer<typeof Trigger>;
@@ -225,6 +247,8 @@ export const runTable = mysqlTable(
     config: json("config").$type<AutodeployConfig>(),
     error: json("error").$type<RunError>(),
     active: boolean("active"),
+    retrier: json("retrier").$type<Actor>(),
+    force: boolean("force"),
   },
   (table) => ({
     ...workspaceIndexes(table),

@@ -1,8 +1,6 @@
 /** @typedef {import("../../core/src/run").Run.RunnerEvent} RunnerEvent */
-/** @typedef {import("aws-lambda").Context} Context */
 import { spawnSync } from "child_process";
 import fs from "fs";
-import semver from "semver";
 import { build } from "esbuild";
 import {
   EventBridgeClient,
@@ -18,9 +16,8 @@ let isWarm = false;
 
 /**
  * @param {RunnerEvent} event
- * @param {Context} context
  */
-export async function handler(event, context) {
+export async function handler(event) {
   console.log("isWarm:", isWarm);
   if (event.warm && isWarm) return "warmed";
   isWarm = true;
@@ -33,12 +30,7 @@ export async function handler(event, context) {
   let sstConfig;
 
   try {
-    await publish("runner.started", {
-      logGroup: context.logGroupName,
-      logStream: context.logStreamName,
-      awsRequestId: context.awsRequestId,
-      timestamp: Date.now(),
-    });
+    await publish("runner.started");
 
     checkout();
     packageJson = await loadPackageJson();
@@ -142,7 +134,7 @@ export async function handler(event, context) {
   }
 
   async function runWorkflow() {
-    const { warm, stage, trigger } = event;
+    const { warm, stage, trigger, force } = event;
     if (warm) return;
 
     const context = {
@@ -158,7 +150,7 @@ export async function handler(event, context) {
       (async (context) => {
         install();
         await installSst();
-        if (trigger.force) unlock();
+        if (force) unlock();
         context.trigger.action === "removed" ? remove() : deploy();
       });
 

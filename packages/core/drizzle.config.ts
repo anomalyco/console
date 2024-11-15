@@ -1,9 +1,10 @@
 import { defineConfig } from "drizzle-kit";
+import { Resource } from "sst";
 
 const connection = {
-  user: process.env["SST_Secret_value_PLANETSCALE_USERNAME"],
-  password: process.env["SST_Secret_value_PLANETSCALE_PASSWORD"],
-  host: "aws.connect.psdb.cloud",
+  user: Resource.Database.username,
+  password: Resource.Database.password,
+  host: Resource.Database.host,
 };
 export default defineConfig({
   out: "./migrations/",

@@ -257,8 +257,6 @@ export module CodebuildRunner {
       }
 
       async function removeFunctionInUserAccount() {
-        if (resource.engine !== "codebuild") return;
-
         const codebuild = new CodeBuildClient(sdkConfig);
         try {
           await codebuild.send(
@@ -282,8 +280,6 @@ export module CodebuildRunner {
       timeoutInMinutes: z.number().int(),
     }),
     async ({ credentials, region, resource, payload, timeoutInMinutes }) => {
-      if (resource.engine !== "codebuild") return;
-
       const codebuild = new CodeBuildClient({
         credentials,
         region,
@@ -291,7 +287,7 @@ export module CodebuildRunner {
       });
       const projectName = resource.properties.project.split("/").pop()!;
       try {
-        await codebuild.send(
+        const ret = await codebuild.send(
           new StartBuildCommand({
             projectName,
             buildspecOverride: [
@@ -303,15 +299,12 @@ export module CodebuildRunner {
               "      - mkdir -p /tmp/buildspec",
               `      - curl -o /tmp/buildspec/index.mjs https://${payload.buildspec.bucket}.s3.amazonaws.com/buildspec/${payload.buildspec.version}/index.mjs`,
               `      - echo '{"name":"buildspec"}' > /tmp/buildspec/package.json`,
-              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge semver esbuild`,
+              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge esbuild`,
               [
                 `      - node --input-type=module -e "`,
                 `import { handler } from '/tmp/buildspec/index.mjs';`,
                 `const event = JSON.parse(process.env.SST_RUNNER_EVENT);`,
-                `const result = await handler(event, {`,
-                `  logGroupName:'/aws/codebuild/${projectName}',`,
-                `  logStreamName:process.env.CODEBUILD_LOG_PATH,`,
-                `});`,
+                `const result = await handler(event);`,
                 `"`,
               ].join(""),
             ].join("\n"),
@@ -324,6 +317,10 @@ export module CodebuildRunner {
             timeoutInMinutesOverride: timeoutInMinutes,
           })
         );
+        return {
+          logGroup: `/aws/codebuild/${projectName}`,
+          logStream: ret.build!.id!.split(":")[1]!,
+        };
       } catch (e: any) {
         if (e.name === "AccountLimitExceededException") {
           throw new RunnerError(

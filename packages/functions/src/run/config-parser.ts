@@ -47,21 +47,41 @@ export async function handler(evt: Run.ConfigParserEvent) {
       `  fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_v2_unsupported"}));`,
       `  process.exit(0);`,
       `}`,
-      // Run the target function
-      `const target = mod.console?.autodeploy?.target?.(${JSON.stringify(
-        evt.trigger
-      )});`,
-      `if (mod.console?.autodeploy?.target && !target) {`,
-      `  fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_target_returned_undefined"}));`,
-      `  process.exit(0);`,
+      // Handle 2 cases:
+      // - latest format: `autodeploy.target` + `autodeploy.runner`
+      // - legacy format: `autodeploy.target`
+      `const trigger = ${JSON.stringify(evt.trigger)};`,
+      // Resolve target stage
+      `let target, stage, isDefaultStage;`,
+      `if (trigger.type === "user") {`,
+      `  stage = "${evt.defaultStage}";`,
+      `  isDefaultStage = true;`,
+      `} else {`,
+      `  if (!mod.console?.autodeploy?.target) {`,
+      `    stage = "${evt.defaultStage}";`,
+      `    isDefaultStage = false;`,
+      `  }`,
+      `  else {`,
+      `    target = mod.console.autodeploy.target(trigger);`,
+      `    if (!target) {`,
+      `      fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_target_returned_undefined"}));`,
+      `      process.exit(0);`,
+      `    }`,
+      `    if (!target.stage) {`,
+      `      fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_target_no_stage"}));`,
+      `      process.exit(0);`,
+      `    }`,
+      `    stage = target.stage;`,
+      `    isDefaultStage = false;`,
+      `  }`,
       `}`,
-      `if (target && !target.stage) {`,
-      `  fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_target_no_stage"}));`,
-      `  process.exit(0);`,
-      `}`,
-      `const stage = target?.stage ?? "${evt.defaultStage}";`,
+      // Resolve runner
+      `const runner = typeof mod.console?.autodeploy?.runner === "function"`,
+      `  ? mod.console?.autodeploy?.runner?.({stage})`,
+      `  : (mod.console?.autodeploy?.runner ?? target?.runner);`,
+      // Resolve app config
       `const app = mod.app({stage});`,
-      `fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({app, stage, console: { autodeploy: { target }}}));`,
+      `fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({app, stage, runner, isDefaultStage}));`,
     ].join("\n")
   );
   const evalRet = spawnSync("node /tmp/eval.mjs", {
