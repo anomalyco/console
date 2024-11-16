@@ -179,13 +179,10 @@ export async function handler(event) {
   function unlock() {
     process.chdir(APP_PATH);
 
-    const { stage, credentials } = event;
+    const { stage } = event;
     const sstPath = findLocalSstBinary() ?? "sst";
     shell(`${sstPath} unlock --stage ${stage}`, {
       env: {
-        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
-        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
-        AWS_SESSION_TOKEN: credentials.sessionToken,
         SST_AWS_NO_PROFILE: "1",
       },
     });
@@ -194,13 +191,10 @@ export async function handler(event) {
   function deploy() {
     process.chdir(APP_PATH);
 
-    const { stage, credentials, runID } = event;
+    const { stage, runID } = event;
     const sstPath = findLocalSstBinary() ?? "sst";
     shell(`${sstPath} deploy --stage ${stage}`, {
       env: {
-        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
-        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
-        AWS_SESSION_TOKEN: credentials.sessionToken,
         SST_AWS_NO_PROFILE: "1",
         SST_RUN_ID: runID,
       },
@@ -210,13 +204,10 @@ export async function handler(event) {
   function remove() {
     process.chdir(APP_PATH);
 
-    const { stage, credentials, runID } = event;
+    const { stage, runID } = event;
     const sstPath = findLocalSstBinary() ?? "sst";
     shell(`${sstPath} remove --stage ${stage}`, {
       env: {
-        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
-        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
-        AWS_SESSION_TOKEN: credentials.sessionToken,
         SST_AWS_NO_PROFILE: "1",
         SST_RUN_ID: runID,
       },

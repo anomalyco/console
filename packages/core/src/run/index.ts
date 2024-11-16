@@ -148,11 +148,6 @@ export module Run {
       version: string;
       bucket: string;
     };
-    credentials: {
-      accessKeyId: string;
-      secretAccessKey: string;
-      sessionToken: string;
-    };
     trigger: Trigger;
     force?: boolean;
   };
@@ -282,7 +277,7 @@ export module Run {
     let minutes;
     if (unit === "hour" || unit === "hours") minutes = countNum * 60;
     if (unit === "minute" || unit === "minutes") minutes = countNum;
-    if (minutes) return Math.max(60, minutes);
+    if (minutes) return Math.max(2160, minutes);
 
     return;
   };
@@ -838,7 +833,6 @@ export module Run {
             cloneUrl,
             path: appRepo.path ?? undefined,
           },
-          credentials: awsConfig.credentials,
           trigger: run.trigger,
           force: run.force ?? undefined,
         },
@@ -1077,14 +1071,14 @@ export module Run {
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const vpc = input.runnerConfig?.vpc;
-      const type =
-        [
-          engine,
-          architecture,
-          image,
-          compute,
-          ...(vpc ? [JSON.stringify(vpc)] : []),
-        ].join("-") + ".20241106";
+      const type = JSON.stringify({
+        engine,
+        architecture,
+        image,
+        compute,
+        vpc,
+        version: "20241116",
+      });
       return await useTransaction((tx) =>
         tx
           .select()
@@ -1125,14 +1119,14 @@ export module Run {
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const vpc = input.runnerConfig?.vpc;
-      const type =
-        [
-          engine,
-          architecture,
-          image,
-          compute,
-          ...(vpc ? [JSON.stringify(vpc)] : []),
-        ].join("-") + ".20241106";
+      const type = JSON.stringify({
+        engine,
+        architecture,
+        image,
+        compute,
+        vpc,
+        version: "20241116",
+      });
       const runnerSuffix =
         architecture +
         "-" +

@@ -106,11 +106,13 @@ export module CodebuildRunner {
                 Version: "2012-10-17",
                 Statement: [
                   {
+                    Sid: "Events",
                     Effect: "Allow",
                     Action: "events:PutEvents",
                     Resource: "*",
                   },
                   {
+                    Sid: "Logs",
                     Effect: "Allow",
                     Action: [
                       "logs:CreateLogStream",
@@ -123,6 +125,7 @@ export module CodebuildRunner {
                     ],
                   },
                   {
+                    Sid: "CodeBuild",
                     Action: [
                       "codebuild:CreateReportGroup",
                       "codebuild:CreateReport",
@@ -133,9 +136,8 @@ export module CodebuildRunner {
                     Resource: `arn:aws:codebuild:${region}:${awsAccountExternalID}:report-group/${projectName}-*`,
                     Effect: "Allow",
                   },
-                  // TODO handle IAM role does not have DescribeSecurityGroups
-                  //      permission right away after creation
                   {
+                    Sid: "VPC",
                     Effect: "Allow",
                     Action: [
                       "ec2:CreateNetworkInterface",
@@ -147,6 +149,12 @@ export module CodebuildRunner {
                       "ec2:DescribeSecurityGroups",
                       "ec2:DescribeVpcs",
                     ],
+                    Resource: "*",
+                  },
+                  {
+                    Sid: "Deploy",
+                    Effect: "Allow",
+                    Action: "*",
                     Resource: "*",
                   },
                 ],
