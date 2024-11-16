@@ -1076,7 +1076,15 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}.20241106`;
+      const vpc = input.runnerConfig?.vpc;
+      const type =
+        [
+          engine,
+          architecture,
+          image,
+          compute,
+          ...(vpc ? [JSON.stringify(vpc)] : []),
+        ].join("-") + ".20241106";
       return await useTransaction((tx) =>
         tx
           .select()
@@ -1116,7 +1124,15 @@ export module Run {
       const image =
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
-      const type = `${engine}-${architecture}-${image}-${compute}.20241106`;
+      const vpc = input.runnerConfig?.vpc;
+      const type =
+        [
+          engine,
+          architecture,
+          image,
+          compute,
+          ...(vpc ? [JSON.stringify(vpc)] : []),
+        ].join("-") + ".20241106";
       const runnerSuffix =
         architecture +
         "-" +
@@ -1153,6 +1169,7 @@ export module Run {
           image,
           architecture,
           compute,
+          vpc,
         });
 
         // Create bus target to forward two types of events to SST Console
@@ -1287,6 +1304,7 @@ export module Run {
             .execute()
         );
       } catch (e) {
+        console.error(e);
         // Remove from db
         await useTransaction((tx) =>
           tx

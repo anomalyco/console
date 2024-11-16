@@ -16,7 +16,7 @@ import {
   DeleteRolePolicyCommand,
 } from "@aws-sdk/client-iam";
 import { zod } from "../util/zod";
-import { Resource, Architecture, Compute } from "./run.sql";
+import { Resource, Architecture, Compute, Vpc } from "./run.sql";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Credentials } from "../aws";
 import { Run } from ".";
@@ -41,6 +41,7 @@ export module CodebuildRunner {
       image: z.string().min(1),
       architecture: z.enum(Architecture),
       compute: z.enum(Compute),
+      vpc: z.custom<Vpc>().optional(),
     }),
     async ({
       credentials,
@@ -50,6 +51,7 @@ export module CodebuildRunner {
       image,
       architecture,
       compute,
+      vpc,
     }): Promise<Resource> => {
       // TODO apply this logic to Windows runners
       // if (architecture === "arm64") {
@@ -131,6 +133,22 @@ export module CodebuildRunner {
                     Resource: `arn:aws:codebuild:${region}:${awsAccountExternalID}:report-group/${projectName}-*`,
                     Effect: "Allow",
                   },
+                  // TODO handle IAM role does not have DescribeSecurityGroups
+                  //      permission right away after creation
+                  {
+                    Effect: "Allow",
+                    Action: [
+                      "ec2:CreateNetworkInterface",
+                      "ec2:CreateNetworkInterfacePermission",
+                      "ec2:DeleteNetworkInterface",
+                      "ec2:DescribeDhcpOptions",
+                      "ec2:DescribeNetworkInterfaces",
+                      "ec2:DescribeSubnets",
+                      "ec2:DescribeSecurityGroups",
+                      "ec2:DescribeVpcs",
+                    ],
+                    Resource: "*",
+                  },
                 ],
               }),
             })
@@ -183,6 +201,11 @@ export module CodebuildRunner {
                     ? "LINUX_CONTAINER"
                     : "ARM_CONTAINER",
                 privilegedMode: true,
+              },
+              vpcConfig: vpc && {
+                vpcId: vpc.id,
+                subnets: vpc.subnets,
+                securityGroupIds: vpc.securityGroups,
               },
               timeoutInMinutes: 60,
               logsConfig: {

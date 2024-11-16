@@ -36,6 +36,12 @@ export const Compute = [
   "xlarge",
   "2xlarge",
 ] as const;
+export const Vpc = z.object({
+  id: z.string().min(1),
+  subnets: z.array(z.string().min(1)).min(1),
+  securityGroups: z.array(z.string().min(1)).min(1),
+});
+export type Vpc = z.infer<typeof Vpc>;
 type RunErrors = {
   manual_deploy_ref_not_found: {};
   config_not_found: { path?: string };
@@ -160,6 +166,7 @@ export const AutodeployConfigRunner = z.object({
   image: z.string().min(1).optional(),
   compute: z.enum(Compute).optional(),
   timeout: z.string().optional(),
+  vpc: Vpc.optional(),
 });
 
 export const AutodeployConfig = z.object({
