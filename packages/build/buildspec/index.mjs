@@ -1,26 +1,24 @@
 /** @typedef {import("../../core/src/run").Run.RunnerEvent} RunnerEvent */
 import { spawnSync } from "child_process";
 import fs from "fs";
+import { createHash } from "crypto";
 import { build } from "esbuild";
 import {
   EventBridgeClient,
   PutEventsCommand,
 } from "@aws-sdk/client-eventbridge";
+import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
 
-const ROOT_PATH = "/tmp";
+const ROOT_PATH = "/root";
 const REPO_DIR_NAME = "repo";
 const REPO_PATH = `${ROOT_PATH}/${REPO_DIR_NAME}`;
 const eb = new EventBridgeClient({});
-
-let isWarm = false;
+const s3 = new S3Client({});
 
 /**
  * @param {RunnerEvent} event
  */
 export async function handler(event) {
-  console.log("isWarm:", isWarm);
-  if (event.warm && isWarm) return "warmed";
-  isWarm = true;
   const APP_PATH = path.join(REPO_PATH, event.repo.path ?? "");
 
   console.log("[sst.deploy.start]");
@@ -32,12 +30,17 @@ export async function handler(event) {
   try {
     await publish("runner.started");
 
+    await restore(".git");
     checkout();
+    for (const item of event.cache?.paths ?? []) await restore(item);
+
     packageJson = await loadPackageJson();
     await installNode();
     sstConfig = await loadSstConfig();
-    if (event.warm) return "warmed";
     await runWorkflow();
+
+    for (const item of [".git", ...(event.cache?.paths ?? [])])
+      await cache(item);
   } catch (e) {
     console.error(e);
     error = e.message;
@@ -47,10 +50,10 @@ export async function handler(event) {
   }
 
   function checkout() {
-    const { warm, repo, trigger } = event;
+    const { repo, trigger } = event;
 
     // Clone or fetch the repo
-    if (fs.existsSync(REPO_PATH)) {
+    if (fs.existsSync(path.join(REPO_PATH, ".git"))) {
       process.chdir(REPO_PATH);
       shell("git reset --hard");
       shell(`git remote set-url origin ${repo.cloneUrl}`);
@@ -60,11 +63,9 @@ export async function handler(event) {
     }
 
     // Checkout commit
-    if (!warm) {
-      process.chdir(REPO_PATH);
-      shell(`git fetch origin ${trigger.commit.id}`);
-      shell(`git -c advice.detachedHead=false checkout ${trigger.commit.id}`);
-    }
+    process.chdir(REPO_PATH);
+    shell(`git fetch origin ${trigger.commit.id}`);
+    shell(`git -c advice.detachedHead=false checkout ${trigger.commit.id}`);
   }
 
   async function loadPackageJson() {
@@ -122,7 +123,11 @@ export async function handler(event) {
 
   async function installSst() {
     // Check if SST is installed locally
-    if (findLocalSstBinary()) return;
+    const localPath = findLocalSstBinary();
+    if (localPath) {
+      console.log("Using locally installed SST binary at", localPath);
+      return;
+    }
 
     // Install SST globally
     const { stage } = event;
@@ -133,9 +138,10 @@ export async function handler(event) {
     return "sst";
   }
 
+  /* Workflow */
+
   async function runWorkflow() {
-    const { warm, stage, trigger, force } = event;
-    if (warm) return;
+    const { stage, trigger, force } = event;
 
     const context = {
       stage,
@@ -240,12 +246,73 @@ export async function handler(event) {
   }
 
   /**
+   * @param {string} path
+   */
+  async function cache(item) {
+    const { cache } = event;
+    const cacheKey = createHash("sha256").update(item).digest("hex");
+    const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
+    const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
+
+    console.log(`Storing cache for ${item}`);
+
+    try {
+      const dirname = path.dirname(itemPath);
+      const basename = path.basename(itemPath);
+      shell(
+        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`
+      );
+    } catch (e) {
+      console.error("Failed to store cache", e);
+    }
+  }
+
+  /**
+   * @param {string} path
+   */
+  async function restore(item) {
+    const { cache } = event;
+    const cacheKey = createHash("sha256").update(item).digest("hex");
+    const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
+    const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
+
+    console.log(`Restoring cache for ${item}`);
+
+    try {
+      await s3.send(
+        new HeadObjectCommand({
+          Bucket: cache.bucket,
+          Key: s3Key,
+        })
+      );
+    } catch (e) {
+      if (e.name === "NotFound") {
+        console.log("Cache not found, skipping restore");
+      } else {
+        console.error("Failed to restore cache", e);
+      }
+      return;
+    }
+
+    try {
+      const dirname = path.dirname(itemPath);
+      shell(`mkdir -p ${dirname}`);
+      shell(
+        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`
+      );
+    } catch (e) {
+      console.error("Failed to restore cache", e);
+    }
+  }
+
+  /* Helpers */
+
+  /**
    * @param {string} type
    * @param {any} payload
    */
   async function publish(type, payload) {
-    const { warm, engine, workspaceID, runID } = event;
-    if (warm) return;
+    const { engine, workspaceID, runID } = event;
 
     await eb.send(
       new PutEventsCommand({
@@ -281,7 +348,6 @@ export async function handler(event) {
     while (true) {
       const sstPath = path.join(searchPath, "node_modules/.bin/sst");
       if (fs.existsSync(sstPath)) {
-        console.log("Using locally installed SST binary at", sstPath);
         return sstPath;
       }
       if (searchPath === path.resolve(REPO_PATH)) break;

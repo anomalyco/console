@@ -16,6 +16,18 @@ import {
   RemoveTargetsCommand,
   ResourceNotFoundException,
 } from "@aws-sdk/client-eventbridge";
+import {
+  GetParameterCommand,
+  PutParameterCommand,
+  SSMClient,
+  ParameterNotFound,
+} from "@aws-sdk/client-ssm";
+import {
+  CreateBucketCommand,
+  GetBucketLifecycleConfigurationCommand,
+  PutBucketLifecycleConfigurationCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { zod } from "../util/zod";
 import {
   createTransaction,
@@ -39,6 +51,7 @@ import {
   RunErrorType,
   runConfigTable,
   GitTrigger,
+  Cache,
 } from "./run.sql";
 import { App, Stage } from "../app";
 import { RunConfig } from "./config";
@@ -150,6 +163,11 @@ export module Run {
     };
     trigger: Trigger;
     force?: boolean;
+    cache?: {
+      bucket: string;
+      prefix: string;
+      paths?: string[];
+    };
   };
 
   export type ConfigParserEvent = {
@@ -778,6 +796,9 @@ export module Run {
         throw new Error("Failed to create runner");
       }
 
+      // Get cache bucket (create if not exist)
+      context = "create cache bucket";
+
       // Get run env
       const env = (await RunConfig.list(stage.appID)).find((row) =>
         minimatch(stage.name, row.stagePattern)
@@ -812,7 +833,7 @@ export module Run {
       }
 
       // Run runner
-      const timeoutInMinutes =
+      const timeout =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
         CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
       const codebuildBuild = await CodebuildRunner.invoke({
@@ -835,8 +856,15 @@ export module Run {
           },
           trigger: run.trigger,
           force: run.force ?? undefined,
+          cache: {
+            bucket: await lookupCacheBucket({
+              credentials: awsConfig.credentials,
+            }),
+            prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
+            paths: run.config.target?.runner?.cache?.paths,
+          },
         },
-        timeoutInMinutes,
+        timeout,
       });
 
       // Update runner's last run time
@@ -895,7 +923,7 @@ export module Run {
     }
 
     // Schedule timeout monitor
-    const timeoutInMinutes =
+    const timeout =
       timeoutToMinutes(run.config.target?.runner?.timeout) ??
       CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
     const scheduler = new SchedulerClient({ retryStrategy: RETRY_STRATEGY });
@@ -907,7 +935,7 @@ export module Run {
           Mode: "OFF",
         },
         ScheduleExpression: `at(${
-          new Date(Date.now() + (timeoutInMinutes + 1) * 60000)
+          new Date(Date.now() + (timeout + 1) * 60000)
             .toISOString()
             .split(".")[0]
         })`,
@@ -1040,6 +1068,79 @@ export module Run {
       })
   );
 
+  const lookupCacheBucket = zod(
+    z.object({
+      credentials: z.custom<Credentials>(),
+    }),
+    async (input) => {
+      // Create bucket
+      const bucketName = await (async () => {
+        const paramName = `/sst/console/bucketName`;
+        const ssm = new SSMClient({ credentials: input.credentials });
+        try {
+          const param = await ssm.send(
+            new GetParameterCommand({
+              Name: paramName,
+            })
+          );
+          if (param.Parameter?.Value) return param.Parameter.Value;
+        } catch (e) {
+          if (!(e instanceof ParameterNotFound)) throw e;
+        }
+
+        const s3 = new S3Client({ credentials: input.credentials });
+        const bucketName = `sst-console-${createId()}`;
+        await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
+
+        await ssm.send(
+          new PutParameterCommand({
+            Name: paramName,
+            Value: bucketName,
+            Type: "String",
+          })
+        );
+        return bucketName;
+      })();
+
+      // Create bucket lifecycle policy
+      await (async () => {
+        const s3 = new S3Client({ credentials: input.credentials });
+        try {
+          const config = await s3.send(
+            new GetBucketLifecycleConfigurationCommand({
+              Bucket: bucketName,
+            })
+          );
+          const rule = config.Rules?.find(
+            (x) =>
+              x.Filter?.Prefix === "autodeploy/cache/" &&
+              x.Expiration?.Days === 14
+          );
+          if (rule) return;
+        } catch (e: any) {
+          if (e.name !== "NoSuchLifecycleConfiguration") throw e;
+        }
+        await s3.send(
+          new PutBucketLifecycleConfigurationCommand({
+            Bucket: bucketName,
+            LifecycleConfiguration: {
+              Rules: [
+                {
+                  ID: "autodeploy-cache-cleanup",
+                  Filter: { Prefix: "autodeploy/cache/" },
+                  Expiration: { Days: 14 },
+                  Status: "Enabled",
+                },
+              ],
+            },
+          })
+        );
+      })();
+
+      return bucketName;
+    }
+  );
+
   export const getRunnerByID = zod(z.string().cuid2(), async (runnerID) => {
     return await useTransaction((tx) =>
       tx
@@ -1056,7 +1157,7 @@ export module Run {
     );
   });
 
-  export const lookupRunner = zod(
+  const lookupRunner = zod(
     z.object({
       region: z.string().min(1),
       awsAccountID: z.string().cuid2(),
@@ -1099,7 +1200,7 @@ export module Run {
     }
   );
 
-  export const createRunner = zod(
+  const createRunner = zod(
     z.object({
       appRepoID: z.string().cuid2(),
       awsAccountID: z.string().cuid2(),

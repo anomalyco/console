@@ -11,7 +11,7 @@ import { websocket } from "./websocket";
 const api = new sst.aws.Function("Api", {
   handler: "packages/functions/src/api/api.handler",
   timeout: "2 minutes",
-  permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
+  permissions: [{ actions: ["sts:*", "iot:*", "ssm:*"], resources: ["*"] }],
   link: [
     storage,
     auth,

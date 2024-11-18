@@ -3,7 +3,6 @@ import {
   mysqlTable,
   varchar,
   foreignKey,
-  text,
   mysqlEnum,
   timestamp,
   unique,
@@ -14,7 +13,6 @@ import { z } from "zod";
 import { app, appRepoTable, stage } from "../app/app.sql";
 import { workspaceIndexes } from "../workspace/workspace.sql";
 import { awsAccount } from "../aws/aws.sql";
-import { user } from "../user/user.sql";
 import { Actor } from "../actor";
 
 export const Resource = z.discriminatedUnion("engine", [
@@ -36,6 +34,10 @@ export const Compute = [
   "xlarge",
   "2xlarge",
 ] as const;
+export const Cache = z.object({
+  paths: z.array(z.string().min(1)).min(1),
+});
+export type Cache = z.infer<typeof Cache>;
 export const Vpc = z.object({
   id: z.string().min(1),
   subnets: z.array(z.string().min(1)).min(1),
@@ -167,6 +169,7 @@ export const AutodeployConfigRunner = z.object({
   compute: z.enum(Compute).optional(),
   timeout: z.string().optional(),
   vpc: Vpc.optional(),
+  cache: Cache.optional(),
 });
 
 export const AutodeployConfig = z.object({

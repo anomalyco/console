@@ -15,11 +15,13 @@ import {
   DeleteRoleCommand,
   DeleteRolePolicyCommand,
 } from "@aws-sdk/client-iam";
+import { S3Client, CreateBucketCommand } from "@aws-sdk/client-s3";
 import { zod } from "../util/zod";
-import { Resource, Architecture, Compute, Vpc } from "./run.sql";
+import { Resource, Architecture, Compute, Vpc, Cache } from "./run.sql";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Credentials } from "../aws";
 import { Run } from ".";
+import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 export module CodebuildRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 60; // 60 minutes
@@ -221,6 +223,7 @@ export module CodebuildRunner {
                   status: "ENABLED",
                 },
               },
+              cache: { type: "NO_CACHE" },
             })
           );
           return ret.project?.arn!;
@@ -308,15 +311,15 @@ export module CodebuildRunner {
       region: z.string().nonempty(),
       resource: z.custom<Resource>(),
       payload: z.custom<Run.RunnerEvent>(),
-      timeoutInMinutes: z.number().int(),
+      timeout: z.number().int(),
     }),
-    async ({ credentials, region, resource, payload, timeoutInMinutes }) => {
+    async (input) => {
       const codebuild = new CodeBuildClient({
-        credentials,
-        region,
+        credentials: input.credentials,
+        region: input.region,
         retryStrategy: RETRY_STRATEGY,
       });
-      const projectName = resource.properties.project.split("/").pop()!;
+      const projectName = input.resource.properties.project.split("/").pop()!;
       try {
         const ret = await codebuild.send(
           new StartBuildCommand({
@@ -328,9 +331,9 @@ export module CodebuildRunner {
               "    commands:",
               "      - rm -rf /tmp/buildspec",
               "      - mkdir -p /tmp/buildspec",
-              `      - curl -o /tmp/buildspec/index.mjs https://${payload.buildspec.bucket}.s3.amazonaws.com/buildspec/${payload.buildspec.version}/index.mjs`,
+              `      - curl -o /tmp/buildspec/index.mjs https://${input.payload.buildspec.bucket}.s3.amazonaws.com/buildspec/${input.payload.buildspec.version}/index.mjs`,
               `      - echo '{"name":"buildspec"}' > /tmp/buildspec/package.json`,
-              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge esbuild`,
+              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge @aws-sdk/client-s3 esbuild`,
               [
                 `      - node --input-type=module -e "`,
                 `import { handler } from '/tmp/buildspec/index.mjs';`,
@@ -342,10 +345,10 @@ export module CodebuildRunner {
             environmentVariablesOverride: [
               {
                 name: "SST_RUNNER_EVENT",
-                value: JSON.stringify(payload),
+                value: JSON.stringify(input.payload),
               },
             ],
-            timeoutInMinutesOverride: timeoutInMinutes,
+            timeoutInMinutesOverride: input.timeout,
           })
         );
         return {

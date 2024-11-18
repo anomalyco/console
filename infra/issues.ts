@@ -24,7 +24,7 @@ stream.subscribe(
         batchSize: 500,
       },
     },
-  },
+  }
 );
 const regions = aws.getRegionsOutput();
 
@@ -36,7 +36,7 @@ const role = new aws.iam.Role("IssueRole", {
         principals: [
           {
             identifiers: regions.names.apply((regions) =>
-              regions.map((r) => `logs.${r}.amazonaws.com`),
+              regions.map((r) => `logs.${r}.amazonaws.com`)
             ),
             type: "Service",
           },
