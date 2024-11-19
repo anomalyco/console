@@ -15,7 +15,7 @@ bus.subscribe(
     },
     permissions: [
       {
-        actions: ["sts:*", "logs:*", "ses:*", "iot:*", "s3:*", "ssm:*"],
+        actions: ["sts:*", "logs:*", "ses:*", "iot:*", "s3:*", "cloudwatch:*"],
         resources: ["*"],
       },
       {
@@ -33,7 +33,7 @@ bus.subscribe(
     pattern: {
       source: [`console.${$app.stage}`],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -46,7 +46,7 @@ bus.subscribe(
     pattern: {
       source: ["aws.s3"],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -60,7 +60,7 @@ bus.subscribe(
     pattern: {
       source: ["sst.runner"],
     },
-  }
+  },
 );
 
 bus.subscribe(
@@ -75,5 +75,5 @@ bus.subscribe(
     pattern: {
       source: ["aws.codebuild"],
     },
-  }
+  },
 );

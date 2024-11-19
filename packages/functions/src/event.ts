@@ -1,3 +1,7 @@
+import {
+  CloudWatchClient,
+  PutMetricDataCommand,
+} from "@aws-sdk/client-cloudwatch";
 import { withActor } from "@console/core/actor";
 import { Alert } from "@console/core/alert";
 import { App, Stage } from "@console/core/app";
@@ -10,6 +14,8 @@ import { State } from "@console/core/state";
 import { stripe } from "@console/core/stripe";
 import { Workspace } from "@console/core/workspace";
 import { bus } from "sst/aws/bus";
+
+const client = new CloudWatchClient({});
 
 export const handler = bus.subscriber(
   [
@@ -33,6 +39,25 @@ export const handler = bus.subscriber(
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
+      await client.send(
+        new PutMetricDataCommand({
+          Namespace: "console",
+          MetricData: [
+            {
+              MetricName: "event",
+              Value: 1,
+              Unit: "Count",
+              Timestamp: new Date(),
+              Dimensions: [
+                {
+                  Name: "type",
+                  Value: evt.type,
+                },
+              ],
+            },
+          ],
+        }),
+      );
       console.log(evt.type);
       console.log(evt);
       switch (evt.type) {
@@ -150,5 +175,5 @@ export const handler = bus.subscriber(
           break;
         }
       }
-    })
+    }),
 );
