@@ -78,7 +78,7 @@ export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   }
 }
 
-const STATUS_MAP = {
+export const STATUS_MAP = {
   queued: "Queued",
   skipped: "Skipped",
   updated: "Deployed",
@@ -253,7 +253,14 @@ const RunMessageCopy = styled("p", {
     ...utility.text.line,
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
-    color: theme.color.text.danger.base,
+    color: theme.color.text.secondary.base,
+  },
+  variants: {
+    error: {
+      true: {
+        color: theme.color.text.danger.base,
+      },
+    },
   },
 });
 
@@ -402,18 +409,18 @@ function RunItem({ run }: { run: Run.Run }) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-        ? trigger.tag
-        : trigger.type === "branch"
-        ? trigger.branch
-        : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+            ? trigger.branch
+            : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-        ? githubRef(repoURL, trigger.tag)
-        : trigger.type === "branch"
-        ? githubRef(repoURL, trigger.branch)
-        : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+            ? githubRef(repoURL, trigger.branch)
+            : githubRef(repoURL, trigger.ref);
     const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
     return { trigger, repoURL, ref, uri, gitUser };
@@ -428,9 +435,8 @@ function RunItem({ run }: { run: Run.Run }) {
             <img
               width="24"
               height="24"
-              src={`https://avatars.githubusercontent.com/u/${
-                runInfo()!.gitUser!.id
-              }?s=48&v=4`}
+              src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
+                }?s=48&v=4`}
             />
           </RunSenderAvatar>
         </Show>
@@ -454,10 +460,12 @@ function RunItem({ run }: { run: Run.Run }) {
       <RunCol2>
         <Switch>
           <Match when={run.error}>
-            <RunMessageIcon error>
+            <RunMessageIcon error={run.status === "error"}>
               <IconExclamationTriangle width="14" height="14" />
             </RunMessageIcon>
-            <RunMessageCopy>{ERROR_MAP(run.error!)}</RunMessageCopy>
+            <RunMessageCopy error={run.status === "error"}>
+              {ERROR_MAP(run.error!)}
+            </RunMessageCopy>
           </Match>
           <Match
             when={
@@ -539,67 +547,65 @@ function ManualDeploy() {
   });
 
   return (
-    <Show when={workspace().slug === "frank"}>
-      <Form
-        onSubmit={async (data) => {
-          const id = createId();
-          await rep().mutate.run_manual_deploy({
-            id,
-            appID: ctx.app.id,
-            ref: data.ref,
-            stageName: data.stage,
-            force: data.force,
-          });
-          nav(`./${id}`);
-        }}
-      >
-        <Field name="ref">
-          {(field, props) => (
-            <FormField label={"Ref"}>
-              <Input
+    <Form
+      onSubmit={async (data) => {
+        const id = createId();
+        await rep().mutate.run_manual_deploy({
+          id,
+          appID: ctx.app.id,
+          ref: data.ref,
+          stageName: data.stage,
+          force: data.force,
+        });
+        nav(`./${id}`);
+      }}
+    >
+      <Field name="ref">
+        {(field, props) => (
+          <FormField label={"Ref"}>
+            <Input
+              {...props}
+              autofocus
+              type="text"
+              placeholder="Enter a branch, tag, or commit hash"
+              value={field.value || ""}
+            />
+          </FormField>
+        )}
+      </Field>
+      <Field name="stage">
+        {(field, props) => (
+          <FormField label={"Stage"}>
+            <Input
+              {...props}
+              autofocus
+              type="text"
+              placeholder="Enter the name of the stage"
+              value={field.value || ""}
+            />
+          </FormField>
+        )}
+      </Field>
+      <Field name="force" type="boolean">
+        {(field, props) => (
+          <FormField label={"Force"}>
+            <Row>
+              <input
+                type="checkbox"
                 {...props}
-                autofocus
-                type="text"
-                placeholder="Enter a branch, tag, or commit hash"
-                value={field.value || ""}
+                checked={field.value || false}
               />
-            </FormField>
-          )}
-        </Field>
-        <Field name="stage">
-          {(field, props) => (
-            <FormField label={"Stage"}>
-              <Input
-                {...props}
-                autofocus
-                type="text"
-                placeholder="Enter the name of the stage"
-                value={field.value || ""}
-              />
-            </FormField>
-          )}
-        </Field>
-        <Field name="force" type="boolean">
-          {(field, props) => (
-            <FormField label={"Force"}>
-              <Row>
-                <input
-                  type="checkbox"
-                  {...props}
-                  checked={field.value || false}
-                />
-                <Text>
-                  Force (Do not use cache and unlock the stage if locked)
-                </Text>
-              </Row>
-            </FormField>
-          )}
-        </Field>
-        <Button type="submit" color="success">
-          Manual deploy
-        </Button>
-      </Form>
-    </Show>
+              <Text>
+                Force (Do not use cache and unlock the stage if locked)
+              </Text>
+            </Row>
+          </FormField>
+        )}
+      </Field>
+      <Button type="submit" color="success">
+        Manual deploy
+      </Button>
+    </Form>
   );
 }
 

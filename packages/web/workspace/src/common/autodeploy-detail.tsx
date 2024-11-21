@@ -16,8 +16,7 @@ import { DateTime } from "luxon";
 import {
   ERROR_MAP,
   STATUS_MAP,
-  RunStatusIcon,
-} from "../pages/workspace/stage/autodeploy/list";
+} from "../pages/workspace/app/autodeploy/list";
 import {
   LogsLoading,
   LogsBackground,
@@ -26,6 +25,7 @@ import {
 } from "../pages/workspace/stage/issues/detail";
 import { NotFound } from "$/pages/not-found";
 import { styled } from "@macaron-css/solid";
+import { globalKeyframes } from "@macaron-css/core";
 import {
   IconPr,
   IconGit,
@@ -94,6 +94,49 @@ const PageTitleCopy = styled("h1", {
   base: {
     fontSize: theme.font.size.lg,
     fontWeight: theme.font.weight.medium,
+  },
+});
+
+const RunStatusIcon = styled("div", {
+  base: {
+    width: 12,
+    height: 12,
+    borderRadius: "50%",
+  },
+  variants: {
+    status: {
+      skipped: {
+        backgroundColor: theme.color.divider.base,
+      },
+      queued: {
+        backgroundColor: theme.color.divider.base,
+      },
+      updated: {
+        backgroundColor: `hsla(${theme.color.base.blue}, 100%)`,
+      },
+      error: {
+        backgroundColor: `hsla(${theme.color.base.red}, 100%)`,
+      },
+      updating: {
+        backgroundColor: `hsla(${theme.color.base.yellow}, 100%)`,
+        animation: "glow-pulse-status 1.7s linear infinite alternate",
+      },
+    },
+  },
+});
+
+globalKeyframes("glow-pulse-status", {
+  "0%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
+  },
+  "50%": {
+    opacity: 1,
+    filter: `drop-shadow(0 0 1px ${theme.color.accent})`,
+  },
+  "100%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
   },
 });
 
@@ -343,60 +386,57 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
           </Match>
         </Switch>
 
-        <Show when={workspace().slug === "frank"}>
-          {/* Retry button */}
-          <Show when={data.value!.run.status === "error"}>
-            <Row space="1.5" vertical="center">
-              <Button
-                onClick={async (e) => {
-                  const force =
-                    e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
-                      "input[name='force']:checked"
-                    )?.value;
+        <Show when={data.value!.run.status === "error"}>
+          <Row space="1.5" vertical="center">
+            <Button
+              onClick={async (e) => {
+                const force =
+                  e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
+                    "input[name='force']:checked"
+                  )?.value;
 
-                  const id = createId();
-                  await rep().mutate.run_redeploy({
-                    id,
-                    runID: data.value!.run.id,
-                    force: force === "true",
-                  });
-                  nav(`../${id}`);
-                }}
-                color="secondary"
-                size="sm"
-              >
-                Retry deploy
-              </Button>
-              <ForceCheckbox
-                name="force"
-                type="checkbox"
-                value="true"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              />
-              <Text>
-                Force (Do not use cache and unlock the stage if locked)
-              </Text>
-            </Row>
-          </Show>
+                const id = createId();
+                await rep().mutate.run_redeploy({
+                  id,
+                  runID: data.value!.run.id,
+                  force: force === "true",
+                });
+                nav(`../${id}`);
+              }}
+              color="secondary"
+              size="sm"
+            >
+              Retry deploy
+            </Button>
+            <ForceCheckbox
+              name="force"
+              type="checkbox"
+              value="true"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+            <Text>
+              Force (Do not use cache and unlock the stage if locked)
+            </Text>
+          </Row>
+        </Show>
 
-          {/* Cancel button */}
-          <Show when={["queued", "updating"].includes(data.value!.run.status)}>
-            <Row space="1.5" vertical="center">
-              <Button
-                onClick={async (e) => {
-                  await rep().mutate.run_cancel({
-                    runID: data.value!.run.id,
-                  });
-                }}
-                color="secondary"
-                size="sm"
-              >
-                Cancel deploy
-              </Button>
-            </Row>
-          </Show>
+        {/* Cancel button */}
+        <Show when={["queued", "updating"].includes(data.value!.run.status)}>
+          <Row space="1.5" vertical="center">
+            <Button
+              onClick={async (e) => {
+                await rep().mutate.run_cancel({
+                  runID: data.value!.run.id,
+                });
+              }}
+              color="secondary"
+              size="sm"
+            >
+              Cancel deploy
+            </Button>
+          </Row>
         </Show>
       </Stack>
     );
@@ -414,18 +454,18 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.type === "branch"
-          ? trigger.branch
-          : trigger.ref;
+            ? trigger.tag
+            : trigger.type === "branch"
+              ? trigger.branch
+              : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-          ? githubRef(repoURL(), trigger.tag)
-          : trigger.type === "branch"
-          ? githubRef(repoURL(), trigger.branch)
-          : githubRef(repoURL(), trigger.ref);
+            ? githubRef(repoURL(), trigger.tag)
+            : trigger.type === "branch"
+              ? githubRef(repoURL(), trigger.branch)
+              : githubRef(repoURL(), trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       return { trigger, ref, uri, gitUser };
@@ -443,9 +483,8 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
                     <img
                       width={AVATAR_SIZE}
                       height={AVATAR_SIZE}
-                      src={`https://avatars.githubusercontent.com/u/${
-                        runInfo()!.gitUser!.id
-                      }?s=${2 * AVATAR_SIZE}&v=4`}
+                      src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
+                        }?s=${2 * AVATAR_SIZE}&v=4`}
                     />
                   </GitAvatar>
                 </Show>
@@ -498,9 +537,8 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             <Stack space="1.5">
               <PanelTitle>Update</PanelTitle>
               <PanelValueLink
-                href={`${appPath}/${data.value!.stage!.name!}/updates/${
-                  data.value!.update!.id
-                }`}
+                href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
+                  }`}
               >
                 #{data.value!.update!.index}
               </PanelValueLink>
@@ -513,16 +551,16 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               title={
                 data.value!.run.time.started
                   ? DateTime.fromISO(
-                      data.value!.run.time.started!
-                    ).toLocaleString(DateTime.DATETIME_FULL)
+                    data.value!.run.time.started!
+                  ).toLocaleString(DateTime.DATETIME_FULL)
                   : undefined
               }
             >
               {data.value!.run.time.started
                 ? formatSinceTime(
-                    DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
-                    true
-                  )
+                  DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
+                  true
+                )
                 : "—"}
             </Text>
           </Stack>
@@ -538,11 +576,11 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
             >
               {data.value!.run.time.started && data.value!.run.time.completed
                 ? formatDuration(
-                    DateTime.fromISO(data.value!.run.time.completed!)
-                      .diff(DateTime.fromISO(data.value!.run.time.started!))
-                      .as("milliseconds"),
-                    true
-                  )
+                  DateTime.fromISO(data.value!.run.time.completed!)
+                    .diff(DateTime.fromISO(data.value!.run.time.started!))
+                    .as("milliseconds"),
+                  true
+                )
                 : "—"}
             </Text>
           </Stack>
@@ -560,22 +598,22 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
         if (!log) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-            "/log/aws/scan?" +
-            new URLSearchParams(
-              log.engine === "lambda"
-                ? {
-                    stageID: data.value!.stage!.id,
-                    timestamp: log.timestamp.toString(),
-                    logStream: log.logStream,
-                    logGroup: log.logGroup,
-                    requestID: log.requestID,
-                  }
-                : {
-                    stageID: data.value!.stage!.id,
-                    logStream: log.logStream,
-                    logGroup: log.logGroup,
-                  }
-            ).toString(),
+          "/log/aws/scan?" +
+          new URLSearchParams(
+            log.engine === "lambda"
+              ? {
+                stageID: data.value!.stage!.id,
+                timestamp: log.timestamp.toString(),
+                logStream: log.logStream,
+                logGroup: log.logGroup,
+                requestID: log.requestID,
+              }
+              : {
+                stageID: data.value!.stage!.id,
+                logStream: log.logStream,
+                logGroup: log.logGroup,
+              }
+          ).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,

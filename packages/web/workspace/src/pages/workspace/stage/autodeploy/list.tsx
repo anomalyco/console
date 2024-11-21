@@ -397,18 +397,18 @@ function RunItem({ run }: { run: Run.Run }) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-        ? trigger.tag
-        : trigger.type === "branch"
-        ? trigger.branch
-        : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+            ? trigger.branch
+            : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-        ? githubRef(repoURL, trigger.tag)
-        : trigger.type === "branch"
-        ? githubRef(repoURL, trigger.branch)
-        : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+            ? githubRef(repoURL, trigger.branch)
+            : githubRef(repoURL, trigger.ref);
     const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
     return { trigger, repoURL, ref, uri, gitUser };
@@ -443,9 +443,8 @@ function RunItem({ run }: { run: Run.Run }) {
               <img
                 width="24"
                 height="24"
-                src={`https://avatars.githubusercontent.com/u/${
-                  runInfo()!.gitUser!.id
-                }?s=48&v=4`}
+                src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
+                  }?s=48&v=4`}
               />
             </RunSenderAvatar>
           </Show>
