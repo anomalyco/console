@@ -1,5 +1,5 @@
 import { useReplicache } from "$/providers/replicache";
-import { LinkButton } from "$/ui/button";
+import { TextButton } from "$/ui/button";
 import { FormField, Input } from "$/ui/form";
 import { Stack, Row } from "$/ui/layout";
 import { Modal } from "$/ui/modal";
@@ -98,15 +98,8 @@ export function DialogPayloadSave(props: {
             />
           </FormField>
           <Row space="5" vertical="center" horizontal="end">
-            <LinkButton
-              onClick={(e) => {
-                e.stopPropagation();
-                control.hide();
-              }}
-            >
-              Cancel
-            </LinkButton>
-            <Button color="secondary">Save Event</Button>
+            <TextButton onClick={() => control.hide()}>Cancel</TextButton>
+            <Button color="success">Save Event</Button>
           </Row>
         </Stack>
       </Form>

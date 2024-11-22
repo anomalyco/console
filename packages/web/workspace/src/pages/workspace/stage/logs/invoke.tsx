@@ -23,7 +23,7 @@ import { Show, createEffect, createMemo } from "solid-js";
 import { createScan2 } from "$/data/store";
 import { useApi, useWorkspace } from "../../context";
 import { bus } from "$/providers/bus";
-import { LinkButton, TextButton, IconButton } from "$/ui/button";
+import { TextButton, IconButton } from "$/ui/button";
 import { Row } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
@@ -317,7 +317,7 @@ export function Invoke(props: Props) {
             >
               <IconBookmark display="block" width={24} height={24} />
             </IconButton>
-            <LinkButton
+            <TextButton
               style={{ display: invoke.empty ? "none" : "inline" }}
               onClick={() => {
                 try {
@@ -330,7 +330,7 @@ export function Invoke(props: Props) {
               }}
             >
               Save
-            </LinkButton>
+            </TextButton>
           </InvokeControlsLeft>
           <Row vertical="center" space="6">
             <Show when={invoke.error}>

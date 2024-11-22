@@ -17,7 +17,7 @@ const Root = styled("div", {
     pointerEvents: "none",
     transition: "200ms opacity",
     paddingTop: "10vh",
-    zIndex: 1,
+    zIndex: 10,
   },
   variants: {
     show: {
@@ -36,8 +36,8 @@ const Content = styled("div", {
     borderRadius: 10,
     flexShrink: 0,
     boxShadow: theme.color.shadow.drop.long,
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
+    // backdropFilter: "blur(10px)",
+    // WebkitBackdropFilter: "blur(10px)",
     background: theme.color.background.modal,
     transform: "scale(0.95)",
     transition: "200ms all",

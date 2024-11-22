@@ -12,7 +12,24 @@ import { For, Show, createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Text } from "$/ui/text";
 
-const IconClose = styled("div", {
+const Header = styled("div", {
+  base: {
+    ...utility.row(2),
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: `${theme.space[5]} ${theme.space[5]} calc(${theme.space[5]} - 2px)`,
+  },
+});
+
+const Title = styled("p", {
+  base: {
+    fontSize: theme.font.size.lg,
+    fontWeight: theme.font.weight.medium,
+    lineHeight: "normal",
+  },
+});
+
+const IconClose = styled("button", {
   base: {
     width: 24,
     height: 24,
@@ -134,19 +151,12 @@ export function DialogPayloadManage(props: {
     <Modal onClose={() => control.hide()} show={state.show}>
       <Root>
         <Stack>
-          <Row
-            space="2"
-            vertical="center"
-            horizontal="between"
-            style={{ padding: theme.space[5] }}
-          >
-            <Text size="lg" weight="medium" leading="normal">
-              Saved event payloads
-            </Text>
+          <Header>
+            <Title>Saved event payloads</Title>
             <IconClose onClick={() => control.hide()}>
               <IconXMark />
             </IconClose>
-          </Row>
+          </Header>
           <Show when={!props.lambdaPayloads.length}>
             <Empty>
               <IconBookmark

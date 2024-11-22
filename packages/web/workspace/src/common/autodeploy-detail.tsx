@@ -3,13 +3,14 @@ import {
   Show,
   Match,
   Switch,
+  Suspense,
+  onCleanup,
   createMemo,
   createResource,
-  onCleanup,
-  createEffect,
 } from "solid-js";
 import { createSubscription, useReplicache } from "$/providers/replicache";
 import { Link, useNavigate, useParams } from "@solidjs/router";
+import { UserStore } from "$/data/user";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
 import { DateTime } from "luxon";
@@ -32,6 +33,7 @@ import {
   IconCommit,
   IconArrowPathSpin,
 } from "$/ui/icons/custom";
+import { AvatarInitialsIcon } from "$/ui/avatar-icon";
 import { Log, LogTime, LogMessage } from "$/common/invocation";
 import { formatCommit, formatDuration, formatSinceTime } from "$/common/format";
 import { useReplicacheStatus } from "$/providers/replicache-status";
@@ -223,7 +225,7 @@ const GitInfo = styled("div", {
   },
 });
 
-const GitAvatar = styled("div", {
+const ActorAvatar = styled("div", {
   base: {
     flex: "0 0 auto",
     width: AVATAR_SIZE,
@@ -444,12 +446,10 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
 
   function Sidebar() {
     const trigger = data.value!.run.trigger;
-    const repoURL = createMemo(() =>
-      trigger.source === "github"
+    const r = createSubscription(async (tx) => {
+      const repoURL = trigger.source === "github"
         ? githubRepo(trigger.repo.owner, trigger.repo.repo)
-        : ""
-    );
-    const runInfo = createMemo(() => {
+        : "";
       const ref =
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
@@ -460,131 +460,181 @@ export function AutodeployDetail(props: AutodeployDetailProps) {
               : trigger.ref;
       const uri =
         trigger.type === "pull_request"
-          ? githubPr(repoURL(), trigger.number)
+          ? githubPr(repoURL, trigger.number)
           : trigger.type === "tag"
-            ? githubRef(repoURL(), trigger.tag)
+            ? githubRef(repoURL, trigger.tag)
             : trigger.type === "branch"
-              ? githubRef(repoURL(), trigger.branch)
-              : githubRef(repoURL(), trigger.ref);
+              ? githubRef(repoURL, trigger.branch)
+              : githubRef(repoURL, trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-      return { trigger, ref, uri, gitUser };
+      const actor = (trigger.type === "user" && trigger.actor.type === "user")
+        ? await UserStore.get(tx, trigger.actor.properties.userID)
+        : undefined;
+
+      return { repoURL, trigger, ref, uri, gitUser, actor };
     });
+    // const repoURL = createMemo(() =>
+    //   trigger.source === "github"
+    //     ? githubRepo(trigger.repo.owner, trigger.repo.repo)
+    //     : ""
+    // );
+    // const runInfo = createMemo(() => {
+    //   const ref =
+    //     trigger.type === "pull_request"
+    //       ? `pr#${trigger.number}`
+    //       : trigger.type === "tag"
+    //         ? trigger.tag
+    //         : trigger.type === "branch"
+    //           ? trigger.branch
+    //           : trigger.ref;
+    //   const uri =
+    //     trigger.type === "pull_request"
+    //       ? githubPr(repoURL(), trigger.number)
+    //       : trigger.type === "tag"
+    //         ? githubRef(repoURL(), trigger.tag)
+    //         : trigger.type === "branch"
+    //           ? githubRef(repoURL(), trigger.branch)
+    //           : githubRef(repoURL(), trigger.ref);
+    //   const gitUser = trigger.type === "user" ? undefined : trigger.sender;
+    //
+    //   return { trigger, ref, uri, gitUser };
+    // });
     const appPath = props.routeType === "app" ? "../.." : "../../..";
     return (
       <SidebarRoot>
-        <Stack space="7">
-          <Stack space="1.5">
-            <PanelTitle>Commit</PanelTitle>
-            <GitInfo>
-              <Row space="1.5" vertical="center">
-                <Show when={runInfo()!.gitUser}>
-                  <GitAvatar title={runInfo()!.gitUser!.username}>
-                    <img
-                      width={AVATAR_SIZE}
-                      height={AVATAR_SIZE}
-                      src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
-                        }?s=${2 * AVATAR_SIZE}&v=4`}
-                    />
-                  </GitAvatar>
+        <Show when={r.value}>
+          <Suspense>
+            <Stack space="7">
+              <Stack space="1.5">
+                <Show
+                  when={trigger.type === "user"}
+                  fallback={<PanelTitle>Commit</PanelTitle>}
+                >
+                  <PanelTitle>Deployed by</PanelTitle>
                 </Show>
-                <Show when={trigger.commit}>
-                  <Stack space="0.5">
-                    <GitLink
-                      target="_blank"
-                      rel="noreferrer"
-                      href={githubCommit(repoURL(), trigger.commit!.id)}
-                    >
-                      <GitIcon size="md">
-                        <IconCommit />
-                      </GitIcon>
-                      <GitCommit>{formatCommit(trigger.commit!.id)}</GitCommit>
-                    </GitLink>
-                    <GitLink
-                      target="_blank"
-                      rel="noreferrer"
-                      href={runInfo()!.uri}
-                    >
-                      <GitIcon size="sm">
-                        <Switch>
-                          <Match when={trigger.type === "pull_request"}>
-                            <IconPr />
-                          </Match>
-                          <Match when={trigger.type === "tag"}>
-                            <IconTag />
-                          </Match>
-                          <Match when={true}>
-                            <IconGit />
-                          </Match>
-                        </Switch>
-                      </GitIcon>
-                      <GitBranch>{runInfo()!.ref}</GitBranch>
-                    </GitLink>
-                  </Stack>
-                </Show>
-              </Row>
-            </GitInfo>
-          </Stack>
-          <Show when={data.value!.stage}>
-            <Stack space="1.5">
-              <PanelTitle>Stage</PanelTitle>
-              <PanelValueLink href={`${appPath}/${data.value!.stage!.name!}`}>
-                {data.value!.stage!.name!}
-              </PanelValueLink>
+                <GitInfo>
+                  <Row space="1.5" vertical="center">
+                    <Switch>
+                      <Match when={r.value!.actor}>
+                        <ActorAvatar title={r.value!.actor!.email}>
+                          <AvatarInitialsIcon
+                            type="user"
+                            text={r.value!.actor?.email || ""}
+                            style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
+                          />
+                        </ActorAvatar>
+                      </Match>
+                      <Match when={true}>
+                        <ActorAvatar title={r.value!.gitUser!.username}>
+                          <img
+                            width={AVATAR_SIZE}
+                            height={AVATAR_SIZE}
+                            src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
+                              }?s=${2 * AVATAR_SIZE}&v=4`}
+                          />
+                        </ActorAvatar>
+                      </Match>
+                    </Switch>
+                    <Show when={r.value!.trigger.commit}>
+                      <Stack space="0.5">
+                        <GitLink
+                          target="_blank"
+                          rel="noreferrer"
+                          href={githubCommit(r.value!.repoURL, trigger.commit!.id)}
+                        >
+                          <GitIcon size="md">
+                            <IconCommit />
+                          </GitIcon>
+                          <GitCommit>{formatCommit(trigger.commit!.id)}</GitCommit>
+                        </GitLink>
+                        <GitLink
+                          target="_blank"
+                          rel="noreferrer"
+                          href={r.value!.uri}
+                        >
+                          <GitIcon size="sm">
+                            <Switch>
+                              <Match when={trigger.type === "pull_request"}>
+                                <IconPr />
+                              </Match>
+                              <Match when={trigger.type === "tag"}>
+                                <IconTag />
+                              </Match>
+                              <Match when={true}>
+                                <IconGit />
+                              </Match>
+                            </Switch>
+                          </GitIcon>
+                          <GitBranch>{r.value!.ref}</GitBranch>
+                        </GitLink>
+                      </Stack>
+                    </Show>
+                  </Row>
+                </GitInfo>
+              </Stack>
+              <Show when={data.value!.stage}>
+                <Stack space="1.5">
+                  <PanelTitle>Stage</PanelTitle>
+                  <PanelValueLink href={`${appPath}/${data.value!.stage!.name!}`}>
+                    {data.value!.stage!.name!}
+                  </PanelValueLink>
+                </Stack>
+              </Show>
+              <Show when={data.value!.update}>
+                <Stack space="1.5">
+                  <PanelTitle>Update</PanelTitle>
+                  <PanelValueLink
+                    href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
+                      }`}
+                  >
+                    #{data.value!.update!.index}
+                  </PanelValueLink>
+                </Stack>
+              </Show>
+              <Stack space="2">
+                <PanelTitle>Started</PanelTitle>
+                <Text
+                  color="secondary"
+                  title={
+                    data.value!.run.time.created
+                      ? DateTime.fromISO(
+                        data.value!.run.time.created!
+                      ).toLocaleString(DateTime.DATETIME_FULL)
+                      : undefined
+                  }
+                >
+                  {data.value!.run.time.created
+                    ? formatSinceTime(
+                      DateTime.fromISO(data.value!.run.time.created!).toSQL()!,
+                      true
+                    )
+                    : "—"}
+                </Text>
+              </Stack>
+              <Stack space="2">
+                <PanelTitle>Duration</PanelTitle>
+                <Text
+                  color="secondary"
+                  title={
+                    DateTime.fromISO(data.value!.run.time.completed!)
+                      .diff(DateTime.fromISO(data.value!.run.time.started!))
+                      .as("seconds") + " seconds"
+                  }
+                >
+                  {data.value!.run.time.started && data.value!.run.time.completed
+                    ? formatDuration(
+                      DateTime.fromISO(data.value!.run.time.completed!)
+                        .diff(DateTime.fromISO(data.value!.run.time.started!))
+                        .as("milliseconds"),
+                      true
+                    )
+                    : "—"}
+                </Text>
+              </Stack>
             </Stack>
-          </Show>
-          <Show when={data.value!.update}>
-            <Stack space="1.5">
-              <PanelTitle>Update</PanelTitle>
-              <PanelValueLink
-                href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
-                  }`}
-              >
-                #{data.value!.update!.index}
-              </PanelValueLink>
-            </Stack>
-          </Show>
-          <Stack space="2">
-            <PanelTitle>Started</PanelTitle>
-            <Text
-              color="secondary"
-              title={
-                data.value!.run.time.started
-                  ? DateTime.fromISO(
-                    data.value!.run.time.started!
-                  ).toLocaleString(DateTime.DATETIME_FULL)
-                  : undefined
-              }
-            >
-              {data.value!.run.time.started
-                ? formatSinceTime(
-                  DateTime.fromISO(data.value!.run.time.started!).toSQL()!,
-                  true
-                )
-                : "—"}
-            </Text>
-          </Stack>
-          <Stack space="2">
-            <PanelTitle>Duration</PanelTitle>
-            <Text
-              color="secondary"
-              title={
-                DateTime.fromISO(data.value!.run.time.completed!)
-                  .diff(DateTime.fromISO(data.value!.run.time.started!))
-                  .as("seconds") + " seconds"
-              }
-            >
-              {data.value!.run.time.started && data.value!.run.time.completed
-                ? formatDuration(
-                  DateTime.fromISO(data.value!.run.time.completed!)
-                    .diff(DateTime.fromISO(data.value!.run.time.started!))
-                    .as("milliseconds"),
-                  true
-                )
-                : "—"}
-            </Text>
-          </Stack>
-        </Stack>
+          </Suspense>
+        </Show>
       </SidebarRoot>
     );
   }

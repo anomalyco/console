@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { createMemo, Show, Suspense } from "solid-js";
+import { createMemo, createEffect, Show, Suspense } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { Link } from "@solidjs/router";
+import { Link, useMatch, useLocation } from "@solidjs/router";
 
 import { theme } from "$/ui/theme";
 import { Button } from "$/ui/button";
@@ -20,6 +20,10 @@ import { createSubscription } from "$/providers/replicache";
 import { Header } from "../header";
 import { useWorkspace } from "../context";
 import { useAppContext } from "./context";
+import {
+  DialogDeploy,
+  DialogDeployControl,
+} from "./autodeploy/dialog-deploy";
 
 
 const PageHeaderRoot = styled("div", {
@@ -36,6 +40,7 @@ const PageHeaderRoot = styled("div", {
 const RepoLink = styled("a", {
   base: {
     ...utility.row(0),
+    alignItems: "center",
     gap: 5,
     color: theme.color.text.secondary.base,
     fontSize: theme.font.size.sm,
@@ -77,6 +82,8 @@ const RepoLinkSeparator = styled("span", {
 });
 
 export function PageHeader() {
+  const isAutodeploy = useMatch(() => ":workspace/:app/autodeploy");
+  let deployControl!: DialogDeployControl;
   const ctx = useAppContext();
   const workspace = useWorkspace();
   const r = createSubscription(async (tx) => {
@@ -130,20 +137,20 @@ export function PageHeader() {
                 <TabTitle size="sm">Settings</TabTitle>
               </Link>
             </Row>
-            <Show
-              when={r.value!.ghRepoOrg}
-              fallback={
-                <Link href={`${appUrl()}/settings#repo`}>
-                  <Button color="github" size="sm">
-                    <ButtonIcon size="sm">
-                      <IconGitHub />
-                    </ButtonIcon>
-                    Connect Repo
-                  </Button>
-                </Link>
-              }
-            >
-              <Stack space="2" horizontal="end">
+            <Row space="3">
+              <Show
+                when={r.value!.ghRepoOrg}
+                fallback={
+                  <Link href={`${appUrl()}/settings#repo`}>
+                    <Button color="github" size="sm">
+                      <ButtonIcon size="sm">
+                        <IconGitHub />
+                      </ButtonIcon>
+                      Connect Repo
+                    </Button>
+                  </Link>
+                }
+              >
                 <RepoLink
                   target="_blank"
                   href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
@@ -156,11 +163,21 @@ export function PageHeader() {
                     {r.value!.ghRepo!.name}
                   </RepoLinkCopy>
                 </RepoLink>
-              </Stack>
-            </Show>
+                <Show when={Boolean(isAutodeploy())}>
+                  <Button
+                    size="sm"
+                    color="secondary"
+                    onClick={() => deployControl.show()}
+                  >
+                    Trigger Deploy
+                  </Button>
+                </Show>
+              </Show>
+            </Row>
           </Suspense>
         </Show>
       </PageHeaderRoot>
+      <DialogDeploy control={(control) => (deployControl = control)} />
     </>
   );
 }
