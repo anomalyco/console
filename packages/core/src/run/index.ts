@@ -36,7 +36,7 @@ import {
 } from "../util/transaction";
 import { Actor, useActor, useWorkspace, withActor } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, getTableColumns, gt, inArray, isNull } from "../drizzle";
+import { and, eq, getTableColumns, inArray, isNull } from "../drizzle";
 import { createEvent } from "../event";
 import {
   Log,
