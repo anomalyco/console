@@ -15,7 +15,15 @@ bus.subscribe(
     },
     permissions: [
       {
-        actions: ["sts:*", "logs:*", "ses:*", "iot:*", "s3:*", "cloudwatch:*"],
+        actions: [
+          "sts:*",
+          "logs:*",
+          "ses:*",
+          "iot:*",
+          "s3:*",
+          "ssm:*",
+          "cloudwatch:*",
+        ],
         resources: ["*"],
       },
       {
