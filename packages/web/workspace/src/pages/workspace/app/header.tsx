@@ -159,7 +159,7 @@ export function PageHeader() {
                 when={r.value!.ghRepoOrg}
                 fallback={
                   <Link href={`${appUrl()}/settings#repo`}>
-                    <Button color="github" size="sm">
+                    <Button color="secondary" size="sm">
                       <ButtonIcon size="sm">
                         <IconGitHub />
                       </ButtonIcon>
