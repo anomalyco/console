@@ -189,7 +189,7 @@ export function PageHeader() {
                       color="secondary"
                       onClick={() => deployControl.show()}
                     >
-                      Trigger Deploy
+                      Deploy
                     </Button>
                   </Match>
                   <Match when={Boolean(isAutodeployDetail())}>
