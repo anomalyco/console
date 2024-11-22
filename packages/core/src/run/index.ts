@@ -174,7 +174,6 @@ export module Run {
     content: string;
     trigger: Trigger;
     defaultStage?: string;
-    manualStage?: string;
   };
 
   export const SstConfig = z.object({
@@ -304,7 +303,6 @@ export module Run {
     z.object({
       content: z.string().min(1),
       trigger: Trigger,
-      manualStage: z.string().min(1).optional(),
     }),
     async (input) => {
       const lambda = new LambdaClient({ retryStrategy: RETRY_STRATEGY });
@@ -330,7 +328,7 @@ export module Run {
                     .replace(/-$/g, "")
                 : input.trigger.type === "pull_request"
                 ? `pr-${input.trigger.number}`
-                : input.manualStage,
+                : input.trigger.stageName,
           } satisfies ConfigParserEvent),
         })
       );
@@ -496,11 +494,11 @@ export module Run {
             repo: result.repo,
           },
           ref,
+          stageName,
           commit,
           actor: useActor(),
         },
         appID,
-        manualStageName: stageName,
         pathToConfig: result.path ?? undefined,
         force: force === true ? true : undefined,
       });
@@ -516,7 +514,6 @@ export module Run {
       pathToConfig: z.string().min(1).optional(),
       retrier: z.custom<Actor>().optional(),
       force: z.boolean().optional(),
-      manualStageName: z.string().min(1).optional(),
     }),
     async (input) => {
       const ref =
@@ -555,7 +552,6 @@ export module Run {
           const sstConfig = await parseSstConfig({
             content,
             trigger: input.trigger,
-            manualStage: input.manualStageName,
           });
           if ("error" in sstConfig)
             return {

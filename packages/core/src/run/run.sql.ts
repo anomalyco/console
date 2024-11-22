@@ -151,6 +151,7 @@ export const Trigger = z.discriminatedUnion("type", [
       repo: z.string().min(1),
     }),
     ref: z.string().min(1),
+    stageName: z.string().min(1),
     commit: z
       .object({
         id: z.string().min(1),
