@@ -76,23 +76,33 @@ export const handler = bus.subscriber(
           break;
 
         case Workspace.Events.Created.type:
-          await Alert.put({
-            source: { app: "*", stage: "*" },
-            destination: {
-              type: "email",
-              properties: { users: "*" },
+          await withActor(
+            {
+              type: "system",
+              properties: {
+                workspaceID: evt.properties.workspaceID,
+              },
             },
-            event: "issue",
-          });
-          await Alert.put({
-            source: { app: "*", stage: "*" },
-            destination: {
-              type: "email",
-              properties: { users: "*" },
+            async () => {
+              await Alert.put({
+                source: { app: "*", stage: "*" },
+                destination: {
+                  type: "email",
+                  properties: { users: "*" },
+                },
+                event: "issue",
+              });
+              await Alert.put({
+                source: { app: "*", stage: "*" },
+                destination: {
+                  type: "email",
+                  properties: { users: "*" },
+                },
+                event: "autodeploy",
+              });
+              await Stripe.createCustomer();
             },
-            event: "autodeploy",
-          });
-          await Stripe.createCustomer();
+          );
           break;
 
         case AWS.Account.Events.Removed.type:
