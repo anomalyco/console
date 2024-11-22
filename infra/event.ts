@@ -61,7 +61,7 @@ bus.subscribe(
   "RunnerUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/runner-updated-external.handler",
-    link: [bus, database, websocket],
+    link: [bus, database, email, websocket],
     permissions: [{ actions: ["iot:*"], resources: ["*"] }],
   },
   {
@@ -76,7 +76,7 @@ bus.subscribe(
   {
     handler:
       "packages/functions/src/events/runner-updated-external.codebuildHandler",
-    link: [bus, database, websocket],
+    link: [bus, database, email, websocket],
     permissions: [{ actions: ["iot:*"], resources: ["*"] }],
   },
   {
