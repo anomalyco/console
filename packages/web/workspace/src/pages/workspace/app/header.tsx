@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { createMemo, createEffect, Show, Suspense } from "solid-js";
+import { createMemo, createEffect, Show, Switch, Match, Suspense } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { Link, useMatch, useLocation } from "@solidjs/router";
+import { Link, useMatch, useParams } from "@solidjs/router";
 
 import { theme } from "$/ui/theme";
 import { Button } from "$/ui/button";
@@ -15,7 +15,7 @@ import {
 } from "$/data/app";
 import { IconGitHub } from "$/ui/icons/custom";
 import { TabTitle, ButtonIcon } from "$/ui/button";
-import { createSubscription } from "$/providers/replicache";
+import { createSubscription, useReplicache } from "$/providers/replicache";
 
 import { Header } from "../header";
 import { useWorkspace } from "../context";
@@ -24,6 +24,10 @@ import {
   DialogDeploy,
   DialogDeployControl,
 } from "./autodeploy/dialog-deploy";
+import {
+  DialogRedeploy,
+  DialogRedeployControl,
+} from "./autodeploy/dialog-redeploy";
 
 
 const PageHeaderRoot = styled("div", {
@@ -82,9 +86,16 @@ const RepoLinkSeparator = styled("span", {
 });
 
 export function PageHeader() {
-  const isAutodeploy = useMatch(() => ":workspace/:app/autodeploy");
   let deployControl!: DialogDeployControl;
+  let redeployControl!: DialogRedeployControl;
+
+  const isAutodeploy = useMatch(() => ":workspace/:app/autodeploy");
+  const isAutodeployDetail = useMatch(() => ":workspace/:app/autodeploy/:runID");
+
+  const runID = isAutodeployDetail()?.params.runID;
+
   const ctx = useAppContext();
+  const rep = useReplicache();
   const workspace = useWorkspace();
   const r = createSubscription(async (tx) => {
     const runs = await RunStore.all(tx);
@@ -108,12 +119,18 @@ export function PageHeader() {
       (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected,
     );
 
+    const currentRun = runID
+      ? runs.find((run) => run.id === runID)
+      : undefined;
+
     return {
       ghRepo,
       ghRepoOrg,
+      currentRun,
       latestRunError,
     };
   });
+
   const appUrl = createMemo(() =>
     `/${workspace().slug}/${ctx.app.name}`,
   );
@@ -151,33 +168,64 @@ export function PageHeader() {
                   </Link>
                 }
               >
-                <RepoLink
-                  target="_blank"
-                  href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
-                    }`}
-                >
-                  <RepoLinkIcon><IconGitHub width="16" height="16" /></RepoLinkIcon>
-                  <RepoLinkCopy>
-                    {r.value!.ghRepoOrg!.login}
-                    <RepoLinkSeparator>/</RepoLinkSeparator>
-                    {r.value!.ghRepo!.name}
-                  </RepoLinkCopy>
-                </RepoLink>
-                <Show when={Boolean(isAutodeploy())}>
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    onClick={() => deployControl.show()}
+                <Show when={!Boolean(isAutodeployDetail())}>
+                  <RepoLink
+                    target="_blank"
+                    href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
+                      }`}
                   >
-                    Trigger Deploy
-                  </Button>
+                    <RepoLinkIcon><IconGitHub width="16" height="16" /></RepoLinkIcon>
+                    <RepoLinkCopy>
+                      {r.value!.ghRepoOrg!.login}
+                      <RepoLinkSeparator>/</RepoLinkSeparator>
+                      {r.value!.ghRepo!.name}
+                    </RepoLinkCopy>
+                  </RepoLink>
                 </Show>
+                <Switch>
+                  <Match when={Boolean(isAutodeploy())}>
+                    <Button
+                      size="sm"
+                      color="secondary"
+                      onClick={() => deployControl.show()}
+                    >
+                      Trigger Deploy
+                    </Button>
+                  </Match>
+                  <Match when={Boolean(isAutodeployDetail())}>
+                    <Switch>
+                      <Match when={r.value!.currentRun
+                        && ["queued", "updating"].includes(r.value!.currentRun?.status)}
+                      >
+                        <Button
+                          size="sm"
+                          color="warning"
+                          onClick={async () => {
+                            runID && await rep().mutate.run_cancel({ runID });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </Match>
+                      <Match when={true}>
+                        <Button
+                          size="sm"
+                          color="secondary"
+                          onClick={() => redeployControl.show()}
+                        >
+                          Redeploy
+                        </Button>
+                      </Match>
+                    </Switch>
+                  </Match>
+                </Switch>
               </Show>
             </Row>
           </Suspense>
         </Show>
       </PageHeaderRoot>
       <DialogDeploy control={(control) => (deployControl = control)} />
+      <DialogRedeploy runID={runID!} control={(control) => (redeployControl = control)} />
     </>
   );
 }

@@ -23,7 +23,6 @@ function init() {
     state,
     control: {
       show() {
-        console.log("here");
         setState("show", true);
       },
       hide() {
@@ -122,12 +121,12 @@ export function DialogRange(props: {
                 hint={
                   store.parsed
                     ? "Looking for logs older than " +
-                      store.parsed.toLocaleString(DATETIME_LONG) +
-                      "."
+                    store.parsed.toLocaleString(DATETIME_LONG) +
+                    "."
                     : store.error
                       ? "Use a valid date format like " +
-                        DateTime.now().toFormat("MM/dd/yyyy h:m a") +
-                        "."
+                      DateTime.now().toFormat("MM/dd/yyyy h:m a") +
+                      "."
                       : "Look for logs older than the given date."
                 }
               >

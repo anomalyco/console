@@ -1,5 +1,11 @@
+import { PageHeader } from "../header";
 import { AutodeployDetail } from "../../../../common/autodeploy-detail";
 
 export function Detail() {
-  return <AutodeployDetail routeType="app" />;
+  return (
+    <>
+      <PageHeader />
+      <AutodeployDetail routeType="app" />
+    </>
+  );
 }

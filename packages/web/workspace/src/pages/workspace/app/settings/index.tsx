@@ -440,9 +440,6 @@ export function Settings() {
   const appRepo = createSubscription((tx) =>
     AppRepoStore.forApp(tx, app.app.id).then((repos) => repos[0])
   );
-  createEffect(() => {
-    console.log("here", appRepo.value);
-  });
 
   const needsGithub = createSubscription(async (tx) => {
     const ghOrgs = await GithubOrgStore.all(tx);

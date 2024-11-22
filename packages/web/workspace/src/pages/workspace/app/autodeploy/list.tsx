@@ -2,6 +2,7 @@ import { pipe, filter, sortBy } from "remeda";
 import { DateTime } from "luxon";
 import { Link } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
+import { PageHeader } from "../header";
 import { useAppContext } from "../context";
 import {
   IconArrowLongRight,
@@ -389,11 +390,6 @@ const RunSenderAvatar = styled("div", {
 });
 
 function RunItem({ run }: { run: Run.Run }) {
-  // const stage = createSubscription(async (tx) => {
-  //   if (!run.stageID) return;
-  //   return await StageStore.get(tx, run.stageID);
-  // });
-
   const r = createSubscription(async (tx) => {
     const stage = run.stageID ? await StageStore.get(tx, run.stageID) : undefined;
 
@@ -424,36 +420,12 @@ function RunItem({ run }: { run: Run.Run }) {
       ? await UserStore.get(tx, trigger.actor.properties.userID)
       : undefined;
 
-    return { stage, trigger, repoURL, ref, uri, gitUser, actor };
-  });
+    const retrier = (run.retrier && run.retrier.type === "user")
+      ? await UserStore.get(tx, run.retrier.properties.userID)
+      : undefined;
 
-  // const runInfo = createMemo(() => {
-  //   const trigger = run.trigger;
-  //   const repoURL =
-  //     trigger.source === "github"
-  //       ? githubRepo(trigger.repo.owner, trigger.repo.repo)
-  //       : "";
-  //   const ref =
-  //     trigger.type === "pull_request"
-  //       ? `pr#${trigger.number}`
-  //       : trigger.type === "tag"
-  //         ? trigger.tag
-  //         : trigger.type === "branch"
-  //           ? trigger.branch
-  //           : trigger.ref;
-  //   const uri =
-  //     trigger.type === "pull_request"
-  //       ? githubPr(repoURL, trigger.number)
-  //       : trigger.type === "tag"
-  //         ? githubRef(repoURL, trigger.tag)
-  //         : trigger.type === "branch"
-  //           ? githubRef(repoURL, trigger.branch)
-  //           : githubRef(repoURL, trigger.ref);
-  //   const gitUser = trigger.type === "user" ? undefined : trigger.sender;
-  //   console.log(trigger.type);
-  //
-  //   return { trigger, repoURL, ref, uri, gitUser };
-  // });
+    return { stage, trigger, repoURL, ref, uri, gitUser, actor, retrier };
+  });
 
   return (
     <RunRoot>
@@ -467,6 +439,15 @@ function RunItem({ run }: { run: Run.Run }) {
                   <AvatarInitialsIcon
                     type="user"
                     text={r.value!.actor?.email || ""}
+                    style={{ width: "24px", height: "24px" }}
+                  />
+                </RunSenderAvatar>
+              </Match>
+              <Match when={r.value!.retrier}>
+                <RunSenderAvatar title={r.value!.retrier?.email}>
+                  <AvatarInitialsIcon
+                    type="user"
+                    text={r.value!.retrier?.email || ""}
                     style={{ width: "24px", height: "24px" }}
                   />
                 </RunSenderAvatar>
@@ -588,28 +569,31 @@ export function List() {
   });
 
   return (
-    <Content>
-      <Show when={runs.value && runs.value.length === 0}>
-        <EmptyRunsSign>
-          <EmptyRunsHelper>
-            <EmptyRunsHelperHeader>Autodeploy your app</EmptyRunsHelperHeader>
-            <EmptyRunsHint>
-              <li>Connect your app to its GitHub repo</li>
-              <li>
-                Add an environment for your{" "}
-                <EmptyRunsHintCode>`production`</EmptyRunsHintCode> branch
-              </li>
-              <li>
-                Git push to deploy{" "}
-                <EmptyRunsHintCode>
-                  `git push origin main:production`
-                </EmptyRunsHintCode>
-              </li>
-            </EmptyRunsHint>
-          </EmptyRunsHelper>
-        </EmptyRunsSign>
-      </Show>
-      <For each={runs.value}>{(run) => <RunItem run={run} />}</For>
-    </Content>
+    <>
+      <PageHeader />
+      <Content>
+        <Show when={runs.value && runs.value.length === 0}>
+          <EmptyRunsSign>
+            <EmptyRunsHelper>
+              <EmptyRunsHelperHeader>Autodeploy your app</EmptyRunsHelperHeader>
+              <EmptyRunsHint>
+                <li>Connect your app to its GitHub repo</li>
+                <li>
+                  Add an environment for your{" "}
+                  <EmptyRunsHintCode>`production`</EmptyRunsHintCode> branch
+                </li>
+                <li>
+                  Git push to deploy{" "}
+                  <EmptyRunsHintCode>
+                    `git push origin main:production`
+                  </EmptyRunsHintCode>
+                </li>
+              </EmptyRunsHint>
+            </EmptyRunsHelper>
+          </EmptyRunsSign>
+        </Show>
+        <For each={runs.value}>{(run) => <RunItem run={run} />}</For>
+      </Content>
+    </>
   );
 }
