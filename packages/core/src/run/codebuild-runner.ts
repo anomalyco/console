@@ -15,13 +15,11 @@ import {
   DeleteRoleCommand,
   DeleteRolePolicyCommand,
 } from "@aws-sdk/client-iam";
-import { S3Client, CreateBucketCommand } from "@aws-sdk/client-s3";
 import { zod } from "../util/zod";
-import { Resource, Architecture, Compute, Vpc, Cache } from "./run.sql";
+import { Resource, Architecture, Compute, Vpc } from "./run.sql";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Credentials } from "../aws";
 import { Run } from ".";
-import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 export module CodebuildRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 60; // 60 minutes
