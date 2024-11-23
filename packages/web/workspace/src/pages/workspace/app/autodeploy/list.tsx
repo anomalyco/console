@@ -390,8 +390,10 @@ const RunSenderAvatar = styled("div", {
 });
 
 function RunItem({ run }: { run: Run.Run }) {
-  const r = createSubscription(async (tx) => {
-    const stage = run.stageID ? await StageStore.get(tx, run.stageID) : undefined;
+  const r = createSubscription(() => async (tx) => {
+    const stage = run.stageID
+      ? await StageStore.get(tx, run.stageID)
+      : undefined;
 
     const trigger = run.trigger;
     const repoURL =
@@ -416,13 +418,15 @@ function RunItem({ run }: { run: Run.Run }) {
             : githubRef(repoURL, trigger.ref);
     const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
-    const actor = (trigger.type === "user" && trigger.actor.type === "user")
-      ? await UserStore.get(tx, trigger.actor.properties.userID)
-      : undefined;
+    const actor =
+      trigger.type === "user" && trigger.actor.type === "user"
+        ? await UserStore.get(tx, trigger.actor.properties.userID)
+        : undefined;
 
-    const retrier = (run.retrier && run.retrier.type === "user")
-      ? await UserStore.get(tx, run.retrier.properties.userID)
-      : undefined;
+    const retrier =
+      run.retrier && run.retrier.type === "user"
+        ? await UserStore.get(tx, run.retrier.properties.userID)
+        : undefined;
 
     return { stage, trigger, repoURL, ref, uri, gitUser, actor, retrier };
   });
@@ -457,8 +461,9 @@ function RunItem({ run }: { run: Run.Run }) {
                   <img
                     width="24"
                     height="24"
-                    src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
-                      }?s=48&v=4`}
+                    src={`https://avatars.githubusercontent.com/u/${
+                      r.value!.gitUser!.id
+                    }?s=48&v=4`}
                   />
                 </RunSenderAvatar>
               </Match>
@@ -517,7 +522,7 @@ function RunItem({ run }: { run: Run.Run }) {
                 rel="noreferrer noopener"
                 href={githubCommit(
                   r.value!.repoURL,
-                  r.value!.trigger.commit!.id
+                  r.value!.trigger.commit!.id,
                 )}
               >
                 <RunGitIcon size="sm">
@@ -533,7 +538,7 @@ function RunItem({ run }: { run: Run.Run }) {
                   rel="noreferrer noopener"
                   href={githubCommit(
                     r.value!.repoURL,
-                    r.value!.trigger.commit!.id
+                    r.value!.trigger.commit!.id,
                   )}
                 >
                   {r.value!.trigger.commit!.message}
@@ -544,7 +549,7 @@ function RunItem({ run }: { run: Run.Run }) {
           <Show when={run.time.created} fallback={<RunTime>—</RunTime>}>
             <RunTime
               title={DateTime.fromISO(run.time.created!).toLocaleString(
-                DateTime.DATETIME_FULL
+                DateTime.DATETIME_FULL,
               )}
             >
               {formatSinceTime(DateTime.fromISO(run.time.created!).toSQL()!)}
