@@ -29,7 +29,6 @@ import {
   DialogRedeployControl,
 } from "./autodeploy/dialog-redeploy";
 
-
 const PageHeaderRoot = styled("div", {
   base: {
     display: "flex",
@@ -79,7 +78,7 @@ const RepoLinkSeparator = styled("span", {
     fontSize: theme.font.size.xs,
     selectors: {
       [`${RepoLink}:hover &`]: {
-        color: theme.color.link.primary.hover
+        color: theme.color.link.primary.hover,
       },
     },
   },
@@ -97,7 +96,7 @@ export function PageHeader() {
   const ctx = useAppContext();
   const rep = useReplicache();
   const workspace = useWorkspace();
-  const r = createSubscription(async (tx) => {
+  const r = createSubscription(() => async (tx) => {
     const runs = await RunStore.all(tx);
     const run = runs
       .filter((run) => run.appID === ctx.app.id)

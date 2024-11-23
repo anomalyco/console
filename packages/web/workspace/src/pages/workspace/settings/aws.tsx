@@ -128,7 +128,7 @@ const AddIcon = styled("span", {
 });
 
 export function AWS() {
-  const accounts = createSubscription(AccountStore.list, []);
+  const accounts = createSubscription(() => AccountStore.list, []);
   const rep = useReplicache();
 
   return (

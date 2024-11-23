@@ -59,7 +59,7 @@ import {
 import { PageStatusIcon } from "../updates/detail";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
-import { } from "@solid-primitives/keyboard";
+import {} from "@solid-primitives/keyboard";
 import { formatSinceTime } from "$/common/format";
 import { ResourceIcon } from "$/common/resource-icon";
 import { createSubscription } from "$/providers/replicache";
@@ -741,7 +741,7 @@ export function Header(props: HeaderProps) {
 
 export function List() {
   const ctx = useStageContext();
-  const latestUpdate = createSubscription(async (tx) => {
+  const latestUpdate = createSubscription(() => async (tx) => {
     const updates = await StateUpdateStore.forStage(tx, ctx.stage.id);
     const latest = updates.sort((a, b) => b.index - a.index)[0];
     return latest;
@@ -944,7 +944,9 @@ export function List() {
                     )}
                   </TitleDescLink>
                 </Stack>
-                <ChevronLink href="../updates" size="sm">View history</ChevronLink>
+                <ChevronLink href="../updates" size="sm">
+                  View history
+                </ChevronLink>
               </TitleRoot>
             </Show>
             <Stack space="5">
@@ -959,7 +961,5 @@ export function List() {
 }
 
 function formatResourceType(type: string) {
-  return type.startsWith("sstv2")
-    ? type.replace(/^sstv2:aws:/, '')
-    : type;
+  return type.startsWith("sstv2") ? type.replace(/^sstv2:aws:/, "") : type;
 }

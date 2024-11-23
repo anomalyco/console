@@ -36,8 +36,8 @@ import { createStore, reconcile } from "solid-js/store";
 import { Splash } from "$/ui/splash";
 
 const mutators = new Client<ServerType>()
-  .mutation("app_stage_sync", async () => { })
-  .mutation("log_poller_subscribe", async () => { })
+  .mutation("app_stage_sync", async () => {})
+  .mutation("log_poller_subscribe", async () => {})
   .mutation("log_search", async (tx, input) => {
     console.log(input);
     await LogSearchStore.put(tx, [input.id], input);
@@ -54,7 +54,7 @@ const mutators = new Client<ServerType>()
       item.timeDeleted = DateTime.now().toUTC().toSQL({ includeOffset: false });
     });
   })
-  .mutation("function_invoke", async () => { })
+  .mutation("function_invoke", async () => {})
   .mutation("function_payload_save", async (tx, input) => {
     await LambdaPayloadStore.put(tx, [input.id!], {
       id: input.id!,
@@ -152,7 +152,7 @@ const mutators = new Client<ServerType>()
   })
   .mutation("run_redeploy", async (tx, input) => {
     const run = (await RunStore.all(tx)).filter(
-      (run) => run.id === input.runID
+      (run) => run.id === input.runID,
     )[0];
     if (!run) return;
 
@@ -189,7 +189,7 @@ const mutators = new Client<ServerType>()
   })
   .mutation("run_cancel", async (tx, input) => {
     const run = (await RunStore.all(tx)).filter(
-      (run) => run.id === input.runID
+      (run) => run.id === input.runID,
     )[0];
     if (!run) return;
 
@@ -204,7 +204,7 @@ const mutators = new Client<ServerType>()
           type: "run_failed",
           properties: { message: "Build cancelled" },
         },
-      }
+      },
     );
   })
   .mutation("run_config_put", async (tx, input) => {
@@ -296,7 +296,7 @@ function createReplicache(workspaceID: string, token: string) {
 }
 
 export function ReplicacheProvider(
-  props: ParentProps<{ workspaceID: string }>
+  props: ParentProps<{ workspaceID: string }>,
 ) {
   const auth = useAuth2();
   const rep = createMemo(() => {
@@ -333,48 +333,55 @@ export function useReplicache() {
 }
 
 export function createSubscription<R>(
-  cb: (tx: ReadTransaction) => Promise<R>
+  cb: () => (tx: ReadTransaction) => Promise<R>,
 ): {
   value: R | undefined;
 };
 export function createSubscription<R>(
-  cb: (tx: ReadTransaction) => Promise<R>,
-  initial: R
+  cb: () => (tx: ReadTransaction) => Promise<R>,
+  initial: R,
 ): {
   value: R;
 };
 export function createSubscription<R>(
-  cb: (tx: ReadTransaction) => Promise<R>,
-  initial?: R | undefined
+  cb: () => (tx: ReadTransaction) => Promise<R>,
+  initial?: R | undefined,
 ) {
   const [store, setStore] = createStore({
     value: initial,
   } as any);
   const rep = useReplicache();
 
-  let subscription: any;
-  const [r] = createResource(() => {
-    if (subscription) {
-      subscription();
-    }
-    return new Promise<void>((resolve) => {
-      subscription = rep().subscribe((tx) => cb(tx), {
-        onData(result) {
-          setStore(
-            reconcile(
-              {
-                value: result,
-              },
-              {
-                merge: true,
-              },
-            ),
-          );
-          resolve();
-        },
+  const [r] = createResource(
+    () => {
+      const tx = cb();
+      return tx;
+    },
+    (subscriber) => {
+      return new Promise<void>((resolve) => {
+        const subscription = rep().subscribe(subscriber, {
+          onData(result) {
+            setStore(
+              reconcile(
+                {
+                  value: result,
+                },
+                {
+                  merge: true,
+                },
+              ),
+            );
+            resolve();
+          },
+        });
+
+        onCleanup(() => {
+          console.log("subscribing");
+          subscription();
+        });
       });
-    });
-  });
+    },
+  );
   return {
     get value() {
       r();

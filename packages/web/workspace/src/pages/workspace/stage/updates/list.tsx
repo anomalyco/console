@@ -342,13 +342,13 @@ function Update(props: UpdateProps) {
   const errors = () => props.errors?.length || 0;
   const runID = props.runID;
 
-  const run = createSubscription(async (tx) => {
+  const run = createSubscription(() => async (tx) => {
     if (!runID) return;
     return RunStore.get(tx, ctx.stage.id, runID);
   });
 
-  const update = createSubscription((tx) =>
-    StateUpdateStore.get(tx, ctx.stage.id, props.id)
+  const update = createSubscription(
+    () => (tx) => StateUpdateStore.get(tx, ctx.stage.id, props.id),
   );
 
   const runInfo = createMemo(() => {
@@ -363,18 +363,18 @@ function Update(props: UpdateProps) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-        ? trigger.tag
-        : trigger.type === "branch"
-        ? trigger.branch
-        : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+            ? trigger.branch
+            : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-        ? githubRef(repoURL, trigger.tag)
-        : trigger.type === "branch"
-        ? githubRef(repoURL, trigger.branch)
-        : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+            ? githubRef(repoURL, trigger.branch)
+            : githubRef(repoURL, trigger.ref);
     const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
     return { trigger, repoURL, branch, uri, gitUser };
@@ -472,7 +472,7 @@ function Update(props: UpdateProps) {
         <Show when={props.timeStarted} fallback={<UpdateTime>—</UpdateTime>}>
           <UpdateTime
             title={DateTime.fromISO(props.timeStarted!).toLocaleString(
-              DateTime.DATETIME_FULL
+              DateTime.DATETIME_FULL,
             )}
           >
             {formatSinceTime(DateTime.fromISO(props.timeStarted!).toSQL()!)}
@@ -500,7 +500,7 @@ function ChangeLegend(props: ChangeLegendProps) {
 
   const widths = createMemo(() => {
     const nonZero = [same(), created(), updated(), deleted()].filter(
-      (n) => n !== 0
+      (n) => n !== 0,
     ).length;
 
     let sameWidth =
@@ -524,7 +524,7 @@ function ChangeLegend(props: ChangeLegendProps) {
         sameWidth,
         createdWidth,
         updatedWidth,
-        deletedWidth
+        deletedWidth,
       );
       if (maxWidth === sameWidth) {
         sameWidth += widthDifference;
@@ -588,8 +588,8 @@ function ChangeLegend(props: ChangeLegendProps) {
 export function List() {
   const ctx = useStageContext();
   const updates = createSubscription(
-    (tx) => StateUpdateStore.forStage(tx, ctx.stage.id),
-    []
+    () => (tx) => StateUpdateStore.forStage(tx, ctx.stage.id),
+    [],
   );
 
   return (

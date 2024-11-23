@@ -299,13 +299,16 @@ const PutForm = object({
 export function Alerts() {
   const rep = useReplicache();
   const users = createSubscription(
-    async (tx) => UserStore.list(tx).then(filter((u) => !u.timeDeleted)),
+    () => async (tx) => UserStore.list(tx).then(filter((u) => !u.timeDeleted)),
     [],
   );
-  const alerts = createSubscription(async (tx) => {
-    const ret = AlertStore.all(tx);
-    return ret;
-  }, []);
+  const alerts = createSubscription(
+    () => async (tx) => {
+      const ret = AlertStore.all(tx);
+      return ret;
+    },
+    [],
+  );
 
   const [putForm, { Form, Field }] = createForm({
     validate: valiForm(PutForm),
@@ -318,7 +321,7 @@ export function Alerts() {
   });
 
   const apps = AppStore.all.watch(rep, () => []);
-  const activeStages = createSubscription(ActiveStages());
+  const activeStages = createSubscription(ActiveStages);
   const stages = createMemo(() => activeStages.value || []);
   // const stages = StageStore.list.watch(rep, () => []);
   const selectedApps = createMemo(() =>
@@ -465,7 +468,7 @@ export function Alerts() {
                     color={field.error ? "danger" : "primary"}
                     hint={
                       getValue(putForm, "destination.type") === "slack" &&
-                        !slackTeam() ? (
+                      !slackTeam() ? (
                         <span>
                           <a href="#slack">Connect your Slack</a> workspace{" "}
                           below.
@@ -750,19 +753,19 @@ export function Alerts() {
                 destination:
                   cloned.destination!.type === "slack"
                     ? {
-                      type: "slack",
-                      properties: {
-                        channel: cloned.destination!.slack?.channel!,
-                      },
-                    }
+                        type: "slack",
+                        properties: {
+                          channel: cloned.destination!.slack?.channel!,
+                        },
+                      }
                     : {
-                      type: "email",
-                      properties: {
-                        users: cloned.destination!.email!.users!.includes("*")
-                          ? "*"
-                          : cloned.destination!.email!.users!,
+                        type: "email",
+                        properties: {
+                          users: cloned.destination!.email!.users!.includes("*")
+                            ? "*"
+                            : cloned.destination!.email!.users!,
+                        },
                       },
-                    },
                 event: cloned.event!,
               });
               setEditing("active", false);
@@ -886,7 +889,7 @@ export function Alerts() {
                                     alert.source.stage.join(", ")}
                                 </AlertsPanelFromKeyword>{" "}
                                 {alert.source.app !== "*" &&
-                                  alert.source.app.length === 1
+                                alert.source.app.length === 1
                                   ? "stage"
                                   : "stages"}
                               </>
@@ -912,16 +915,16 @@ export function Alerts() {
                                       {destination().properties.users === "*"
                                         ? "To all users in the workspace"
                                         : (
-                                          destination().properties
-                                            .users as string[]
-                                        )
-                                          .map(
-                                            (id) =>
-                                              users.value.find(
-                                                (u) => u.id === id,
-                                              )?.email,
+                                            destination().properties
+                                              .users as string[]
                                           )
-                                          .join(", ")}
+                                            .map(
+                                              (id) =>
+                                                users.value.find(
+                                                  (u) => u.id === id,
+                                                )?.email,
+                                            )
+                                            .join(", ")}
                                     </AlertsPanelToLabel>
                                   </>
                                 )}
@@ -1031,9 +1034,7 @@ export function Alerts() {
                 <AlertsPanelRowIcon>
                   <IconEllipsisHorizontal width={18} height={18} />
                 </AlertsPanelRowIcon>
-                <TextButton
-                  onClick={() => createAlert()}
-                >
+                <TextButton onClick={() => createAlert()}>
                   Add a new alert
                 </TextButton>
               </AlertsPanelRow>

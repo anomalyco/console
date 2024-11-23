@@ -243,17 +243,20 @@ const CardGitMessage = styled("div", {
 export function Overview() {
   const app = useAppContext();
   const local = useLocalContext();
-  const stages = createSubscription(async (tx) => {
-    return sortBy(
-      await ActiveStagesForApp(app.app.id)(tx),
-      (stage) =>
-        app.app.name === local().app && stage.name === local().stage ? 0 : 1,
-      [(stage) => stage.timeUpdated, "desc"],
-    );
+  const stages = createSubscription(() => {
+    const appID = app.app.id;
+    return async (tx) => {
+      return sortBy(
+        await ActiveStagesForApp(appID)(tx),
+        (stage) =>
+          app.app.name === local().app && stage.name === local().stage ? 0 : 1,
+        [(stage) => stage.timeUpdated, "desc"],
+      );
+    };
   });
 
   function Card(props: { stage: Stage.Info }) {
-    const latest = createSubscription(async (tx) => {
+    const latest = createSubscription(() => async (tx) => {
       const updates = await StateUpdateStore.forStage(tx, props.stage.id);
       if (!updates.length) return;
       const update = updates.sort((a, b) => b.index - a.index)[0];
@@ -272,8 +275,8 @@ export function Overview() {
       };
     });
     const local = useLocalContext();
-    const aws = createSubscription(async (tx) =>
-      AWS.AccountStore.get(tx, props.stage.awsAccountID),
+    const aws = createSubscription(
+      () => async (tx) => AWS.AccountStore.get(tx, props.stage.awsAccountID),
     );
     return (
       <CardRoot>
@@ -313,14 +316,18 @@ export function Overview() {
                 }
               >
                 <CardInternalLink href={`${props.stage.name}/local`}>
-                  <Tag level="tip" type="outline">Local</Tag>
+                  <Tag level="tip" type="outline">
+                    Local
+                  </Tag>
                 </CardInternalLink>
               </Show>
               <Show when={latest.value?.update.errors.length}>
                 <CardInternalLink
                   href={`${props.stage.name}/updates/${latest.value?.update.id}`}
                 >
-                  <Tag level="danger" type="outline">Error</Tag>
+                  <Tag level="danger" type="outline">
+                    Error
+                  </Tag>
                 </CardInternalLink>
               </Show>
             </Row>
@@ -380,7 +387,9 @@ export function Overview() {
           </Show>
           <Stack space="px">
             <CardRegion>{props.stage.region}</CardRegion>
-            <Tag class={cardAccountId} title="AWS Account ID">{aws.value?.accountID}</Tag>
+            <Tag class={cardAccountId} title="AWS Account ID">
+              {aws.value?.accountID}
+            </Tag>
           </Stack>
         </CardBodyRight>
       </CardRoot>

@@ -22,7 +22,15 @@ import {
 } from "$/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
 import { Link, useNavigate, useSearchParams } from "@solidjs/router";
-import { For, Match, Show, Switch, Suspense, createEffect, createMemo } from "solid-js";
+import {
+  For,
+  Match,
+  Show,
+  Switch,
+  Suspense,
+  createEffect,
+  createMemo,
+} from "solid-js";
 import { Header } from "./header";
 import { useLocalContext } from "$/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
@@ -316,7 +324,7 @@ export function OverviewNext() {
   const auth = useAuth2();
   const local = useLocalContext();
   const users = UserStore.list.watch(rep, () => []);
-  const r = createSubscription(async (tx) => {
+  const r = createSubscription(() => async (tx) => {
     const stages = await ActiveStages()(tx);
     const apps = await AppStore.all(tx);
     const cols = splitCols(
@@ -338,16 +346,16 @@ export function OverviewNext() {
         ),
       ),
     );
-    const ambiguous = new Set(pipe(
-      stages,
-      groupBy(
-        (s) => `${apps.find((a) => a.id === s.appID)?.name}/${s.name}`,
+    const ambiguous = new Set(
+      pipe(
+        stages,
+        groupBy((s) => `${apps.find((a) => a.id === s.appID)?.name}/${s.name}`),
+        entries,
+        filter(([, stages]) => stages.length > 1),
+        flatMap(([_, stages]) => stages),
+        map((s) => s.id),
       ),
-      entries,
-      filter(([, stages]) => stages.length > 1),
-      flatMap(([_, stages]) => stages),
-      map((s) => s.id),
-    ));
+    );
 
     return {
       apps,
@@ -408,7 +416,7 @@ export function OverviewNext() {
         [(c) => c.timeUpdated, "desc"],
       );
     });
-    const repo = createSubscription(RepoFromApp(props.app.id));
+    const repo = createSubscription(() => RepoFromApp(props.app.id));
     const childrenCapped = createMemo(() =>
       children().length > OVERFLOW_APPS_COUNT
         ? children().slice(0, OVERFLOW_APPS_DISPLAY)
@@ -417,7 +425,7 @@ export function OverviewNext() {
     const showOverflow = createMemo(() => {
       return showApps().includes(props.app.id);
     });
-    const lastestRun = createSubscription(async (tx) => {
+    const lastestRun = createSubscription(() => async (tx) => {
       const runs = await RunStore.all(tx);
       const run = runs
         .filter((run) => run.appID === props.app.id)
@@ -473,7 +481,10 @@ export function OverviewNext() {
         <div>
           <For each={showOverflow() ? children() : childrenCapped()}>
             {(stage) => (
-              <StageCard ambiguous={r.value!.ambiguous.has(stage.id)} stage={stage} />
+              <StageCard
+                ambiguous={r.value!.ambiguous.has(stage.id)}
+                stage={stage}
+              />
             )}
           </For>
           <Show when={children().length === 0}>
@@ -557,8 +568,12 @@ export function OverviewNext() {
               <Stack space="4">
                 <Row space="5" vertical="center" horizontal="between">
                   <PageHeader>
-                    <Text size="lg" weight="medium">Overview</Text>
-                    <ChevronLink href="settings" size="sm">Manage workspace</ChevronLink>
+                    <Text size="lg" weight="medium">
+                      Overview
+                    </Text>
+                    <ChevronLink href="settings" size="sm">
+                      Manage workspace
+                    </ChevronLink>
                   </PageHeader>
                   <Row space="4" vertical="center">
                     <Link href="account">
@@ -625,7 +640,9 @@ export function OverviewNext() {
                         </Show>
                       </div>
                     </Card>
-                    <For each={r.value!.cols[1]}>{(app) => <AppCard app={app} />}</For>
+                    <For each={r.value!.cols[1]}>
+                      {(app) => <AppCard app={app} />}
+                    </For>
                   </Col>
                 </Row>
               </Stack>
@@ -802,7 +819,7 @@ interface StageCardProps {
 }
 function StageCard(props: StageCardProps) {
   const app = AppStore.get.watch(useReplicache(), () => [props.stage.appID]);
-  const latestUpdate = createSubscription(async (tx) => {
+  const latestUpdate = createSubscription(() => async (tx) => {
     const updates = await StateUpdateStore.forStage(tx, props.stage.id);
     const latest = updates.sort((a, b) => b.index - a.index)[0];
     return latest;
@@ -812,7 +829,7 @@ function StageCard(props: StageCardProps) {
   const local = useLocalContext();
 
   function Github() {
-    const repoUrl = createSubscription(async (tx) => {
+    const repoUrl = createSubscription(() => async (tx) => {
       if (!latestUpdate.value?.runID) return;
       const run = await RunStore.get(
         tx,
@@ -828,7 +845,11 @@ function StageCard(props: StageCardProps) {
     });
     return (
       <Show when={repoUrl.value}>
-        <StageGitLink target="_blank" href={repoUrl.value!.url} rel="noreferrer noopener">
+        <StageGitLink
+          target="_blank"
+          href={repoUrl.value!.url}
+          rel="noreferrer noopener"
+        >
           <StageGitIcon>
             <IconCommit />
           </StageGitIcon>
@@ -879,13 +900,17 @@ function StageCard(props: StageCardProps) {
               app()?.name === local()?.app
             }
           >
-            <Tag level="tip" type="outline">Local</Tag>
+            <Tag level="tip" type="outline">
+              Local
+            </Tag>
           </Match>
           <Match when={latestUpdate.value?.errors.length}>
             <StageCardLink
               href={`${stageUri()}/updates/${latestUpdate.value?.id}`}
             >
-              <Tag type="outline" level="danger">Error</Tag>
+              <Tag type="outline" level="danger">
+                Error
+              </Tag>
             </StageCardLink>
           </Match>
           <Match when={props.stage.unsupported}>

@@ -558,13 +558,13 @@ function RunItem({ run }: { run: Run.Run }) {
 
 export function List() {
   const ctx = useAppContext();
-  const runs = createSubscription(async (tx) => {
+  const runs = createSubscription(() => async (tx) => {
     const all = await RunStore.all(tx);
 
     return pipe(
       all,
       filter((run) => run.appID === ctx.app.id),
-      sortBy([(run) => run.time.created, "desc"])
+      sortBy([(run) => run.time.created, "desc"]),
     );
   });
 

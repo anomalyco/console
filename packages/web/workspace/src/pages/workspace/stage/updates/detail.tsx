@@ -334,20 +334,20 @@ export function Detail() {
   const rep = useReplicache();
   const ctx = useStageContext();
   const replicacheStatus = useReplicacheStatus();
-  const update = createSubscription((tx) =>
-    StateUpdateStore.get(tx, ctx.stage.id, params.updateID)
+  const update = createSubscription(
+    () => (tx) => StateUpdateStore.get(tx, ctx.stage.id, params.updateID),
   );
   const resources = StateEventStore.forUpdate.watch(
     rep,
     () => [ctx.stage.id, params.updateID],
-    (resources) => sortBy(resources, [(r) => getResourceName(r.urn)!, "asc"])
+    (resources) => sortBy(resources, [(r) => getResourceName(r.urn)!, "asc"]),
   );
 
-  const run = createSubscription(async (tx) => {
+  const run = createSubscription(() => async (tx) => {
     const update = await StateUpdateStore.get(
       tx,
       ctx.stage.id,
-      params.updateID
+      params.updateID,
     );
     if (!update.runID) return;
     return RunStore.get(tx, ctx.stage.id, update.runID);
@@ -355,7 +355,7 @@ export function Detail() {
   const repoURL = createMemo(() =>
     run.value?.trigger.source === "github"
       ? githubRepo(run.value.trigger.repo.owner, run.value.trigger.repo.repo)
-      : ""
+      : "",
   );
 
   const status = createMemo(() => {
@@ -378,13 +378,13 @@ export function Detail() {
     return "updating";
   });
   const deleted = createMemo(() =>
-    resources().filter((r) => r.action === "deleted")
+    resources().filter((r) => r.action === "deleted"),
   );
   const created = createMemo(() =>
-    resources().filter((r) => r.action === "created")
+    resources().filter((r) => r.action === "created"),
   );
   const updated = createMemo(() =>
-    resources().filter((r) => r.action === "updated")
+    resources().filter((r) => r.action === "updated"),
   );
   const isEmpty = createMemo(
     () =>
@@ -392,7 +392,7 @@ export function Detail() {
       !deleted().length &&
       !created().length &&
       !updated().length &&
-      !update.value.resource.same
+      !update.value.resource.same,
   );
 
   function renderSidebar() {
@@ -404,18 +404,18 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.type === "branch"
-          ? trigger.branch
-          : trigger.ref;
+            ? trigger.tag
+            : trigger.type === "branch"
+              ? trigger.branch
+              : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL(), trigger.number)
           : trigger.type === "tag"
-          ? githubRef(repoURL(), trigger.tag)
-          : trigger.type === "branch"
-          ? githubRef(repoURL(), trigger.branch)
-          : githubRef(repoURL(), trigger.ref);
+            ? githubRef(repoURL(), trigger.tag)
+            : trigger.type === "branch"
+              ? githubRef(repoURL(), trigger.branch)
+              : githubRef(repoURL(), trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       return { trigger, branch, uri, gitUser };
@@ -469,7 +469,7 @@ export function Detail() {
                 title={
                   update.value!.time.started
                     ? DateTime.fromISO(
-                        update.value!.time.started!
+                        update.value!.time.started!,
                       ).toLocaleString(DateTime.DATETIME_FULL)
                     : undefined
                 }
@@ -477,7 +477,7 @@ export function Detail() {
                 {update.value!.time.started
                   ? formatSinceTime(
                       DateTime.fromISO(update.value!.time.started!).toSQL()!,
-                      true
+                      true,
                     )
                   : "—"}
               </Text>
@@ -497,7 +497,7 @@ export function Detail() {
                       DateTime.fromISO(update.value!.time.completed!)
                         .diff(DateTime.fromISO(update.value!.time.started!))
                         .as("milliseconds"),
-                      true
+                      true,
                     )
                   : "—"}
               </Text>

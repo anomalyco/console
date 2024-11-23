@@ -93,7 +93,7 @@ export function Content() {
   const bar = useCommandBar();
   const nav = useNavigate();
   const params = useParams();
-  const apps = createSubscription(AppStore.all, []);
+  const apps = createSubscription(() => AppStore.all, []);
   const stages = StageStore.list.watch(useReplicache(), () => []);
 
   bar.register("stage-switcher", async (input, global) => {
