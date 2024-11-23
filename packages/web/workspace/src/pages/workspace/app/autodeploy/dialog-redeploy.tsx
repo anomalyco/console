@@ -104,6 +104,7 @@ export function DialogRedeploy(props: {
       force,
       runID: props.runID,
     });
+    control.hide();
     nav(`../${id}`);
   }
 

@@ -156,10 +156,8 @@ export function DialogDeploy(props: {
                 stageName: data.stage,
                 force: data.force,
               });
-              // TODO: Implement navigation
               control.hide();
-              // nav(`./${id}`);
-              // window.location.reload();
+              nav(`./${id}`);
             }}
           >
             <Field name="ref">
