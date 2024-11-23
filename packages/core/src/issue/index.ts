@@ -452,10 +452,12 @@ export async function cleanup() {
   }
 
   {
-    const result = await db
-      .delete(issueCount)
-      .where(lt(issueCount.hour, sql`now() - interval 24 hour`));
-    console.log("deleted", result.rowsAffected, "issue counts");
+    for (let i = 1; i <= 24; i++) {
+      const result = await db
+        .delete(issueCount)
+        .where(lt(issueCount.hour, sql`now() - interval ${i} hour`));
+      console.log("deleted", result.rowsAffected, "issue counts");
+    }
   }
 
   {
