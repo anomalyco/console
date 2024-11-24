@@ -43,5 +43,6 @@ export default $config({
     await import("./infra/web");
     await import("./infra/issues");
     await import("./infra/autodeploy");
+    await import("./infra/billing");
   },
 });
