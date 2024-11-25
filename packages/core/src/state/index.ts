@@ -647,7 +647,9 @@ export module State {
             errors: update.errors,
             stageID: input.config.stageID,
             workspaceID: useWorkspace(),
-            timeStarted: new Date(update.timeStarted),
+            timeStarted: update.timeStarted
+              ? new Date(update.timeStarted)
+              : undefined,
             timeCompleted: update.timeCompleted
               ? new Date(update.timeCompleted)
               : null,
