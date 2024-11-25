@@ -97,5 +97,7 @@ WebhookRoute.post("/stripe", async (c) => {
     );
   }
 
-  return c.status(200);
+  console.log("finished handling");
+
+  return c.json("ok", 200);
 });
