@@ -83,7 +83,7 @@ function createEcrRepo() {
 function createBuildTimeoutMonitor() {
   const scheduleGroup = new aws.scheduler.ScheduleGroup(
     "AutodeployTimeoutMonitorScheduleGroup",
-    { name: `${$app.name}-${$app.stage}-run-timeout-monitor` },
+    { name: `${$app.name}-${$app.stage}-run-timeout-monitor` }
   );
   const handler = new sst.aws.Function("AutodeployTimeoutMonitor", {
     handler: "packages/functions/src/run/monitor.handler",
@@ -129,7 +129,7 @@ function createBuildTimeoutMonitor() {
 function createRunnerRemover() {
   const scheduleGroup = new aws.scheduler.ScheduleGroup(
     "AutodeployRunnerRemoverScheduleGroup",
-    { name: `${$app.name}-${$app.stage}-runner-remover` },
+    { name: `${$app.name}-${$app.stage}-runner-remover` }
   );
   const handler = new sst.aws.Function("AutodeployRunnerRemover", {
     handler: "packages/functions/src/run/runner-remover.handler",

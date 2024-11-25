@@ -9,9 +9,6 @@ import {
 } from "@aws-sdk/client-eventbridge";
 import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
 
-const ROOT_PATH = "/root";
-const REPO_DIR_NAME = "repo";
-const REPO_PATH = `${ROOT_PATH}/${REPO_DIR_NAME}`;
 const eb = new EventBridgeClient({});
 const s3 = new S3Client({});
 
@@ -19,6 +16,9 @@ const s3 = new S3Client({});
  * @param {RunnerEvent} event
  */
 export async function handler(event) {
+  const ROOT_PATH = "/root";
+  const REPO_DIR_NAME = "repo";
+  const REPO_PATH = `${ROOT_PATH}/${REPO_DIR_NAME}`;
   const APP_PATH = path.join(REPO_PATH, event.repo.path ?? "");
 
   console.log("[sst.deploy.start]");
@@ -30,10 +30,10 @@ export async function handler(event) {
   try {
     await publish("runner.started");
 
+    resetCache();
     await restore(".git");
     checkout();
     for (const item of event.cache?.paths ?? []) await restore(item);
-
     packageJson = await loadPackageJson();
     await installNode();
     sstConfig = await loadSstConfig();
@@ -121,46 +121,35 @@ export async function handler(event) {
       shell(`n auto`);
   }
 
-  async function installSst() {
-    // Check if SST is installed locally
-    const localPath = findLocalSstBinary();
-    if (localPath) {
-      console.log("Using locally installed SST binary at", localPath);
-      return;
+  async function resetCache() {
+    const { cache } = event;
+
+    console.log("Clearing all cache because of force deploy");
+
+    try {
+      shell(`aws s3 rm --recursive s3://${cache.bucket}/${cache.prefix}`);
+    } catch (e) {
+      console.error("Failed to clear cache", e);
     }
-
-    // Install SST globally
-    const { stage } = event;
-    const semverPattern = sstConfig.app({ stage }).version;
-    console.log("Installing SST globally, version:", semverPattern ?? "Latest");
-
-    shell(`npm -g install sst@${semverPattern ?? "latest"}`);
-    return "sst";
   }
 
   /* Workflow */
 
   async function runWorkflow() {
-    const { stage, trigger, force } = event;
-
     const context = {
-      stage,
-      trigger,
+      stage: event.stage,
+      trigger: event.trigger,
+      unlock,
       install,
+      installSst,
       deploy,
       remove,
       shell,
     };
-    const workflow =
-      sstConfig.console?.autodeploy?.workflow ??
-      (async (context) => {
-        install();
-        await installSst();
-        if (force) unlock();
-        context.trigger.action === "removed" ? remove() : deploy();
-      });
 
-    await workflow(context);
+    return sstConfig.console?.autodeploy?.workflow
+      ? await sstConfig.console.autodeploy.workflow(context)
+      : workflow(context, event.force);
   }
 
   function install() {
@@ -180,6 +169,23 @@ export async function handler(event) {
       shell("bun install --frozen-lockfile");
     } else if (findUp("package-lock.json")) shell("npm ci");
     else if (findUp("package.json")) shell("npm install");
+  }
+
+  async function installSst() {
+    // Check if SST is installed locally
+    const localPath = findLocalSstBinary();
+    if (localPath) {
+      console.log("Using locally installed SST binary at", localPath);
+      return;
+    }
+
+    // Install SST globally
+    const { stage } = event;
+    const semverPattern = sstConfig.app({ stage }).version;
+    console.log("Installing SST globally, version:", semverPattern ?? "Latest");
+
+    shell(`npm -g install sst@${semverPattern ?? "latest"}`);
+    return "sst";
   }
 
   function unlock() {
@@ -354,4 +360,14 @@ export async function handler(event) {
       searchPath = path.resolve(searchPath, "..");
     }
   }
+}
+
+/**
+ * @param {any} context
+ */
+async function workflow(context, force) {
+  context.install();
+  await context.installSst();
+  if (force) context.unlock();
+  context.trigger.action === "removed" ? context.remove() : context.deploy();
 }

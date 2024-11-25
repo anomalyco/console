@@ -41,7 +41,7 @@ bus.subscribe(
     pattern: {
       source: [`console.${$app.stage}`],
     },
-  },
+  }
 );
 
 bus.subscribe(
@@ -54,7 +54,7 @@ bus.subscribe(
     pattern: {
       source: ["aws.s3"],
     },
-  },
+  }
 );
 
 bus.subscribe(
@@ -68,7 +68,7 @@ bus.subscribe(
     pattern: {
       source: ["sst.runner"],
     },
-  },
+  }
 );
 
 bus.subscribe(
@@ -83,5 +83,5 @@ bus.subscribe(
     pattern: {
       source: ["aws.codebuild"],
     },
-  },
+  }
 );
