@@ -107,7 +107,7 @@ const TABLE_KEY = {
     stateEventTable.updateID,
     stateEventTable.id,
   ],
-  run: [runTable.stageID, runTable.id],
+  run: [runTable.id],
   stripe: [],
 } as {
   [key in TableName]?: MySqlColumn[];
