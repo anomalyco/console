@@ -10,7 +10,7 @@ const queue = new sst.aws.Queue("BillingQueue", {
 queue.subscribe(
   {
     link: [database],
-    handler: "packages/functions/src/events/fetch-usage.handler",
+    handler: "packages/functions/src/billing/fetch-usage.handler",
     permissions: [assumable],
     timeout: "3 minutes",
   },
