@@ -3,12 +3,7 @@ export * from "./extract";
 
 import { useActor, useWorkspace } from "../actor";
 import { and, db, eq, inArray, lt, sql } from "../drizzle";
-import {
-  issue,
-  issueAlertLimit,
-  issueCount as issueCount,
-  issueSubscriber,
-} from "./issue.sql";
+import { issue, issueAlertLimit, issueCount as issueCount } from "./issue.sql";
 import { zod } from "../util/zod";
 import { createSelectSchema } from "drizzle-zod";
 import {
@@ -28,7 +23,7 @@ import { RETRY_STRATEGY } from "../util/aws";
 import { Stage, StageCredentials } from "../app/stage";
 import { createEvent } from "../event";
 import { Warning } from "../warning";
-import { createTransaction, useTransaction } from "../util/transaction";
+import { useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
 import { filter, map, pipe, unique } from "remeda";

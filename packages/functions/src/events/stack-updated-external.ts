@@ -3,7 +3,7 @@ import { Stage } from "@console/core/app/stage";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import { State } from "@console/core/state";
 import { useTransaction } from "@console/core/util/transaction";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@console/core/drizzle";
 import { Resource } from "sst";
 import { bus } from "sst/aws/bus";
 

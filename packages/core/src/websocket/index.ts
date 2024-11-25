@@ -1,5 +1,6 @@
 import { Resource } from "sst";
 import { useWorkspace } from "../actor";
+import { fetch } from "undici";
 
 export namespace Websocket {
   export async function publish(type: string, properties: Record<string, any>) {

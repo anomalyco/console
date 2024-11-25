@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { AWS } from "../aws";
 import { SourceMapConsumer } from "source-map";
-import { filter, maxBy, pipe, sortBy } from "remeda";
+import { filter, firstBy, pipe, sortBy } from "remeda";
 import { zod } from "../util/zod";
 import { z } from "zod";
 
@@ -162,7 +162,7 @@ export function createSourcemapCache(input: {
       const match = pipe(
         await sourcemapsMeta(),
         filter((x) => x.created < number),
-        maxBy((x) => x.created),
+        firstBy((x) => [x.created, "desc"]),
       );
       if (!match) return;
       if (sourcemapCache.has(match.key)) {

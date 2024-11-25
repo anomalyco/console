@@ -11,7 +11,7 @@ export function createContext<T>(name: string) {
       return result;
     },
     with<R>(value: T, fn: () => R) {
-      return storage.run<R>(value, fn);
+      return storage.run<R, any[]>(value, fn);
     },
   };
 }

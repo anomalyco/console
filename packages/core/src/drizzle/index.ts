@@ -3,6 +3,7 @@ import { Client } from "@planetscale/database";
 import { Resource } from "sst";
 import { fetch } from "undici";
 export * from "drizzle-orm";
+export { MySqlColumn } from "drizzle-orm/mysql-core";
 
 const client = new Client({
   host: Resource.Database.host,

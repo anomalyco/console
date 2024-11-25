@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { createHash } from "crypto";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { DateTime } from "luxon";
-import { createPipe, flatMap, groupBy, values } from "remeda";
+import { flatMap, groupBy, pipe, values } from "remeda";
 import { z } from "zod";
 import { Events } from ".";
 import { withActor } from "../actor";
@@ -16,7 +16,7 @@ import {
   createTransactionEffect,
 } from "../util/transaction";
 import { zod } from "../util/zod";
-import { issueCount, issue, issueSubscriber } from "./issue.sql";
+import { issueCount, issue } from "./issue.sql";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 
@@ -145,7 +145,7 @@ export const extract = zod(
             region: region!,
           },
         });
-        const errors = Promise.allSettled(
+        const errors = await Promise.allSettled(
           input.logEvents.map(async (event) => {
             const splits = event.message.split(`\t`).map((x) => x.trim());
             const extracted = Log.extractError(splits);
@@ -209,15 +209,16 @@ export const extract = zod(
               err,
             };
           }),
-        ).then(
-          createPipe(
+        ).then((arr) =>
+          pipe(
+            arr,
             flatMap((item) => {
               return item.status === "fulfilled" && item.value
                 ? [item.value]
                 : [];
             }),
             groupBy((item) => item.group),
-            values,
+            values(),
           ),
         );
         sourcemapCache.destroy();

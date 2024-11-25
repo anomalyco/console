@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@types/luxon": "^3.3.1",
-    "@types/node": "^18.16.0",
+    "@types/node": "^20.0.0",
     "@types/react": "18.0.25",
     "@types/relaxed-json": "^1.0.1",
     "drizzle-kit": "0.22.8",
@@ -48,10 +48,11 @@
     "octokit": "^4.0.2",
     "react": "18.2.0",
     "relaxed-json": "^1.0.3",
-    "remeda": "^1.17.1",
+    "remeda": "^2.17.3",
     "source-map": "^0.7.4",
     "stripe": "16.8.0",
     "undici": "^5.22.0",
-    "zod": "3.23.8"
+    "zod": "3.23.8",
+    "hono": "4.6.5"
   }
 }
