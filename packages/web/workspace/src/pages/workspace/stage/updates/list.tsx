@@ -429,7 +429,7 @@ function Update(props: UpdateProps) {
                 </UpdateSenderAvatar>
               </Show>
             </Match>
-            <Match when={!runID}>
+            <Match when={!props.runID}>
               <UpdateSenderIcon title="From the CLI">
                 <IconCommandLine />
               </UpdateSenderIcon>
