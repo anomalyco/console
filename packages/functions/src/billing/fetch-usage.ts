@@ -127,7 +127,7 @@ async function processStage(stageID: string) {
         target: stageID,
       });
     } catch (e: any) {
-      if (e.name === "AccessDenied") {
+      if (e.name === "AccessDenied" || e.name === "OptInRequired") {
         console.error(e);
         await Warning.create({
           type: "permission_usage",
