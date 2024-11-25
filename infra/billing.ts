@@ -25,7 +25,7 @@ new sst.aws.Cron("BillingCron", {
   schedule: "cron(0 5 * * ? *)",
   job: {
     handler: "packages/functions/src/billing/cron.handler",
-    timeout: "100 seconds",
+    timeout: "900 seconds",
     permissions: [assumable],
     link: [bus, database, queue],
   },
