@@ -195,18 +195,6 @@ export const handler = bus.subscriber(
           MetricData: [
             {
               MetricName: "event",
-              Value: 1,
-              Unit: "Count",
-              Timestamp: new Date(),
-              Dimensions: [
-                {
-                  Name: "type",
-                  Value: evt.type,
-                },
-              ],
-            },
-            {
-              MetricName: "event_duration",
               Value: duration,
               Unit: "Milliseconds",
               Timestamp: new Date(),
