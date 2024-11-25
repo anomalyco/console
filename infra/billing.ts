@@ -4,7 +4,7 @@ import { assumable } from "./secret";
 
 const queue = new sst.aws.Queue("BillingQueue", {
   fifo: true,
-  visibilityTimeout: "100 seconds",
+  visibilityTimeout: "180 seconds",
 });
 
 queue.subscribe(
@@ -18,7 +18,7 @@ queue.subscribe(
     batch: {
       size: 10,
     },
-  },
+  }
 );
 
 new sst.aws.Cron("BillingCron", {

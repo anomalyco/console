@@ -57,6 +57,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "BillingQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
     "BotpoisonSecretKey": {
       "type": "sst.sst.Secret"
       "value": string
