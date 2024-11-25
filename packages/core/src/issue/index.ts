@@ -257,7 +257,6 @@ export const subscribeIon = zod(
         unique(),
       );
       if (!groups.length) return;
-      await connectStage(config);
       for (const group of groups) {
         await subscribe(group as string);
       }
