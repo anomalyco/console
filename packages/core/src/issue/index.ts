@@ -257,10 +257,9 @@ export const subscribeIon = zod(
         unique(),
       );
       if (!groups.length) return;
-      for (const group of groups) {
-        await subscribe(group as string);
-      }
-
+      await Promise.allSettled(
+        groups.map((group) => subscribe(group as string)),
+      );
       async function subscribe(logGroup: string) {
         if (limited.has(logGroup)) {
           console.log("skipping", logGroup, "because it's rate limited");
