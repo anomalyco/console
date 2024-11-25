@@ -13,6 +13,7 @@ import { Run } from "@console/core/run";
 import { State } from "@console/core/state";
 import { stripe } from "@console/core/stripe";
 import { Workspace } from "@console/core/workspace";
+import { DateTime } from "luxon";
 import { bus } from "sst/aws/bus";
 
 const client = new CloudWatchClient({});
@@ -60,6 +61,7 @@ export const handler = bus.subscriber(
       );
       console.log(evt.type);
       console.log(evt);
+      const now = Date.now();
       switch (evt.type) {
         case AWS.Account.Events.Created.type:
           const account = await AWS.Account.fromID(evt.properties.awsAccountID);
@@ -185,5 +187,38 @@ export const handler = bus.subscriber(
           break;
         }
       }
+      const duration = Date.now() - now;
+      // send to cloudwatch metrics
+      await client.send(
+        new PutMetricDataCommand({
+          Namespace: "console",
+          MetricData: [
+            {
+              MetricName: "event",
+              Value: 1,
+              Unit: "Count",
+              Timestamp: new Date(),
+              Dimensions: [
+                {
+                  Name: "type",
+                  Value: evt.type,
+                },
+              ],
+            },
+            {
+              MetricName: "event_duration",
+              Value: duration,
+              Unit: "Milliseconds",
+              Timestamp: new Date(),
+              Dimensions: [
+                {
+                  Name: "type",
+                  Value: evt.type,
+                },
+              ],
+            },
+          ],
+        }),
+      );
     }),
 );
