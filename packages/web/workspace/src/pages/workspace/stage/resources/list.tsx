@@ -48,7 +48,7 @@ import {
 } from "$/ui/icons/custom";
 import { Resource } from "@console/core/app/resource";
 import type { State } from "@console/core/state";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { Syncing } from "$/ui/loader";
 import {
   IconCheck,
@@ -202,7 +202,7 @@ const TitleText = styled("div", {
   },
 });
 
-const TitleDescLink = styled(Link, {
+const TitleDescLink = styled(A, {
   base: {
     marginLeft: `calc(${theme.space[3]} + 12px)`,
     fontSize: theme.font.size.sm,
@@ -236,7 +236,7 @@ const Card = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -292,7 +292,7 @@ const HeaderTitle = styled("span", {
   },
 });
 
-const HeaderTitleTaglineLink = styled(Link, {
+const HeaderTitleTaglineLink = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,
@@ -393,7 +393,7 @@ export const Child = styled("div", {
   },
 });
 
-export const ChildTitleLink = styled(Link, {
+export const ChildTitleLink = styled(A, {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
@@ -510,7 +510,7 @@ const ChildKey = styled("span", {
   },
 });
 
-const ChildKeyLink = styled(Link, {
+const ChildKeyLink = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,

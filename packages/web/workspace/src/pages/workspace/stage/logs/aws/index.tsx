@@ -373,19 +373,21 @@ export function AWS() {
   const past = createLogStore(-1);
   const resources = useStateResources();
   const fn = createMemo(() => {
-    if (search.view === "local") {
-      const match = resources().find((r) => r.urn === search.functionID);
-      return match;
-    }
-    if (search.hint === "lambda") {
-      const match = resources().find(
-        (r) =>
-          r.outputs?.loggingConfig?.logGroup === search.logGroup ||
-          r.outputs?.enrichment?.logGroup === search.logGroup,
-      );
-      if (match?.type === "sstv2:aws:Function") return match;
-      const fn = resources().find((r) => r.urn === match?.parent);
-      return fn;
+    if (search.view) {
+      if (search.view === "local") {
+        const match = resources().find((r) => r.urn === search.functionID);
+        return match;
+      }
+      if (search.hint === "lambda") {
+        const match = resources().find(
+          (r) =>
+            r.outputs?.loggingConfig?.logGroup === search.logGroup ||
+            r.outputs?.enrichment?.logGroup === search.logGroup,
+        );
+        if (match?.type === "sstv2:aws:Function") return match;
+        const fn = resources().find((r) => r.urn === match?.parent);
+        return fn;
+      }
     }
   });
   const local = createMemo(() => {

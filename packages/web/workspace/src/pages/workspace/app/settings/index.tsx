@@ -13,7 +13,7 @@ import {
   PANEL_CONTENT_SPACE,
 } from "../../settings";
 import { PageHeader } from "../header";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { style } from "@macaron-css/core";
 import type { RunConfig } from "@console/core/run/config";
 import { styled } from "@macaron-css/solid";
@@ -31,27 +31,27 @@ import {
   Suspense,
   createMemo,
   createSignal,
-  createEffect,
+  batch,
 } from "solid-js";
 import { useReplicache, createSubscription } from "$/providers/replicache";
 import { githubRepo } from "$/common/url-builder";
 import {
   getValue,
-  insert,
-  clearError,
   valiForm,
   createForm,
   setValue,
   setValues,
   remove,
   reset,
+  clearError,
+  insert,
 } from "@modular-forms/solid";
 import { IconAdd, IconGitHub } from "$/ui/icons/custom";
-import { array, minLength, object, optional, string } from "valibot";
+import * as v from "valibot";
 import { AWS } from "$/data/aws";
 import { createStore } from "solid-js/store";
 import { fromEntries, map, pipe, sortBy, filter } from "remeda";
-import { TextButton, TabTitle, ButtonIcon } from "$/ui/button";
+import { TextButton, ButtonIcon } from "$/ui/button";
 import { FormField, Input } from "$/ui/form";
 import { Grower, Row, Stack } from "$/ui/layout";
 import { Tag } from "$/ui/tag";
@@ -303,7 +303,7 @@ const TargetFormField = styled("div", {
   },
 });
 
-const TargetAddAccountLink = styled(Link, {
+const TargetAddAccountLink = styled(A, {
   base: {
     fontSize: theme.font.size.sm,
   },
@@ -409,22 +409,25 @@ const selectRepo = style({
   flex: 1,
 });
 
-export const EditTargetForm = object({
-  stagePattern: string([minLength(1, "Set a stage pattern")]),
-  awsAccount: string([minLength(1, "Pick an AWS account")]),
-  env: optional(
-    array(
-      object({
-        key: string([minLength(1, "Set the key of the variable")]),
-        value: string([minLength(1, "Set the value of the variable")]),
+export const EditTargetForm = v.object({
+  stagePattern: v.pipe(v.string(), v.minLength(1, "Set a stage pattern")),
+  awsAccount: v.pipe(v.string(), v.minLength(1, "Pick an AWS account")),
+  env: v.optional(
+    v.array(
+      v.object({
+        key: v.pipe(v.string(), v.minLength(1, "Set the key of the variable")),
+        value: v.pipe(
+          v.string(),
+          v.minLength(1, "Set the value of the variable"),
+        ),
       }),
     ),
   ),
 });
 
-const EditRepoForm = object({
-  repo: string([minLength(1, "Pick a repo")]),
-  path: optional(string()),
+const EditRepoForm = v.object({
+  repo: v.pipe(v.string(), v.minLength(1, "Pick a repo")),
+  path: v.optional(v.string()),
 });
 
 export function Settings() {
@@ -480,11 +483,11 @@ export function Settings() {
   );
 
   const [putForm, { Form, Field, FieldArray }] = createForm({
-    validate: valiForm(EditTargetForm),
+    validate: valiForm<v.InferOutput<typeof EditTargetForm>>(EditTargetForm),
   });
 
   const [repoForm, { Form: RepoFormForm, Field: RepoFormField }] = createForm({
-    validate: valiForm(EditRepoForm),
+    validate: valiForm<v.InferOutput<typeof EditRepoForm>>(EditRepoForm),
   });
   const repoFormInitialValues = {
     repo: "",
@@ -755,8 +758,14 @@ export function Settings() {
                       </For>
                       <TargetAddVarLink
                         onClick={() => {
-                          insert(putForm, "env", {
-                            value: { key: "", value: "" },
+                          batch(() => {
+                            insert(putForm, "env", {
+                              value: { key: "", value: "" },
+                            });
+                            setTimeout(() => {
+                              clearError(putForm, "awsAccount");
+                              clearError(putForm, "stagePattern");
+                            }, 0);
                           });
                         }}
                       >
@@ -882,9 +891,9 @@ export function Settings() {
                   label={expanded() ? "Repo" : undefined}
                   hint={
                     empty() ? (
-                      <Link href="../../settings#github">
+                      <A href="../../settings#github">
                         Connect to a different organization
-                      </Link>
+                      </A>
                     ) : undefined
                   }
                 >

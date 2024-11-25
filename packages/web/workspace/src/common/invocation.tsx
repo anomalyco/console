@@ -12,7 +12,7 @@ import {
 } from "solid-js";
 import { formatDuration, formatBytes } from "./format";
 import { styled } from "@macaron-css/solid";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { DateTime } from "luxon";
 import { TabTitle, TextButton } from "$/ui/button";
 import { Row, Stack } from "$/ui/layout";
@@ -251,7 +251,7 @@ const LogReportKey = styled(LogTime, {
   },
 });
 
-const FunctionLink = styled(Link, {
+const FunctionLink = styled(A, {
   base: {
     cursor: "pointer",
     fontSize: theme.font.size.sm,
@@ -281,7 +281,7 @@ export function InvocationRow(props: {
   );
   const longDate = createMemo(() =>
     new Intl.DateTimeFormat("en-US", longDateOptions).format(
-      props.invocation.start
+      props.invocation.start,
     ),
   );
   const [replaying, setReplaying] = createSignal(false);
@@ -325,7 +325,7 @@ export function InvocationRow(props: {
           {props.mixed
             ? props.mixed.description
             : props.invocation.errors[0]?.message ||
-            props.invocation.logs[0]?.message}
+              props.invocation.logs[0]?.message}
         </LogPreview>
       </Summary>
       <Show when={props.expanded}>

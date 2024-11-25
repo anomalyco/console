@@ -1,12 +1,11 @@
 import { makePersisted } from "@solid-primitives/storage";
 import { createInitializedContext } from "$/common/context";
-import { createStore, produce, reconcile, unwrap } from "solid-js/store";
+import { createStore, produce, reconcile } from "solid-js/store";
 import { createEffect, createMemo } from "solid-js";
 import { useLocation, useNavigate } from "@solidjs/router";
-import { IconUserMinus, IconUserPlus, IconUsers } from "../ui/icons";
+import { IconUserPlus, IconUsers } from "../ui/icons";
 import { useCommandBar, Action } from "$/pages/workspace/command-bar";
 import type { Workspace } from "@console/core/workspace";
-import { useStorage } from "./account";
 import { IconLogout } from "$/ui/icons/custom";
 
 interface AccountInfo {
@@ -23,8 +22,8 @@ interface Storage {
 
 export const { use: useAuth2, provider: AuthProvider2 } =
   createInitializedContext("AuthContext", () => {
-    const bar = useCommandBar();
     const nav = useNavigate();
+    const bar = useCommandBar();
     const [store, setStore] = makePersisted(
       createStore<Storage>({
         accounts: {},

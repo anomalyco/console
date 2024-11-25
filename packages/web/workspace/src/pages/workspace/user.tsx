@@ -7,13 +7,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { useReplicache } from "$/providers/replicache";
 import { useNavigate } from "@solidjs/router";
 import { Header } from "./header";
-import {
-  createForm,
-  setError,
-  submit,
-  valiForm,
-} from "@modular-forms/solid";
-import { object, string, email, toLowerCase } from "valibot";
+import { createForm, setError, submit, valiForm } from "@modular-forms/solid";
+import { object, string, InferOutput } from "valibot";
 import { UserStore } from "$/data/user";
 import { Fullscreen, Stack } from "$/ui/layout";
 import { Text } from "$/ui/text";
@@ -26,16 +21,16 @@ const FieldList = styled("form", {
   },
 });
 
-export function User() {
+const FormSchema = object({
+  email: string(),
+});
+
+export function UserRoute() {
   const workspace = useWorkspace();
   const rep = useReplicache();
   const nav = useNavigate();
-  const [form, { Form, Field }] = createForm({
-    validate: valiForm(
-      object({
-        email: string(),
-      }),
-    ),
+  const [form, { Form, Field }] = createForm<InferOutput<typeof FormSchema>>({
+    validate: valiForm(FormSchema),
     validateOn: "input",
   });
   const users = UserStore.list.watch(rep, () => []);
@@ -64,7 +59,7 @@ export function User() {
               const id = createId();
               await rep().mutate.user_create({
                 id,
-                email: data.email,
+                email: data.email?.toString() || "",
               });
               nav(`/${workspace()?.slug}`);
             }}

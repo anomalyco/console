@@ -2,7 +2,7 @@ import { AvatarInitialsIcon } from "$/ui/avatar-icon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "./context";
 import { utility } from "$/ui/utility";
-import { Link, useNavigate } from "@solidjs/router";
+import { A, useNavigate } from "@solidjs/router";
 import { IconArrowsRightLeft } from "$/ui/icons";
 import { IconAws } from "$/ui/icons/custom";
 import { Header } from "./header";
@@ -65,7 +65,7 @@ const AddAccountInvite = styled("div", {
   },
 });
 
-export function Account() {
+export function AccountRoute() {
   const workspace = useWorkspace();
   const nav = useNavigate();
   return (
@@ -127,11 +127,11 @@ export function Account() {
             <Text size="sm" color="dimmed">
               Or, invite a teammate that has access to the account
             </Text>
-            <Link href="../user">
+            <A href="../user">
               <Button style={{ width: "100%" }} color="secondary">
                 Invite a Teammate
               </Button>
-            </Link>
+            </A>
           </AddAccountInvite>
         </Stack>
       </Fullscreen>

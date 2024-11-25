@@ -227,7 +227,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
         map((item) => ({
           ...item,
           link:
-            `/${workspace().slug}/${stage.app.name}/${stage.stage.name}/logs/aws/logs?` +
+            `/${workspace().slug}/${stage.app.name}/${stage.stage.name}/logs/aws?` +
             item.link,
         })),
       ),

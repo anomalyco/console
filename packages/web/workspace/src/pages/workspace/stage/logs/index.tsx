@@ -1,14 +1,12 @@
-import { Route, Routes } from "@solidjs/router";
+import { Route } from "@solidjs/router";
 import { NotFound } from "../../../not-found";
 import { List } from "./list";
 import { AWS } from "./aws";
 
-export function Logs() {
-  return (
-    <Routes>
-      <Route path="" element={<List />} />
-      <Route path="aws/*" element={<AWS />} />
-      <Route path="*" element={<NotFound inset="header-tabs" />} />
-    </Routes>
-  );
-}
+export const Logs = (
+  <Route>
+    <Route path="/" component={List} />
+    <Route path="aws" component={AWS} />
+    <Route path="*" component={() => <NotFound inset="header-tabs" />} />
+  </Route>
+);

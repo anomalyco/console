@@ -59,7 +59,7 @@ export const handler = ApiHandler(async () => {
 
       const data = generateData(useQueryParam("dummy") || "empty");
       const keys = {
-        run: (item: any) => [item._type, item.stageID, item.id],
+        run: (item: any) => [item._type, item.id],
         appRepo: (item: any) => [item._type, item.appID, item.id],
         runConfig: (item: any) => [item._type, item.appID, item.id],
         resource: (item: any) => [item._type, item.stageID, item.id],

@@ -21,7 +21,7 @@ import {
   IconArrowPathSpin,
 } from "$/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
-import { Link, useNavigate, useSearchParams } from "@solidjs/router";
+import { A, useNavigate, useSearchParams } from "@solidjs/router";
 import {
   For,
   Match,
@@ -56,7 +56,7 @@ const Root = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -136,7 +136,7 @@ const CardHeader = styled("div", {
   },
 });
 
-const CardTitle = styled(Link, {
+const CardTitle = styled(A, {
   base: {
     ...utility.row(2),
     zIndex: 2,
@@ -150,7 +150,7 @@ const CardTitle = styled(Link, {
   },
 });
 
-const CardTitleErrorLink = styled(Link, {
+const CardTitleErrorLink = styled(A, {
   base: {
     zIndex: 2,
   },
@@ -194,7 +194,7 @@ const CardTitleRightCol = styled("div", {
   },
 });
 
-const CardTitleStatusLink = styled(Link, {
+const CardTitleStatusLink = styled(A, {
   base: {
     zIndex: 2,
   },
@@ -309,7 +309,7 @@ function splitCols(array: App.Info[]) {
   return [col1, col2];
 }
 
-export function OverviewNext() {
+export function OverviewRoute() {
   const rep = useReplicache();
   const [query, setQuery] = useSearchParams<{
     force?: string;
@@ -534,7 +534,7 @@ export function OverviewNext() {
                   </Text>
                   <Text center size="sm" color="secondary">
                     If not, then remove the stack and{" "}
-                    <Link href="account">reconnect it here.</Link>
+                    <A href="account">reconnect it here.</A>
                   </Text>
                 </Stack>
               </Stack>
@@ -576,12 +576,12 @@ export function OverviewNext() {
                     </ChevronLink>
                   </PageHeader>
                   <Row space="4" vertical="center">
-                    <Link href="account">
+                    <A href="account">
                       <Button color="secondary">Add AWS Account</Button>
-                    </Link>
-                    <Link href="user">
+                    </A>
+                    <A href="user">
                       <Button color="primary">Invite Team</Button>
-                    </Link>
+                    </A>
                   </Row>
                 </Row>
                 <Row space="4">
@@ -680,7 +680,7 @@ const StageCardLeft = styled("div", {
   },
 });
 
-const StageLink = styled(Link, {
+const StageLink = styled(A, {
   base: {
     ...utility.row(2.5),
     zIndex: 2,
@@ -738,7 +738,7 @@ const StageLinkText = styled("span", {
   },
 });
 
-const StageCardLink = styled(Link, {
+const StageCardLink = styled(A, {
   base: {
     zIndex: 2,
   },
@@ -831,12 +831,9 @@ function StageCard(props: StageCardProps) {
   function Github() {
     const repoUrl = createSubscription(() => async (tx) => {
       if (!latestUpdate.value?.runID) return;
-      const run = await RunStore.get(
-        tx,
-        props.stage.id,
-        latestUpdate.value.runID,
-      );
+      const run = await RunStore.get(tx, latestUpdate.value.runID);
       if (run.trigger.source !== "github") return;
+      if (!run.trigger.commit) return;
       const repoUrl = githubRepo(run.trigger.repo.owner, run.trigger.repo.repo);
       return {
         url: githubCommit(repoUrl, run.trigger.commit.id),

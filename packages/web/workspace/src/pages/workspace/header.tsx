@@ -5,7 +5,7 @@ import { IconChevronUpDown, IconMagnifyingGlass } from "$/ui/icons";
 import { utility } from "$/ui/utility";
 import { TextButton } from "$/ui/button";
 import { styled } from "@macaron-css/solid";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { WorkspaceContext } from "./context";
 import { useCommandBar } from "./command-bar";
 import {
@@ -64,13 +64,13 @@ const Breadcrumbs = styled("div", {
   },
 });
 
-const WorkspaceLogoLink = styled(Link, {
+const WorkspaceLogoLink = styled(A, {
   base: {
     display: "flex",
   },
 });
 
-const SSTConsoleTitle = styled(Link, {
+const SSTConsoleTitle = styled(A, {
   base: {
     ...breadCrumbStyles,
     ...breadCrumbFirstStyles,
@@ -101,7 +101,7 @@ const Breadcrumb = styled("div", {
   },
 });
 
-const BreadcrumbCopy = styled(Link, {
+const BreadcrumbCopy = styled(A, {
   base: {
     ...utility.text.line,
     lineHeight: "normal",
@@ -259,11 +259,11 @@ export function Header(props: { app?: string; stage?: string }) {
           when={workspace}
           fallback={
             <>
-              <Link href="/">
+              <A href="/">
                 <SSTIcon>
                   <IconApp width="20" height="20" />
                 </SSTIcon>
-              </Link>
+              </A>
               <SSTConsoleTitle href="/">
                 <SSTConsoleTitleCopy>Console</SSTConsoleTitleCopy>
               </SSTConsoleTitle>

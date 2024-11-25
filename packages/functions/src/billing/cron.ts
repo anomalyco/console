@@ -28,7 +28,7 @@ export async function handler() {
             }),
             MessageGroupId: (index++ % 10).toString(),
           })),
-        })
+        }),
       );
     }
   } while (cursor !== undefined);

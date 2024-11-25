@@ -27,7 +27,7 @@ GithubRoute.get("/installed", async (c) => {
       async () => {
         await Github.connect(installationID);
         await Github.syncRepos(installationID);
-      }
+      },
     );
   }
 
@@ -55,7 +55,7 @@ GithubRoute.get("/connect", async (c) => {
       ? "sst-console"
       : `sst-console-${Resource.App.stage}`;
   return c.redirect(
-    `https://github.com/apps/${appName}/installations/new?state=${workspaceID}`
+    `https://github.com/apps/${appName}/installations/new?state=${workspaceID}`,
   );
 });
 
@@ -117,7 +117,7 @@ app.webhooks.on(
         },
       },
     });
-  }
+  },
 );
 
 app.webhooks.on("push", async (event) => {

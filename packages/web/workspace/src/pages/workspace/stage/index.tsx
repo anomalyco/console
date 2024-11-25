@@ -1,8 +1,8 @@
-import { Link, Navigate, Route, Routes, useNavigate } from "@solidjs/router";
+import { A, Navigate, Route, useNavigate } from "@solidjs/router";
 import { JSX, Match, Show, Switch, createMemo } from "solid-js";
-import { RunStore, StateUpdateStore } from "$/data/app";
+import { StateUpdateStore } from "$/data/app";
 import { NavigationAction, useCommandBar } from "$/pages/workspace/command-bar";
-import { createSubscription, useReplicache } from "$/providers/replicache";
+import { useReplicache } from "$/providers/replicache";
 import {
   StageContext,
   IssuesProvider,
@@ -26,38 +26,119 @@ import {
 import { IconExclamationTriangle } from "$/ui/icons";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
-import { DateTime } from "luxon";
 import { TabTitle } from "$/ui/button";
 import { Stack, Row } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 
-export function Stage() {
-  const stageContext = createStageContext();
-
-  return (
-    <Show when={stageContext.ready}>
-      <Switch>
-        <Match when={stageContext.app && stageContext.stage}>
-          <StageContext.Provider value={stageContext}>
-            <StateResourcesProvider>
-              <LogsProvider>
-                <IssuesProvider>
-                  <HeaderProvider>
-                    <Inner />
-                  </HeaderProvider>
-                </IssuesProvider>
-              </LogsProvider>
-            </StateResourcesProvider>
-          </StageContext.Provider>
-        </Match>
-        <Match when={!stageContext.stage}>
-          <NotFound header inset="header" message="Stage not found" />
-        </Match>
-      </Switch>
-    </Show>
-  );
-}
+export const StageRoute = (
+  <Route
+    component={(props) => {
+      const ctx = createStageContext();
+      const rep = useReplicache();
+      const header = useHeaderContext();
+      return (
+        <Show when={ctx.ready}>
+          <Switch>
+            <Match when={ctx.app && ctx.stage}>
+              <StageContext.Provider value={ctx}>
+                <StateResourcesProvider>
+                  <LogsProvider>
+                    <IssuesProvider>
+                      <HeaderProvider>
+                        {(() => {
+                          const updates = StateUpdateStore.forStage.watch(
+                            rep,
+                            () => [ctx.stage.id],
+                          );
+                          const issues = useIssuesContext();
+                          const issuesCount = createMemo(
+                            () =>
+                              issues().filter(
+                                (item) =>
+                                  !item.timeResolved && !item.timeIgnored,
+                              ).length,
+                          );
+                          return (
+                            <>
+                              <Commands />
+                              <Header
+                                app={ctx.app.name}
+                                stage={ctx.stage.name}
+                              />
+                              <Switch>
+                                <Match when={ctx.stage.timeDeleted}>
+                                  <NotFound
+                                    inset="header"
+                                    message="Stage has been removed"
+                                  />
+                                </Match>
+                                <Match when={true}>
+                                  <PageHeader>
+                                    <Row space="5" vertical="center">
+                                      <A href="resources">
+                                        <TabTitle size="sm">Resources</TabTitle>
+                                      </A>
+                                      <Show when={updates().length > 0}>
+                                        <A href="updates">
+                                          <TabTitle size="sm">Updates</TabTitle>
+                                        </A>
+                                      </Show>
+                                      <Show when={!ctx.stage.timeDeleted}>
+                                        <A href="issues">
+                                          <TabTitle
+                                            size="sm"
+                                            count={
+                                              issuesCount()
+                                                ? issuesCount().toString()
+                                                : undefined
+                                            }
+                                          >
+                                            Issues
+                                          </TabTitle>
+                                        </A>
+                                      </Show>
+                                      <A href="logs">
+                                        <TabTitle size="sm">Logs</TabTitle>
+                                      </A>
+                                      <Show when={ctx.connected && false}>
+                                        <A href="local">
+                                          <TabTitle size="sm">Local</TabTitle>
+                                        </A>
+                                      </Show>
+                                    </Row>
+                                    <Show when={header.children}>
+                                      {header.children}
+                                    </Show>
+                                  </PageHeader>
+                                  <div>{props.children}</div>
+                                </Match>
+                              </Switch>
+                            </>
+                          );
+                        })()}
+                      </HeaderProvider>
+                    </IssuesProvider>
+                  </LogsProvider>
+                </StateResourcesProvider>
+              </StageContext.Provider>
+            </Match>
+            <Match when={!ctx.stage}>
+              <NotFound header inset="header" message="Stage not found" />
+            </Match>
+          </Switch>
+        </Show>
+      );
+    }}
+  >
+    <Route path="resources" children={Resources} />
+    <Route path="updates" children={Updates} />
+    <Route path="issues" children={Issues} />
+    <Route path="logs" children={Logs} />
+    <Route path="" component={() => <Navigate href="resources" />} />
+    <Route path="*" component={() => <NotFound inset="header-tabs" />} />
+  </Route>
+);
 
 const WarningRoot = styled("div", {
   base: {
@@ -114,20 +195,10 @@ export function Warning(props: WarningProps) {
   );
 }
 
-export function Inner() {
-  const rep = useReplicache();
+export function Commands() {
   const bar = useCommandBar();
   const ctx = useStageContext();
-  const issues = useIssuesContext();
-  const issuesCount = createMemo(
-    () =>
-      issues().filter((item) => !item.timeResolved && !item.timeIgnored).length,
-  );
-  const updates = StateUpdateStore.forStage.watch(rep, () => [ctx.stage.id]);
-  const header = useHeaderContext();
-
   const nav = useNavigate();
-
   bar.register("stage", async () => {
     return [
       NavigationAction({
@@ -178,57 +249,5 @@ export function Inner() {
     ];
   });
 
-  return (
-    <>
-      <Header app={ctx.app.name} stage={ctx.stage.name} />
-      <Switch>
-        <Match when={ctx.stage.timeDeleted}>
-          <NotFound inset="header" message="Stage has been removed" />
-        </Match>
-        <Match when={true}>
-          <PageHeader>
-            <Row space="5" vertical="center">
-              <Link href="resources">
-                <TabTitle size="sm">Resources</TabTitle>
-              </Link>
-              <Show when={updates().length > 0}>
-                <Link href="updates">
-                  <TabTitle size="sm">Updates</TabTitle>
-                </Link>
-              </Show>
-              <Show when={!ctx.stage.timeDeleted}>
-                <Link href="issues">
-                  <TabTitle
-                    size="sm"
-                    count={issuesCount() ? issuesCount().toString() : undefined}
-                  >
-                    Issues
-                  </TabTitle>
-                </Link>
-              </Show>
-              <Link href="logs">
-                <TabTitle size="sm">Logs</TabTitle>
-              </Link>
-              <Show when={ctx.connected && false}>
-                <Link href="local">
-                  <TabTitle size="sm">Local</TabTitle>
-                </Link>
-              </Show>
-            </Row>
-            <Show when={header.children}>{header.children}</Show>
-          </PageHeader>
-          <div>
-            <Routes>
-              <Route path="resources/*" component={Resources} />
-              <Route path="updates/*" component={Updates} />
-              <Route path="issues/*" component={Issues} />
-              <Route path="logs/*" component={Logs} />
-              <Route path="" element={<Navigate href="resources" />} />
-              <Route path="*" element={<NotFound inset="header-tabs" />} />
-            </Routes>
-          </div>
-        </Match>
-      </Switch>
-    </>
-  );
+  return null;
 }

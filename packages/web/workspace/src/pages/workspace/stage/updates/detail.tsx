@@ -1,6 +1,6 @@
 import { For, Show, Match, Switch, createMemo, createSignal } from "solid-js";
 import { createSubscription, useReplicache } from "$/providers/replicache";
-import { Link, useParams } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import { RunStore, StateUpdateStore, StateEventStore } from "$/data/app";
 import { State } from "@console/core/state";
 import { DateTime } from "luxon";
@@ -10,7 +10,7 @@ import { CMD_MAP, STATUS_MAP, errorCountCopy } from "./list";
 import { NotFound } from "$/pages/not-found";
 import { inputFocusStyles } from "$/ui/form";
 import { styled } from "@macaron-css/solid";
-import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
+import { IconPr, IconGit } from "$/ui/icons/custom";
 import { formatDuration, formatSinceTime } from "$/common/format";
 import { useReplicacheStatus } from "$/providers/replicache-status";
 import {
@@ -19,18 +19,12 @@ import {
   IconXCircle,
   IconEllipsisVertical,
 } from "$/ui/icons";
-import {
-  githubPr,
-  githubRepo,
-  githubRef,
-  githubCommit,
-} from "$/common/url-builder";
+import { githubPr, githubRepo, githubRef } from "$/common/url-builder";
 import { sortBy } from "remeda";
 import { Stack, Row } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -285,7 +279,7 @@ const GitAvatar = styled("div", {
   },
 });
 
-const GitBranchLink = styled(Link, {
+const GitBranchLink = styled(A, {
   base: {
     ...utility.row(1),
     alignItems: "center",
@@ -343,14 +337,14 @@ export function Detail() {
     (resources) => sortBy(resources, [(r) => getResourceName(r.urn)!, "asc"]),
   );
 
-  const run = createSubscription(() => async (tx) => {
-    const update = await StateUpdateStore.get(
-      tx,
-      ctx.stage.id,
-      params.updateID,
-    );
-    if (!update.runID) return;
-    return RunStore.get(tx, ctx.stage.id, update.runID);
+  const run = createSubscription(() => {
+    const updateID = params.updateID;
+    const stageID = ctx.stage.id;
+    return async (tx) => {
+      const update = await StateUpdateStore.get(tx, stageID, updateID);
+      if (!update.runID) return;
+      return RunStore.get(tx, update.runID);
+    };
   });
   const repoURL = createMemo(() =>
     run.value?.trigger.source === "github"

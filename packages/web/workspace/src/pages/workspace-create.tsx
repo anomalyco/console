@@ -2,7 +2,6 @@ import { styled } from "@macaron-css/solid";
 import { createForm, getValue, setError, valiForm } from "@modular-forms/solid";
 import { useNavigate } from "@solidjs/router";
 import { Show } from "solid-js";
-import { minLength, object, string, regex } from "valibot";
 import { Header } from "./workspace/header";
 import { useAuth2 } from "$/providers/auth2";
 import { Workspace } from "@console/core/workspace";
@@ -38,10 +37,11 @@ export function WorkspaceCreate() {
   const [form, { Form, Field }] = createForm({
     validate: valiForm(
       object({
-        slug: string([
-          minLength(3, "Must be at least 3 characters long."),
+        slug: pipe(
+          string(),
           regex(/^[a-z0-9\-]+$/, "Must be lowercase, URL friendly."),
-        ]),
+          minLength(3, "Must be at least 3 characters long."),
+        ),
       }),
     ),
   });

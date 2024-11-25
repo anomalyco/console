@@ -2,8 +2,14 @@ import { DateTime } from "luxon";
 import { IconApp } from "$/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
 import { IconChevronRight } from "$/ui/icons";
-import { Navigate, Route, Routes, useSearchParams } from "@solidjs/router";
-import { For, Show, createSignal, onMount } from "solid-js";
+import {
+  Navigate,
+  Route,
+  RouteProps,
+  Router,
+  useSearchParams,
+} from "@solidjs/router";
+import { For, Show, createSignal } from "solid-js";
 import Botpoison from "@botpoison/browser";
 import { NotFound } from "../not-found";
 import { FormField, Input } from "$/ui/form";
@@ -87,7 +93,6 @@ const LegalLinks = styled("div", {
   },
 });
 
-
 const LegalLink = styled("a", {
   base: {
     fontSize: theme.font.size.xs,
@@ -104,19 +109,6 @@ const AnnouncementLinkIcon = styled("span", {
     opacity: theme.iconOpacity,
   },
 });
-
-export function Auth() {
-  return (
-    <Fullscreen>
-      <Routes>
-        <Route path="email" component={Email} />
-        <Route path="code" component={Code} />
-        <Route path="" element={<Navigate href="email" />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Fullscreen>
-  );
-}
 
 export function Email() {
   const botpoison = new Botpoison({
@@ -337,3 +329,12 @@ export function Code() {
     </Root>
   );
 }
+
+export const Auth = (
+  <Route component={Fullscreen}>
+    <Route path="email" component={Email} />
+    <Route path="code" component={Code} />
+    <Route path="/" component={() => <Navigate href="email" />} />
+    <Route path="*" component={() => <NotFound />} />
+  </Route>
+);

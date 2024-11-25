@@ -1,4 +1,4 @@
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { JSX, Show, ComponentProps } from "solid-js";
 import { theme } from "./theme";
@@ -592,7 +592,7 @@ export function TabTitle(props: TabTitleProps) {
   );
 }
 
-const ChevronLinkRoot = styled(Link, {
+const ChevronLinkRoot = styled(A, {
   base: {
     ...utility.row(0),
     gap: 1,
@@ -624,7 +624,6 @@ const ChevronLinkIcon = styled("span", {
     base: {},
   },
 });
-
 
 type ChevronLinkProps = ComponentProps<typeof ChevronLinkRoot> & {
   size?: "sm" | "base";

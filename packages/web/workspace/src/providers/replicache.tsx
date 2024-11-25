@@ -151,9 +151,7 @@ const mutators = new Client<ServerType>()
     });
   })
   .mutation("run_redeploy", async (tx, input) => {
-    const run = (await RunStore.all(tx)).filter(
-      (run) => run.id === input.runID,
-    )[0];
+    const run = await RunStore.get(tx, input.runID);
     if (!run) return;
 
     await tx.put(`/runs/${input.id}`, {
@@ -188,9 +186,7 @@ const mutators = new Client<ServerType>()
     });
   })
   .mutation("run_cancel", async (tx, input) => {
-    const run = (await RunStore.all(tx)).filter(
-      (run) => run.id === input.runID,
-    )[0];
+    const run = await RunStore.get(tx, input.runID);
     if (!run) return;
 
     await tx.set(
@@ -376,7 +372,6 @@ export function createSubscription<R>(
         });
 
         onCleanup(() => {
-          console.log("subscribing");
           subscription();
         });
       });

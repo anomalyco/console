@@ -7,7 +7,7 @@ import { Stack } from "$/ui/layout";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { styled } from "@macaron-css/solid";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { For, Show, Switch, Match } from "solid-js";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
@@ -45,7 +45,7 @@ const CardDesc = styled("p", {
   },
 });
 
-const CardError = styled(Link, {
+const CardError = styled(A, {
   base: {
     textUnderlineOffset: 3,
     textDecoration: "underline",
@@ -68,13 +68,6 @@ const CardActions = styled("div", {
   base: {
     ...utility.row(2),
     alignItems: "center",
-  },
-});
-
-const CardErrorCopy = styled(Text, {
-  base: {
-    fontSize: theme.font.size.sm,
-    color: `hsla(${theme.color.base.red}, 100%)`,
   },
 });
 
@@ -115,7 +108,7 @@ const CardStatusCopy = styled("span", {
   },
 });
 
-const AddAccountLink = styled(Link, {
+const AddAccountLink = styled(A, {
   base: {
     fontSize: theme.font.size.sm,
   },
@@ -145,9 +138,9 @@ export function AWS() {
         <Show
           when={accounts.value.length}
           fallback={
-            <Link href="../account">
+            <A href="../account">
               <Button>Connect an AWS Account</Button>
-            </Link>
+            </A>
           }
         >
           <Stack space="7">

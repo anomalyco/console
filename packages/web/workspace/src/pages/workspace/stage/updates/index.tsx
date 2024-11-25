@@ -1,14 +1,12 @@
-import { Route, Routes } from "@solidjs/router";
+import { Route } from "@solidjs/router";
 import { NotFound } from "../../../not-found";
 import { Detail } from "./detail";
 import { List } from "./list";
 
-export function Updates() {
-  return (
-    <Routes>
-      <Route path="" element={<List />} />
-      <Route path=":updateID" element={<Detail />} />
-      <Route path="*" element={<NotFound inset="header-tabs" />} />
-    </Routes>
-  );
-}
+export const Updates = (
+  <Route>
+    <Route path="" component={List} />
+    <Route path=":updateID" component={Detail} />
+    <Route path="*" component={() => <NotFound inset="header-tabs" />} />
+  </Route>
+);

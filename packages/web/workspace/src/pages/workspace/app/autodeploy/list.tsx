@@ -1,6 +1,6 @@
 import { pipe, filter, sortBy } from "remeda";
 import { DateTime } from "luxon";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { PageHeader } from "../header";
 import { useAppContext } from "../context";
@@ -25,7 +25,7 @@ import {
 import { RunStore } from "$/data/app";
 import { UserStore } from "$/data/user";
 import { StageStore } from "$/data/stage";
-import { For, Show, Match, Switch, createMemo, Suspense } from "solid-js";
+import { For, Show, Match, Switch, Suspense } from "solid-js";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 
@@ -160,7 +160,7 @@ const RunRoot = styled("div", {
   },
 });
 
-const RunBlockLink = styled(Link, {
+const RunBlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -268,7 +268,7 @@ const RunStatusCopy = styled("p", {
   },
 });
 
-const RunMessageLink = styled(Link, {
+const RunMessageLink = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,
@@ -327,7 +327,7 @@ const RunGitIcon = styled("span", {
   },
 });
 
-const RunGitBranch = styled(Link, {
+const RunGitBranch = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,
@@ -565,7 +565,6 @@ export function List() {
   const ctx = useAppContext();
   const runs = createSubscription(() => async (tx) => {
     const all = await RunStore.all(tx);
-
     return pipe(
       all,
       filter((run) => run.appID === ctx.app.id),

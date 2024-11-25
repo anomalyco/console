@@ -4,7 +4,7 @@ import { IconCheck, IconNoSymbol, IconExclamationTriangle } from "$/ui/icons";
 import { inputFocusStyles, SplitOptions, SplitOptionsOption } from "$/ui/form";
 import { IconCaretRight, IconSubRight } from "$/ui/icons/custom";
 import { formatSinceTime, parseTime } from "$/common/format";
-import { Link, useSearchParams } from "@solidjs/router";
+import { A, useSearchParams } from "@solidjs/router";
 import { theme } from "$/ui/theme";
 import type { Issue } from "@console/core/issue";
 import {
@@ -466,7 +466,7 @@ export function List() {
                       each={subWarnings()
                         .map((item) => {
                           if (item.type === "log_subscription") {
-                            const reason = (function() {
+                            const reason = (function () {
                               switch (item.data.error) {
                                 case "unknown":
                                   return "Unknown error: " + item.data.message;
@@ -737,7 +737,7 @@ const IssueRoot = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -748,7 +748,7 @@ const BlockLink = styled(Link, {
   },
 });
 
-const IssueError = styled(Link, {
+const IssueError = styled(A, {
   base: {
     zIndex: 2,
     overflow: "hidden",

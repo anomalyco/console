@@ -1,5 +1,5 @@
 import { theme } from "$/ui/theme";
-import { Link, useParams } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { Show, Switch, Match, createMemo, createEffect, For } from "solid-js";
 import { IconCheck, IconNoSymbol } from "$/ui/icons";
@@ -124,7 +124,7 @@ export const LogsLoadingIcon = styled("div", {
   },
 });
 
-const FunctionLink = styled(Link, {
+const FunctionLink = styled(A, {
   base: {
     cursor: "pointer",
     wordBreak: "break-all",
@@ -171,12 +171,12 @@ export function Detail() {
     if (issue()?.invocation) return;
     await fetch(
       import.meta.env.VITE_API_URL +
-      "/log?" +
-      new URLSearchParams({
-        pointer: JSON.stringify(issue()!.pointer),
-        stageID: issue()!.stageID,
-        groupID: issue()!.group,
-      }),
+        "/log?" +
+        new URLSearchParams({
+          pointer: JSON.stringify(issue()!.pointer),
+          stageID: issue()!.stageID,
+          groupID: issue()!.group,
+        }),
       {
         headers: {
           authorization: rep().auth,

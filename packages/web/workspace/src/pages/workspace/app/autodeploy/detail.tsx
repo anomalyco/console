@@ -10,7 +10,7 @@ import {
   createResource,
 } from "solid-js";
 import { createSubscription, useReplicache } from "$/providers/replicache";
-import { Link, useNavigate, useParams } from "@solidjs/router";
+import { A, useNavigate, useParams } from "@solidjs/router";
 import { UserStore } from "$/data/user";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { StageStore } from "$/data/stage";
@@ -313,7 +313,7 @@ const PanelTitle = styled("span", {
   },
 });
 
-const PanelValueLink = styled(Link, {
+const PanelValueLink = styled(A, {
   base: {
     lineHeight: theme.font.lineHeight,
     whiteSpace: "pre-wrap",
@@ -329,14 +329,10 @@ export function Detail() {
   const data = createSubscription(() => {
     const runID = params.runID;
     return async (tx) => {
-      const runs = (await RunStore.all(tx)).filter((run) => run.id === runID);
-      if (!runs.length) return;
-
-      const run = runs[0];
-
+      const run = await RunStore.get(tx, runID);
+      if (!run) return;
       if (!run.stageID) return { run };
       const stage = await StageStore.get(tx, run.stageID);
-
       const update = (await StateUpdateStore.forStage(tx, run.stageID)).find(
         (update) => update.runID === run.id
       );

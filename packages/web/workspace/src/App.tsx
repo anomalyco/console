@@ -6,12 +6,12 @@ import { styled } from "@macaron-css/solid";
 import { darkClass, lightClass, theme } from "./ui/theme";
 import { globalStyle, macaron$ } from "@macaron-css/core";
 import { Match, Switch, onCleanup, Component, createSignal } from "solid-js";
-import { Navigate, Route, Router, Routes, useNavigate } from "@solidjs/router";
+import { Navigate, Route, Router, useNavigate } from "@solidjs/router";
 import { Auth, Code } from "./pages/auth";
 import { CommandBar, useCommandBar } from "./pages/workspace/command-bar";
-import { Debug } from "./pages/debug";
+import { DebugRoute } from "./pages/debug";
 import { Design } from "./pages/design";
-import { Workspace } from "./pages/workspace";
+import { WorkspaceRoute } from "./pages/workspace";
 import { WorkspaceCreate } from "./pages/workspace-create";
 import { IconAddCircle, IconWorkspace } from "./ui/icons/custom";
 import { LocalProvider } from "./providers/local";
@@ -24,6 +24,7 @@ import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
 import { AuthProvider2, useAuth2 } from "./providers/auth2";
 import { RealtimeProvider } from "./providers/realtime";
+import { Fullscreen } from "./ui/layout";
 
 const Root = styled("div", {
   base: {
@@ -156,11 +157,11 @@ export const App: Component = () => {
   return (
     <Root class={theme() === "light" ? lightClass : darkClass} id="styled">
       <Router>
-        <Routes>
-          <Route path="auth/*" component={Auth} />
+        <Route>
+          <Route path="/auth">{Auth}</Route>
           <Route
             path="*"
-            element={
+            component={(props) => (
               <CommandBar>
                 <AuthProvider2>
                   <ReplicacheStatusProvider>
@@ -171,56 +172,7 @@ export const App: Component = () => {
                           <LocalProvider>
                             <LocalLogsProvider>
                               <GlobalCommands />
-                              <Routes>
-                                <Route path="local/*" component={Local} />
-                                <Route path="debug" component={Debug} />
-                                <Route path="design" component={Design} />
-                                <Route
-                                  path="workspace"
-                                  component={WorkspaceCreate}
-                                />
-                                <Route
-                                  path=":workspaceSlug/*"
-                                  component={Workspace}
-                                />
-                                <Route path="/auth/code" component={Code} />
-                                <Route
-                                  path=""
-                                  component={() => {
-                                    const auth = useAuth2();
-                                    console.log(
-                                      "HERE",
-                                      auth.current.workspaces,
-                                    );
-
-                                    return (
-                                      <Switch>
-                                        <Match
-                                          when={
-                                            auth.current.workspaces.length > 0
-                                          }
-                                        >
-                                          <Navigate
-                                            href={`/${
-                                              (
-                                                auth.current.workspaces.find(
-                                                  (w) =>
-                                                    w.id ===
-                                                    storage.value.workspace,
-                                                ) || auth.current.workspaces[0]
-                                              ).slug
-                                            }`}
-                                          />
-                                        </Match>
-                                        <Match when={true}>
-                                          <Navigate href={`/workspace`} />
-                                        </Match>
-                                      </Switch>
-                                    );
-                                  }}
-                                />
-                                <Route path="*" element={<NotFound />} />
-                              </Routes>
+                              {props.children}
                             </LocalLogsProvider>
                           </LocalProvider>
                         </FlagsProvider>
@@ -229,9 +181,41 @@ export const App: Component = () => {
                   </ReplicacheStatusProvider>
                 </AuthProvider2>
               </CommandBar>
-            }
-          />
-        </Routes>
+            )}
+          >
+            <Route path="local" component={Local} />
+            <Route path="debug" component={DebugRoute} />
+            <Route path="design" component={Design} />
+            <Route path="workspace" component={WorkspaceCreate} />
+            <Route path=":workspaceSlug">{WorkspaceRoute}</Route>
+            <Route
+              path="/"
+              component={() => {
+                console.log("here");
+                const auth = useAuth2();
+                return (
+                  <Switch>
+                    <Match when={auth.current.workspaces.length > 0}>
+                      <Navigate
+                        href={`/${
+                          (
+                            auth.current.workspaces.find(
+                              (w) => w.id === storage.value.workspace,
+                            ) || auth.current.workspaces[0]
+                          ).slug
+                        }`}
+                      />
+                    </Match>
+                    <Match when={true}>
+                      <Navigate href={`/workspace`} />
+                    </Match>
+                  </Switch>
+                );
+              }}
+            />
+            <Route path="*" component={() => <NotFound />} />
+          </Route>
+        </Route>
       </Router>
     </Root>
   );

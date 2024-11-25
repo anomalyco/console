@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { For, Show, Match, Switch } from "solid-js";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { PageHeader } from "./header";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { useAppContext } from "./context";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
@@ -45,7 +45,7 @@ const CardRoot = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -71,7 +71,7 @@ const CardTitle = styled("div", {
   },
 });
 
-const CardTitleText = styled(Link, {
+const CardTitleText = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,
@@ -81,7 +81,7 @@ const CardTitleText = styled(Link, {
   },
 });
 
-const CardInternalLink = styled(Link, {
+const CardInternalLink = styled(A, {
   base: {
     zIndex: 2,
   },
@@ -264,9 +264,10 @@ export function Overview() {
         update,
       };
       if (!update.runID) return result;
-      const run = await RunStore.get(tx, props.stage.id, update.runID);
+      const run = await RunStore.get(tx, update.runID);
       if (run?.trigger.source !== "github") result;
       if (!run) return result;
+      if (!run.trigger.commit) return result;
       const repoUrl = githubRepo(run.trigger.repo.owner, run.trigger.repo.repo);
       return {
         ...result,

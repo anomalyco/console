@@ -1,12 +1,12 @@
 import { Show } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { Text } from "$/ui/text";
 import { Stack, Fullscreen } from "$/ui/layout";
 import { Header } from "./workspace/header";
 import { theme } from "$/ui/theme";
 
-const HomeLink = styled(Link, {
+const HomeLink = styled(A, {
   base: {
     fontSize: theme.font.size.sm,
   },

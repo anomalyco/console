@@ -13,7 +13,7 @@ import { DateTime } from "luxon";
 import { formatSinceTime } from "$/common/format";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "$/pages/not-found";
-import { Link, useNavigate, useParams } from "@solidjs/router";
+import { A, useNavigate, useParams } from "@solidjs/router";
 import { useReplicache } from "$/providers/replicache";
 import { useReplicacheStatus } from "$/providers/replicache-status";
 import { useStageContext } from "../context";
@@ -175,7 +175,7 @@ const PanelValueEmpty = styled("span", {
   },
 });
 
-const PanelValueMonoLink = styled(Link, {
+const PanelValueMonoLink = styled(A, {
   base: {
     ...utility.text.line,
     minWidth: 0,
@@ -207,9 +207,9 @@ export function Detail() {
   const outputs = createMemo(() =>
     resource() && Object.keys(resource()!.outputs).length
       ? Object.keys(resource()!.outputs).map((key) => ({
-        key,
-        value: resource()!.outputs[key],
-      }))
+          key,
+          value: resource()!.outputs[key],
+        }))
       : [],
   );
 
@@ -217,13 +217,13 @@ export function Detail() {
     return [
       ...(resource()?.parent
         ? [
-          NavigationAction({
-            category: "Resource",
-            title: "Go to parent",
-            nav,
-            path: "../" + encodeURIComponent(resource()!.parent!),
-          }),
-        ]
+            NavigationAction({
+              category: "Resource",
+              title: "Go to parent",
+              nav,
+              path: "../" + encodeURIComponent(resource()!.parent!),
+            }),
+          ]
         : []),
       {
         icon: IconClipboard,
@@ -382,7 +382,7 @@ export function Detail() {
                             </span>
                           }
                         >
-                          <Link
+                          <A
                             href={`../../updates/${resource()!.update.createdID}`}
                             title={DateTime.fromISO(
                               resource()!.time.stateCreated!,
@@ -394,7 +394,7 @@ export function Detail() {
                               ).toSQL()!,
                               true,
                             )}
-                          </Link>
+                          </A>
                         </Show>
                       </Show>
                     </PanelValue>
@@ -406,7 +406,7 @@ export function Detail() {
                         when={
                           resource()!.time.stateModified &&
                           resource()!.time.stateCreated !==
-                          resource()!.time.stateModified
+                            resource()!.time.stateModified
                         }
                         fallback={<PanelValueEmpty>—</PanelValueEmpty>}
                       >
@@ -427,7 +427,7 @@ export function Detail() {
                             </span>
                           }
                         >
-                          <Link
+                          <A
                             href={`../../updates/${resource()!.update.modifiedID!}`}
                             title={DateTime.fromISO(
                               resource()!.time.stateModified!,
@@ -439,7 +439,7 @@ export function Detail() {
                               ).toSQL()!,
                               true,
                             )}
-                          </Link>
+                          </A>
                         </Show>
                       </Show>
                     </PanelValue>

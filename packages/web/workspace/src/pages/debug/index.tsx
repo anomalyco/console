@@ -27,6 +27,6 @@ export function Debug() {
 }
 */
 
-export function Debug() {
+export function DebugRoute() {
   return <span />;
 }

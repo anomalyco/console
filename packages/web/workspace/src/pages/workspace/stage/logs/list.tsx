@@ -1,4 +1,4 @@
-import { For, Match, Switch, createMemo } from "solid-js";
+import { For, Match, Switch } from "solid-js";
 import {
   IconFunction,
   IconConstruct,
@@ -7,8 +7,8 @@ import {
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
 import { styled } from "@macaron-css/solid";
-import { useLogsContext, useStageContext } from "../context";
-import { Link } from "@solidjs/router";
+import { useLogsContext } from "../context";
+import { A } from "@solidjs/router";
 import { Row, Stack, Fullscreen } from "$/ui/layout";
 
 const Content = styled("div", {
@@ -68,7 +68,7 @@ const Child = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -99,7 +99,7 @@ const ChildColContent = styled("div", {
   },
 });
 
-const ChildTitleLink = styled(Link, {
+const ChildTitleLink = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,

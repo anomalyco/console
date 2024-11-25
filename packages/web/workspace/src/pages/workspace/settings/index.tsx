@@ -119,7 +119,7 @@ const UsageStatTier = styled("span", {
   },
 });
 
-export function Settings() {
+export function SettingsRoute() {
   const rep = useReplicache();
   const usages = UsageStore.list.watch(rep, () => []);
   const invocations = createMemo(() =>

@@ -1,12 +1,12 @@
 import { DateTime } from "luxon";
-import { createMemo, createEffect, Show, Switch, Match, Suspense } from "solid-js";
+import { createMemo, Show, Switch, Match, Suspense } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { Link, useMatch, useParams } from "@solidjs/router";
+import { A, useMatch } from "@solidjs/router";
 
 import { theme } from "$/ui/theme";
 import { Button } from "$/ui/button";
 import { utility } from "$/ui/utility";
-import { Row, Stack } from "$/ui/layout";
+import { Row } from "$/ui/layout";
 import {
   RunStore,
   AppRepoStore,
@@ -20,10 +20,7 @@ import { createSubscription, useReplicache } from "$/providers/replicache";
 import { Header } from "../header";
 import { useWorkspace } from "../context";
 import { useAppContext } from "./context";
-import {
-  DialogDeploy,
-  DialogDeployControl,
-} from "./autodeploy/dialog-deploy";
+import { DialogDeploy, DialogDeployControl } from "./autodeploy/dialog-deploy";
 import {
   DialogRedeploy,
   DialogRedeployControl,
@@ -89,7 +86,9 @@ export function PageHeader() {
   let redeployControl!: DialogRedeployControl;
 
   const isAutodeploy = useMatch(() => ":workspace/:app/autodeploy");
-  const isAutodeployDetail = useMatch(() => ":workspace/:app/autodeploy/:runID");
+  const isAutodeployDetail = useMatch(
+    () => ":workspace/:app/autodeploy/:runID",
+  );
 
   const runID = isAutodeployDetail()?.params.runID;
 
@@ -118,9 +117,7 @@ export function PageHeader() {
       (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected,
     );
 
-    const currentRun = runID
-      ? runs.find((run) => run.id === runID)
-      : undefined;
+    const currentRun = runID ? runs.find((run) => run.id === runID) : undefined;
 
     return {
       ghRepo,
@@ -130,9 +127,7 @@ export function PageHeader() {
     };
   });
 
-  const appUrl = createMemo(() =>
-    `/${workspace().slug}/${ctx.app.name}`,
-  );
+  const appUrl = createMemo(() => `/${workspace().slug}/${ctx.app.name}`);
 
   return (
     <>
@@ -141,39 +136,42 @@ export function PageHeader() {
         <Show when={r.value!}>
           <Suspense>
             <Row space="5" vertical="center">
-              <Link end href={appUrl()}>
+              <A end href={appUrl()}>
                 <TabTitle size="sm">Stages</TabTitle>
-              </Link>
-              <Link href={`${appUrl()}/autodeploy`}>
+              </A>
+              <A href={`${appUrl()}/autodeploy`}>
                 <TabTitle size="sm" count={r.value!.latestRunError ? "•" : ""}>
                   Autodeploy
                 </TabTitle>
-              </Link>
-              <Link href={`${appUrl()}/settings`}>
+              </A>
+              <A href={`${appUrl()}/settings`}>
                 <TabTitle size="sm">Settings</TabTitle>
-              </Link>
+              </A>
             </Row>
             <Row space="3">
               <Show
                 when={r.value!.ghRepoOrg}
                 fallback={
-                  <Link href={`${appUrl()}/settings#repo`}>
+                  <A href={`${appUrl()}/settings#repo`}>
                     <Button color="secondary" size="sm">
                       <ButtonIcon size="sm">
                         <IconGitHub />
                       </ButtonIcon>
                       Connect Repo
                     </Button>
-                  </Link>
+                  </A>
                 }
               >
                 <Show when={!Boolean(isAutodeployDetail())}>
                   <RepoLink
                     target="_blank"
-                    href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
-                      }`}
+                    href={`https://github.com/${r.value!.ghRepoOrg!.login}/${
+                      r.value!.ghRepo!.name
+                    }`}
                   >
-                    <RepoLinkIcon><IconGitHub width="16" height="16" /></RepoLinkIcon>
+                    <RepoLinkIcon>
+                      <IconGitHub width="16" height="16" />
+                    </RepoLinkIcon>
                     <RepoLinkCopy>
                       {r.value!.ghRepoOrg!.login}
                       <RepoLinkSeparator>/</RepoLinkSeparator>
@@ -193,14 +191,19 @@ export function PageHeader() {
                   </Match>
                   <Match when={Boolean(isAutodeployDetail())}>
                     <Switch>
-                      <Match when={r.value!.currentRun
-                        && ["queued", "updating"].includes(r.value!.currentRun?.status)}
+                      <Match
+                        when={
+                          r.value!.currentRun &&
+                          ["queued", "updating"].includes(
+                            r.value!.currentRun?.status,
+                          )
+                        }
                       >
                         <Button
                           size="sm"
                           color="warning"
                           onClick={async () => {
-                            runID && await rep().mutate.run_cancel({ runID });
+                            runID && (await rep().mutate.run_cancel({ runID }));
                           }}
                         >
                           Cancel
@@ -224,7 +227,10 @@ export function PageHeader() {
         </Show>
       </PageHeaderRoot>
       <DialogDeploy control={(control) => (deployControl = control)} />
-      <DialogRedeploy runID={runID!} control={(control) => (redeployControl = control)} />
+      <DialogRedeploy
+        runID={runID!}
+        control={(control) => (redeployControl = control)}
+      />
     </>
   );
 }

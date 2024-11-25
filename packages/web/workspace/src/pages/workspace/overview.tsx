@@ -17,7 +17,7 @@ import { IconApp, IconArrowPathSpin } from "$/ui/icons/custom";
 import type { Stage } from "@console/core/app";
 import type { Account } from "@console/core/aws/account";
 import { styled } from "@macaron-css/solid";
-import { Link, useNavigate, useSearchParams } from "@solidjs/router";
+import { A, useNavigate, useSearchParams } from "@solidjs/router";
 import { For, Match, Show, Switch, createEffect, createMemo } from "solid-js";
 import { Header } from "./header";
 import { useLocalContext } from "$/providers/local";
@@ -263,7 +263,7 @@ export function Overview() {
         stages().filter((stage) => stage.awsAccountID === account.id),
         (c) =>
           apps().find((app) => app.id === c.appID)?.name === local().app &&
-            c.name === local().stage
+          c.name === local().stage
             ? 0
             : 1,
         (c) => (c.unsupported ? 1 : 0),
@@ -325,9 +325,9 @@ export function Overview() {
               <CardStatusIcon status="error">
                 <IconExclamationTriangle />
               </CardStatusIcon>
-              <Link href="account">
+              <A href="account">
                 <CardErrorCopy>Reconnect account</CardErrorCopy>
-              </Link>
+              </A>
             </CardStatus>
           </Show>
           <Show when={!account.timeDiscovered && !account.timeFailed}>
@@ -398,7 +398,7 @@ export function Overview() {
                   </Text>
                   <Text center size="sm" color="secondary">
                     If not, then remove the stack and{" "}
-                    <Link href="account">reconnect it here.</Link>
+                    <A href="account">reconnect it here.</A>
                   </Text>
                 </Stack>
               </Stack>
@@ -432,7 +432,7 @@ export function Overview() {
                     <Text size="lg" weight="medium">
                       Overview
                     </Text>
-                    <Link href="settings">
+                    <A href="settings">
                       <TextButton>
                         <Row space="0.5" horizontal="center">
                           Manage workspace
@@ -441,15 +441,15 @@ export function Overview() {
                           </ManageIcon>
                         </Row>
                       </TextButton>
-                    </Link>
+                    </A>
                   </PageHeader>
                   <Row space="4" vertical="center">
-                    <Link href="account">
+                    <A href="account">
                       <Button color="secondary">Add AWS Account</Button>
-                    </Link>
-                    <Link href="user">
+                    </A>
+                    <A href="user">
                       <Button color="primary">Invite Team</Button>
-                    </Link>
+                    </A>
                   </Row>
                 </Row>
                 <Row space="4">
@@ -506,7 +506,7 @@ export function Overview() {
   );
 }
 
-const StageRoot = styled(Link, {
+const StageRoot = styled(A, {
   base: {
     ...utility.row(3),
     height: 58,
@@ -559,8 +559,9 @@ function StageCard(props: StageCardProps) {
   const local = useLocalContext();
   return (
     <StageRoot
-      href={`${app()?.name}/${props.ambiguous ? props.stage.id : props.stage.name
-        }`}
+      href={`${app()?.name}/${
+        props.ambiguous ? props.stage.id : props.stage.name
+      }`}
     >
       <Row space="2" vertical="center">
         <StageIcon dimmed={props.stage.unsupported || false}>
@@ -596,7 +597,9 @@ function StageCard(props: StageCardProps) {
             props.stage.name === local()?.stage && app()?.name === local()?.app
           }
         >
-          <Tag level="tip" type="outline">Local</Tag>
+          <Tag level="tip" type="outline">
+            Local
+          </Tag>
         </Show>
         <Show when={props.stage.unsupported}>
           <Tag type="outline">Upgrade</Tag>

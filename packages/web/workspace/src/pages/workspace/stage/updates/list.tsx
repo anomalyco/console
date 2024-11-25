@@ -1,22 +1,15 @@
 import { sortBy } from "remeda";
 import { DateTime } from "luxon";
-import { Row, Stack } from "$/ui/layout";
-import { Link } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
-import { State } from "@console/core/state";
 import { IconCommandLine, IconTag } from "$/ui/icons";
 import { inputFocusStyles } from "$/ui/form";
 import { useStageContext } from "../context";
 import { globalKeyframes } from "@macaron-css/core";
-import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
-import { formatCommit, formatSinceTime } from "$/common/format";
+import { IconPr, IconGit } from "$/ui/icons/custom";
+import { formatSinceTime } from "$/common/format";
 import { createSubscription } from "$/providers/replicache";
-import {
-  githubPr,
-  githubRepo,
-  githubRef,
-  githubCommit,
-} from "$/common/url-builder";
+import { githubPr, githubRepo, githubRef } from "$/common/url-builder";
 import { RunStore, StateUpdateStore } from "$/data/app";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
 import { theme } from "$/ui/theme";
@@ -75,7 +68,7 @@ const UpdateRoot = styled("div", {
   },
 });
 
-const BlockLink = styled(Link, {
+const BlockLink = styled(A, {
   base: {
     position: "absolute",
     top: 0,
@@ -104,7 +97,7 @@ const UpdateStatus = styled("div", {
   },
 });
 
-export const UpdateStatusIcon = styled(Link, {
+export const UpdateStatusIcon = styled(A, {
   base: {
     zIndex: 2,
     width: 12,
@@ -151,7 +144,7 @@ globalKeyframes("glow-pulse-status", {
   },
 });
 
-const UpdateLink = styled(Link, {
+const UpdateLink = styled(A, {
   base: {
     zIndex: 2,
     fontWeight: theme.font.weight.medium,
@@ -175,7 +168,7 @@ const UpdateStatusCopy = styled("p", {
   },
 });
 
-const UpdateGitBranchLink = styled(Link, {
+const UpdateGitBranchLink = styled(A, {
   base: {
     ...utility.row(0),
     zIndex: 2,
@@ -247,7 +240,7 @@ const ChangeLegendRoot = styled("div", {
   },
 });
 
-const ChangeLegendTag = styled(Link, {
+const ChangeLegendTag = styled(A, {
   base: {
     zIndex: 2,
     height: 16,
@@ -340,11 +333,13 @@ type UpdateProps = {
 function Update(props: UpdateProps) {
   const ctx = useStageContext();
   const errors = () => props.errors?.length || 0;
-  const runID = props.runID;
 
-  const run = createSubscription(() => async (tx) => {
-    if (!runID) return;
-    return RunStore.get(tx, ctx.stage.id, runID);
+  const run = createSubscription(() => {
+    const runID = props.runID;
+    return async (tx) => {
+      if (!runID) return;
+      return RunStore.get(tx, runID);
+    };
   });
 
   const update = createSubscription(

@@ -90,8 +90,7 @@ export const StateEventStore = new Store()
 export const RunStore = new Store()
   .type<Run.Run>()
   .scan("all", () => ["run/"])
-  .scan("forStage", (stageID: string) => ["run", stageID])
-  .get((stageID: string, runID: string) => ["run", stageID, runID])
+  .get((runID: string) => ["run", runID])
   .build();
 
 export function RepoFromApp(id: string) {
