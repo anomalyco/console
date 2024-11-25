@@ -19,6 +19,7 @@ import { zod } from "../util/zod";
 import { issueCount, issue } from "./issue.sql";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
+import { warning } from "../warning/warning.sql";
 
 export const extract = zod(
   z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
@@ -104,11 +105,24 @@ export const extract = zod(
                 workspaceID: row.workspaceID,
               },
             },
-            () =>
-              bus.publish(Resource.Bus, Events.RateLimited, {
+            async () => {
+              const existing = await db
+                .select()
+                .from(warning)
+                .where(
+                  and(
+                    eq(warning.workspaceID, row.workspaceID),
+                    eq(warning.stageID, row.stageID),
+                    eq(warning.target, input.logGroup),
+                    eq(warning.type, "issue_rate_limited"),
+                  ),
+                );
+              if (existing.length) return;
+              await bus.publish(Resource.Bus, Events.RateLimited, {
                 stageID: row.stageID,
                 logGroup: input.logGroup,
-              }),
+              });
+            },
           ),
         ),
       );
