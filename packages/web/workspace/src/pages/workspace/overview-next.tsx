@@ -543,7 +543,7 @@ export function OverviewRoute() {
         </Match>
         <Match when={r.value!}>
           <>
-            <Show when={DateTime.now() < DateTime.fromISO("2024-07-31")}>
+            <Show when={DateTime.now() < DateTime.fromISO("2024-12-07")}>
               <Announcement>
                 <AnnouncementTag>New</AnnouncementTag>
                 <Text size="sm" on="surface" color="dimmed">
@@ -551,9 +551,9 @@ export function OverviewRoute() {
                   —{" "}
                 </Text>
                 <Text size="sm" on="surface" color="secondary">
-                  Autodeploy your apps with the Console{" "}
+                  Console containers updates{" "}
                   <a
-                    href="https://ion.sst.dev/docs/console/#autodeploy"
+                    href="https://sst.dev/blog/console-container-updates"
                     target="_blank"
                   >
                     Learn more
