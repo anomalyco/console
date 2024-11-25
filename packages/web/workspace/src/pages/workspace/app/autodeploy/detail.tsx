@@ -338,7 +338,7 @@ export function Detail() {
       const stage = await StageStore.get(tx, run.stageID);
 
       const update = (await StateUpdateStore.forStage(tx, run.stageID)).find(
-        (update) => update.runID === run.id,
+        (update) => update.runID === run.id
       );
       return { run, stage, update };
     };
@@ -389,7 +389,7 @@ export function Detail() {
               onClick={async (e) => {
                 const force =
                   e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
-                    "input[name='force']:checked",
+                    "input[name='force']:checked"
                   )?.value;
 
                 const id = createId();
@@ -431,18 +431,18 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-            ? trigger.tag
-            : trigger.type === "branch"
-              ? trigger.branch
-              : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+          ? trigger.branch
+          : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL, trigger.number)
           : trigger.type === "tag"
-            ? githubRef(repoURL, trigger.tag)
-            : trigger.type === "branch"
-              ? githubRef(repoURL, trigger.branch)
-              : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+          ? githubRef(repoURL, trigger.branch)
+          : githubRef(repoURL, trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       const actor =
@@ -523,7 +523,7 @@ export function Detail() {
                             rel="noreferrer"
                             href={githubCommit(
                               r.value!.repoURL,
-                              trigger.commit!.id,
+                              trigger.commit!.id
                             )}
                           >
                             <GitIcon size="md">
@@ -587,7 +587,7 @@ export function Detail() {
                     title={
                       data.value!.run.time.created
                         ? DateTime.fromISO(
-                            data.value!.run.time.created!,
+                            data.value!.run.time.created!
                           ).toLocaleString(DateTime.DATETIME_FULL)
                         : undefined
                     }
@@ -595,9 +595,9 @@ export function Detail() {
                     {data.value!.run.time.created
                       ? formatSinceTime(
                           DateTime.fromISO(
-                            data.value!.run.time.created!,
+                            data.value!.run.time.created!
                           ).toSQL()!,
-                          true,
+                          true
                         )
                       : "—"}
                   </Text>
@@ -617,10 +617,10 @@ export function Detail() {
                       ? formatDuration(
                           DateTime.fromISO(data.value!.run.time.completed!)
                             .diff(
-                              DateTime.fromISO(data.value!.run.time.started!),
+                              DateTime.fromISO(data.value!.run.time.started!)
                             )
                             .as("milliseconds"),
-                          true,
+                          true
                         )
                       : "—"}
                   </Text>
@@ -656,14 +656,14 @@ export function Detail() {
                     stageID: data.value!.stage!.id,
                     logStream: log.logStream,
                     logGroup: log.logGroup,
-                  },
+                  }
             ).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,
               Authorization: "Bearer " + auth.current.token,
             },
-          },
+          }
         ).then(
           (res) =>
             res.json() as Promise<
@@ -671,13 +671,13 @@ export function Detail() {
                 message: string;
                 timestamp: number;
               }[]
-            >,
+            >
         );
         return results;
       },
       {
         initialValue: [],
-      },
+      }
     );
     const trimmedLogs = createMemo(() => {
       return pipe(
@@ -685,7 +685,7 @@ export function Detail() {
         dropWhile((r) => !r.message.startsWith("[sst.deploy.start]")),
         drop(1),
         filter((r) => r.message.trim() != ""),
-        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]")),
+        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]"))
       );
     });
 
@@ -708,7 +708,7 @@ export function Detail() {
           >
             Logs —{" "}
             {DateTime.fromMillis(trimmedLogs()![0].timestamp!).toLocaleString(
-              DATETIME_NO_TIME,
+              DATETIME_NO_TIME
             )}
           </PanelTitle>
         </Show>
@@ -722,7 +722,7 @@ export function Detail() {
                     .toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}
                 >
                   {DateTime.fromMillis(entry.timestamp).toFormat(
-                    "HH:mm:ss.SSS",
+                    "HH:mm:ss.SSS"
                   )}
                 </LogTime>
                 <LogMessage>{entry.message}</LogMessage>
@@ -756,7 +756,7 @@ export function Detail() {
                   <PanelEmptyCopy>Running&hellip;</PanelEmptyCopy>
                 </LogsLoading>
               </Match>
-              <Match when={data.value!.run.log}>
+              <Match when={data.value!.run.time.started}>
                 <LogsLoading>
                   <LogsLoadingIcon>
                     <IconArrowPathSpin />
