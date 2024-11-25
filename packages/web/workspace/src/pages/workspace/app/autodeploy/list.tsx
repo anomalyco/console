@@ -233,7 +233,7 @@ const RunMessageIcon = styled("div", {
   base: {
     lineHeight: 0,
     opacity: theme.iconOpacity,
-    color: theme.color.text.secondary.base,
+    color: theme.color.text.dimmed.base,
   },
   variants: {
     error: {
@@ -249,7 +249,7 @@ const RunMessageCopy = styled("p", {
     ...utility.text.line,
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
-    color: theme.color.text.secondary.base,
+    color: theme.color.text.dimmed.base,
   },
   variants: {
     error: {
@@ -272,7 +272,8 @@ const RunMessageLink = styled(A, {
   base: {
     ...utility.text.line,
     zIndex: 2,
-    color: theme.color.text.secondary.base,
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.primary.base,
   },
 });
 
@@ -461,9 +462,8 @@ function RunItem({ run }: { run: Run.Run }) {
                   <img
                     width="24"
                     height="24"
-                    src={`https://avatars.githubusercontent.com/u/${
-                      r.value!.gitUser!.id
-                    }?s=48&v=4`}
+                    src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
+                      }?s=48&v=4`}
                   />
                 </RunSenderAvatar>
               </Match>
