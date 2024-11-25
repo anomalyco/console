@@ -154,7 +154,7 @@ const mutators = new Client<ServerType>()
     const run = await RunStore.get(tx, input.runID);
     if (!run) return;
 
-    await tx.put(`/runs/${input.id}`, {
+    await RunStore.put(tx, [input.id], {
       id: input.id,
       appID: run.appID,
       status: "queued",
