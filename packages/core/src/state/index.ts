@@ -617,7 +617,7 @@ export module State {
         version: string;
         command: UpdateCommand;
         timeStarted: string;
-        runtID?: string;
+        runID?: string;
         timeCompleted?: string;
         errors: {
           urn: string;
@@ -643,7 +643,7 @@ export module State {
           .values({
             id: input.updateID,
             index: max + 1,
-            runID: update.runtID,
+            runID: update.runID,
             errors: update.errors,
             stageID: input.config.stageID,
             workspaceID: useWorkspace(),
