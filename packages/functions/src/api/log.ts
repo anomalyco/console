@@ -4,6 +4,7 @@ import { notPublic } from "./auth";
 import { Stage } from "@console/core/app";
 import { Invocation, Log, LogEntry } from "@console/core/log";
 import { Storage } from "@console/core/storage";
+import stripAnsi from "strip-ansi";
 import { Issue } from "@console/core/issue";
 import { Replicache } from "@console/core/replicache";
 import { z } from "zod";
@@ -140,7 +141,7 @@ export const LogRoute = new Hono()
           events.push({
             id: event.eventId!,
             timestamp: event.timestamp!,
-            message: event.message!,
+            message: stripAnsi(event.message!),
           });
         }
         return c.json(events);
@@ -163,6 +164,12 @@ export const LogRoute = new Hono()
           });
         }
         const data = processor.flush();
+        for (const invocation of data) {
+          for (const log of invocation.logs) {
+            if (!log.message) continue;
+            log.message = stripAnsi(log.message);
+          }
+        }
         return c.json(data);
       }
     },
@@ -324,6 +331,10 @@ export const LogRoute = new Hono()
         timestamp: body.timestamp || undefined,
         config,
       });
+      for (const log of logs) {
+        if (!log.message) continue;
+        log.message = stripAnsi(log.message);
+      }
       return c.json(logs);
     },
   );
