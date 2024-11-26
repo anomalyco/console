@@ -122,7 +122,9 @@ export async function handler(event) {
   }
 
   async function resetCache() {
-    const { cache } = event;
+    const { cache, force } = event;
+
+    if (!force) return;
 
     console.log("Clearing all cache because of force deploy");
 
