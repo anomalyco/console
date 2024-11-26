@@ -84,7 +84,7 @@ async function processStage(stageID: string) {
           eq(stateResourceTable.workspaceID, useWorkspace()),
           eq(stateResourceTable.stageID, stageID),
           inArray(stateResourceTable.type, [
-            "aws:lambda/function:/Function",
+            "aws:lambda/function:Function",
             "sstv2:aws:Function",
           ])
         )
