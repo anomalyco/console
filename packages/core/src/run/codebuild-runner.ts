@@ -24,8 +24,6 @@ import { Run } from ".";
 export module CodebuildRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 60; // 60 minutes
 
-  export class RunnerError extends Error {}
-
   export const getImage = zod(z.enum(Architecture), (architecture) =>
     architecture === "x86_64"
       ? `aws/codebuild/amazonlinux2-x86_64-standard:5.0`
@@ -56,7 +54,7 @@ export module CodebuildRunner {
       // TODO apply this logic to Windows runners
       // if (architecture === "arm64") {
       //   if (compute !== "small" && compute !== "large")
-      //     throw new RunnerError(
+      //     throw new Error(
       //       `AWS CodeBuild does not support "${compute}" compute size for ARM architecture`
       //     );
       // }
@@ -230,7 +228,7 @@ export module CodebuildRunner {
             e.name === "InvalidInputException" &&
             e.message === `Region ${region} is not supported for ARM_CONTAINER`
           )
-            throw new RunnerError(
+            throw new Error(
               `AWS CodeBuild does not support ARM architecture in ${region} region`
             );
           else if (
@@ -355,7 +353,7 @@ export module CodebuildRunner {
         };
       } catch (e: any) {
         if (e.name === "AccountLimitExceededException") {
-          throw new RunnerError(
+          throw new Error(
             `AWS CodeBuild has reached the limit: ${e.message}. Open an AWS support case to increase the limit.`
           );
         }

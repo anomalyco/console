@@ -705,6 +705,8 @@ export module Run {
     const run = runs[runs.length - 1]!;
     const runsToSkip = runs.slice(0, -1);
 
+    console.log("orchestrating", run.id);
+
     // Mark the run as active
     try {
       await useTransaction((tx) =>
@@ -720,7 +722,10 @@ export module Run {
       );
     } catch (e: any) {
       // A run is already active
-      if (e.message.includes("errno 1062")) return;
+      if (e.message.includes("errno 1062")) {
+        console.log("run already active");
+        return;
+      }
       throw e;
     }
 
@@ -907,15 +912,15 @@ export module Run {
           .onDuplicateKeyUpdate({ set: { timeRun: now } })
           .execute();
       });
-    } catch (e) {
+    } catch (e: any) {
+      console.log(e);
       await markRunCompleted({
         runID: run.id,
-        error:
-          e instanceof CodebuildRunner.RunnerError
-            ? e.message
-            : `Failed to ${context}`,
+        error: e.message?.length
+          ? `Failed to ${context}: ${e.message}`
+          : `Failed to ${context}`,
       });
-      throw e;
+      return;
     }
 
     // Schedule timeout monitor
