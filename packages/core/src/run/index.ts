@@ -859,6 +859,7 @@ export module Run {
           force: run.force ?? undefined,
           cache: {
             bucket: await lookupCacheBucket({
+              region: runner.region,
               credentials: awsConfig.credentials,
             }),
             prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
@@ -1071,13 +1072,19 @@ export module Run {
 
   const lookupCacheBucket = zod(
     z.object({
+      region: z.string().min(1),
       credentials: z.custom<Credentials>(),
     }),
     async (input) => {
+      const sdkConfig = {
+        credentials: input.credentials,
+        region: input.region,
+        retryStrategy: RETRY_STRATEGY,
+      };
       // Create bucket
       const bucketName = await (async () => {
         const paramName = `/sst/console/bucketName`;
-        const ssm = new SSMClient({ credentials: input.credentials });
+        const ssm = new SSMClient(sdkConfig);
         try {
           const param = await ssm.send(
             new GetParameterCommand({
@@ -1089,7 +1096,7 @@ export module Run {
           if (!(e instanceof ParameterNotFound)) throw e;
         }
 
-        const s3 = new S3Client({ credentials: input.credentials });
+        const s3 = new S3Client(sdkConfig);
         const bucketName = `sst-console-${createId()}`;
         await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
 
@@ -1105,7 +1112,7 @@ export module Run {
 
       // Create bucket lifecycle policy
       await (async () => {
-        const s3 = new S3Client({ credentials: input.credentials });
+        const s3 = new S3Client(sdkConfig);
         try {
           const config = await s3.send(
             new GetBucketLifecycleConfigurationCommand({

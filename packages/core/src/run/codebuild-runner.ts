@@ -250,7 +250,7 @@ export module CodebuildRunner {
   export const removeResource = zod(
     z.object({
       credentials: z.custom<Credentials>(),
-      region: z.string().nonempty(),
+      region: z.string().min(1),
       resource: z.custom<Resource>(),
     }),
     async ({ region, resource, credentials }) => {
