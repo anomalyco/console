@@ -167,7 +167,7 @@ const mutators = new Client<ServerType>()
     });
   })
   .mutation("run_manual_deploy", async (tx, input) => {
-    await tx.put(`/runs/${input.id}`, {
+    await tx.put(`/run/${input.id}`, {
       id: input.id,
       appID: input.appID,
       status: "queued",
@@ -189,19 +189,14 @@ const mutators = new Client<ServerType>()
     const run = await RunStore.get(tx, input.runID);
     if (!run) return;
 
-    await tx.set(
-      run.stageID
-        ? `/runs/${run.stageID}/${input.runID}`
-        : `/runs/${input.runID}`,
-      {
-        ...run,
-        status: "error",
-        error: {
-          type: "run_failed",
-          properties: { message: "Build cancelled" },
-        },
+    await tx.set(`/run/${input.runID}`, {
+      ...run,
+      status: "error",
+      error: {
+        type: "run_failed",
+        properties: { message: "Build cancelled" },
       },
-    );
+    });
   })
   .mutation("run_config_put", async (tx, input) => {
     await RunConfigStore.put(tx, [input.appID, input.id!], {

@@ -90,40 +90,44 @@ export function PageHeader() {
     () => ":workspace/:app/autodeploy/:runID",
   );
 
-  const runID = isAutodeployDetail()?.params.runID;
-
+  const runID = () => isAutodeployDetail()?.params.runID;
   const ctx = useAppContext();
   const rep = useReplicache();
   const workspace = useWorkspace();
-  const r = createSubscription(() => async (tx) => {
-    const runs = await RunStore.all(tx);
-    const run = runs
-      .filter((run) => run.appID === ctx.app.id)
-      .sort(
-        (a, b) =>
-          DateTime.fromISO(b.time.created).toMillis() -
-          DateTime.fromISO(a.time.created).toMillis(),
-      )[0];
-    const latestRunError = run?.status === "error";
+  const r = createSubscription(() => {
+    const appID = ctx.app.id;
+    return async (tx) => {
+      const runs = await RunStore.all(tx);
+      const run = runs
+        .filter((run) => run.appID === appID)
+        .sort(
+          (a, b) =>
+            DateTime.fromISO(b.time.created).toMillis() -
+            DateTime.fromISO(a.time.created).toMillis(),
+        )[0];
+      const latestRunError = run?.status === "error";
 
-    const appRepo = await AppRepoStore.forApp(tx, ctx.app.id);
-    const ghRepo = (await GithubRepoStore.all(tx)).find(
-      (repo) => repo.id === appRepo[0]?.repoID,
-    );
+      const appRepo = await AppRepoStore.forApp(tx, ctx.app.id);
+      const ghRepo = (await GithubRepoStore.all(tx)).find(
+        (repo) => repo.id === appRepo[0]?.repoID,
+      );
 
-    if (!ghRepo) return { latestRunError };
+      if (!ghRepo) return { latestRunError };
 
-    const ghRepoOrg = (await GithubOrgStore.all(tx)).find(
-      (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected,
-    );
+      const ghRepoOrg = (await GithubOrgStore.all(tx)).find(
+        (org) => org.id === ghRepo.githubOrgID && !org.time.disconnected,
+      );
 
-    const currentRun = runID ? runs.find((run) => run.id === runID) : undefined;
+      const currentRun = runID()
+        ? runs.find((run) => run.id === runID())
+        : undefined;
 
-    return {
-      ghRepo,
-      ghRepoOrg,
-      currentRun,
-      latestRunError,
+      return {
+        ghRepo,
+        ghRepoOrg,
+        currentRun,
+        latestRunError,
+      };
     };
   });
 
@@ -203,7 +207,10 @@ export function PageHeader() {
                           size="sm"
                           color="warning"
                           onClick={async () => {
-                            runID && (await rep().mutate.run_cancel({ runID }));
+                            runID() &&
+                              (await rep().mutate.run_cancel({
+                                runID: runID()!,
+                              }));
                           }}
                         >
                           Cancel
@@ -228,7 +235,7 @@ export function PageHeader() {
       </PageHeaderRoot>
       <DialogDeploy control={(control) => (deployControl = control)} />
       <DialogRedeploy
-        runID={runID!}
+        runID={runID()!}
         control={(control) => (redeployControl = control)}
       />
     </>
