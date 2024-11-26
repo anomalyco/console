@@ -15,6 +15,7 @@ import { LogRoute } from "./log";
 import { LambdaRoute } from "./lambda";
 import { SlackRoute } from "./slack";
 import { HTTPException } from "hono/http-exception";
+import { LocalRoute } from "./local";
 
 export const app = new Hono()
   .use(logger())
@@ -71,7 +72,8 @@ export const app = new Hono()
   .route("/debug", DebugRoute)
   .route("/lambda", LambdaRoute)
   .route("/slack", SlackRoute)
-  .route("/log", LogRoute);
+  .route("/log", LogRoute)
+  .route("/local", LocalRoute);
 
 console.log(process.env.SST_DEV);
 export const handler = process.env.SST_DEV ? handle(app) : streamHandle(app);

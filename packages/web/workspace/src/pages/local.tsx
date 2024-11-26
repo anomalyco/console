@@ -8,13 +8,13 @@ export function Local() {
   const ctx = useLocalContext();
   const nav = useNavigate();
   createEffect(async () => {
-    const { app, stage } = ctx();
+    const { app, stage } = ctx;
     if (!app || !stage) return;
     const auth = useAuth2();
     for (const account of auth.all) {
       const result = await fetch(
         import.meta.env.VITE_API_URL +
-          "/rest/local?" +
+          "/local?" +
           new URLSearchParams({
             app,
             stage,

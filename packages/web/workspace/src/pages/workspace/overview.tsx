@@ -262,8 +262,8 @@ export function Overview() {
       return sortBy(
         stages().filter((stage) => stage.awsAccountID === account.id),
         (c) =>
-          apps().find((app) => app.id === c.appID)?.name === local().app &&
-          c.name === local().stage
+          apps().find((app) => app.id === c.appID)?.name === local.app &&
+          c.name === local.stage
             ? 0
             : 1,
         (c) => (c.unsupported ? 1 : 0),
@@ -592,11 +592,7 @@ function StageCard(props: StageCardProps) {
         </Row>
       </Row>
       <StageCardTags>
-        <Show
-          when={
-            props.stage.name === local()?.stage && app()?.name === local()?.app
-          }
-        >
+        <Show when={props.stage.name === local.stage && app.name === local.app}>
           <Tag level="tip" type="outline">
             Local
           </Tag>

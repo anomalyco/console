@@ -332,7 +332,7 @@ export function OverviewRoute() {
         apps,
         filter((app) => stages.find((s) => s.appID === app.id) !== undefined),
         sortBy(
-          (app) => (app.name === local().app ? 0 : 1),
+          (app) => (app.name === local.app ? 0 : 1),
           [
             (app) =>
               pipe(
@@ -410,8 +410,7 @@ export function OverviewRoute() {
     const children = createMemo(() => {
       return sortBy(
         r.value!.stages.filter((stage) => stage.appID === props.app.id),
-        (c) =>
-          props.app.name === local().app && c.name === local().stage ? 0 : 1,
+        (c) => (props.app.name === local.app && c.name === local.stage ? 0 : 1),
         (c) => (c.unsupported ? 1 : 0),
         [(c) => c.timeUpdated, "desc"],
       );
@@ -892,10 +891,7 @@ function StageCard(props: StageCardProps) {
         </StageLink>
         <Switch>
           <Match
-            when={
-              props.stage.name === local()?.stage &&
-              app()?.name === local()?.app
-            }
+            when={props.stage.name === local.stage && app()?.name === local.app}
           >
             <Tag level="tip" type="outline">
               Local

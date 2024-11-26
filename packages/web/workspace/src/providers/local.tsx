@@ -9,6 +9,7 @@ import {
 } from "solid-js";
 import { bus } from "./bus";
 import { useDummyConfig } from "./dummy";
+import { createStore } from "solid-js/store";
 
 interface State {
   app?: string;
@@ -16,20 +17,20 @@ interface State {
   region?: string;
 }
 
-const localContext = createContext<Accessor<State>>(() => ({}));
+const localContext = createContext<State>();
 
 export function LocalProvider(props: ParentProps) {
   const dummy = useDummyConfig();
   if (dummy())
     return (
-      <localContext.Provider value={() => dummy()!.local}>
+      <localContext.Provider value={dummy()!.local}>
         {props.children}
       </localContext.Provider>
     );
 
   let reconnect: number;
   let ws: WebSocket;
-  const [store, setStore] = createSignal<State>({});
+  const [store, setStore] = createStore<State>({});
 
   bus.on("log.cleared", (properties) => {
     if (!ws) return;

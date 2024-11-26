@@ -1,23 +1,16 @@
 import { useReplicache } from "$/providers/replicache";
 import {
-  Accessor,
-  ParentProps,
-  Show,
   createContext,
   createMemo,
   useContext,
 } from "solid-js";
-import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@solidjs/router";
 import { StageStore } from "$/data/stage";
 import { AppStore, StateResourceStore } from "$/data/app";
-import { Resource } from "@console/core/app/resource";
 import { NavigationAction, useCommandBar } from "../command-bar";
-import { IconApi, IconFunction, IconNextjsSite } from "$/ui/icons/custom";
 import { useLocalContext } from "$/providers/local";
-import { ResourceIcon } from "$/common/resource-icon";
 import { createInitializedContext } from "$/common/context";
 import { IssueStore } from "$/data/issue";
-import { ResourceStore } from "$/data/resource";
 import { UsageStore } from "$/data/usage";
 import {
   flatMap,
@@ -72,9 +65,9 @@ export function createStageContext() {
     },
     get connected() {
       return (
-        local().app === app()?.name &&
-        local().stage === stage()?.name &&
-        (!local().region || stage()?.region === local().region)
+        local.app === app.name &&
+        local.stage === stage.name &&
+        (!local.region || stage()?.region === local.region)
       );
     },
     get isFree() {

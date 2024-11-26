@@ -249,7 +249,7 @@ export function Overview() {
       return sortBy(
         await ActiveStagesForApp(appID)(tx),
         (stage) =>
-          app.app.name === local().app && stage.name === local().stage ? 0 : 1,
+          app.app.name === local.app && stage.name === local.stage ? 0 : 1,
         [(stage) => stage.timeUpdated, "desc"],
       );
     };
@@ -312,8 +312,7 @@ export function Overview() {
               </CardTitleText>
               <Show
                 when={
-                  props.stage.name === local().stage &&
-                  app.app.name === local().app
+                  props.stage.name === local.stage && app.app.name === local.app
                 }
               >
                 <CardInternalLink href={`${props.stage.name}/local`}>
