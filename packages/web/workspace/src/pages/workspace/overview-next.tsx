@@ -551,7 +551,7 @@ export function OverviewRoute() {
                   —{" "}
                 </Text>
                 <Text size="sm" on="surface" color="secondary">
-                  Console containers updates{" "}
+                  Console containers updates.{" "}
                   <a
                     href="https://sst.dev/blog/console-container-updates"
                     target="_blank"
