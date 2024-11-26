@@ -769,8 +769,9 @@ export module Run {
       if (!awsConfig) throw new Error("Fail to assume AWS role");
 
       // Get runner (create if not exist)
+      // Note: wait up to 2 minutes if runner.resource is not ready
       context = "lookup existing runner";
-      const waitTill = Date.now() + 120000; // wait up to 2 minutes
+      const waitTill = Date.now() + 120000;
       while (Date.now() < waitTill) {
         runner = await lookupRunner({
           awsAccountID: stage.awsAccountID,
@@ -837,37 +838,46 @@ export module Run {
       const timeout =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
         CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-      const codebuildBuild = await CodebuildRunner.invoke({
-        credentials: awsConfig.credentials,
-        region: runner.region,
-        resource: runner.resource,
-        payload: {
-          engine: runner.engine,
-          buildspec: {
-            version: SSTResource.AutodeployConfig.buildspecVersion,
-            bucket: SSTResource.AutodeployConfig.buildspecBucketName,
-          },
-          runID: run.id,
-          workspaceID: useWorkspace(),
-          stage: stage.name,
-          env: env.env ?? {},
-          repo: {
-            cloneUrl,
-            path: appRepo.path ?? undefined,
-          },
-          trigger: run.trigger,
-          force: run.force ?? undefined,
-          cache: {
-            bucket: await lookupCacheBucket({
-              region: runner.region,
-              credentials: awsConfig.credentials,
-            }),
-            prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
-            paths: run.config.target?.runner?.cache?.paths,
-          },
-        },
-        timeout,
-      });
+      const codebuildBuild = await (async () => {
+        try {
+          return await CodebuildRunner.invoke({
+            credentials: awsConfig.credentials,
+            region: runner.region,
+            resource: runner.resource!,
+            payload: {
+              engine: runner.engine,
+              buildspec: {
+                version: SSTResource.AutodeployConfig.buildspecVersion,
+                bucket: SSTResource.AutodeployConfig.buildspecBucketName,
+              },
+              runID: run.id,
+              workspaceID: useWorkspace(),
+              stage: stage.name,
+              env: env.env ?? {},
+              repo: {
+                cloneUrl,
+                path: appRepo.path ?? undefined,
+              },
+              trigger: run.trigger,
+              force: run.force ?? undefined,
+              cache: {
+                bucket: await lookupCacheBucket({
+                  region: runner.region,
+                  credentials: awsConfig.credentials,
+                }),
+                prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
+                paths: run.config!.target?.runner?.cache?.paths,
+              },
+            },
+            timeout,
+          });
+        } catch (e) {
+          if (e instanceof CodebuildRunner.RunnerNotExistError) {
+            await removeRunnerFromDB({ runnerID: runner.id });
+          }
+          throw e;
+        }
+      })();
 
       // Update runner's last run time
       const now = new Date();
@@ -1447,12 +1457,23 @@ export module Run {
       }
 
       // Remove db entry
+      return removeRunnerFromDB({ runnerID: runner.id });
+    }
+  );
+
+  const removeRunnerFromDB = zod(
+    z.object({
+      runnerID: z.string().cuid2(),
+    }),
+    async (input) => {
+      const { runnerID } = input;
+
       return useTransaction((tx) =>
         tx
           .delete(runnerTable)
           .where(
             and(
-              eq(runnerTable.id, runner.id),
+              eq(runnerTable.id, runnerID),
               eq(runnerTable.workspaceID, useWorkspace())
             )
           )

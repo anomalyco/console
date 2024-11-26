@@ -23,6 +23,7 @@ import { Run } from ".";
 
 export module CodebuildRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 60; // 60 minutes
+  export class RunnerNotExistError extends Error {}
 
   export const getImage = zod(z.enum(Architecture), (architecture) =>
     architecture === "x86_64"
@@ -260,7 +261,7 @@ export module CodebuildRunner {
         retryStrategy: RETRY_STRATEGY,
       };
       await removeIamRoleInUserAccount();
-      await removeFunctionInUserAccount();
+      await removeProjectInUserAccount();
 
       async function removeIamRoleInUserAccount() {
         const roleArn = resource.properties.role;
@@ -286,7 +287,7 @@ export module CodebuildRunner {
         }
       }
 
-      async function removeFunctionInUserAccount() {
+      async function removeProjectInUserAccount() {
         const codebuild = new CodeBuildClient(sdkConfig);
         try {
           await codebuild.send(
@@ -355,6 +356,11 @@ export module CodebuildRunner {
         if (e.name === "AccountLimitExceededException") {
           throw new Error(
             `AWS CodeBuild has reached the limit: ${e.message}. Open an AWS support case to increase the limit.`
+          );
+        }
+        if (e.name === "ResourceNotFoundException") {
+          throw new RunnerNotExistError(
+            `It seems the CodeBuild project "${projectName}" used by the runner was removed from your AWS account. Trigger a new deploy to re-create the runner.`
           );
         }
         throw e;
