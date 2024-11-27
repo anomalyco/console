@@ -111,7 +111,7 @@ const space = {
 const color = {
   base: {
     brand: "13, 88%",
-    yellow: "47, 99%",
+    yellow: "43, 95%",
     white: "0, 0%",
     black: "240, 28%",
     blue: "198, 39%",
@@ -122,7 +122,7 @@ const color = {
 const light = (() => {
   const base = {
     brand: `${color.base.brand}, 60%`,
-    yellow: `${color.base.yellow}, 51%`,
+    yellow: `${color.base.yellow}, 48%`,
     white: `${color.base.white}, 100%`,
     black: `${color.base.black}, 14%`,
     blue: `${color.base.blue}, 51%`,
@@ -386,7 +386,7 @@ const light = (() => {
 const dark = ((): typeof light => {
   const base = {
     brand: `${color.base.brand}, 58%`,
-    yellow: `${color.base.yellow}, 48%`,
+    yellow: `${color.base.yellow}, 44%`,
     white: `${color.base.white}, 100%`,
     black: `${color.base.black}, 14%`,
     blue: `${color.base.blue}, 56%`,
@@ -520,8 +520,8 @@ const dark = ((): typeof light => {
     drop: {
       short: `0 1px 1px hsla(${black.d1}, 0.4),
     0 2px 2px hsla(${black.d1}, 0.4)`,
-      shortDark: `0 1px 1px hsla(${black.d1}, 80%),
-    0 2px 2px hsla(${black.d1}, 80%)`,
+      shortDark: `0 1px 1px hsla(${black.d1}, 0.65),
+    0 2px 2px hsla(${black.d1}, 0.5)`,
       medium: `0 1px 1px hsla(${black.d1}, 0.075),
     0 2px 2px hsla(${black.d1}, 0.075),
     0 4px 4px hsla(${black.d1}, 0.075),

@@ -204,8 +204,8 @@ export function DialogDeploy(props: {
               )}
             </Field>
             <Controls>
-              <TextButton onClick={() => control.hide()}>Cancel</TextButton>
-              <Button color="success">Deploy</Button>
+              <TextButton type="button" onClick={() => control.hide()}>Cancel</TextButton>
+              <Button type="submit" color="success">Deploy</Button>
             </Controls>
           </Form>
         </Stack>

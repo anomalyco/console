@@ -169,9 +169,8 @@ export function PageHeader() {
                 <Show when={!Boolean(isAutodeployDetail())}>
                   <RepoLink
                     target="_blank"
-                    href={`https://github.com/${r.value!.ghRepoOrg!.login}/${
-                      r.value!.ghRepo!.name
-                    }`}
+                    href={`https://github.com/${r.value!.ghRepoOrg!.login}/${r.value!.ghRepo!.name
+                      }`}
                   >
                     <RepoLinkIcon>
                       <IconGitHub width="16" height="16" />
