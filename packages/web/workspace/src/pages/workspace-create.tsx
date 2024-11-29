@@ -1,10 +1,9 @@
 import { styled } from "@macaron-css/solid";
 import {
-  createForm,
   getValue,
-  minLength,
   setError,
   valiForm,
+  createForm,
 } from "@modular-forms/solid";
 import { useNavigate } from "@solidjs/router";
 import { Show } from "solid-js";
@@ -18,7 +17,7 @@ import { AvatarInitialsIcon } from "$/ui/avatar-icon";
 import { FormField, Input } from "$/ui/form";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
-import { pipe, object, string, regex } from "valibot";
+import { pipe, object, string, regex, minLength } from "valibot";
 
 const CreateWorkspaceHint = styled("ul", {
   base: {
