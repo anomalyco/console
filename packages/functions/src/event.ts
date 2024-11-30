@@ -148,6 +148,7 @@ export const handler = bus.subscriber(
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
           await Issue.subscribeIon(config);
+          break;
         }
 
         case Issue.Events.RateLimited.type: {
