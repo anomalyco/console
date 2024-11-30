@@ -143,6 +143,12 @@ export const handler = bus.subscriber(
           break;
         }
 
+        case State.Event.StateRefreshed.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Issue.subscribeIon(config);
+        }
+
         case Issue.Events.RateLimited.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;

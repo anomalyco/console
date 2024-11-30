@@ -49,6 +49,10 @@ export module State {
       "state.updated",
       z.object({ stageID: z.string() }),
     ),
+    StateRefreshed: createEvent(
+      "state.refreshed",
+      z.object({ stageID: z.string() }),
+    ),
     /** @deprecated */
     LockCreated: createEvent(
       "state.lock.created",
@@ -1078,7 +1082,9 @@ export module State {
                 ),
               );
             await createTransactionEffect(() =>
-              Issue.subscribeIon(input.config),
+              bus.publish(SSTResource.Bus, Event.StateRefreshed, {
+                stageID: input.config.stageID,
+              }),
             );
           }
           await createTransactionEffect(() => Replicache.poke());
