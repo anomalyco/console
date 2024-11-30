@@ -178,6 +178,10 @@ export const handler = bus.subscriber(
       }
       const duration = Date.now() - now;
       // send to cloudwatch metrics
+      console.log("event duration", {
+        type: evt.type,
+        duration,
+      });
       await client.send(
         new PutMetricDataCommand({
           Namespace: "console",
