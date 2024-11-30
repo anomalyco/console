@@ -31,6 +31,7 @@ export const handler = bus.subscriber(
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
     State.Event.UpdateCreated,
+    State.Event.StateRefreshed,
     Workspace.Events.Created,
     Stage.Events.ResourcesUpdated,
     Issue.Events.RateLimited,
