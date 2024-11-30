@@ -998,14 +998,15 @@ export module State {
               data: {},
             });
             for (let res of body) {
-              const enrichment =
-                res.type in Enrichers
-                  ? await Enrichers[res.type as keyof typeof Enrichers](
-                      res,
-                      input.config.credentials,
-                      input.config.region,
-                    ).catch(() => ({}))
-                  : {};
+              let enrichment = {};
+              if (res.type in Enrichers) {
+                console.log("enriching", res.type);
+                enrichment = await Enrichers[
+                  res.type as keyof typeof Enrichers
+                ](res, input.config.credentials, input.config.region).catch(
+                  () => ({}),
+                );
+              }
               r.push({
                 ...res,
                 stackID,
