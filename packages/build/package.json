@@ -6,7 +6,7 @@
     "@types/aws-lambda": "^8.10.114"
   },
   "dependencies": {
-    "@aws-sdk/client-eventbridge": "3.433.0"
+    "@aws-sdk/client-eventbridge": "3.699.0"
   },
   "main": "index.js",
   "scripts": {

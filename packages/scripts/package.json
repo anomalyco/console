@@ -7,17 +7,17 @@
     "shell": "sst bind bash"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.352.0",
+    "@aws-sdk/client-cloudwatch": "3.600.0",
     "@console/mail": "workspace:*",
     "@jsx-email/render": "^1.1.0",
-    "@tsconfig/node16": "^1.0.3",
-    "luxon": "^3.3.0",
+    "@tsconfig/node16": "^16.1.0",
+    "luxon": "3.5.0",
     "sst": "3.3.27",
     "tsx": "^3.12.7"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.3",
-    "@types/luxon": "^3.3.1",
+    "@types/luxon": "3.4.2",
     "inquirer": "^9.2.7"
   }
 }

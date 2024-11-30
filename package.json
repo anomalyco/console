@@ -28,7 +28,7 @@
     "constructs": "10.3.0",
     "sst": "3.3.27",
     "turbo": "^1.10.13",
-    "typescript": "^5.2.2"
+    "typescript": "5.5.4"
   },
   "dependencies": {
     "@tsconfig/node20": "^20.1.4"
