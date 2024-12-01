@@ -990,48 +990,46 @@ export module State {
             const body = await result
               .Body!.transformToString()
               .then((x) => JSON.parse(x));
-            const r = [];
             body.push({
               type: "Stack",
               id: stackID,
               addr: stackID,
               data: {},
             });
-            for (let res of body) {
-              let enrichment = {};
-              if (res.type in Enrichers) {
-                console.log("enriching", res.type);
-                enrichment = await Enrichers[
-                  res.type as keyof typeof Enrichers
-                ](res, input.config.credentials, input.config.region).catch(
-                  () => ({}),
-                );
-              }
-              r.push({
-                ...res,
-                stackID,
-                enrichment,
-              });
-              const type = `sstv2:aws:${res.type}`;
-              const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${stackID}$${type}::${res.id}`;
-              resourceInserts.push({
-                workspaceID,
-                type,
-                urn,
-                id: createId(),
-                custom: true,
-                inputs: {
-                  addr: res.addr,
-                  stackID: stackID,
-                },
-                outputs: {
-                  ...res.data,
-                  enrichment,
-                },
-                stageID: input.config.stageID,
-                updateID: "",
-              });
-            }
+            resourceInserts.push(
+              ...(await Promise.all(
+                body.map(async (res: any) => {
+                  let enrichment = {};
+                  if (res.type in Enrichers) {
+                    console.log("enriching", res.type);
+                    enrichment = await Enrichers[
+                      res.type as keyof typeof Enrichers
+                    ](res, input.config.credentials, input.config.region).catch(
+                      () => ({}),
+                    );
+                  }
+                  const type = `sstv2:aws:${res.type}`;
+                  const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${stackID}$${type}::${res.id}`;
+                  resourceInserts.push({
+                    workspaceID,
+                    type,
+                    urn,
+                    id: createId(),
+                    custom: true,
+                    inputs: {
+                      addr: res.addr,
+                      stackID: stackID,
+                    },
+                    outputs: {
+                      ...res.data,
+                      enrichment,
+                    },
+                    stageID: input.config.stageID,
+                    updateID: "",
+                  });
+                }),
+              )),
+            );
           }
         }
       }
