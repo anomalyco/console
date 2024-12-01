@@ -1001,7 +1001,7 @@ export module State {
                 body.map(async (res: any) => {
                   const type = `sstv2:aws:${res.type}`;
                   const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${stackID}$${type}::${res.id}`;
-                  resourceInserts.push({
+                  return {
                     workspaceID,
                     type,
                     urn,
@@ -1024,7 +1024,7 @@ export module State {
                     },
                     stageID: input.config.stageID,
                     updateID: "",
-                  });
+                  };
                 }),
               )),
             );
