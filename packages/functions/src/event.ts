@@ -177,11 +177,6 @@ export const handler = bus.subscriber(
         }
       }
       const duration = Date.now() - now;
-      // send to cloudwatch metrics
-      console.log("event duration", {
-        type: evt.type,
-        duration,
-      });
       await client.send(
         new PutMetricDataCommand({
           Namespace: "console",
@@ -199,6 +194,27 @@ export const handler = bus.subscriber(
               ],
             },
           ],
+        }),
+      );
+      console.log(
+        JSON.stringify({
+          _aws: {
+            Timestamp: new Date().getTime(),
+            CloudWatchMetrics: [
+              {
+                Namespace: "console",
+                Dimensions: [["type"]],
+                Metrics: [
+                  {
+                    Name: "event_duration",
+                    Unit: "Milliseconds",
+                  },
+                ],
+              },
+            ],
+          },
+          type: evt.type,
+          event_duration: duration,
         }),
       );
     }),
