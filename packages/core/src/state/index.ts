@@ -999,15 +999,6 @@ export module State {
             resourceInserts.push(
               ...(await Promise.all(
                 body.map(async (res: any) => {
-                  let enrichment = {};
-                  if (res.type in Enrichers) {
-                    console.log("enriching", res.type);
-                    enrichment = await Enrichers[
-                      res.type as keyof typeof Enrichers
-                    ](res, input.config.credentials, input.config.region).catch(
-                      () => ({}),
-                    );
-                  }
                   const type = `sstv2:aws:${res.type}`;
                   const urn = `urn:pulumi:${input.config.stage}::${input.config.app}::${stackID}$${type}::${res.id}`;
                   resourceInserts.push({
@@ -1022,7 +1013,14 @@ export module State {
                     },
                     outputs: {
                       ...res.data,
-                      enrichment,
+                      enrichment:
+                        res.type in Enrichers
+                          ? await Enrichers[res.type as keyof typeof Enrichers](
+                              res,
+                              input.config.credentials,
+                              input.config.region,
+                            ).catch(() => ({}))
+                          : {},
                     },
                     stageID: input.config.stageID,
                     updateID: "",
