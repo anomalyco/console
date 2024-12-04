@@ -1190,14 +1190,19 @@ export module Run {
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const vpc = input.runnerConfig?.vpc;
-      const type = JSON.stringify({
-        engine,
-        architecture,
-        image,
-        compute,
-        vpc,
-        version: "20241116",
-      });
+      const type =
+        createHash("sha256")
+          .update(
+            JSON.stringify({
+              engine,
+              architecture,
+              image,
+              compute,
+              vpc,
+            })
+          )
+          .digest("hex")
+          .substring(0, 8) + "-20241204";
       return await useTransaction((tx) =>
         tx
           .select()
@@ -1238,18 +1243,23 @@ export module Run {
         input.runnerConfig?.image ?? CodebuildRunner.getImage(architecture);
       const compute = input.runnerConfig?.compute ?? DEFAULT_COMPUTE;
       const vpc = input.runnerConfig?.vpc;
-      const type = JSON.stringify({
-        engine,
-        architecture,
-        image,
-        compute,
-        vpc,
-        version: "20241116",
-      });
+      const type =
+        createHash("sha256")
+          .update(
+            JSON.stringify({
+              engine,
+              architecture,
+              image,
+              compute,
+              vpc,
+            })
+          )
+          .digest("hex")
+          .substring(0, 8) + "-20241204";
       const runnerSuffix =
         architecture +
         "-" +
-        createHash("sha256").update(type).digest("hex").substring(0, 8) +
+        type +
         (SSTResource.App.stage !== "production"
           ? "-" + SSTResource.App.stage
           : "");
