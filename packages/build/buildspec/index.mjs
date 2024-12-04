@@ -147,11 +147,14 @@ export async function handler(event) {
       deploy,
       remove,
       shell,
+      options: {
+        force: event.force,
+      },
     };
 
     return sstConfig.console?.autodeploy?.workflow
       ? await sstConfig.console.autodeploy.workflow(context)
-      : workflow(context, event.force);
+      : workflow(context);
   }
 
   function install() {
@@ -367,9 +370,9 @@ export async function handler(event) {
 /**
  * @param {any} context
  */
-async function workflow(context, force) {
+async function workflow(context) {
   context.install();
   await context.installSst();
-  if (force) context.unlock();
+  if (context.options.force) context.unlock();
   context.trigger.action === "removed" ? context.remove() : context.deploy();
 }
