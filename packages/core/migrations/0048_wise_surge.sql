@@ -1,0 +1,1 @@
+ALTER TABLE `run` DROP COLUMN `stage_id`;

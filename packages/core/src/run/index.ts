@@ -43,17 +43,14 @@ import {
   Trigger,
   runnerTable,
   runTable,
-  runnerUsageTable,
   AutodeployConfig,
   Engine,
   RunError,
   AutodeployConfigRunner,
   RunErrorType,
-  runConfigTable,
   GitTrigger,
-  Cache,
 } from "./run.sql";
-import { App, Stage } from "../app";
+import { App } from "../app";
 import { RunConfig } from "./config";
 import { RETRY_STRATEGY } from "../util/aws";
 import { AWS, Credentials } from "../aws";
@@ -62,7 +59,7 @@ import { Github } from "../git/github";
 import { CodebuildRunner } from "./codebuild-runner";
 import { Replicache } from "../replicache";
 import { minimatch } from "minimatch";
-import { app, appRepoTable, stage, stage as stageTable } from "../app/app.sql";
+import { app, appRepoTable } from "../app/app.sql";
 import { workspace } from "../workspace/workspace.sql";
 import { Alert } from "../alert";
 import { render } from "@jsx-email/render";

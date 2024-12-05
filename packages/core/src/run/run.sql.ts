@@ -215,35 +215,6 @@ export const runnerTable = mysqlTable(
   })
 );
 
-export const runnerUsageTable = mysqlTable(
-  "runner_usage",
-  {
-    ...workspaceID,
-    ...timestampsNext,
-    runnerID: cuid("runner_id").notNull(),
-    stageID: cuid("stage_id").notNull(),
-    timeRun: timestamp("time_run"),
-  },
-  (table) => ({
-    ...workspaceIndexes(table),
-    fkRunnerID: foreignKey({
-      name: "runner_id_fk",
-      columns: [table.workspaceID, table.runnerID],
-      foreignColumns: [runnerTable.workspaceID, runnerTable.id],
-    }).onDelete("cascade"),
-    fkStageID: foreignKey({
-      name: "stage_id_fk",
-      columns: [table.workspaceID, table.stageID],
-      foreignColumns: [stage.workspaceID, stage.id],
-    }).onDelete("cascade"),
-    uniqueStageID: unique("runner_id_stage_id_unique").on(
-      table.workspaceID,
-      table.runnerID,
-      table.stageID
-    ),
-  })
-);
-
 export const runTable = mysqlTable(
   "run",
   {
@@ -252,7 +223,6 @@ export const runTable = mysqlTable(
     timeStarted: timestamp("time_started"),
     timeCompleted: timestamp("time_completed"),
     appID: cuid("app_id").notNull(),
-    stageID: cuid("stage_id"),
     stageName: varchar("stage_name", { length: 255 }),
     region: varchar("region", { length: 255 }),
     awsAccountExternalID: varchar("aws_account_external_id", {
@@ -268,11 +238,6 @@ export const runTable = mysqlTable(
   },
   (table) => ({
     ...workspaceIndexes(table),
-    stageID: foreignKey({
-      name: "workspace_id_stage_id_fk",
-      columns: [table.workspaceID, table.stageID],
-      foreignColumns: [stage.workspaceID, stage.id],
-    }).onDelete("cascade"),
     appID: foreignKey({
       name: "workspace_id_app_id_fk",
       columns: [table.workspaceID, table.appID],
