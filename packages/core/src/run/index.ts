@@ -197,7 +197,9 @@ export module Run {
     Created: createEvent(
       "run.created",
       z.object({
-        stageID: z.string().min(1),
+        stageName: z.string().min(1),
+        region: z.string().min(1),
+        awsAccountExternalID: z.string().min(1),
       })
     ),
     CreateFailed: createEvent(
@@ -227,7 +229,9 @@ export module Run {
   export const Run = z.object({
     id: z.string().cuid2(),
     appID: z.string().cuid2(),
-    stageID: z.string().cuid2().optional(),
+    stageName: z.string().min(1).optional(),
+    region: z.string().min(1).optional(),
+    awsAccountExternalID: z.string().min(1).optional(),
     time: z.object({
       created: z.string(),
       deleted: z.string().optional(),
@@ -251,7 +255,9 @@ export module Run {
       id: input.id,
       active: input.active || false,
       appID: input.appID,
-      stageID: input.stageID || undefined,
+      stageName: input.stageName || undefined,
+      region: input.region || undefined,
+      awsAccountExternalID: input.awsAccountExternalID || undefined,
       time: {
         created: input.timeCreated.toISOString(),
         updated: input.timeUpdated.toISOString(),
@@ -558,8 +564,8 @@ export module Run {
               type: sstConfig.error,
             };
 
-          const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
           const stageName = sstConfig.stage;
+          const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
 
           // Validate app name
           const app = await App.fromID(input.appID);
@@ -607,29 +613,6 @@ export module Run {
               properties: { target: env.stagePattern },
             };
 
-          // Create stage if stage not exist
-          let stageID = await App.Stage.fromName({
-            appID: input.appID,
-            name: stageName,
-            region,
-            awsAccountID: awsAccount.id,
-          }).then((s) => s?.id!);
-
-          if (!stageID) {
-            console.log("creating stage", { appID: input.appID, stageID });
-            stageID = createId();
-            await useTransaction((tx) =>
-              tx.insert(stage).ignore().values({
-                id: stageID,
-                name: stageName,
-                region,
-                awsAccountID: awsAccount.id,
-                workspaceID: useWorkspace(),
-                appID: input.appID,
-              })
-            );
-          }
-
           // Create Run
           await useTransaction(async (tx) => {
             await tx
@@ -638,9 +621,8 @@ export module Run {
                 id: runID,
                 workspaceID: useWorkspace(),
                 appID: input.appID,
-                stageID,
                 stageName,
-                region,
+                region: sstConfig.app.providers?.aws?.region ?? "us-east-1",
                 awsAccountExternalID: env.awsAccountExternalID,
                 trigger: input.trigger,
                 retrier: input.retrier,
@@ -655,7 +637,11 @@ export module Run {
               .execute();
 
             await createTransactionEffect(() =>
-              bus.publish(SSTResource.Bus, Event.Created, { stageID })
+              bus.publish(SSTResource.Bus, Event.Created, {
+                stageName,
+                region,
+                awsAccountExternalID: env.awsAccountExternalID,
+              })
             );
           });
         })();
@@ -686,286 +672,295 @@ export module Run {
     }
   );
 
-  export const orchestrate = zod(z.string().cuid2(), async (stageID) => {
-    // Get queued runs
-    const runs = await useTransaction((tx) =>
-      tx
-        .select()
-        .from(runTable)
-        .where(
-          and(
-            eq(runTable.workspaceID, useWorkspace()),
-            eq(runTable.stageID, stageID),
-            isNull(runTable.timeCompleted)
-          )
-        )
-        .orderBy(runTable.timeCreated)
-        .execute()
-    );
-    if (!runs.length) return;
-    if (runs.some((r) => r.active)) return;
-
-    const run = runs[runs.length - 1]!;
-    const runsToSkip = runs.slice(0, -1);
-
-    console.log("orchestrating", run.id);
-
-    // Mark the run as active
-    try {
-      await useTransaction((tx) =>
-        tx
-          .update(runTable)
-          .set({ active: true })
-          .where(
-            and(
-              eq(runTable.workspaceID, useWorkspace()),
-              eq(runTable.id, run.id)
-            )
-          )
-      );
-    } catch (e: any) {
-      // A run is already active
-      if (e.message.includes("errno 1062")) {
-        console.log("run already active");
-        return;
-      }
-      throw e;
-    }
-
-    await Replicache.poke();
-
-    // Skip all runs except the first one
-    if (runsToSkip.length) {
-      await useTransaction((tx) =>
-        tx
-          .update(runTable)
-          .set({ timeCompleted: new Date() })
-          .where(
-            and(
-              eq(runTable.workspaceID, useWorkspace()),
-              inArray(
-                runTable.id,
-                runsToSkip.map((r) => r.id)
-              ),
-              isNull(runTable.timeCompleted)
-            )
-          )
-          .execute()
-      );
-    }
-
-    // Start the most recent run
-    let runner;
-    let context = "initialize runner";
-    try {
-      if (!run.stageID) throw new Error("Run is not associated with a stage");
-      if (!run.config) throw new Error("Run does not have a config");
-
-      const stage = await Stage.fromID(run.stageID);
-      if (!stage) throw new Error("Stage not found");
-
-      const appRepo = await AppRepo.getByAppID(stage.appID);
-      if (!appRepo) throw new Error("AppRepo not found");
-
-      context = "assume AWS role";
-      const awsConfig = await Stage.assumeRole(stageID);
-      if (!awsConfig) throw new Error("Fail to assume AWS role");
-
-      // Get runner (create if not exist)
-      // Note: wait up to 2 minutes if runner.resource is not ready
-      context = "lookup existing runner";
-      const waitTill = Date.now() + 120000;
-      while (Date.now() < waitTill) {
-        runner = await lookupRunner({
-          awsAccountID: stage.awsAccountID,
-          appRepoID: appRepo.id,
-          region: stage.region,
-          runnerConfig: run.config.target?.runner,
-        });
-        if (!runner || runner.resource) break;
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        console.log("waiting for runner being created");
-      }
-      context = "create runner";
-      if (!runner) {
-        runner = await createRunner({
-          appRepoID: appRepo.id,
-          awsAccountID: stage.awsAccountID,
-          awsAccountExternalID: awsConfig.awsAccountID,
-          region: stage.region,
-          runnerConfig: run.config.target?.runner,
-          credentials: awsConfig.credentials,
-        });
-      }
-      if (!runner.resource) {
-        throw new Error("Failed to create runner");
-      }
-
-      // Get cache bucket (create if not exist)
-      context = "create cache bucket";
-
-      // Get run env
-      const env = (await RunConfig.list(stage.appID)).find((row) =>
-        minimatch(stage.name, row.stagePattern)
-      );
-      if (!env) throw new Error("AWS Account ID is not set in Run Env");
-
-      // Build cloneUrl
-      context = "start runner";
-      const gitRepo = await Github.getExternalInfoByRepoID(appRepo.repoID);
-      if (!gitRepo) throw new Error("Github Repo not found");
-      const cloneUrl = await Github.getCloneUrl(gitRepo);
-
-      // Check if build is cancelled
-      // Note: build can be cancelled by user while this function is running
-      //       (ie. the runner is being created)
-      const runCheck = await useTransaction((tx) =>
+  export const orchestrate = zod(
+    z.object({
+      stageName: z.string().min(1),
+      region: z.string().min(1),
+      awsAccountExternalID: z.string().min(1),
+    }),
+    async ({ stageName, region, awsAccountExternalID }) => {
+      // Get queued runs
+      const runs = await useTransaction((tx) =>
         tx
           .select()
           .from(runTable)
           .where(
             and(
               eq(runTable.workspaceID, useWorkspace()),
-              eq(runTable.id, run.id)
+              eq(runTable.stageName, stageName),
+              eq(runTable.region, region),
+              eq(runTable.awsAccountExternalID, awsAccountExternalID),
+              isNull(runTable.timeCompleted)
             )
           )
+          .orderBy(runTable.timeCreated)
           .execute()
-          .then((x) => x[0])
       );
-      if (runCheck?.timeCompleted) {
-        await orchestrate(run.stageID);
+      if (!runs.length) return;
+      if (runs.some((r) => r.active)) return;
+
+      const run = runs[runs.length - 1]!;
+      const runsToSkip = runs.slice(0, -1);
+
+      console.log("orchestrating", run.id);
+
+      // Mark the run as active
+      try {
+        await useTransaction((tx) =>
+          tx
+            .update(runTable)
+            .set({ active: true })
+            .where(
+              and(
+                eq(runTable.workspaceID, useWorkspace()),
+                eq(runTable.id, run.id)
+              )
+            )
+        );
+      } catch (e: any) {
+        // A run is already active
+        if (e.message.includes("errno 1062")) {
+          console.log("run already active");
+          return;
+        }
+        throw e;
+      }
+
+      await Replicache.poke();
+
+      // Skip all runs except the first one
+      if (runsToSkip.length) {
+        await useTransaction((tx) =>
+          tx
+            .update(runTable)
+            .set({ timeCompleted: new Date() })
+            .where(
+              and(
+                eq(runTable.workspaceID, useWorkspace()),
+                inArray(
+                  runTable.id,
+                  runsToSkip.map((r) => r.id)
+                ),
+                isNull(runTable.timeCompleted)
+              )
+            )
+            .execute()
+        );
+      }
+
+      // Start the most recent run
+      let runner;
+      let context = "initialize runner";
+      try {
+        if (!run.config) throw new Error("Run does not have a config");
+        if (!run.region) throw new Error("Run does not have a region");
+        if (!run.awsAccountExternalID)
+          throw new Error("Run does not have an AWS account");
+
+        const appRepo = await AppRepo.getByAppID(run.appID);
+        if (!appRepo) throw new Error("AppRepo not found");
+
+        context = "assume AWS role";
+        const awsAccount = await AWS.Account.fromExternalID(
+          run.awsAccountExternalID
+        );
+        if (!awsAccount)
+          throw new Error(
+            `AWS account ${run.awsAccountExternalID} not linked to workspace`
+          );
+        const credentials = await AWS.assumeRole(run.awsAccountExternalID);
+        if (!credentials)
+          throw new Error(
+            `Fail to assume role for AWS account ${run.awsAccountExternalID}`
+          );
+
+        // Get runner (create if not exist)
+        // Note: wait up to 2 minutes if runner.resource is not ready
+        context = "lookup existing runner";
+        const waitTill = Date.now() + 120000;
+        while (Date.now() < waitTill) {
+          runner = await lookupRunner({
+            awsAccountID: awsAccount.id,
+            appRepoID: appRepo.id,
+            region: run.region,
+            runnerConfig: run.config.target?.runner,
+          });
+          if (!runner || runner.resource) break;
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          console.log("waiting for runner being created");
+        }
+        context = "create runner";
+        if (!runner) {
+          runner = await createRunner({
+            appRepoID: appRepo.id,
+            awsAccountID: awsAccount.id,
+            awsAccountExternalID: run.awsAccountExternalID,
+            region: run.region,
+            runnerConfig: run.config.target?.runner,
+            credentials,
+          });
+        }
+        if (!runner.resource) {
+          throw new Error("Failed to create runner");
+        }
+
+        // Get run env
+        const env = (await RunConfig.list(run.appID)).find((row) =>
+          minimatch(stageName, row.stagePattern)
+        );
+        if (!env) throw new Error("AWS Account ID is not set in Run Env");
+
+        // Build cloneUrl
+        context = "start runner";
+        const gitRepo = await Github.getExternalInfoByRepoID(appRepo.repoID);
+        if (!gitRepo) throw new Error("Github Repo not found");
+        const cloneUrl = await Github.getCloneUrl(gitRepo);
+
+        // Check if build is cancelled
+        // Note: build can be cancelled by user while this function is running
+        //       (ie. the runner is being created)
+        const runCheck = await useTransaction((tx) =>
+          tx
+            .select()
+            .from(runTable)
+            .where(
+              and(
+                eq(runTable.workspaceID, useWorkspace()),
+                eq(runTable.id, run.id)
+              )
+            )
+            .execute()
+            .then((x) => x[0])
+        );
+        if (runCheck?.timeCompleted) {
+          await orchestrate({ stageName, region, awsAccountExternalID });
+          return;
+        }
+
+        // Run runner
+        const timeout =
+          timeoutToMinutes(run.config.target?.runner?.timeout) ??
+          CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
+        const codebuildBuild = await (async () => {
+          try {
+            return await CodebuildRunner.invoke({
+              credentials,
+              region: runner.region,
+              resource: runner.resource!,
+              payload: {
+                engine: runner.engine,
+                buildspec: {
+                  version: SSTResource.AutodeployConfig.buildspecVersion,
+                  bucket: SSTResource.AutodeployConfig.buildspecBucketName,
+                },
+                runID: run.id,
+                workspaceID: useWorkspace(),
+                stage: stageName,
+                env: env.env ?? {},
+                repo: {
+                  cloneUrl,
+                  path: appRepo.path ?? undefined,
+                },
+                trigger: run.trigger,
+                force: run.force ?? undefined,
+                cache: {
+                  bucket: await lookupCacheBucket({
+                    region: runner.region,
+                    credentials,
+                  }),
+                  prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
+                  paths: run.config!.target?.runner?.cache?.paths,
+                },
+              },
+              timeout,
+            });
+          } catch (e) {
+            if (e instanceof CodebuildRunner.RunnerNotExistError) {
+              await removeRunnerFromDB({ runnerID: runner.id });
+            }
+            throw e;
+          }
+        })();
+
+        // Update runner's last run time
+        const now = new Date();
+        const runnerID = runner.id;
+        await useTransaction(async (tx) => {
+          await tx
+            .update(runTable)
+            .set({
+              log: {
+                engine: "codebuild",
+                logGroup: codebuildBuild.logGroup,
+                logStream: codebuildBuild.logStream,
+              },
+            })
+            .where(
+              and(
+                eq(runTable.id, run.id),
+                eq(runTable.workspaceID, useWorkspace())
+              )
+            )
+            .execute();
+
+          await tx
+            .update(runnerTable)
+            .set({ timeRun: now })
+            .where(
+              and(
+                eq(runnerTable.id, runnerID),
+                eq(runnerTable.workspaceID, useWorkspace())
+              )
+            )
+            .execute();
+        });
+      } catch (e: any) {
+        console.log(e);
+        await markRunCompleted({
+          runID: run.id,
+          error: {
+            type: "run_failed",
+            properties: {
+              message: e.message?.length
+                ? `Failed to ${context}: ${e.message}`
+                : `Failed to ${context}`,
+            },
+          },
+        });
         return;
       }
 
-      // Run runner
+      // Schedule timeout monitor
       const timeout =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
         CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-      const codebuildBuild = await (async () => {
-        try {
-          return await CodebuildRunner.invoke({
-            credentials: awsConfig.credentials,
-            region: runner.region,
-            resource: runner.resource!,
-            payload: {
-              engine: runner.engine,
-              buildspec: {
-                version: SSTResource.AutodeployConfig.buildspecVersion,
-                bucket: SSTResource.AutodeployConfig.buildspecBucketName,
-              },
-              runID: run.id,
+      const scheduler = new SchedulerClient({ retryStrategy: RETRY_STRATEGY });
+      await scheduler.send(
+        new CreateScheduleCommand({
+          Name: `run-timeout-${run.id}`,
+          GroupName:
+            SSTResource.AutodeployConfig.timeoutMonitorScheduleGroupName,
+          FlexibleTimeWindow: {
+            Mode: "OFF",
+          },
+          ScheduleExpression: `at(${
+            new Date(Date.now() + (timeout + 1) * 60000)
+              .toISOString()
+              .split(".")[0]
+          })`,
+          Target: {
+            Arn: SSTResource.AutodeployConfig.timeoutMonitorFunctionArn,
+            RoleArn: SSTResource.AutodeployConfig.timeoutMonitorScheduleRoleArn,
+            Input: JSON.stringify({
               workspaceID: useWorkspace(),
-              stage: stage.name,
-              env: env.env ?? {},
-              repo: {
-                cloneUrl,
-                path: appRepo.path ?? undefined,
-              },
-              trigger: run.trigger,
-              force: run.force ?? undefined,
-              cache: {
-                bucket: await lookupCacheBucket({
-                  region: runner.region,
-                  credentials: awsConfig.credentials,
-                }),
-                prefix: `autodeploy-cache/${gitRepo.owner}/${gitRepo.repo}`,
-                paths: run.config!.target?.runner?.cache?.paths,
-              },
-            },
-            timeout,
-          });
-        } catch (e) {
-          if (e instanceof CodebuildRunner.RunnerNotExistError) {
-            await removeRunnerFromDB({ runnerID: runner.id });
-          }
-          throw e;
-        }
-      })();
-
-      // Update runner's last run time
-      const now = new Date();
-      const runnerID = runner.id;
-      await useTransaction(async (tx) => {
-        await tx
-          .update(runTable)
-          .set({
-            log: {
-              engine: "codebuild",
-              logGroup: codebuildBuild.logGroup,
-              logStream: codebuildBuild.logStream,
-            },
-          })
-          .where(
-            and(
-              eq(runTable.id, run.id),
-              eq(runTable.workspaceID, useWorkspace())
-            )
-          )
-          .execute();
-
-        await tx
-          .update(runnerTable)
-          .set({ timeRun: now })
-          .where(
-            and(
-              eq(runnerTable.id, runnerID),
-              eq(runnerTable.workspaceID, useWorkspace())
-            )
-          )
-          .execute();
-
-        await tx
-          .insert(runnerUsageTable)
-          .values({
-            workspaceID: useWorkspace(),
-            id: createId(),
-            runnerID,
-            stageID: run.stageID!,
-            timeRun: now,
-          })
-          .onDuplicateKeyUpdate({ set: { timeRun: now } })
-          .execute();
-      });
-    } catch (e: any) {
-      console.log(e);
-      await markRunCompleted({
-        runID: run.id,
-        error: e.message?.length
-          ? `Failed to ${context}: ${e.message}`
-          : `Failed to ${context}`,
-      });
-      return;
+              runID: run.id,
+            } satisfies RunTimeoutMonitorEvent),
+          },
+          ActionAfterCompletion: "DELETE",
+        })
+      );
     }
-
-    // Schedule timeout monitor
-    const timeout =
-      timeoutToMinutes(run.config.target?.runner?.timeout) ??
-      CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-    const scheduler = new SchedulerClient({ retryStrategy: RETRY_STRATEGY });
-    await scheduler.send(
-      new CreateScheduleCommand({
-        Name: `run-timeout-${run.id}`,
-        GroupName: SSTResource.AutodeployConfig.timeoutMonitorScheduleGroupName,
-        FlexibleTimeWindow: {
-          Mode: "OFF",
-        },
-        ScheduleExpression: `at(${
-          new Date(Date.now() + (timeout + 1) * 60000)
-            .toISOString()
-            .split(".")[0]
-        })`,
-        Target: {
-          Arn: SSTResource.AutodeployConfig.timeoutMonitorFunctionArn,
-          RoleArn: SSTResource.AutodeployConfig.timeoutMonitorScheduleRoleArn,
-          Input: JSON.stringify({
-            workspaceID: useWorkspace(),
-            runID: run.id,
-          } satisfies RunTimeoutMonitorEvent),
-        },
-        ActionAfterCompletion: "DELETE",
-      })
-    );
-  });
+  );
 
   export const cancelRun = zod(
     z.object({
@@ -975,7 +970,9 @@ export module Run {
       const run = await useTransaction((tx) =>
         tx
           .select({
-            stageID: runTable.stageID,
+            stageName: runTable.stageName,
+            region: runTable.region,
+            awsAccountExternalID: runTable.awsAccountExternalID,
             log: runTable.log,
           })
           .from(runTable)
@@ -992,20 +989,23 @@ export module Run {
       if (!run) return;
 
       // Stop CodeBuild job if running
-      if (run.stageID && run.log) {
-        const awsConfig = await Stage.assumeRole(run.stageID);
-        if (!awsConfig) throw new Error("Fail to assume AWS role");
+      if (run.stageName && run.region && run.awsAccountExternalID && run.log) {
+        const credentials = await AWS.assumeRole(run.awsAccountExternalID);
+        if (!credentials) throw new Error("Fail to assume AWS role");
 
         await CodebuildRunner.cancel({
           buildID: `${run.log.logGroup.split("/").pop()}:${run.log.logStream}`,
-          credentials: awsConfig.credentials,
-          region: awsConfig.region,
+          credentials,
+          region: run.region,
         });
       }
 
       await markRunCompleted({
         runID,
-        error: "Build cancelled",
+        error: {
+          type: "run_failed",
+          properties: { message: "Build cancelled" },
+        },
       });
     }
   );
@@ -1013,7 +1013,7 @@ export module Run {
   export const markRunCompleted = zod(
     z.object({
       runID: z.string().cuid2(),
-      error: z.string().min(1).optional(),
+      error: z.custom<RunError>().optional(),
     }),
     async ({ runID, error }) => {
       const run = await useTransaction((tx) =>
@@ -1038,13 +1038,7 @@ export module Run {
           .update(runTable)
           .set({
             timeCompleted: new Date(),
-            error:
-              error === undefined
-                ? undefined
-                : {
-                    type: "run_failed" as const,
-                    properties: { message: error },
-                  },
+            error,
             active: null,
           })
           .where(
@@ -1057,7 +1051,11 @@ export module Run {
           .execute();
       });
 
-      await orchestrate(run.stageID!);
+      await orchestrate({
+        stageName: run.stageName!,
+        region: run.region!,
+        awsAccountExternalID: run.awsAccountExternalID!,
+      });
       await alert(runID);
     }
   );
@@ -1560,25 +1558,7 @@ export module Run {
     );
     if (!run) return;
 
-    const stage =
-      run.stageID === null
-        ? undefined
-        : await useTransaction((tx) =>
-            tx
-              .select()
-              .from(stageTable)
-              .where(
-                and(
-                  eq(stageTable.id, run.stageID!),
-                  eq(stageTable.workspaceID, useWorkspace())
-                )
-              )
-              .execute()
-              .then((x) => x[0])
-          );
-
-    const { appName, workspaceSlug } = run;
-    const stageName = stage?.name;
+    const { appName, workspaceSlug, stageName } = run;
 
     // Do not send `skipped` emails
     const status = ERROR_STATUS_MAP(run.error);
@@ -1615,9 +1595,19 @@ export module Run {
       ? `https://console.sst.dev/${workspaceSlug}/${appName}/${stageName}/autodeploy/${runID}`
       : `https://console.sst.dev/${workspaceSlug}/${appName}/autodeploy/${runID}`;
 
+    const stage =
+      run.stageName && run.region && run.awsAccountExternalID
+        ? await App.Stage.fromName({
+            appID: run.appID,
+            name: run.stageName,
+            region: run.region,
+            awsAccountID: run.awsAccountExternalID,
+          })
+        : undefined;
+
     const alerts = await Alert.list({
       app: appName,
-      stage: stageName,
+      stage: stageName ?? undefined,
       events:
         status === "failed"
           ? ["autodeploy", "autodeploy.error"]
@@ -1629,7 +1619,7 @@ export module Run {
 
       if (destination.type === "slack") {
         await Alert.sendSlack({
-          stageID: run.stageID ?? undefined,
+          stageID: stage?.id,
           alertID: alert.id,
           destination,
           blocks: [
@@ -1667,7 +1657,7 @@ export module Run {
             // @ts-ignore
             AutodeployEmail({
               error: run.error ? true : false,
-              stage: stageName,
+              stage: stageName ?? undefined,
               app: appName,
               subject,
               message,

@@ -53,7 +53,7 @@ export type DummyMode =
   | "overview:base;usage:overage;resources:base;workspace:gated;subscription:overdue";
 
 export function* generateData(
-  mode: DummyMode,
+  mode: DummyMode
 ): Generator<DummyData, void, unknown> {
   console.log("generating for", mode);
 
@@ -571,7 +571,9 @@ function* overviewUpdateCasesApp(): Generator<DummyData, void, unknown> {
   });
   yield run({
     id: RUN_ID++,
-    stageID: STAGE_ION.id,
+    stageName: STAGE_ION.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     appID: APP_ID_LONG,
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
@@ -606,7 +608,9 @@ function* overviewUpdateCasesApp(): Generator<DummyData, void, unknown> {
   });
   yield run({
     id: RUN_ID++,
-    stageID: STAGE_ION_LONG.id,
+    stageName: STAGE_ION_LONG.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     appID: APP_ID_LONG,
     status: "error",
     error: unknownRunError(),
@@ -625,11 +629,13 @@ function* appsFull(): Generator<DummyData, void, unknown> {
   // Run: Error + Long Message
   yield run({
     id: RUN_ID++,
-    stageID: STAGE_ION_LONG.id,
+    stageName: STAGE_ION_LONG.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     appID: APP_ID_LONG,
     status: "error",
     error: unknownRunError(
-      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside",
+      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside"
     ),
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
@@ -641,7 +647,9 @@ function* appsFull(): Generator<DummyData, void, unknown> {
   // Run: Long Stage
   yield run({
     id: RUN_ID++,
-    stageID: STAGE_ION_LONG.id,
+    stageName: STAGE_ION_LONG.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     appID: APP_ID_LONG,
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
@@ -795,7 +803,7 @@ function* stageIonBase(): Generator<DummyData, void, unknown> {
 }
 
 function* stageIonUpdateLinks(
-  parent: string,
+  parent: string
 ): Generator<DummyData, void, unknown> {
   const UPDATE_1 = 1;
   const UPDATE_2 = 2;
@@ -898,7 +906,7 @@ function* stageIonUpdateLinks(
 }
 
 function* stageIonBaseIconCase(
-  parent: string,
+  parent: string
 ): Generator<DummyData, void, unknown> {
   yield stateResource({
     parent,
@@ -2329,7 +2337,9 @@ function* updatesBase(): Generator<DummyData, void, unknown> {
   yield run({
     id: RUN_ID,
     appID: APP_ID,
-    stageID: STAGE_ION.id,
+    stageName: STAGE_ION.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
     commitMessage: "",
@@ -2349,7 +2359,9 @@ function* updatesBase(): Generator<DummyData, void, unknown> {
   yield run({
     id: RUN_ID,
     appID: APP_ID,
-    stageID: STAGE_ION.id,
+    stageName: STAGE_ION.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     branch: "",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
     commitMessage: "working on it",
@@ -2403,7 +2415,9 @@ function* updatesBase(): Generator<DummyData, void, unknown> {
   yield run({
     id: RUN_ID,
     appID: APP_ID,
-    stageID: STAGE_ION.id,
+    stageName: STAGE_ION.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     branch:
       "a-really-long-branch-name-that-should-overflow-because-its-too-long",
     commitID: "99a2721dab38cb264be29b7d1b552802bcca32ce",
@@ -2420,7 +2434,9 @@ function* updatesBase(): Generator<DummyData, void, unknown> {
   yield run({
     id: RUN_ID,
     appID: APP_ID,
-    stageID: STAGE_ION.id,
+    stageName: STAGE_ION.name,
+    region: "us-east-1",
+    awsAccountExternalID: ACCOUNT_ID,
     branch: "main",
     commitID: "3492661dab38cb264be29b7d1b552802bcca32ce",
     commitMessage: "feat: Add new function",
@@ -3427,18 +3443,18 @@ function invocation({
       duration === undefined
         ? duration
         : {
-          duration,
-          memory: 128,
-          size: 2048,
-          xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
-        },
+            duration,
+            memory: 128,
+            size: 2048,
+            xray: "eb1e33e8a81b697b75855af6bfcdbcbf7cbb",
+          },
     start: startTime.valueOf(),
     logs: messages
       ? messages.map((message, i) => ({
-        message,
-        id: `log-${INVOCATION_COUNT}-${i}`,
-        timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
-      }))
+          message,
+          id: `log-${INVOCATION_COUNT}-${i}`,
+          timestamp: startTime.plus({ seconds: 20 * i }).toMillis(),
+        }))
       : [],
   };
 }
@@ -3690,7 +3706,9 @@ function stateFunction({
 interface RunProps {
   id: number;
   appID: string;
-  stageID?: string;
+  stageName?: string;
+  region?: string;
+  awsAccountExternalID?: string;
   timeStarted?: string;
   timeCompleted?: string;
   branch?: string;
@@ -3707,7 +3725,9 @@ interface RunProps {
 function run({
   id,
   appID,
-  stageID,
+  stageName,
+  region,
+  awsAccountExternalID,
   timeStarted,
   timeCompleted,
   branch,
@@ -3726,7 +3746,9 @@ function run({
     active: false,
     id: `${id}`,
     appID,
-    stageID,
+    stageName,
+    region,
+    awsAccountExternalID,
     status: status || "updated",
     error,
     time: {

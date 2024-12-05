@@ -24,7 +24,12 @@ export const handler = bus.subscriber(
           case Run.Event.RunnerCompleted.type:
             await Run.markRunCompleted({
               runID: evt.properties.runID,
-              error: evt.properties.error,
+              error: evt.properties.error
+                ? {
+                    type: "run_failed",
+                    properties: { message: evt.properties.error },
+                  }
+                : undefined,
             });
             break;
         }
@@ -77,12 +82,17 @@ export const codebuildHandler = async (evt: Payload) => {
       const status = evt.detail["build-status"];
       await Run.markRunCompleted({
         runID: runnerEvent.runID,
-        error:
-          status === "TIMED_OUT"
-            ? "CodeBuild run timed out"
-            : status === "STOPPED"
-            ? "CodeBuild run stopped"
-            : "CodeBuild run failed",
+        error: {
+          type: "run_failed",
+          properties: {
+            message:
+              status === "TIMED_OUT"
+                ? "CodeBuild run timed out"
+                : status === "STOPPED"
+                ? "CodeBuild run stopped"
+                : "CodeBuild run failed",
+          },
+        },
       });
     }
   );

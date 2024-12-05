@@ -1,0 +1,2 @@
+ALTER TABLE `run` DROP INDEX `unique_active`;--> statement-breakpoint
+ALTER TABLE `run` ADD CONSTRAINT `unique_stage_active` UNIQUE(`workspace_id`,`stage_name`,`region`,`aws_account_external_id`,`active`);

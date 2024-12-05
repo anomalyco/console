@@ -278,9 +278,11 @@ export const runTable = mysqlTable(
       columns: [table.workspaceID, table.appID],
       foreignColumns: [app.workspaceID, app.id],
     }).onDelete("cascade"),
-    active: unique("unique_active").on(
+    activeStage: unique("unique_stage_active").on(
       table.workspaceID,
-      table.stageID,
+      table.stageName,
+      table.region,
+      table.awsAccountExternalID,
       table.active
     ),
   })

@@ -85,7 +85,7 @@ export const handler = bus.subscriber(
                 event: "autodeploy",
               });
               await Stripe.createCustomer();
-            },
+            }
           );
           break;
 
@@ -167,7 +167,11 @@ export const handler = bus.subscriber(
         }
 
         case Run.Event.Created.type: {
-          await Run.orchestrate(evt.properties.stageID);
+          await Run.orchestrate({
+            stageName: evt.properties.stageName,
+            region: evt.properties.region,
+            awsAccountExternalID: evt.properties.awsAccountExternalID,
+          });
           break;
         }
 
@@ -196,7 +200,7 @@ export const handler = bus.subscriber(
           },
           type: evt.type,
           event_duration: duration,
-        }),
+        })
       );
-    }),
+    })
 );
