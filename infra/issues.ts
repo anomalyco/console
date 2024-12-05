@@ -1,7 +1,17 @@
 import { bus } from "./bus";
 import { identity } from "./connect";
+import { email } from "./email";
 import { database } from "./planetscale";
 import { storage } from "./storage";
+
+const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
+  fifo: true,
+  visibilityTimeout: "5 minutes",
+});
+issueDetectionQueue.subscribe({
+  handler: "packages/functions/src/issue-detected.handler",
+  link: [database, email],
+});
 
 const stream = new sst.aws.KinesisStream("IssueStream");
 stream.subscribe(
@@ -13,7 +23,7 @@ stream.subscribe(
     nodejs: {
       install: ["source-map"],
     },
-    link: [bus, storage, database],
+    link: [bus, storage, database, issueDetectionQueue],
   },
   {
     transform: {
@@ -24,7 +34,7 @@ stream.subscribe(
         batchSize: 500,
       },
     },
-  }
+  },
 );
 const regions = aws.getRegionsOutput();
 
@@ -36,7 +46,7 @@ const role = new aws.iam.Role("IssueRole", {
         principals: [
           {
             identifiers: regions.names.apply((regions) =>
-              regions.map((r) => `logs.${r}.amazonaws.com`)
+              regions.map((r) => `logs.${r}.amazonaws.com`),
             ),
             type: "Service",
           },

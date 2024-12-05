@@ -20,6 +20,9 @@ import { issueCount, issue } from "./issue.sql";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 import { warning } from "../warning/warning.sql";
+import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+
+const sqs = new SQSClient({});
 
 export const extract = zod(
   z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
@@ -349,11 +352,20 @@ export const extract = zod(
                     workspaceID: item.workspace.workspaceID,
                   },
                 },
-                () =>
-                  bus.publish(Resource.Bus, Events.IssueDetected, {
+                async () => {
+                  const evt = await Events.IssueDetected.create({
                     stageID: item.workspace.stageID,
                     group: item.group,
-                  }),
+                  });
+                  await sqs.send(
+                    new SendMessageCommand({
+                      QueueUrl: Resource.IssueDetectionQueue.url,
+                      MessageBody: JSON.stringify(evt),
+                      MessageGroupId: evt.properties.group,
+                      MessageDeduplicationId: crypto.randomUUID(),
+                    }),
+                  );
+                },
               ),
             ),
         ),

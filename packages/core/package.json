@@ -32,6 +32,7 @@
     "@aws-sdk/client-scheduler": "3.699.0",
     "@aws-sdk/client-sesv2": "3.699.0",
     "@aws-sdk/client-sfn": "3.699.0",
+    "@aws-sdk/client-sqs": "^3.699.0",
     "@aws-sdk/client-ssm": "3.699.0",
     "@aws-sdk/client-sts": "3.699.0",
     "@aws-sdk/middleware-retry": "3.374.0",

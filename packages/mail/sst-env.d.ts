@@ -110,6 +110,10 @@ declare module "sst" {
       "stream": string
       "type": "sst.sst.Linkable"
     }
+    "IssueDetectionQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
     "IssueStream": {
       "name": string
       "type": "sst.aws.KinesisStream"

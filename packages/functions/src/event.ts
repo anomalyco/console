@@ -177,25 +177,6 @@ export const handler = bus.subscriber(
         }
       }
       const duration = Date.now() - now;
-      await client.send(
-        new PutMetricDataCommand({
-          Namespace: "console",
-          MetricData: [
-            {
-              MetricName: "event",
-              Value: duration,
-              Unit: "Milliseconds",
-              Timestamp: new Date(),
-              Dimensions: [
-                {
-                  Name: "type",
-                  Value: evt.type,
-                },
-              ],
-            },
-          ],
-        }),
-      );
       console.log(
         JSON.stringify({
           _aws: {
