@@ -333,7 +333,7 @@ export function Detail() {
       if (!run) return;
       if (!run.stageName) return { run };
       const stage = (await StageStore.list(tx)).find(
-        (stage) => stage.name === run.stageName
+        (stage) => stage.name === run.stageName && !stage.timeDeleted
       );
       if (!stage) return { run };
       const update = (await StateUpdateStore.forStage(tx, stage.id)).find(
