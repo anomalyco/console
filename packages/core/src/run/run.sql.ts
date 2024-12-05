@@ -253,6 +253,11 @@ export const runTable = mysqlTable(
     timeCompleted: timestamp("time_completed"),
     appID: cuid("app_id").notNull(),
     stageID: cuid("stage_id"),
+    stageName: varchar("stage_name", { length: 255 }),
+    region: varchar("region", { length: 255 }),
+    awsAccountExternalID: varchar("aws_account_external_id", {
+      length: 12,
+    }),
     log: json("log").$type<Log>(),
     trigger: json("trigger").$type<Trigger>().notNull(),
     config: json("config").$type<AutodeployConfig>(),

@@ -309,6 +309,13 @@
       "when": 1731633081366,
       "tag": "0043_premium_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1733423159845,
+      "tag": "0044_remarkable_blade",
+      "breakpoints": true
     }
   ]
 }
