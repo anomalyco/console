@@ -226,7 +226,7 @@ export const handler = async (evt: Payload) => {
     evt["detail-type"] === "Object Created" ||
     evt["detail-type"] === "Object Deleted"
   ) {
-    if (!evt.detail.object.key.startsWith("stackMetadata/")) {
+    if (!evt.detail.object.key.startsWith("appMetadata/")) {
       console.log("skipping", evt.detail.object.key);
       return;
     }
@@ -234,7 +234,7 @@ export const handler = async (evt: Payload) => {
     console.log({ appHint, stageHint });
     if (!stageHint || !appHint) return;
     let stageName = stageHint.endsWith(".json")
-      ? stageHint.split(".")[0]
+      ? stageHint.split(".")[1]
       : stageHint?.split(".").at(-1);
     const appName = appHint.includes(".")
       ? appHint?.split(".").at(-1)
