@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { createHash } from "crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { DateTime } from "luxon";
-import { flatMap, groupBy, pipe, values } from "remeda";
+import { flatMap, groupBy, pipe, uniqueBy, values } from "remeda";
 import { z } from "zod";
 import { Events } from ".";
 import { withActor } from "../actor";
@@ -163,69 +163,71 @@ export const extract = zod(
           },
         });
         const errors = await Promise.allSettled(
-          input.logEvents.map(async (event) => {
-            const splits = event.message.split(`\t`).map((x) => x.trim());
-            const extracted = Log.extractError(splits);
-            if (!extracted) {
-              return;
-            }
-            console.log("extracted error");
-            const err = await Log.applySourcemap(
-              sourcemapCache,
-              event.timestamp,
-              extracted,
-            );
-            if (
-              err.error !== "Runtime.HandlerNotFound" &&
-              err.stack.length &&
-              err.stack.every((frame) => !frame.context) &&
-              (await sourcemapCache.meta()).length
-            ) {
-              // ???
-            }
-
-            if (!err.error || !err.message) {
-              console.log("error was undefined for some reason", event);
-              return;
-            }
-
-            const groupParts = (() => {
-              const [important] = err.stack.filter((x) => x.important);
-
-              if (err.error === "LambdaTimeoutError") {
-                return [err.error, sourcemapKey];
+          uniqueBy(input.logEvents, (event) => event.message).map(
+            async (event) => {
+              const splits = event.message.split(`\t`).map((x) => x.trim());
+              const extracted = Log.extractError(splits);
+              if (!extracted) {
+                return;
+              }
+              console.log("extracted error");
+              const err = await Log.applySourcemap(
+                sourcemapCache,
+                event.timestamp,
+                extracted,
+              );
+              if (
+                err.error !== "Runtime.HandlerNotFound" &&
+                err.stack.length &&
+                err.stack.every((frame) => !frame.context) &&
+                (await sourcemapCache.meta()).length
+              ) {
+                // ???
               }
 
-              if (important) {
-                return [
-                  err.error,
-                  important.context?.[3]?.trim(),
-                  important.file,
-                ];
+              if (!err.error || !err.message) {
+                console.log("error was undefined for some reason", event);
+                return;
               }
 
-              const frames = err.stack
-                .map((x) => {
-                  if (x.file) {
-                    return x.context?.[3] || x.file;
-                  }
+              const groupParts = (() => {
+                const [important] = err.stack.filter((x) => x.important);
 
-                  return x.raw!;
-                })
-                .map((x) => x.trim());
-              return [err.error, frames[0]];
-            })();
+                if (err.error === "LambdaTimeoutError") {
+                  return [err.error, sourcemapKey];
+                }
 
-            const group = createHash("sha256")
-              .update(groupParts.filter(Boolean).join("\n"))
-              .digest("hex");
+                if (important) {
+                  return [
+                    err.error,
+                    important.context?.[3]?.trim(),
+                    important.file,
+                  ];
+                }
 
-            return {
-              group,
-              timestamp: event.timestamp,
-              err,
-            };
-          }),
+                const frames = err.stack
+                  .map((x) => {
+                    if (x.file) {
+                      return x.context?.[3] || x.file;
+                    }
+
+                    return x.raw!;
+                  })
+                  .map((x) => x.trim());
+                return [err.error, frames[0]];
+              })();
+
+              const group = createHash("sha256")
+                .update(groupParts.filter(Boolean).join("\n"))
+                .digest("hex");
+
+              return {
+                group,
+                timestamp: event.timestamp,
+                err,
+              };
+            },
+          ),
         ).then((arr) =>
           pipe(
             arr,
