@@ -33,7 +33,6 @@ import { Resource as SSTResource } from "sst";
 import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
-import { Issue } from "../issue";
 
 export module State {
   export const Event = {
