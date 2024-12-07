@@ -41,8 +41,7 @@ export const handler = bus.subscriber(
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
-      console.log(evt.type);
-      console.log(evt);
+      console.log(JSON.stringify(evt));
       const now = Date.now();
       switch (evt.type) {
         case AWS.Account.Events.Created.type:
@@ -85,7 +84,7 @@ export const handler = bus.subscriber(
                 event: "autodeploy",
               });
               await Stripe.createCustomer();
-            }
+            },
           );
           break;
 
@@ -200,7 +199,7 @@ export const handler = bus.subscriber(
           },
           type: evt.type,
           event_duration: duration,
-        })
+        }),
       );
-    })
+    }),
 );
