@@ -856,77 +856,79 @@ function StageCard(props: StageCardProps) {
   }
 
   return (
-    <StageRoot>
-      <BlockLink href={stageUri()}></BlockLink>
-      <StageCardLeft>
-        <StageLink
-          href={stageUri()}
-          unsupported={props.stage.unsupported || false}
-        >
+    <Suspense>
+      <StageRoot>
+        <BlockLink href={stageUri()}></BlockLink>
+        <StageCardLeft>
+          <StageLink
+            href={stageUri()}
+            unsupported={props.stage.unsupported || false}
+          >
+            <Switch>
+              <Match when={props.stage.unsupported}>
+                <StatusIcon status="unsupported" />
+              </Match>
+              <Match
+                when={
+                  latestUpdate.value?.time.completed &&
+                  latestUpdate.value?.errors.length === 0
+                }
+              >
+                <StatusIcon status="success" />
+              </Match>
+              <Match when={latestUpdate.value?.errors.length}>
+                <StatusIcon status="error" />
+              </Match>
+              <Match
+                when={latestUpdate.value && !latestUpdate.value.time.completed}
+              >
+                <StatusIcon status="updating" />
+              </Match>
+              <Match when={true}>
+                <StatusIcon status="base" />
+              </Match>
+            </Switch>
+            <StageLinkText>{props.stage.name}</StageLinkText>
+          </StageLink>
           <Switch>
-            <Match when={props.stage.unsupported}>
-              <StatusIcon status="unsupported" />
-            </Match>
             <Match
-              when={
-                latestUpdate.value?.time.completed &&
-                latestUpdate.value?.errors.length === 0
-              }
+              when={props.stage.name === local.stage && app()?.name === local.app}
             >
-              <StatusIcon status="success" />
+              <Tag level="tip" type="outline">
+                Local
+              </Tag>
             </Match>
             <Match when={latestUpdate.value?.errors.length}>
-              <StatusIcon status="error" />
+              <StageCardLink
+                href={`${stageUri()}/updates/${latestUpdate.value?.id}`}
+              >
+                <Tag type="outline" level="danger">
+                  Error
+                </Tag>
+              </StageCardLink>
             </Match>
-            <Match
-              when={latestUpdate.value && !latestUpdate.value.time.completed}
-            >
-              <StatusIcon status="updating" />
-            </Match>
-            <Match when={true}>
-              <StatusIcon status="base" />
+            <Match when={props.stage.unsupported}>
+              <Tag type="outline">Upgrade</Tag>
             </Match>
           </Switch>
-          <StageLinkText>{props.stage.name}</StageLinkText>
-        </StageLink>
-        <Switch>
-          <Match
-            when={props.stage.name === local.stage && app()?.name === local.app}
+        </StageCardLeft>
+        <StageCardRight>
+          <Switch>
+            <Match when={latestUpdate.value}>
+              <Github />
+            </Match>
+          </Switch>
+          <StageRegion>{props.stage.region}</StageRegion>
+          <StageUpdatedTime
+            title={parseTime(props.stage.timeUpdated).toLocaleString(
+              DateTime.DATETIME_FULL,
+            )}
           >
-            <Tag level="tip" type="outline">
-              Local
-            </Tag>
-          </Match>
-          <Match when={latestUpdate.value?.errors.length}>
-            <StageCardLink
-              href={`${stageUri()}/updates/${latestUpdate.value?.id}`}
-            >
-              <Tag type="outline" level="danger">
-                Error
-              </Tag>
-            </StageCardLink>
-          </Match>
-          <Match when={props.stage.unsupported}>
-            <Tag type="outline">Upgrade</Tag>
-          </Match>
-        </Switch>
-      </StageCardLeft>
-      <StageCardRight>
-        <Switch>
-          <Match when={latestUpdate.value}>
-            <Github />
-          </Match>
-        </Switch>
-        <StageRegion>{props.stage.region}</StageRegion>
-        <StageUpdatedTime
-          title={parseTime(props.stage.timeUpdated).toLocaleString(
-            DateTime.DATETIME_FULL,
-          )}
-        >
-          {formatSinceTime(props.stage.timeUpdated, false, true)}
-        </StageUpdatedTime>
-      </StageCardRight>
-    </StageRoot>
+            {formatSinceTime(props.stage.timeUpdated, false, true)}
+          </StageUpdatedTime>
+        </StageCardRight>
+      </StageRoot>
+    </Suspense>
   );
 }
 
