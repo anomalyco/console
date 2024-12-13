@@ -116,3 +116,14 @@ export const fromID = zod(z.string().min(1), async (id) =>
       .then((rows) => rows[0]);
   }),
 );
+
+export const fromSlug = zod(z.string().min(1), async (input) =>
+  useTransaction(async (tx) => {
+    return tx
+      .select()
+      .from(workspace)
+      .where(eq(workspace.slug, input))
+      .execute()
+      .then((rows) => rows[0]);
+  }),
+);

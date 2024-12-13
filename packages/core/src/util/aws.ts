@@ -13,7 +13,6 @@ export const RETRY_STRATEGY = new StandardRetryStrategy(async () => 10000, {
         "SlowDown",
       ].includes(e.name)
     ) {
-      console.log("retrying", JSON.stringify(e));
       return true;
     }
     return false;

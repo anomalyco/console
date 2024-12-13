@@ -8,6 +8,11 @@ import { z } from "zod";
 import { CodeAdapter, OauthAdapter } from "sst/auth/adapter";
 import { Issuer } from "sst/auth";
 import { Resource } from "sst";
+import { Workspace } from "@console/core/workspace";
+import { User } from "@console/core/user";
+import { and, db, eq, isNull } from "@console/core/drizzle";
+import { user } from "@console/core/user/user.sql";
+import { workspace } from "@console/core/workspace/workspace.sql";
 
 const ses = new SESv2Client({});
 
@@ -165,17 +170,30 @@ export const handler = auth.authorizer({
       },
       async success(ctx, response) {
         let email: string | undefined;
-
         console.log(response);
         if (response.provider === "email") {
-          if (
-            response.claims.impersonate &&
-            response.claims.email?.split("@")[1] !== "sst.dev"
-          )
-            return new Response("Unauthorized", {
-              status: 401,
-            });
-          email = response.claims.impersonate || response.claims.email;
+          email = response.claims.email;
+
+          if (response.claims.impersonate) {
+            if (response.claims.email?.split("@")[1] !== "sst.dev") {
+              return new Response("Unauthorized", {
+                status: 401,
+              });
+            }
+            email = await db
+              .select({
+                email: user.email,
+              })
+              .from(user)
+              .innerJoin(workspace, eq(user.workspaceID, workspace.id))
+              .where(
+                and(
+                  eq(workspace.slug, response.claims.impersonate),
+                  isNull(workspace.timeDeleted),
+                ),
+              )
+              .then((rows) => rows.at(0)?.email);
+          }
         }
         if (!email) throw new Error("No email found");
         let accountID = await Account.fromEmail(email).then((x) => x?.id);

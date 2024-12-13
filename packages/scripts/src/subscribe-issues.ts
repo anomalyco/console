@@ -1,11 +1,8 @@
-import { useWorkspace, withActor } from "@console/core/actor";
-import { and, db, eq, inArray, or } from "@console/core/drizzle";
+import { withActor } from "@console/core/actor";
+import { db, inArray } from "@console/core/drizzle";
 import { stage } from "@console/core/app/app.sql";
 import { Stage } from "@console/core/app";
 import { queue } from "@console/core/util/queue";
-import { issueSubscriber } from "@console/core/issue/issue.sql";
-import { useTransaction } from "@console/core/util/transaction";
-import { warning } from "@console/core/warning/warning.sql";
 import { promptWorkspaces } from "./common";
 import { Issue } from "@console/core/issue";
 
@@ -14,7 +11,6 @@ const stages = await db
   .from(stage)
   .where(inArray(stage.workspaceID, await promptWorkspaces()))
   .execute();
-console.log("found", stages, "stages");
 await queue(
   1,
   stages,
@@ -29,6 +25,8 @@ await queue(
       async () => {
         const config = await Stage.assumeRole(stage.id);
         if (!config) return;
+        if (config.stage !== "prod-v3") return;
+        console.log(config);
         await Issue.subscribeIon(config);
         console.log("done");
       },

@@ -195,7 +195,6 @@ export const subscribeIon = zod(
   z.custom<StageCredentials>(),
   async (config) => {
     const uniqueIdentifier = destinationIdentifier(config);
-    console.log("subscribing", uniqueIdentifier);
     const destination =
       SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
       uniqueIdentifier;
@@ -236,6 +235,8 @@ export const subscribeIon = zod(
 
       if (!resources.length) return;
 
+      await connectStage(config);
+
       const groups = pipe(
         resources,
         map((resource): string | undefined => {
@@ -257,14 +258,14 @@ export const subscribeIon = zod(
         unique(),
       );
       if (!groups.length) return;
-      await Promise.allSettled(
-        groups.map((group) => subscribe(group as string)),
-      );
+      for (const group of groups) {
+        await subscribe(group as string);
+      }
       async function subscribe(logGroup: string) {
+        console.log("subscribing", logGroup);
         if (limited.has(logGroup)) {
           console.log("skipping", logGroup, "because it's rate limited");
         }
-        console.log("subscribing", logGroup);
         while (true) {
           try {
             await cw.send(
