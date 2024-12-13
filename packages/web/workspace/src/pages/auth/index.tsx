@@ -194,7 +194,6 @@ export function Email() {
           <FormField>
             <Input
               autofocus
-              type="email"
               name="impersonate"
               placeholder="Impersonate"
             />
