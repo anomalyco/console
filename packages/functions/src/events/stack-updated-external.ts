@@ -88,6 +88,9 @@ export const handler = async (evt: Payload) => {
             stageID,
             updateID,
           });
+          await bus.publish(Resource.Bus, State.Event.StateUpdated, {
+            stageID,
+          });
         },
       );
     }
@@ -110,15 +113,15 @@ export const handler = async (evt: Payload) => {
           },
         },
         async () => {
-          const { stageID } = await Stage.put({
-            stageName: stageHint!,
-            appName: appHint!,
-            region,
-            awsAccountID: row.id,
-          });
-          await bus.publish(Resource.Bus, State.Event.StateUpdated, {
-            stageID,
-          });
+          // const { stageID } = await Stage.put({
+          //   stageName: stageHint!,
+          //   appName: appHint!,
+          //   region,
+          //   awsAccountID: row.id,
+          // });
+          // await bus.publish(Resource.Bus, State.Event.StateUpdated, {
+          //   stageID,
+          // });
         },
       );
     }
