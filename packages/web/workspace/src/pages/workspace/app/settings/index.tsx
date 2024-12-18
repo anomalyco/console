@@ -917,7 +917,7 @@ export function Settings() {
                   <FormField
                     label="Path"
                     class={selectRepo}
-                    hint={`Path to the "sst.config.ts" in your repo. Defalts to "/".`}
+                    hint={`Path to the "sst.config.ts" in your repo. Defaults to "/".`}
                   >
                     <Input
                       {...props}
