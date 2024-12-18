@@ -28,6 +28,7 @@ import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
 import { filter, map, pipe, unique } from "remeda";
 import { warning } from "../warning/warning.sql";
+import { queue } from "../util/queue";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -258,9 +259,7 @@ export const subscribeIon = zod(
         unique(),
       );
       if (!groups.length) return;
-      for (const group of groups) {
-        await subscribe(group as string);
-      }
+      await queue(5, groups as string[], subscribe);
       async function subscribe(logGroup: string) {
         console.log("subscribing", logGroup);
         if (limited.has(logGroup)) {
