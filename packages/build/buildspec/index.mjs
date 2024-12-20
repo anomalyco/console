@@ -169,7 +169,7 @@ export async function handler(event) {
         ? shell(`npm install -g ${packageJson.packageManager}`)
         : shell("npm install -g pnpm");
       shell("pnpm install --frozen-lockfile");
-    } else if (findUp("bun.lockb")) {
+    } else if (findUp("bun.lockb") || findUp("bun.lock")) {
       shell("npm install -g bun");
       shell("bun install --frozen-lockfile");
     } else if (findUp("package-lock.json")) shell("npm ci");
@@ -271,7 +271,7 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       const basename = path.basename(itemPath);
       shell(
-        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`
+        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`,
       );
     } catch (e) {
       console.error("Failed to store cache", e);
@@ -294,7 +294,7 @@ export async function handler(event) {
         new HeadObjectCommand({
           Bucket: cache.bucket,
           Key: s3Key,
-        })
+        }),
       );
     } catch (e) {
       if (e.name === "NotFound") {
@@ -309,7 +309,7 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       shell(`mkdir -p ${dirname}`);
       shell(
-        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`
+        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`,
       );
     } catch (e) {
       console.error("Failed to restore cache", e);
@@ -341,7 +341,7 @@ export async function handler(event) {
             }),
           },
         ],
-      })
+      }),
     );
   }
 
