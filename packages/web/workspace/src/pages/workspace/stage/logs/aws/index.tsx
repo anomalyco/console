@@ -427,7 +427,6 @@ export function AWS() {
   async function fetchPast() {
     if (search.view === "local") return;
     setPastResult("loading", true);
-    console.log("fetching past");
     const result = await api.client.log.aws.past
       .$get({
         query: {
@@ -439,8 +438,6 @@ export function AWS() {
       })
       .then((r) => r.json());
     past.ingest(result.invocations);
-    console.log(past.all);
-    console.log(result);
     setPastResult({
       start: result.start,
       completed: result.completed,
