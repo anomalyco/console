@@ -4,6 +4,14 @@
 
 Runs the app in dev mode with `pnpm dev` and go to `http://localhost:3000`
 
+### Connect to dev
+
+To only run the frontend and connect it to the dev backend.
+
+```bash
+pnpm sst shell --stage=dev --target=Workspace pnpm dev
+```
+
 ### Dummy
 
 To run the dummy

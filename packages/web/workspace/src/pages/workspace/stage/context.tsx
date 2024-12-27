@@ -192,7 +192,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
               },
             ];
           }
-          if (r.type === "sst:aws:Service") {
+          if (r.type === "sst:aws:Service" || r.type === "sst:aws:Task") {
             const logGroup = resources().find(
               (child) =>
                 child.type === "aws:cloudwatch/logGroup:LogGroup" &&

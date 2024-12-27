@@ -355,15 +355,15 @@ function LogRow(props: LogRowProps) {
 export function AWS() {
   const [search, setSearch] = useSearchParams<
     | {
-        logGroup: string;
-        hint: "normal" | "lambda";
-        view: "live" | "past";
-        end?: string;
-      }
+      logGroup: string;
+      hint: "normal" | "lambda";
+      view: "live" | "past";
+      end?: string;
+    }
     | {
-        view: "local";
-        functionID: string;
-      }
+      view: "local";
+      functionID: string;
+    }
   >();
 
   const stage = useStageContext();
@@ -427,6 +427,7 @@ export function AWS() {
   async function fetchPast() {
     if (search.view === "local") return;
     setPastResult("loading", true);
+    console.log("fetching past");
     const result = await api.client.log.aws.past
       .$get({
         query: {
@@ -438,6 +439,8 @@ export function AWS() {
       })
       .then((r) => r.json());
     past.ingest(result.invocations);
+    console.log(past.all);
+    console.log(result);
     setPastResult({
       start: result.start,
       completed: result.completed,
@@ -686,9 +689,9 @@ export function AWS() {
           onScroll={() => {
             setScrollEnd(
               vlist?.scrollOffset! -
-                vlist?.scrollSize! +
-                vlist?.viewportSize! >=
-                -1.5,
+              vlist?.scrollSize! +
+              vlist?.viewportSize! >=
+              -1.5,
             );
           }}
         >
@@ -749,6 +752,14 @@ export function AWS() {
                 <IconArrowPathSpin />
               </LogMoreIndicatorIcon>
               <LogMoreIndicatorCopy>Scanning logs&hellip;</LogMoreIndicatorCopy>
+            </LogMoreIndicator>
+          </Match>
+          <Match when={past.all.length === 0 && pastResult.completed}>
+            <LogMoreIndicator border={showBorder()}>
+              <LogMoreIndicatorIcon>
+                <IconEllipsisHorizontal />
+              </LogMoreIndicatorIcon>
+              <LogMoreIndicatorCopy>No logs found</LogMoreIndicatorCopy>
             </LogMoreIndicator>
           </Match>
           <Match when={past.all.length}>

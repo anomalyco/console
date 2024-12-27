@@ -59,7 +59,7 @@ import {
 import { PageStatusIcon } from "../updates/detail";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
-import {} from "@solid-primitives/keyboard";
+import { } from "@solid-primitives/keyboard";
 import { formatSinceTime } from "$/common/format";
 import { ResourceIcon } from "$/common/resource-icon";
 import { createSubscription } from "$/providers/replicache";
@@ -123,6 +123,7 @@ const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:sst:LinkRef": IconConnect,
   "sst:aws:Function": IconFunction,
   "sst:aws:Nextjs": IconNextjsSite,
+  "sst:aws:Task": IconContainerRuntime,
   "sst:aws:Service": IconContainerRuntime,
   "sst:aws:Cluster": IconContainerRuntime,
   "sst:aws:Cluster.v1": IconContainerRuntime,
@@ -568,6 +569,8 @@ function stateResourcePriority(resource: SortedStateResource) {
       return 3;
     case "sst:aws:Function":
     case "sstv2:aws:Function":
+    case "sst:aws:Service":
+    case "sst:aws:Task":
       return 4;
     case "sst:sst:Secret":
     case "sstv2:aws:Config":
