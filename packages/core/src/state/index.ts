@@ -17,7 +17,7 @@ import {
 } from "../util/transaction";
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
-import { and, count, count, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { createEvent } from "../event";
 import { Stage, StageCredentials } from "../app/stage";
 import {
