@@ -4,9 +4,9 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "test": "sst bind vitest",
+    "test": "sst shell vitest",
     "typecheck": "tsc --noEmit --incremental",
-    "db": "sst bind drizzle-kit"
+    "db": "sst shell drizzle-kit"
   },
   "devDependencies": {
     "@types/luxon": "3.4.2",

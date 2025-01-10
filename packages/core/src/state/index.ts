@@ -8,6 +8,7 @@ import {
   Command,
   Error,
   stateResourceTable,
+  stateCountTable,
 } from "./state.sql";
 import {
   createTransaction,
@@ -16,7 +17,7 @@ import {
 } from "../util/transaction";
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
-import { and, count, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, count, count, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { createEvent } from "../event";
 import { Stage, StageCredentials } from "../app/stage";
 import {
@@ -33,6 +34,7 @@ import { Resource as SSTResource } from "sst";
 import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
+import { DateTime } from "luxon";
 
 export module State {
   export const Event = {
@@ -1082,6 +1084,31 @@ export module State {
                   eq(stage.workspaceID, workspaceID),
                 ),
               );
+
+            const total = await tx
+              .select({ count: count() })
+              .from(stateResourceTable)
+              .where(
+                and(
+                  eq(stateResourceTable.workspaceID, workspaceID),
+                  eq(stateResourceTable.stageID, input.config.stageID),
+                ),
+              )
+              .then((rows) => rows.at(0)!.count);
+            await tx
+              .insert(stateCountTable)
+              .values({
+                id: createId(),
+                workspaceID: workspaceID,
+                stageID: input.config.stageID,
+                month: DateTime.now().startOf("month").toSQLDate()!,
+                count: total,
+              })
+              .onDuplicateKeyUpdate({
+                set: {
+                  count: sql`GREATEST(VALUES(count), count)`,
+                },
+              });
             await createTransactionEffect(() =>
               bus.publish(SSTResource.Bus, Event.StateRefreshed, {
                 stageID: input.config.stageID,

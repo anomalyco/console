@@ -344,6 +344,13 @@
       "when": 1733440229303,
       "tag": "0048_wise_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "5",
+      "when": 1736542436715,
+      "tag": "0049_acoustic_baron_strucker",
+      "breakpoints": true
     }
   ]
 }

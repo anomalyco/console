@@ -9,6 +9,8 @@ import {
   timestamp,
   int,
   bigint,
+  date,
+  uniqueIndex,
 } from "drizzle-orm/mysql-core";
 import { cuid, timestamps, timestampsNext, workspaceID } from "../util/sql";
 import { stage } from "../app/app.sql";
@@ -142,5 +144,23 @@ export const stateResourceTable = mysqlTable(
       columns: [table.workspaceID, table.updateModifiedID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
+  }),
+);
+
+export const stateCountTable = mysqlTable(
+  "state_count",
+  {
+    ...workspaceID,
+    month: date("month", { mode: "string" }).notNull(),
+    stageID: cuid("stage_id").notNull(),
+    count: int("count").notNull(),
+  },
+  (table) => ({
+    ...workspaceIndexes(table),
+    month: uniqueIndex("month").on(
+      table.workspaceID,
+      table.stageID,
+      table.month,
+    ),
   }),
 );
