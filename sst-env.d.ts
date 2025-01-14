@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 /* deno-fmt-ignore-file */
-import "sst"
-export {}
+
 declare module "sst" {
   export interface Resource {
     "Alerts": {
@@ -56,6 +55,11 @@ declare module "sst" {
     "AutodeployTimeoutMonitor": {
       "name": string
       "type": "sst.aws.Function"
+    }
+    "Backend": {
+      "service": string
+      "type": "sst.aws.Service"
+      "url": string
     }
     "BillingQueue": {
       "type": "sst.aws.Queue"
@@ -146,6 +150,9 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "VPC": {
+      "type": "sst.aws.Vpc"
+    }
     "Websocket": {
       "http": string
       "realtime": string
@@ -166,3 +173,7 @@ declare module "sst" {
     }
   }
 }
+/// <reference path="sst-env.d.ts" />
+
+import "sst"
+export {}

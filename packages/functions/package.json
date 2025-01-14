@@ -11,7 +11,7 @@
     "@types/aws-lambda": "^8.10.114",
     "@types/luxon": "3.4.2",
     "@types/node": "^22.10.1",
-    "sst": "3.4.7",
+    "sst": "3.5.9",
     "typescript": "5.5.4"
   },
   "dependencies": {
@@ -22,7 +22,7 @@
     "@aws-sdk/client-s3": "3.701.0",
     "@aws-sdk/client-scheduler": "3.699.0",
     "@aws-sdk/client-sesv2": "3.699.0",
-    "@aws-sdk/client-sqs": "3.600.0",
+    "@aws-sdk/client-sqs": "^3.699.0",
     "@aws-sdk/s3-request-presigner": "3.701.0",
     "@botpoison/node": "^0.1.10",
     "@console/mail": "workspace:*",
@@ -39,6 +39,6 @@
     "source-map": "^0.7.4",
     "strip-ansi": "^7.1.0",
     "undici": "^5.22.0",
-    "zod": "3.23.8"
+    "zod": "3.24.1"
   }
 }

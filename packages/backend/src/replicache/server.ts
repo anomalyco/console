@@ -22,6 +22,7 @@ import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 import { Run } from "@console/core/run";
 import { State } from "@console/core/state";
+import { publish } from "@console/core/event";
 
 export const server = new Server()
   .expose("log_poller_subscribe", LogPoller.subscribe)
@@ -80,6 +81,10 @@ export const server = new Server()
             ),
           )
           .execute();
+
+        await publish(tx, State.Event.StateRefreshed, {
+          stageID: input.stageID,
+        });
       });
     },
   )

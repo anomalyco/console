@@ -22,7 +22,6 @@ export const handler = bus.subscriber(
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
     State.Event.UpdateCreated,
-    State.Event.StateRefreshed,
     Workspace.Events.Created,
     Stage.Events.ResourcesUpdated,
     Issue.Events.RateLimited,
@@ -134,12 +133,12 @@ export const handler = bus.subscriber(
           break;
         }
 
-        case State.Event.StateRefreshed.type: {
-          const config = await Stage.assumeRole(evt.properties.stageID);
-          if (!config) return;
-          await Issue.subscribeIon(config);
-          break;
-        }
+        // case State.Event.StateRefreshed.type: {
+        //   const config = await Stage.assumeRole(evt.properties.stageID);
+        //   if (!config) return;
+        //   await Issue.subscribeIon(config);
+        //   break;
+        // }
 
         case Issue.Events.RateLimited.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);

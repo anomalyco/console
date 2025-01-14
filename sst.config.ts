@@ -31,6 +31,8 @@ export default $config({
   },
   async run() {
     await import("./infra/dns");
+    await import("./infra/cluster");
+    await import("./infra/network");
     await import("./infra/planetscale");
     await import("./infra/websocket");
     await import("./infra/bus");
