@@ -23,7 +23,7 @@ export const usage = mysqlTable(
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     stage: uniqueIndex("stage").on(table.workspaceID, table.stageID, table.day),
-  }),
+  })
 );
 
 export const stripeTable = mysqlTable(
@@ -36,11 +36,12 @@ export const stripeTable = mysqlTable(
     subscriptionItemID: varchar("subscription_item_id", {
       length: 255,
     }),
+    priceID: varchar("price_id", { length: 255 }),
     standing: mysqlEnum("standing", ["good", "overdue"]),
     timeTrialEnded: timestamp("time_trial_ended", { mode: "string" }),
   },
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     workspace: uniqueIndex("workspaceID").on(table.workspaceID),
-  }),
+  })
 );

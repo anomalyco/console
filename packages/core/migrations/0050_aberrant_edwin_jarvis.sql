@@ -1,0 +1,1 @@
+ALTER TABLE `stripe` ADD `price_id` varchar(255);

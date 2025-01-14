@@ -24,47 +24,9 @@ export function get() {
       .from(stripeTable)
       .where(eq(stripeTable.workspaceID, useWorkspace()))
       .execute()
-      .then((rows) => rows.at(0)),
+      .then((rows) => rows.at(0))
   );
 }
-
-export const setSubscription = zod(
-  Info.pick({
-    subscriptionID: true,
-    subscriptionItemID: true,
-  }),
-  (input) =>
-    useTransaction((tx) =>
-      tx
-        .update(stripeTable)
-        .set({
-          subscriptionID: input.subscriptionID,
-          subscriptionItemID: input.subscriptionItemID,
-        })
-        .where(eq(stripeTable.workspaceID, useWorkspace()))
-        .execute(),
-    ),
-);
-
-export const setCustomerID = zod(Info.shape.customerID, (input) =>
-  useTransaction((tx) =>
-    tx
-      .insert(stripeTable)
-      .values({
-        workspaceID: useWorkspace(),
-        id: createId(),
-        customerID: input,
-        standing: "good",
-      })
-      .onDuplicateKeyUpdate({
-        set: {
-          customerID: input,
-          standing: "good",
-        },
-      })
-      .execute(),
-  ),
-);
 
 export async function createCustomer() {
   const workspaceID = useWorkspace();
@@ -80,7 +42,24 @@ export async function createCustomer() {
     },
   });
 
-  await setCustomerID(customer.id);
+  const customerID = customer.id;
+  await useTransaction((tx) =>
+    tx
+      .insert(stripeTable)
+      .values({
+        workspaceID: useWorkspace(),
+        id: createId(),
+        customerID,
+        standing: "good",
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          customerID,
+          standing: "good",
+        },
+      })
+      .execute()
+  );
 }
 
 export const fromCustomerID = zod(z.string(), (input) =>
@@ -90,8 +69,43 @@ export const fromCustomerID = zod(z.string(), (input) =>
       .from(stripeTable)
       .where(and(eq(stripeTable.customerID, input)))
       .execute()
-      .then((rows) => rows.at(0)),
-  ),
+      .then((rows) => rows.at(0))
+  )
+);
+
+export const setSubscription = zod(
+  Info.pick({
+    subscriptionID: true,
+    subscriptionItemID: true,
+    priceID: true,
+  }),
+  (input) =>
+    useTransaction((tx) =>
+      tx
+        .update(stripeTable)
+        .set({
+          subscriptionID: input.subscriptionID,
+          subscriptionItemID: input.subscriptionItemID,
+          priceID: input.priceID,
+        })
+        .where(eq(stripeTable.workspaceID, useWorkspace()))
+        .execute()
+    )
+);
+
+export const removeSubscription = zod(
+  z.string().min(1),
+  (stripeSubscriptionID) =>
+    useTransaction((tx) =>
+      tx
+        .update(stripeTable)
+        .set({
+          subscriptionItemID: null,
+          subscriptionID: null,
+        })
+        .where(and(eq(stripeTable.subscriptionID, stripeSubscriptionID)))
+        .execute()
+    )
 );
 
 export const setStanding = zod(
@@ -107,8 +121,8 @@ export const setStanding = zod(
           standing: input.standing,
         })
         .where(and(eq(stripeTable.subscriptionID, input.subscriptionID!)))
-        .execute(),
-    ),
+        .execute()
+    )
 );
 
 export const grantTrial = zod(z.string().nonempty(), (timeTrialEnded) =>
@@ -119,21 +133,6 @@ export const grantTrial = zod(z.string().nonempty(), (timeTrialEnded) =>
         timeTrialEnded: timeTrialEnded,
       })
       .where(eq(stripeTable.workspaceID, useWorkspace()))
-      .execute(),
-  ),
-);
-
-export const removeSubscription = zod(
-  z.string().min(1),
-  (stripeSubscriptionID) =>
-    useTransaction((tx) =>
-      tx
-        .update(stripeTable)
-        .set({
-          subscriptionItemID: null,
-          subscriptionID: null,
-        })
-        .where(and(eq(stripeTable.subscriptionID, stripeSubscriptionID)))
-        .execute(),
-    ),
+      .execute()
+  )
 );

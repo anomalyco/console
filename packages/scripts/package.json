@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx",
-    "shell": "sst bind bash"
+    "shell": "sst shell"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "3.600.0",
