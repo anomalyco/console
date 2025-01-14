@@ -12,7 +12,7 @@ import {
   date,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
-import { cuid, timestamps, timestampsNext, workspaceID } from "../util/sql";
+import { cuid, timestampsNext, workspaceID } from "../util/sql";
 import { stage } from "../app/app.sql";
 import { workspaceIndexes } from "../workspace/workspace.sql";
 import { z } from "zod";
@@ -60,7 +60,7 @@ export const stateUpdateTable = mysqlTable(
       foreignColumns: [runTable.workspaceID, runTable.id],
     }).onDelete("cascade"),
     // index: unique("index").on(table.workspaceID, table.stageID, table.index),
-  }),
+  })
 );
 
 export const Action = ["created", "updated", "deleted"] as const;
@@ -98,14 +98,14 @@ export const stateEventTable = mysqlTable(
       table.workspaceID,
       table.stageID,
       table.updateID,
-      table.urn,
+      table.urn
     ),
     updateID: foreignKey({
       name: "state_event_update_id",
       columns: [table.workspaceID, table.updateID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
-  }),
+  })
 );
 
 export const stateResourceTable = mysqlTable(
@@ -144,7 +144,7 @@ export const stateResourceTable = mysqlTable(
       columns: [table.workspaceID, table.updateModifiedID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
-  }),
+  })
 );
 
 export const stateCountTable = mysqlTable(
@@ -154,13 +154,14 @@ export const stateCountTable = mysqlTable(
     month: date("month", { mode: "string" }).notNull(),
     stageID: cuid("stage_id").notNull(),
     count: int("count").notNull(),
+    ...timestampsNext,
   },
   (table) => ({
     ...workspaceIndexes(table),
     month: uniqueIndex("month").on(
       table.workspaceID,
       table.stageID,
-      table.month,
+      table.month
     ),
-  }),
+  })
 );
