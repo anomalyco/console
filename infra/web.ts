@@ -17,7 +17,7 @@ new sst.aws.StaticSite("Workspace", {
     }),
   },
   environment: {
-    VITE_API_URL: backend.url,
+    VITE_API_URL: apiRouter.url,
     VITE_AUTH_URL: authRouter.url,
     VITE_STAGE: $app.stage,
     VITE_CONNECT_URL: connectTemplateUrl,

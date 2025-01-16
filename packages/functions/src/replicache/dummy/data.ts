@@ -3285,9 +3285,11 @@ function stripe({ standing }: StripeProps): DummyData {
     subscriptionID: "sub_123",
     standing: standing || "good",
     subscriptionItemID: "sub_item_123",
-    priceID: "price_123",
-    timeDeleted: null,
-    timeTrialEnded: null,
+    price: "resources",
+    time: {
+      created: DateTime.now().startOf("day").toISO()!,
+      updated: DateTime.now().startOf("day").toISO()!,
+    },
     ...timestamps,
   };
 }

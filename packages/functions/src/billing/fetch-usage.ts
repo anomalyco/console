@@ -4,6 +4,7 @@ import {
   CloudWatchClient,
   GetMetricDataCommand,
 } from "@aws-sdk/client-cloudwatch";
+import { createId } from "@paralleldrive/cuid2";
 import { withActor, useWorkspace } from "@console/core/actor";
 import { Stage } from "@console/core/app/stage";
 import { Billing } from "@console/core/billing";
@@ -12,9 +13,13 @@ import { Warning } from "@console/core/warning";
 import { unique } from "remeda";
 import { Workspace } from "@console/core/workspace";
 import { usage } from "@console/core/billing/billing.sql";
-import { and, desc, eq, inArray } from "@console/core/drizzle";
+import { and, desc, eq, inArray, sql } from "@console/core/drizzle";
 import { useTransaction } from "@console/core/util/transaction";
-import { stateResourceTable } from "@console/core/state/state.sql";
+import {
+  stateCountTable,
+  stateResourceTable,
+} from "@console/core/state/state.sql";
+import { Resource } from "sst";
 
 export async function handler(event: SQSEvent) {
   console.log("got", event.Records.length, "records");
@@ -29,19 +34,20 @@ export async function handler(event: SQSEvent) {
         },
       },
       async () => {
-        const { stageID } = evt;
-
-        // Check if stage is unsupported
-        const stage = await Stage.fromID(stageID);
-        if (stage?.unsupported) return;
-
-        await processStage(stageID);
+        if (evt.price === "invocations") {
+          await processInvocations(evt.stageID);
+        } else if (evt.price === "resources") {
+          await processResources(evt.workspaceID);
+        }
       }
     );
   }
 }
 
-async function processStage(stageID: string) {
+async function processInvocations(stageID: string) {
+  const stage = await Stage.fromID(stageID);
+  if (stage?.unsupported) return;
+
   const workspace = await Workspace.fromID(useWorkspace());
   if (!workspace) return;
 
@@ -157,11 +163,24 @@ async function processStage(stageID: string) {
     }
     hasChanges = hasChanges || invocations > 0;
 
-    await Billing.createUsage({
-      stageID,
-      day: startDate.toSQLDate()!,
-      invocations,
-    });
+    // Create usage
+    await useTransaction((tx) =>
+      tx
+        .insert(usage)
+        .values({
+          id: createId(),
+          workspaceID: useWorkspace(),
+          stageID,
+          day: startDate.toSQLDate()!,
+          invocations,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            invocations,
+          },
+        })
+        .execute()
+    );
 
     async function queryUsageFromAWS() {
       const client = new CloudWatchClient(config!);
@@ -217,8 +236,9 @@ async function processStage(stageID: string) {
   async function reportUsageToStripe() {
     const item = await Billing.Stripe.get();
     if (!item?.subscriptionItemID) return;
+    if (item?.priceID !== Resource.StripeInvocationsPriceID.value) return;
 
-    const monthlyInvocations = await Billing.countByStartAndEndDay({
+    const monthlyInvocations = await Billing.countInvocationsByStartAndEndDay({
       startDay: startDate.startOf("month").toSQLDate()!,
       endDay: startDate.endOf("month").toSQLDate()!,
     });
@@ -235,6 +255,60 @@ async function processStage(stageID: string) {
         },
         {
           idempotencyKey: `${useWorkspace()}-${stageID}-${timestamp}`,
+        }
+      );
+    } catch (e: any) {
+      console.log(e.message);
+      // TODO: aren't there instanceof checks we can do
+      if (e.message.startsWith("Keys for idempotent requests")) {
+        return;
+      }
+      if (
+        e.message.startsWith(
+          "Cannot create the usage record with this timestamp"
+        )
+      ) {
+        return;
+      }
+      throw e;
+    }
+  }
+}
+
+async function processResources(workspaceID: string) {
+  const workspace = await Workspace.fromID(workspaceID);
+  if (!workspace) return;
+
+  const count = await Billing.countResourcesByMonth({
+    month: DateTime.utc().startOf("month").toSQLDate()!,
+  });
+
+  console.log(`workspace ${workspaceID} has ${count} resources`);
+
+  if (count > 0) await reportUsageToStripe();
+  await Billing.updateGatingStatus();
+
+  /////////////////
+  // Functions
+  /////////////////
+
+  async function reportUsageToStripe() {
+    const item = await Billing.Stripe.get();
+    if (!item?.subscriptionItemID) return;
+    if (item?.priceID !== Resource.StripeResourcesPriceID.value) return;
+
+    try {
+      //const timestamp = DateTime.utc().startOf("day").toUnixInteger();
+      const timestamp = DateTime.utc().toUnixInteger();
+      await stripe.subscriptionItems.createUsageRecord(
+        item.subscriptionItemID,
+        {
+          quantity: count,
+          timestamp,
+          action: "set",
+        },
+        {
+          idempotencyKey: `${useWorkspace()}-${timestamp}`,
         }
       );
     } catch (e: any) {

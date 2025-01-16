@@ -44,6 +44,7 @@ import {
 import { githubOrgTable, githubRepoTable } from "@console/core/git/git.sql";
 import { slackTeam } from "@console/core/slack/slack.sql";
 import {
+  stateCountTable,
   stateEventTable,
   stateResourceTable,
   stateUpdateTable,
@@ -68,6 +69,7 @@ export const TABLES = {
   stateUpdate: stateUpdateTable,
   stateResource: stateResourceTable,
   stateEvent: stateEventTable,
+  stateCount: stateCountTable,
   workspace,
   stripe: stripeTable,
   user,
@@ -101,6 +103,7 @@ const TABLE_KEY = {
   issueCount: [issueCount.group, issueCount.id],
   warning: [warning.stageID, warning.type, warning.id],
   usage: [usage.stageID, usage.id],
+  stateCount: [stateCountTable.stageID, stateCountTable.id],
   stateUpdate: [stateUpdateTable.stageID, stateUpdateTable.id],
   stateResource: [stateResourceTable.stageID, stateResourceTable.id],
   stateEvent: [
@@ -131,6 +134,7 @@ const TABLE_PROJECTION = {
   stateUpdate: (input) => State.serializeUpdate(input),
   stateEvent: (input) => State.serializeEvent(input),
   stateResource: (input) => State.serializeResource(input),
+  stateCount: (input) => State.serializeCount(input),
   runConfig: (input) => {
     if (!input.env) return input;
     for (const key of Object.keys(input.env)) {
@@ -284,6 +288,10 @@ ReplicacheRoute.post("/pull1", async (c) => {
                 stateUpdate: inArray(stateUpdateTable.id, updates),
               }
             : {}),
+          stateCount: gte(
+            stateCountTable.month,
+            DateTime.now().toUTC().startOf("month").toSQLDate()!
+          ),
           stateResource: deletedStages.length
             ? notInArray(stateResourceTable.stageID, deletedStages)
             : undefined,

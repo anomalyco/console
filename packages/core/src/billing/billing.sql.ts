@@ -10,6 +10,8 @@ import {
 } from "drizzle-orm/mysql-core";
 import { timestamps, workspaceID, cuid } from "../util/sql";
 
+export const Standing = ["good", "overdue"] as const;
+
 export const usage = mysqlTable(
   "usage",
   {
@@ -37,7 +39,7 @@ export const stripeTable = mysqlTable(
       length: 255,
     }),
     priceID: varchar("price_id", { length: 255 }),
-    standing: mysqlEnum("standing", ["good", "overdue"]),
+    standing: mysqlEnum("standing", Standing),
     timeTrialEnded: timestamp("time_trial_ended", { mode: "string" }),
   },
   (table) => ({

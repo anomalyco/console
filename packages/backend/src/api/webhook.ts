@@ -11,19 +11,19 @@ WebhookRoute.post("/stripe", async (c) => {
   const body = stripe.webhooks.constructEvent(
     await c.req.text(),
     c.req.header("stripe-signature")!,
-    Resource.StripeWebhookSigningSecret.value,
+    Resource.StripeWebhookSigningSecret.value
   );
 
   console.log(body.type, body);
   if (body.type === "customer.subscription.created") {
     const { id: subscriptionID, customer, items } = body.data.object;
     const item = await Billing.Stripe.fromCustomerID(customer as string);
-    if (!item) {
-      throw new Error("Workspace not found for customer");
-    }
-    if (item.subscriptionID) {
+    if (!item) throw new Error("Workspace not found for customer");
+    if (item.subscriptionID)
       throw new Error("Workspace already has a subscription");
-    }
+    if (!items.data[0]) throw new Error("Subscription items is empty");
+    const subscriptionItemID = items.data[0].id;
+    const priceID = items.data[0].price.id;
 
     await withActor(
       {
@@ -33,14 +33,13 @@ WebhookRoute.post("/stripe", async (c) => {
         },
       },
       async () => {
-        if (!items.data[0]) throw new Error("Subscription items is empty");
-
         await Billing.Stripe.setSubscription({
           subscriptionID,
-          subscriptionItemID: items.data[0].id,
+          subscriptionItemID,
+          priceID,
         });
         await Billing.updateGatingStatus();
-      },
+      }
     );
   } else if (body.type === "customer.subscription.updated") {
     const { id: subscriptionID, customer, status } = body.data.object;
@@ -74,7 +73,7 @@ WebhookRoute.post("/stripe", async (c) => {
           });
           await Billing.updateGatingStatus();
         }
-      },
+      }
     );
   } else if (body.type === "customer.subscription.deleted") {
     const { id: subscriptionID } = body.data.object;
@@ -93,7 +92,7 @@ WebhookRoute.post("/stripe", async (c) => {
         invoice: id,
         customer,
         created: new Date(created * 1000),
-      },
+      }
     );
   }
 

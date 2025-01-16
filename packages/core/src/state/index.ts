@@ -40,31 +40,31 @@ export module State {
   export const Event = {
     UpdateCreated: createEvent(
       "state.update.created",
-      z.object({ stageID: z.string(), updateID: z.string() }),
+      z.object({ stageID: z.string(), updateID: z.string() })
     ),
     SnapshotCreated: createEvent(
       "state.snapshot.created",
-      z.object({ stageID: z.string(), updateID: z.string() }),
+      z.object({ stageID: z.string(), updateID: z.string() })
     ),
     StateUpdated: createEvent(
       "state.updated",
-      z.object({ stageID: z.string() }),
+      z.object({ stageID: z.string() })
     ),
     StateRefreshed: event("state.refreshed", z.object({ stageID: z.string() })),
     /** @deprecated */
     LockCreated: createEvent(
       "state.lock.created",
-      z.object({ stageID: z.string(), versionID: z.string().optional() }),
+      z.object({ stageID: z.string(), versionID: z.string().optional() })
     ),
     /** @deprecated */
     LockRemoved: createEvent(
       "state.lock.removed",
-      z.object({ stageID: z.string(), versionID: z.string().optional() }),
+      z.object({ stageID: z.string(), versionID: z.string().optional() })
     ),
     /** @deprecated */
     SummaryCreated: createEvent(
       "state.summary.created",
-      z.object({ stageID: z.string(), updateID: z.string() }),
+      z.object({ stageID: z.string(), updateID: z.string() })
     ),
     /** @deprecated */
     HistoryCreated: createEvent(
@@ -73,12 +73,12 @@ export module State {
         stageID: z.string(),
         key: z.string(),
         initial: z.boolean().optional(),
-      }),
+      })
     ),
     /** @deprecated */
     HistorySynced: createEvent(
       "state.history.synced",
-      z.object({ stageID: z.string(), updateID: z.string() }),
+      z.object({ stageID: z.string(), updateID: z.string() })
     ),
   };
 
@@ -149,8 +149,21 @@ export module State {
   });
   export type ResourceEvent = z.infer<typeof ResourceEvent>;
 
+  export const Count = z.object({
+    id: z.string().cuid2(),
+    stageID: z.string().cuid2(),
+    month: z.string(),
+    count: z.number(),
+    time: z.object({
+      created: z.string(),
+      deleted: z.string().optional(),
+      updated: z.string(),
+    }),
+  });
+  export type Count = z.infer<typeof Count>;
+
   export function serializeUpdate(
-    input: typeof stateUpdateTable.$inferSelect,
+    input: typeof stateUpdateTable.$inferSelect
   ): Update {
     return {
       id: input.id,
@@ -176,7 +189,7 @@ export module State {
   }
 
   export function serializeEvent(
-    input: typeof stateEventTable.$inferSelect,
+    input: typeof stateEventTable.$inferSelect
   ): ResourceEvent {
     return {
       id: input.id,
@@ -200,7 +213,7 @@ export module State {
   }
 
   export function serializeResource(
-    input: typeof stateResourceTable.$inferSelect,
+    input: typeof stateResourceTable.$inferSelect
   ): Resource {
     return {
       id: input.id,
@@ -225,6 +238,22 @@ export module State {
     };
   }
 
+  export function serializeCount(
+    input: typeof stateCountTable.$inferSelect
+  ): Count {
+    return {
+      id: input.id,
+      time: {
+        created: input.timeCreated.toISOString(),
+        updated: input.timeUpdated.toISOString(),
+        deleted: input.timeDeleted?.toISOString(),
+      },
+      stageID: input.stageID,
+      count: input.count,
+      month: input.month,
+    };
+  }
+
   export const receiveHistory = zod(
     z.object({
       key: z.string(),
@@ -244,10 +273,10 @@ export module State {
           .where(
             and(
               eq(stateUpdateTable.workspaceID, useWorkspace()),
-              eq(stateUpdateTable.id, updateID),
-            ),
+              eq(stateUpdateTable.id, updateID)
+            )
           )
-          .then((result) => result.at(0)),
+          .then((result) => result.at(0))
       );
       if (!existing) {
         console.log("update not found", { updateID });
@@ -265,12 +294,12 @@ export module State {
           new GetObjectCommand({
             Bucket: bootstrap.bucket,
             Key: input.key,
-          }),
+          })
         )
         .then(
           async (result) =>
             JSON.parse(await result.Body!.transformToString()).checkpoint
-              .latest || {},
+              .latest || {}
         )
         .catch(() => {});
       if (!state) return;
@@ -283,7 +312,7 @@ export module State {
             Prefix: `history/${input.config.app}/${input.config.stage}/`,
             StartAfter: input.key,
             ContinuationToken: continueToken,
-          }),
+          })
         )
         .then((result) => result.Contents?.[0]?.Key);
       let previousState = {
@@ -295,12 +324,12 @@ export module State {
             new GetObjectCommand({
               Bucket: bootstrap.bucket,
               Key: previousKey,
-            }),
+            })
           )
           .then(
             async (result) =>
               JSON.parse(await result.Body!.transformToString()).checkpoint
-                .latest,
+                .latest
           )
           .catch(() => ({}));
         console.log("found previous", previousKey);
@@ -312,10 +341,10 @@ export module State {
       if (!previousState.resources) previousState.resources = [];
 
       const resources = Object.fromEntries(
-        state.resources.map((r: any) => [r.urn, r]),
+        state.resources.map((r: any) => [r.urn, r])
       );
       const previousResources = Object.fromEntries(
-        previousState.resources.map((r: any) => [r.urn, r]),
+        previousState.resources.map((r: any) => [r.urn, r])
       );
 
       const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
@@ -393,8 +422,8 @@ export module State {
             .where(
               and(
                 eq(stateUpdateTable.workspaceID, useWorkspace()),
-                eq(stateUpdateTable.id, updateID),
-              ),
+                eq(stateUpdateTable.id, updateID)
+              )
             );
           if (eventInserts.length)
             await tx.insert(stateEventTable).ignore().values(eventInserts);
@@ -405,8 +434,8 @@ export module State {
                 and(
                   eq(stateResourceTable.workspaceID, useWorkspace()),
                   eq(stateResourceTable.stageID, input.config.stageID),
-                  inArray(stateResourceTable.urn, resourceDeletes),
-                ),
+                  inArray(stateResourceTable.urn, resourceDeletes)
+                )
               );
           await tx
             .update(stage)
@@ -420,21 +449,21 @@ export module State {
             .where(
               and(
                 eq(stage.workspaceID, useWorkspace()),
-                eq(stage.id, input.config.stageID),
-              ),
+                eq(stage.id, input.config.stageID)
+              )
             );
           await createTransactionEffect(() =>
             bus.publish(SSTResource.Bus, Event.HistorySynced, {
               stageID: input.config.stageID,
               updateID: updateID,
-            }),
+            })
           );
         },
         {
           isolationLevel: "read uncommitted",
-        },
+        }
       );
-    },
+    }
   );
 
   export const receiveLock = zod(
@@ -458,7 +487,7 @@ export module State {
               ["lock", input.config.app, input.config.stage].join("/") +
               ".json",
             VersionId: input.versionID,
-          }),
+          })
         )
         .catch(() => {});
       if (!obj) return;
@@ -485,8 +514,8 @@ export module State {
           .where(
             and(
               eq(stateUpdateTable.workspaceID, useWorkspace()),
-              eq(stateUpdateTable.stageID, input.config.stageID),
-            ),
+              eq(stateUpdateTable.stageID, input.config.stageID)
+            )
           )
           .then((result) => result[0]?.count || 0);
         await tx
@@ -510,13 +539,13 @@ export module State {
           .where(
             and(
               eq(stage.workspaceID, useWorkspace()),
-              eq(stage.id, input.config.stageID),
-            ),
+              eq(stage.id, input.config.stageID)
+            )
           );
 
         await createTransactionEffect(() => Replicache.poke());
       });
-    },
+    }
   );
 
   export const receiveSummary = zod(
@@ -543,7 +572,7 @@ export module State {
                 input.config.stage,
                 input.updateID,
               ].join("/") + ".json",
-          }),
+          })
         )
         .catch(() => {});
       if (!obj) return;
@@ -568,8 +597,8 @@ export module State {
           .where(
             and(
               eq(stateUpdateTable.workspaceID, useWorkspace()),
-              eq(stateUpdateTable.id, input.updateID),
-            ),
+              eq(stateUpdateTable.id, input.updateID)
+            )
           );
         await tx
           .update(stage)
@@ -579,12 +608,12 @@ export module State {
           .where(
             and(
               eq(stage.workspaceID, useWorkspace()),
-              eq(stage.id, input.config.stageID),
-            ),
+              eq(stage.id, input.config.stageID)
+            )
           );
         await createTransactionEffect(() => Replicache.poke());
       });
-    },
+    }
   );
 
   export const receiveUpdate = zod(
@@ -611,7 +640,7 @@ export module State {
                 input.config.stage,
                 input.updateID,
               ].join("/") + ".json",
-          }),
+          })
         )
         .catch(() => {});
       if (!obj) return;
@@ -636,8 +665,8 @@ export module State {
           .where(
             and(
               eq(stateUpdateTable.workspaceID, useWorkspace()),
-              eq(stateUpdateTable.stageID, input.config.stageID),
-            ),
+              eq(stateUpdateTable.stageID, input.config.stageID)
+            )
           )
           .then((result) => result[0]?.count || 0);
         await tx
@@ -677,12 +706,12 @@ export module State {
           .where(
             and(
               eq(stage.workspaceID, useWorkspace()),
-              eq(stage.id, input.config.stageID),
-            ),
+              eq(stage.id, input.config.stageID)
+            )
           );
         await createTransactionEffect(() => Replicache.poke());
       });
-    },
+    }
   );
 
   export const receiveSnapshot = zod(
@@ -698,10 +727,10 @@ export module State {
           .where(
             and(
               eq(stateUpdateTable.workspaceID, useWorkspace()),
-              eq(stateUpdateTable.id, input.updateID),
-            ),
+              eq(stateUpdateTable.id, input.updateID)
+            )
           )
-          .then((result) => result.at(0)),
+          .then((result) => result.at(0))
       );
       if (!existing) {
         console.log("update not found", { updateID: input.updateID });
@@ -720,12 +749,12 @@ export module State {
           new GetObjectCommand({
             Bucket: bootstrap.bucket,
             Key: key,
-          }),
+          })
         )
         .then(
           async (result) =>
             JSON.parse(await result.Body!.transformToString()).checkpoint
-              .latest || {},
+              .latest || {}
         )
         .catch(() => {});
       if (!state) return;
@@ -738,7 +767,7 @@ export module State {
             Prefix: `snapshot/${input.config.app}/${input.config.stage}/`,
             StartAfter: key,
             ContinuationToken: continueToken,
-          }),
+          })
         )
         .then((result) => result.Contents?.[0]?.Key);
       // migrate from old history
@@ -750,7 +779,7 @@ export module State {
               Prefix: `history/${input.config.app}/${input.config.stage}/`,
               ContinuationToken: continueToken,
               MaxKeys: 1,
-            }),
+            })
           )
           .then((result) => result.Contents?.[0]?.Key);
       }
@@ -763,12 +792,12 @@ export module State {
             new GetObjectCommand({
               Bucket: bootstrap.bucket,
               Key: previousKey,
-            }),
+            })
           )
           .then(
             async (result) =>
               JSON.parse(await result.Body!.transformToString()).checkpoint
-                .latest,
+                .latest
           )
           .catch(() => ({}));
         console.log("found previous", previousKey);
@@ -780,10 +809,10 @@ export module State {
       if (!previousState.resources) previousState.resources = [];
 
       const resources = Object.fromEntries(
-        state.resources.map((r: any) => [r.urn, r]),
+        state.resources.map((r: any) => [r.urn, r])
       );
       const previousResources = Object.fromEntries(
-        previousState.resources.map((r: any) => [r.urn, r]),
+        previousState.resources.map((r: any) => [r.urn, r])
       );
 
       const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
@@ -862,8 +891,8 @@ export module State {
             .where(
               and(
                 eq(stateUpdateTable.workspaceID, useWorkspace()),
-                eq(stateUpdateTable.id, input.updateID),
-              ),
+                eq(stateUpdateTable.id, input.updateID)
+              )
             );
           if (eventInserts.length)
             await tx.insert(stateEventTable).ignore().values(eventInserts);
@@ -874,8 +903,8 @@ export module State {
                 and(
                   eq(stateResourceTable.workspaceID, useWorkspace()),
                   eq(stateResourceTable.stageID, input.config.stageID),
-                  inArray(stateResourceTable.urn, resourceDeletes),
-                ),
+                  inArray(stateResourceTable.urn, resourceDeletes)
+                )
               );
           await tx
             .update(stage)
@@ -889,15 +918,15 @@ export module State {
             .where(
               and(
                 eq(stage.workspaceID, useWorkspace()),
-                eq(stage.id, input.config.stageID),
-              ),
+                eq(stage.id, input.config.stageID)
+              )
             );
         },
         {
           isolationLevel: "read uncommitted",
-        },
+        }
       );
-    },
+    }
   );
 
   export const refreshState = zod(
@@ -921,12 +950,12 @@ export module State {
             new GetObjectCommand({
               Bucket: v3bootstrap.bucket,
               Key: key,
-            }),
+            })
           )
           .then(
             async (result) =>
               JSON.parse(await result.Body!.transformToString()).checkpoint
-                .latest || {},
+                .latest || {}
           )
           .catch(() => {});
         for (const resource of state?.resources || []) {
@@ -963,7 +992,7 @@ export module State {
             new ListObjectsV2Command({
               Prefix: `stackMetadata/app.${input.config.app}/stage.${input.config.stage}/`,
               Bucket: v2bootstrap.bucket,
-            }),
+            })
           )
           .catch(() => {});
         if (list && list.Contents?.length) {
@@ -976,7 +1005,7 @@ export module State {
                 new GetObjectCommand({
                   Key: obj.Key!,
                   Bucket: v2bootstrap.bucket,
-                }),
+                })
               )
               .catch((err) => {
                 if (err.name === "AccessDenied") return;
@@ -1005,7 +1034,7 @@ export module State {
                         ? await Enrichers[res.type as keyof typeof Enrichers](
                             res,
                             input.config.credentials,
-                            input.config.region,
+                            input.config.region
                           ).catch(() => ({}))
                         : {};
                   }
@@ -1028,8 +1057,8 @@ export module State {
                     stageID: input.config.stageID,
                     updateID: "",
                   };
-                }),
-              )),
+                })
+              ))
             );
           }
         }
@@ -1061,10 +1090,10 @@ export module State {
               resourceInserts.length
                 ? notInArray(
                     stateResourceTable.urn,
-                    resourceInserts.map((i) => i.urn),
+                    resourceInserts.map((i) => i.urn)
                   )
-                : undefined,
-            ),
+                : undefined
+            )
           );
           if (!resourceInserts.length) {
             await Stage.remove(input.config.stageID);
@@ -1078,8 +1107,8 @@ export module State {
               .where(
                 and(
                   eq(stage.id, input.config.stageID),
-                  eq(stage.workspaceID, workspaceID),
-                ),
+                  eq(stage.workspaceID, workspaceID)
+                )
               );
 
             const total = await tx
@@ -1088,8 +1117,8 @@ export module State {
               .where(
                 and(
                   eq(stateResourceTable.workspaceID, workspaceID),
-                  eq(stateResourceTable.stageID, input.config.stageID),
-                ),
+                  eq(stateResourceTable.stageID, input.config.stageID)
+                )
               )
               .then((rows) => rows.at(0)!.count);
             await tx
@@ -1114,9 +1143,9 @@ export module State {
         },
         {
           isolationLevel: "read uncommitted",
-        },
+        }
       );
-    },
+    }
   );
 
   export const scan = zod(
@@ -1149,7 +1178,7 @@ export module State {
                 Prefix: "stackMetadata",
                 Bucket: v2bootstrap.bucket,
                 ContinuationToken: token,
-              }),
+              })
             )
             .catch(() => {});
           if (!list) break;
@@ -1180,7 +1209,7 @@ export module State {
                 Prefix: "app/",
                 Bucket: v3bootstrap.bucket,
                 ContinuationToken: token,
-              }),
+              })
             )
             .catch((err) => {
               console.error(err);
@@ -1204,7 +1233,7 @@ export module State {
       const apps = pipe(
         stages,
         map((x) => x.app),
-        unique(),
+        unique()
       );
       const workspaceID = useWorkspace();
       if (!apps.length) return;
@@ -1216,7 +1245,7 @@ export module State {
               id: createId(),
               name: app,
               workspaceID,
-            })),
+            }))
           )
           .onDuplicateKeyUpdate({
             set: {
@@ -1240,7 +1269,7 @@ export module State {
               name: item.stage,
               region: input.region,
               awsAccountID: input.awsAccountID,
-            })),
+            }))
           );
         const allStages = await tx
           .select({ id: stage.id })
@@ -1249,8 +1278,8 @@ export module State {
             and(
               eq(stage.workspaceID, workspaceID),
               eq(stage.awsAccountID, input.awsAccountID),
-              eq(stage.region, input.region),
-            ),
+              eq(stage.region, input.region)
+            )
           )
           .execute();
         return allStages;
@@ -1272,6 +1301,6 @@ export module State {
           }
         }
       });
-    },
+    }
   );
 }

@@ -1,9 +1,5 @@
 import { useReplicache } from "$/providers/replicache";
-import {
-  createContext,
-  createMemo,
-  useContext,
-} from "solid-js";
+import { createContext, createMemo, useContext } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { StageStore } from "$/data/stage";
 import { AppStore, StateResourceStore } from "$/data/app";
@@ -11,17 +7,7 @@ import { NavigationAction, useCommandBar } from "../command-bar";
 import { useLocalContext } from "$/providers/local";
 import { createInitializedContext } from "$/common/context";
 import { IssueStore } from "$/data/issue";
-import { UsageStore } from "$/data/usage";
-import {
-  flatMap,
-  groupBy,
-  map,
-  mapValues,
-  pipe,
-  sortBy,
-  sumBy,
-  values,
-} from "remeda";
+import { flatMap, groupBy, map, mapValues, pipe, sortBy, values } from "remeda";
 import { useWorkspace } from "../context";
 
 export const StageContext =
@@ -33,7 +19,7 @@ export function createStageContext() {
   const app = AppStore.all.watch(
     rep,
     () => [],
-    (items) => items.find((app) => app.name === params.appName),
+    (items) => items.find((app) => app.name === params.appName)
   );
   const stage = StageStore.list.watch(
     rep,
@@ -43,15 +29,10 @@ export function createStageContext() {
         (stage) =>
           stage.appID === app()?.id &&
           !stage.timeDeleted &&
-          (stage.name === params.stageName || stage.id === params.stageName),
-      ),
+          (stage.name === params.stageName || stage.id === params.stageName)
+      )
   );
   const local = useLocalContext();
-  const usage = UsageStore.forStage.watch(
-    rep,
-    () => [stage()?.id || "unknown"],
-    (items) => sumBy(items, (item) => item.invocations),
-  );
 
   return {
     get ready() {
@@ -69,9 +50,6 @@ export function createStageContext() {
         local.stage === stage.name &&
         (!local.region || stage()?.region === local.region)
       );
-    },
-    get isFree() {
-      return usage() < 1_000_000;
     },
   };
 }
@@ -108,7 +86,7 @@ export const { use: useStateResources, provider: StateResourcesProvider } =
           path: `resources/${encodeURIComponent(resource.urn)}`,
           title: resource.urn.split("::").at(-1)! + " (" + resource.type + ")",
           category: "resource",
-        }),
+        })
       );
     });
     return resources;
@@ -156,7 +134,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
             const lambda = resources().find(
               (child) =>
                 child.type === "aws:lambda/function:Function" &&
-                child.parent === r.urn,
+                child.parent === r.urn
             );
             const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
             const dev = lambda?.outputs?.description?.includes("live");
@@ -196,7 +174,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
             const logGroup = resources().find(
               (child) =>
                 child.type === "aws:cloudwatch/logGroup:LogGroup" &&
-                child.parent === r.urn,
+                child.parent === r.urn
             )?.outputs?.id;
 
             return [
@@ -220,10 +198,11 @@ export const { use: useLogsContext, provider: LogsProvider } =
         map((item) => ({
           ...item,
           link:
-            `/${workspace().slug}/${stage.app.name}/${stage.stage.name}/logs/aws?` +
-            item.link,
-        })),
-      ),
+            `/${workspace().slug}/${stage.app.name}/${
+              stage.stage.name
+            }/logs/aws?` + item.link,
+        }))
+      )
     );
 
     const bar = useCommandBar();
@@ -235,7 +214,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
           path: item.link,
           title: item.title,
           category: "logs",
-        }),
+        })
       );
     });
 

@@ -10,21 +10,11 @@ import {
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
 import { awsAccount } from "../aws/aws.sql";
-import { and, asc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { AWS } from "../aws";
-import {
-  GetObjectCommand,
-  ListObjectsV2Command,
-  S3Client,
-} from "@aws-sdk/client-s3";
-import { Enrichers, Resource } from "./resource";
-import { db } from "../drizzle";
 import { createEvent } from "../event";
 import { Replicache } from "../replicache";
 import { issueSubscriber } from "../issue/issue.sql";
-import { bus } from "sst/aws/bus";
-import { Resource as SSTResource } from "sst";
-import { State } from "../state";
 export * as Stage from "./stage";
 
 export const Events = {
@@ -32,26 +22,26 @@ export const Events = {
     "app.stage.connected",
     z.object({
       stageID: z.string().min(1),
-    }),
+    })
   ),
   Updated: createEvent(
     "app.stage.updated",
     z.object({
       stageID: z.string().min(1),
-    }),
+    })
   ),
   ResourcesUpdated: createEvent(
     "app.stage.resources_updated",
     z.object({
       stageID: z.string().min(1),
-    }),
+    })
   ),
   UsageRequested: createEvent(
     "app.stage.usage_requested",
     z.object({
       stageID: z.string().min(1),
       daysOffset: z.number().int().min(1),
-    }),
+    })
   ),
 };
 
@@ -72,8 +62,8 @@ export const fromID = zod(Info.shape.id, (stageID) =>
       .from(stage)
       .where(and(eq(stage.workspaceID, useWorkspace()), eq(stage.id, stageID)))
       .execute()
-      .then((x) => x[0]),
-  ),
+      .then((x) => x[0])
+  )
 );
 
 export const fromName = zod(
@@ -95,12 +85,12 @@ export const fromName = zod(
             eq(stage.region, input.region),
             eq(stage.appID, input.appID),
             eq(stage.awsAccountID, input.awsAccountID),
-            isNull(stage.timeDeleted),
-          ),
+            isNull(stage.timeDeleted)
+          )
         )
         .execute()
-        .then((x) => x[0]),
-    ),
+        .then((x) => x[0])
+    )
 );
 
 export const put = zod(
@@ -123,7 +113,7 @@ export const put = zod(
         .select({ id: app.id })
         .from(app)
         .where(
-          and(eq(app.workspaceID, workspaceID), eq(app.name, input.appName)),
+          and(eq(app.workspaceID, workspaceID), eq(app.name, input.appName))
         )
         .execute()
         .then((x) => x.at(0)!.id);
@@ -145,35 +135,13 @@ export const put = zod(
             eq(stage.appID, appID),
             eq(stage.name, input.stageName),
             eq(stage.region, input.region),
-            eq(stage.awsAccountID, input.awsAccountID),
-          ),
+            eq(stage.awsAccountID, input.awsAccountID)
+          )
         )
         .execute()
         .then((x) => x.at(0)!.id);
       return { appID, stageID };
-    }),
-);
-
-export const list = zod(
-  z.object({
-    cursor: z.string().min(1).optional(),
-  }),
-  ({ cursor }) =>
-    useTransaction(async (tx) => {
-      const SIZE = 100000;
-      const items = await tx
-        .select()
-        .from(stage)
-        .where(cursor ? gt(stage.id, cursor) : undefined)
-        .limit(SIZE)
-        .orderBy(asc(stage.id))
-        .execute()
-        .then((rows) => rows);
-      return {
-        items,
-        cursor: items.length < SIZE ? undefined : items.at(-1)?.id,
-      };
-    }),
+    })
 );
 
 export type StageCredentials = Exclude<
@@ -195,7 +163,7 @@ export const assumeRole = zod(Info.shape.id, async (stageID) => {
       .innerJoin(app, eq(stage.appID, app.id))
       .where(and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())))
       .execute()
-      .then((rows) => rows.at(0)),
+      .then((rows) => rows.at(0))
   );
   if (!result) return;
   const credentials = await AWS.assumeRole(result.accountID);
@@ -220,7 +188,7 @@ export const remove = zod(Info.shape.id, (stageID) =>
           timeDeleted: sql`CURRENT_TIMESTAMP(3)`,
         })
         .where(
-          and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())),
+          and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace()))
         )
         .execute();
       await tx
@@ -228,8 +196,8 @@ export const remove = zod(Info.shape.id, (stageID) =>
         .where(
           and(
             eq(resource.stageID, stageID),
-            eq(resource.workspaceID, useWorkspace()),
-          ),
+            eq(resource.workspaceID, useWorkspace())
+          )
         )
         .execute();
       await tx
@@ -237,16 +205,16 @@ export const remove = zod(Info.shape.id, (stageID) =>
         .where(
           and(
             eq(issueSubscriber.stageID, stageID),
-            eq(issueSubscriber.workspaceID, useWorkspace()),
-          ),
+            eq(issueSubscriber.workspaceID, useWorkspace())
+          )
         )
         .execute();
       await createTransactionEffect(() => Replicache.poke());
     },
     {
       isolationLevel: "read uncommitted",
-    },
-  ),
+    }
+  )
 );
 
 function parseVersion(input: string) {

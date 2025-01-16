@@ -1,13 +1,19 @@
 import { Show, createMemo, createSignal, Suspense } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
-import { useApi, useWorkspace } from "../context";
+import { useWorkspace } from "../context";
 import { utility } from "$/ui/utility";
 import { Toggle } from "$/ui/switch";
 import { IconLogosSlack, IconLogosGitHub } from "$/ui/icons/custom";
 import { formatNumber } from "$/common/format";
 import { useReplicache } from "$/providers/replicache";
-import { PRICING_PLAN, PricingPlan, UsageStore } from "$/data/usage";
+import {
+  INVOCATIONS_PRICING_PLAN,
+  RESOURCES_PRICING_PLAN,
+  PricingPlan,
+  InvocationsUsageStore,
+  ResourcesUsageStore,
+} from "$/data/usage";
 import { Header } from "../header";
 import { SlackTeamStore, StripeStore, GithubOrgStore } from "$/data/app";
 import { createEventListener } from "@solid-primitives/event-listener";
@@ -30,10 +36,10 @@ function calculateCost(units: number, pricingPlan: PricingPlan) {
   for (let tier of pricingPlan) {
     if (units > tier.from) {
       if (units < tier.to) {
-        cost += (units - tier.from) * tier.rate;
+        cost += (tier.base ?? 0) + (units - tier.from) * tier.rate;
         break;
       } else {
-        cost += (tier.to - tier.from) * tier.rate;
+        cost += (tier.base ?? 0) + (tier.to - tier.from) * tier.rate;
       }
     }
   }
@@ -121,18 +127,24 @@ const UsageStatTier = styled("span", {
 
 export function SettingsRoute() {
   const rep = useReplicache();
-  const usages = UsageStore.list.watch(rep, () => []);
+  const invocationsUsages = InvocationsUsageStore.list.watch(rep, () => []);
+  const resourcesUsages = ResourcesUsageStore.list.watch(rep, () => []);
   const invocations = createMemo(() =>
-    usages()
+    invocationsUsages()
       .map((usage) => usage.invocations)
-      .reduce((a, b) => a + b, 0),
+      .reduce((a, b) => a + b, 0)
   );
-  const api = useApi();
-  console.log("usages", usages().length);
+  const resources = createMemo(() =>
+    resourcesUsages()
+      .map((usage) => usage.count)
+      .reduce((a, b) => a + b, 0)
+  );
+  console.log("invocations", invocationsUsages().length);
+  console.log("resources", resourcesUsages().length);
   const auth = useAuth2();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
-    const data = usages();
+    const data = invocationsUsages();
     const start = data[0] ? DateTime.fromSQL(data[0].day) : DateTime.now();
     return {
       start: start.startOf("month").toFormat("LLL d"),
@@ -222,6 +234,69 @@ export function SettingsRoute() {
             <UsagePanel>
               <UsageStat stretch>
                 <Text code uppercase size="mono_xs" color="dimmed">
+                  Resources
+                </Text>
+                <Text code size="xl">
+                  {resources()}
+                </Text>
+              </UsageStat>
+              <UsageStat stretch>
+                <Text code uppercase size="mono_xs" color="dimmed">
+                  Current Cost
+                </Text>
+                <Row space="0.5" vertical="center">
+                  <Text size="sm" color="secondary">
+                    $
+                  </Text>
+                  <Text code weight="medium" size="xl">
+                    {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
+                  </Text>
+                </Row>
+              </UsageStat>
+              <UsageTiers>
+                <Stack space="1">
+                  <Row space={TIER_LABEL_SPACE}>
+                    <UsageStatTier>
+                      {formatNumber(RESOURCES_PRICING_PLAN[0].from)} -{" "}
+                      {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
+                    </UsageStatTier>
+                    <Text color="dimmed" on="surface" size="xs">
+                      →
+                    </Text>
+                    <Text size="mono_xs" on="surface" color="secondary">
+                      Free
+                    </Text>
+                  </Row>
+                  <Row space={TIER_LABEL_SPACE}>
+                    <UsageStatTier>
+                      {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
+                      {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
+                    </UsageStatTier>
+                    <Text color="dimmed" on="surface" size="xs">
+                      →
+                    </Text>
+                    <Text code size="mono_xs" on="surface" color="secondary">
+                      ${RESOURCES_PRICING_PLAN[1].base} + $
+                      {RESOURCES_PRICING_PLAN[1].rate} per
+                    </Text>
+                  </Row>
+                  <Row space={TIER_LABEL_SPACE}>
+                    <UsageStatTier>
+                      {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
+                    </UsageStatTier>
+                    <Text color="dimmed" on="surface" size="xs">
+                      →
+                    </Text>
+                    <Text code size="mono_xs" on="surface" color="secondary">
+                      ${RESOURCES_PRICING_PLAN[2].rate} per
+                    </Text>
+                  </Row>
+                </Stack>
+              </UsageTiers>
+            </UsagePanel>
+            <UsagePanel>
+              <UsageStat stretch>
+                <Text code uppercase size="mono_xs" color="dimmed">
                   Invocations
                 </Text>
                 <Text code size="xl">
@@ -237,7 +312,7 @@ export function SettingsRoute() {
                     $
                   </Text>
                   <Text code weight="medium" size="xl">
-                    {calculateCost(invocations(), PRICING_PLAN)}
+                    {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
                   </Text>
                 </Row>
               </UsageStat>
@@ -245,8 +320,8 @@ export function SettingsRoute() {
                 <Stack space="1">
                   <Row space={TIER_LABEL_SPACE}>
                     <UsageStatTier>
-                      {formatNumber(PRICING_PLAN[0].from)} -{" "}
-                      {formatNumber(PRICING_PLAN[0].to)}
+                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
+                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
                     </UsageStatTier>
                     <Text color="dimmed" on="surface" size="xs">
                       →
@@ -257,25 +332,25 @@ export function SettingsRoute() {
                   </Row>
                   <Row space={TIER_LABEL_SPACE}>
                     <UsageStatTier>
-                      {formatNumber(PRICING_PLAN[1].from)} -{" "}
-                      {formatNumber(PRICING_PLAN[1].to)}
+                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
+                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
                     </UsageStatTier>
                     <Text color="dimmed" on="surface" size="xs">
                       →
                     </Text>
                     <Text code size="mono_xs" on="surface" color="secondary">
-                      ${PRICING_PLAN[1].rate} per
+                      ${INVOCATIONS_PRICING_PLAN[1].rate} per
                     </Text>
                   </Row>
                   <Row space={TIER_LABEL_SPACE}>
                     <UsageStatTier>
-                      {formatNumber(PRICING_PLAN[2].from)} +
+                      {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
                     </UsageStatTier>
                     <Text color="dimmed" on="surface" size="xs">
                       →
                     </Text>
                     <Text code size="mono_xs" on="surface" color="secondary">
-                      ${PRICING_PLAN[2].rate} per
+                      ${INVOCATIONS_PRICING_PLAN[2].rate} per
                     </Text>
                   </Row>
                 </Stack>
@@ -325,7 +400,7 @@ export function SettingsRoute() {
               >
                 Add Billing Details
               </Button>
-              <Show when={invocations() > PRICING_PLAN[0].to}>
+              <Show when={invocations() > INVOCATIONS_PRICING_PLAN[0].to}>
                 <Text color="danger" size="sm">
                   Your current usage is above the free tier. Please add your
                   billing details.
@@ -353,7 +428,7 @@ export function SettingsRoute() {
               onClick={async () => {
                 if (
                   !confirm(
-                    "Are you sure you want to remove this workspace?\n\nYou cannot undo this.",
+                    "Are you sure you want to remove this workspace?\n\nYou cannot undo this."
                   )
                 )
                   return;
@@ -386,12 +461,12 @@ function Integrations() {
   const slackTeam = SlackTeamStore.all.watch(
     rep,
     () => [],
-    (all) => all.at(0),
+    (all) => all.at(0)
   );
   const githubOrg = GithubOrgStore.all.watch(
     rep,
     () => [],
-    (orgs) => orgs.find((org) => !org.time.disconnected),
+    (orgs) => orgs.find((org) => !org.time.disconnected)
   );
 
   const [overrideSlack, setOverrideSlack] = createSignal(false);
@@ -403,7 +478,7 @@ function Integrations() {
     (e) => {
       if (e.data === "slack.success") setOverrideSlack(true);
       if (e.data === "github.success") setOverrideGithub(true);
-    },
+    }
   );
 
   return (

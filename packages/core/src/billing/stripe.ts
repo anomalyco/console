@@ -1,6 +1,6 @@
-import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { stripeTable } from "./billing.sql";
+import { Resource } from "sst";
+import { Standing, stripeTable } from "./billing.sql";
 import { zod } from "../util/zod";
 import { useTransaction } from "../util/transaction";
 import { eq, and } from "drizzle-orm";
@@ -10,12 +10,43 @@ import { stripe } from "../stripe";
 
 export * as Stripe from "./stripe";
 
-export const Info = createSelectSchema(stripeTable, {
-  customerID: (schema) => schema.customerID.trim().nonempty(),
-  subscriptionID: (schema) => schema.subscriptionID.trim().nonempty(),
-  subscriptionItemID: (schema) => schema.subscriptionItemID.trim().nonempty(),
+export const Info = z.object({
+  id: z.string().cuid2(),
+  customerID: z.string().optional(),
+  subscriptionID: z.string().optional(),
+  subscriptionItemID: z.string().optional(),
+  price: z.enum(["invocations", "resources"]).optional(),
+  standing: z.enum(Standing),
+  timeTrialEnded: z.string().optional(),
+  time: z.object({
+    created: z.string(),
+    deleted: z.string().optional(),
+    updated: z.string(),
+  }),
 });
 export type Info = z.infer<typeof Info>;
+
+export function serializeInfo(input: typeof stripeTable.$inferSelect): Info {
+  return {
+    id: input.id,
+    customerID: input.customerID || undefined,
+    subscriptionID: input.subscriptionID || undefined,
+    subscriptionItemID: input.subscriptionItemID || undefined,
+    price:
+      input.priceID === Resource.StripeInvocationsPriceID.value
+        ? "invocations"
+        : input.priceID === Resource.StripeResourcesPriceID.value
+        ? "resources"
+        : undefined,
+    standing: input.standing || "good",
+    timeTrialEnded: input.timeTrialEnded || undefined,
+    time: {
+      created: input.timeCreated,
+      updated: input.timeUpdated,
+      deleted: input.timeDeleted || undefined,
+    },
+  };
+}
 
 export function get() {
   return useTransaction((tx) =>
@@ -74,10 +105,10 @@ export const fromCustomerID = zod(z.string(), (input) =>
 );
 
 export const setSubscription = zod(
-  Info.pick({
-    subscriptionID: true,
-    subscriptionItemID: true,
-    priceID: true,
+  z.object({
+    subscriptionID: z.string().min(1),
+    subscriptionItemID: z.string().min(1),
+    priceID: z.string().min(1),
   }),
   (input) =>
     useTransaction((tx) =>
@@ -102,6 +133,7 @@ export const removeSubscription = zod(
         .set({
           subscriptionItemID: null,
           subscriptionID: null,
+          priceID: null,
         })
         .where(and(eq(stripeTable.subscriptionID, stripeSubscriptionID)))
         .execute()
@@ -109,9 +141,9 @@ export const removeSubscription = zod(
 );
 
 export const setStanding = zod(
-  Info.pick({
-    subscriptionID: true,
-    standing: true,
+  z.object({
+    subscriptionID: z.string().min(1),
+    standing: z.enum(Standing),
   }),
   (input) =>
     useTransaction((tx) =>

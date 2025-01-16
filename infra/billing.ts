@@ -1,6 +1,6 @@
 import { bus } from "./bus";
 import { database } from "./planetscale";
-import { assumable, secret } from "./secret";
+import { allSecrets, assumable, secret } from "./secret";
 
 const queue = new sst.aws.Queue("BillingQueue", {
   fifo: true,
@@ -9,7 +9,7 @@ const queue = new sst.aws.Queue("BillingQueue", {
 
 queue.subscribe(
   {
-    link: [database, secret.StripeSecretKey],
+    link: [database, ...allSecrets],
     handler: "packages/functions/src/billing/fetch-usage.handler",
     permissions: [assumable],
     timeout: "3 minutes",
@@ -27,6 +27,6 @@ new sst.aws.Cron("BillingCron", {
     handler: "packages/functions/src/billing/cron.handler",
     timeout: "900 seconds",
     permissions: [assumable],
-    link: [bus, database, queue],
+    link: [bus, database, queue, ...allSecrets],
   },
 });
