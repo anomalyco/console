@@ -17,33 +17,33 @@ export const Info = z.object({
   subscriptionItemID: z.string().optional(),
   price: z.enum(["invocations", "resources"]).optional(),
   standing: z.enum(Standing),
-  timeTrialEnded: z.string().optional(),
   time: z.object({
     created: z.string(),
     deleted: z.string().optional(),
     updated: z.string(),
+    trialEnded: z.string().optional(),
   }),
 });
 export type Info = z.infer<typeof Info>;
 
-export function serializeInfo(input: typeof stripeTable.$inferSelect): Info {
+export function serialize(input: typeof stripeTable.$inferSelect): Info {
   return {
     id: input.id,
-    customerID: input.customerID || undefined,
-    subscriptionID: input.subscriptionID || undefined,
-    subscriptionItemID: input.subscriptionItemID || undefined,
+    customerID: input.customerID ?? undefined,
+    subscriptionID: input.subscriptionID ?? undefined,
+    subscriptionItemID: input.subscriptionItemID ?? undefined,
     price:
       input.priceID === Resource.StripeInvocationsPriceID.value
-        ? "invocations"
+        ? ("invocations" as const)
         : input.priceID === Resource.StripeResourcesPriceID.value
-        ? "resources"
+        ? ("resources" as const)
         : undefined,
-    standing: input.standing || "good",
-    timeTrialEnded: input.timeTrialEnded || undefined,
+    standing: input.standing ?? "good",
     time: {
       created: input.timeCreated,
       updated: input.timeUpdated,
-      deleted: input.timeDeleted || undefined,
+      deleted: input.timeDeleted ?? undefined,
+      trialEnded: input.timeTrialEnded ?? undefined,
     },
   };
 }

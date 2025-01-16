@@ -1,4 +1,10 @@
-import { Show, createMemo, createSignal, Suspense } from "solid-js";
+import {
+  Show,
+  createMemo,
+  createSignal,
+  Suspense,
+  createEffect,
+} from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "../context";
@@ -139,9 +145,8 @@ export function SettingsRoute() {
       .map((usage) => usage.count)
       .reduce((a, b) => a + b, 0)
   );
-  console.log("invocations", invocationsUsages().length);
-  console.log("resources", resourcesUsages().length);
   const auth = useAuth2();
+  const nav = useNavigate();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
     const data = invocationsUsages();
@@ -151,6 +156,7 @@ export function SettingsRoute() {
       end: start.endOf("month").toFormat("LLL d"),
     };
   });
+  const stripe = StripeStore.get.watch(rep, () => []);
 
   let portalLink: Promise<Response> | undefined;
   let checkoutLink: Promise<Response> | undefined;
@@ -203,9 +209,6 @@ export function SettingsRoute() {
     window.location.href = result.url;
   }
 
-  const stripe = StripeStore.get.watch(rep, () => []);
-  const nav = useNavigate();
-
   return (
     <Suspense>
       <Header />
@@ -231,6 +234,74 @@ export function SettingsRoute() {
             </Text>
           </Stack>
           <Stack space="3.5">
+            <Show when={stripe()?.price === "invocations"}>
+              <UsagePanel>
+                <UsageStat stretch>
+                  <Text code uppercase size="mono_xs" color="dimmed">
+                    Invocations
+                  </Text>
+                  <Text code size="xl">
+                    {invocations()}
+                  </Text>
+                </UsageStat>
+                <UsageStat stretch>
+                  <Text code uppercase size="mono_xs" color="dimmed">
+                    Current Cost
+                  </Text>
+                  <Row space="0.5" vertical="center">
+                    <Text size="sm" color="secondary">
+                      $
+                    </Text>
+                    <Text code weight="medium" size="xl">
+                      {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                    </Text>
+                  </Row>
+                </UsageStat>
+                <UsageTiers>
+                  <Stack space="1">
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
+                        {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text size="mono_xs" on="surface" color="secondary">
+                        Free
+                      </Text>
+                    </Row>
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
+                        {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text code size="mono_xs" on="surface" color="secondary">
+                        ${INVOCATIONS_PRICING_PLAN[1].rate} per
+                      </Text>
+                    </Row>
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text code size="mono_xs" on="surface" color="secondary">
+                        ${INVOCATIONS_PRICING_PLAN[2].rate} per
+                      </Text>
+                    </Row>
+                  </Stack>
+                </UsageTiers>
+              </UsagePanel>
+              <p>
+                You can stay on the old plan. If you switched to the new plan,
+                you cost would be the following:
+              </p>
+            </Show>
             <UsagePanel>
               <UsageStat stretch>
                 <Text code uppercase size="mono_xs" color="dimmed">
@@ -289,68 +360,6 @@ export function SettingsRoute() {
                     </Text>
                     <Text code size="mono_xs" on="surface" color="secondary">
                       ${RESOURCES_PRICING_PLAN[2].rate} per
-                    </Text>
-                  </Row>
-                </Stack>
-              </UsageTiers>
-            </UsagePanel>
-            <UsagePanel>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Invocations
-                </Text>
-                <Text code size="xl">
-                  {invocations()}
-                </Text>
-              </UsageStat>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Current Cost
-                </Text>
-                <Row space="0.5" vertical="center">
-                  <Text size="sm" color="secondary">
-                    $
-                  </Text>
-                  <Text code weight="medium" size="xl">
-                    {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
-                  </Text>
-                </Row>
-              </UsageStat>
-              <UsageTiers>
-                <Stack space="1">
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text size="mono_xs" on="surface" color="secondary">
-                      Free
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${INVOCATIONS_PRICING_PLAN[1].rate} per
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${INVOCATIONS_PRICING_PLAN[2].rate} per
                     </Text>
                   </Row>
                 </Stack>
