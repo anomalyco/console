@@ -44,7 +44,7 @@ export const handler = auth.authorizer({
               return Response.redirect(
                 process.env.AUTH_FRONTEND_URL +
                   "/auth/email?error=invalid_email",
-                302,
+                302
               );
             }
 
@@ -57,7 +57,7 @@ export const handler = auth.authorizer({
                 return Response.redirect(
                   process.env.AUTH_FRONTEND_URL +
                     "/auth/email?error=invalid_challenge",
-                  302,
+                  302
                 );
               console.log("challenge verified");
               const cmd = new SendEmailCommand({
@@ -88,15 +88,15 @@ export const handler = auth.authorizer({
               process.env.AUTH_FRONTEND_URL +
                 "/auth/code?" +
                 new URLSearchParams({ email: claims.email }).toString(),
-              302,
+              302
             );
-          },
+          }
         );
       },
       async onCodeInvalid() {
         return Response.redirect(
           process.env.AUTH_FRONTEND_URL + "/auth/code?error=invalid_code",
-          302,
+          302
         );
       },
     }),
@@ -190,7 +190,8 @@ export const handler = auth.authorizer({
                 and(
                   eq(workspace.slug, response.claims.impersonate),
                   isNull(workspace.timeDeleted),
-                ),
+                  isNull(user.timeDeleted)
+                )
               )
               .then((rows) => rows.at(0)?.email);
           }
