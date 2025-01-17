@@ -11,7 +11,7 @@ export const secret = {
     "StripeResourcesPriceID",
     $app.stage === "production"
       ? "price_1QhwLAEAHP8a0ogpjRV91Yl8"
-      : "price_1QhvxTEAHP8a0ogp9RrSh6uX"
+      : "price_1Qi4QzEAHP8a0ogpDvPDu8Bm"
   ),
   SlackClientID: new sst.Secret("SlackClientID"),
   SlackClientSecret: new sst.Secret("SlackClientSecret"),
