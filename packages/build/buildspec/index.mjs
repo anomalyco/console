@@ -36,6 +36,7 @@ export async function handler(event) {
     for (const item of event.cache?.paths ?? []) await restore(item);
     packageJson = await loadPackageJson();
     await installNode();
+    await installUv();
     sstConfig = await loadSstConfig();
     await runWorkflow();
 
@@ -119,6 +120,10 @@ export async function handler(event) {
       packageJson.engines?.node
     )
       shell(`n auto`);
+  }
+
+  async function installUv() {
+    if (findInRepo("uv.lock")) shell("pip install uv");
   }
 
   async function resetCache() {
@@ -271,7 +276,7 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       const basename = path.basename(itemPath);
       shell(
-        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`,
+        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`
       );
     } catch (e) {
       console.error("Failed to store cache", e);
@@ -294,7 +299,7 @@ export async function handler(event) {
         new HeadObjectCommand({
           Bucket: cache.bucket,
           Key: s3Key,
-        }),
+        })
       );
     } catch (e) {
       if (e.name === "NotFound") {
@@ -309,7 +314,7 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       shell(`mkdir -p ${dirname}`);
       shell(
-        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`,
+        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`
       );
     } catch (e) {
       console.error("Failed to restore cache", e);
@@ -341,7 +346,7 @@ export async function handler(event) {
             }),
           },
         ],
-      }),
+      })
     );
   }
 
@@ -352,6 +357,17 @@ export async function handler(event) {
       if (dir === REPO_PATH) break;
       dir = path.resolve(dir, "..");
     }
+  }
+
+  function findInRepo(filename, dir = APP_PATH) {
+    const children = fs.readdirSync(dir);
+    for (const child of children) {
+      const childPath = path.join(dir, child);
+      const stat = fs.statSync(childPath);
+      if (stat.isFile() && child === filename) return true;
+      if (stat.isDirectory() && findInRepo(filename, childPath)) return true;
+    }
+    return false;
   }
 
   function findLocalSstBinary() {
