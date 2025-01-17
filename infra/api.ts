@@ -49,37 +49,37 @@ export const apiRouter = new sst.aws.Router("ApiRouter", {
   },
 });
 
-export const backend = cluster.addService("Backend", {
-  link: [
-    storage,
-    auth,
-    database,
-    bus,
-    email,
-    autodeploy,
-    websocket,
-    ...allSecrets,
-  ],
-  loadBalancer: {
-    domain: "backend." + domain,
-    rules: [
-      {
-        listen: "80/http",
-        forward: "3001/http",
-      },
-      {
-        listen: "443/https",
-        forward: "3001/http",
-      },
-    ],
-  },
-  image: {
-    context: ".",
-    dockerfile: "./packages/backend/Dockerfile",
-  },
-  dev: {
-    directory: "./packages/backend",
-    command: "bun run --hot ./src/index.ts",
-    url: "http://localhost:3001",
-  },
-});
+//export const backend = cluster.addService("Backend", {
+//  link: [
+//    storage,
+//    auth,
+//    database,
+//    bus,
+//    email,
+//    autodeploy,
+//    websocket,
+//    ...allSecrets,
+//  ],
+//  loadBalancer: {
+//    domain: "backend." + domain,
+//    rules: [
+//      {
+//        listen: "80/http",
+//        forward: "3001/http",
+//      },
+//      {
+//        listen: "443/https",
+//        forward: "3001/http",
+//      },
+//    ],
+//  },
+//  image: {
+//    context: ".",
+//    dockerfile: "./packages/backend/Dockerfile",
+//  },
+//  dev: {
+//    directory: "./packages/backend",
+//    command: "bun run --hot ./src/index.ts",
+//    url: "http://localhost:3001",
+//  },
+//});
