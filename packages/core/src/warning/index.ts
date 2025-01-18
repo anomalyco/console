@@ -20,6 +20,13 @@ type Data =
           };
     }
   | {
+      type: "issue_infra";
+      data: {
+        region: string;
+        awsAccountID: string;
+      };
+    }
+  | {
       type: "permission_usage";
       data: {};
     }
@@ -35,7 +42,7 @@ type Data =
     };
 
 export async function create(
-  input: Data & { target: Info["target"]; stageID: Info["stageID"] }
+  input: Data & { target: Info["target"]; stageID: Info["stageID"] },
 ) {
   await useTransaction(async (tx) =>
     tx
@@ -53,7 +60,7 @@ export async function create(
           data: input.data,
         },
       })
-      .execute()
+      .execute(),
   );
 }
 
@@ -68,10 +75,10 @@ export async function remove(input: Pick<Info, "type" | "stageID" | "target">) {
             ? eq(warning.stageID, input.stageID)
             : isNull(warning.stageID),
           eq(warning.type, input.type),
-          eq(warning.target, input.target)
-        )
+          eq(warning.target, input.target),
+        ),
       )
-      .execute()
+      .execute(),
   );
 }
 
@@ -86,9 +93,9 @@ export async function forType(input: Pick<Info, "type" | "stageID">) {
           input.stageID
             ? eq(warning.stageID, input.stageID)
             : isNull(warning.stageID),
-          eq(warning.type, input.type)
-        )
+          eq(warning.type, input.type),
+        ),
       )
-      .execute()
+      .execute(),
   );
 }

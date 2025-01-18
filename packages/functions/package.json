@@ -15,6 +15,7 @@
     "typescript": "5.5.4"
   },
   "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
     "@aws-sdk/client-cloudformation": "3.699.0",
     "@aws-sdk/client-cloudwatch": "3.600.0",
     "@aws-sdk/client-cloudwatch-logs": "3.699.0",
@@ -22,8 +23,11 @@
     "@aws-sdk/client-s3": "3.701.0",
     "@aws-sdk/client-scheduler": "3.699.0",
     "@aws-sdk/client-sesv2": "3.699.0",
-    "@aws-sdk/client-sqs": "^3.699.0",
+    "@aws-sdk/client-sqs": "3.699.0",
+    "@aws-sdk/client-sts": "3.699.0",
     "@aws-sdk/s3-request-presigner": "3.701.0",
+    "@aws-sdk/signature-v4": "^3.374.0",
+    "@aws-sdk/util-format-url": "^3.731.0",
     "@botpoison/node": "^0.1.10",
     "@console/mail": "workspace:*",
     "@esbuild/linux-arm64": "0.21.4",

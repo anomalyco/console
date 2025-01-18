@@ -223,8 +223,7 @@ export const subscribeIon = zod(
         retryStrategy: RETRY_STRATEGY,
       });
 
-      /*
-      while (true) {
+      while (true && config.app === "console") {
         const result = await cfn.send(
           new DescribeStacksCommand({
             StackName: stackName,
@@ -314,8 +313,16 @@ export const subscribeIon = zod(
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-      */
 
+      await Warning.create({
+        stageID: config.stageID,
+        target: config.region,
+        type: "issue_infra",
+        data: {
+          region,
+          awsAccountID: config.awsAccountID,
+        },
+      });
       return destinations.set(region, destination), destination!;
     }
 

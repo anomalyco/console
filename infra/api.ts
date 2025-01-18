@@ -3,6 +3,7 @@ import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
 import { domain } from "./dns";
 import { email } from "./email";
+import { issueDetectionQueue } from "./issues";
 import { database } from "./planetscale";
 import { allSecrets, secret } from "./secret";
 import { storage } from "./storage";
@@ -20,6 +21,7 @@ const api = new sst.aws.Function("Api", {
     email,
     autodeploy,
     websocket,
+    issueDetectionQueue,
     ...allSecrets,
   ],
   streaming: !$dev,

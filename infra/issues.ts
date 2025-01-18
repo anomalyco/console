@@ -4,9 +4,9 @@ import { identity } from "./connect";
 import { email } from "./email";
 import { database } from "./planetscale";
 import { storage } from "./storage";
-import { apiRouter } from "./api";
+import { domain } from "./dns";
 
-const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
+export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   fifo: true,
   visibilityTimeout: "5 minutes",
 });
@@ -48,12 +48,11 @@ const issuePermissions = [
 ];
 const issueLambda = new sst.aws.Function("IssueLambda", {
   handler: "packages/functions/src/issues/subscriber-self-hosted.handler",
-  dev: false,
   nodejs: {
     install: ["source-map"],
   },
   environment: {
-    SST_API_URL: apiRouter.url,
+    SST_API_URL: "http://api." + domain,
   },
   permissions: [
     {
@@ -175,9 +174,6 @@ const cfnTemplate = $jsonStringify({
         Environment: issueLambda.nodes.function.environment.apply((env) => ({
           Variables: {
             ...env?.variables,
-            SST_WORKSPACE_ID: {
-              "Fn::Sub": "${workspaceID}",
-            },
           },
         })),
         Handler: "bundle.handler",
