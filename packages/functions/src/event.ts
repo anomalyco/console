@@ -19,6 +19,7 @@ export const handler = bus.subscriber(
     State.Event.SummaryCreated,
     State.Event.HistoryCreated,
     State.Event.HistorySynced,
+    State.Event.StateRefreshed,
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
     State.Event.UpdateCreated,
@@ -133,12 +134,12 @@ export const handler = bus.subscriber(
           break;
         }
 
-        // case State.Event.StateRefreshed.type: {
-        //   const config = await Stage.assumeRole(evt.properties.stageID);
-        //   if (!config) return;
-        //   await Issue.subscribeIon(config);
-        //   break;
-        // }
+        case State.Event.StateRefreshed.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await Issue.subscribeIon(config);
+          break;
+        }
 
         case Issue.Events.RateLimited.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);

@@ -18,7 +18,7 @@ import {
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
 import { and, count, eq, inArray, notInArray, sql } from "drizzle-orm";
-import { createEvent, event, publish } from "../event";
+import { createEvent } from "../event";
 import { Stage, StageCredentials } from "../app/stage";
 import {
   S3Client,
@@ -50,7 +50,10 @@ export module State {
       "state.updated",
       z.object({ stageID: z.string() }),
     ),
-    StateRefreshed: event("state.refreshed", z.object({ stageID: z.string() })),
+    StateRefreshed: createEvent(
+      "state.refreshed",
+      z.object({ stageID: z.string() }),
+    ),
     /** @deprecated */
     LockCreated: createEvent(
       "state.lock.created",
@@ -1106,9 +1109,11 @@ export module State {
                   count: sql`GREATEST(VALUES(count), count)`,
                 },
               });
-            await publish(tx, Event.StateRefreshed, {
-              stageID: input.config.stageID,
-            });
+            await createTransactionEffect(() =>
+              bus.publish(SSTResource.Bus, Event.StateRefreshed, {
+                stageID: input.config.stageID,
+              }),
+            );
           }
           await createTransactionEffect(() => Replicache.poke());
         },

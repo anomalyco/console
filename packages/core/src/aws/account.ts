@@ -7,7 +7,8 @@ import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { awsAccount } from "./aws.sql";
 import { useWorkspace } from "../actor";
 import { and, eq, sql } from "drizzle-orm";
-import { Credentials } from ".";
+import { bootstrap, bootstrapIon } from "./bootstrap";
+export * from "./bootstrap";
 import {
   CloudFormationClient,
   DeleteStackCommand,
@@ -165,90 +166,6 @@ export const fromAccountID = zod(Info.shape.accountID, (accountID) =>
   ),
 );
 
-export const bootstrap = zod(
-  z.object({
-    credentials: z.custom<Credentials>(),
-    region: z.string(),
-  }),
-  async (input) => {
-    const cf = new CloudFormationClient(input);
-
-    const bootstrap = await cf
-      .send(
-        new DescribeStacksCommand({
-          StackName: "SSTBootstrap",
-        }),
-      )
-      .catch(() => {});
-
-    if (bootstrap) {
-      const bucket = bootstrap.Stacks?.at(0)?.Outputs?.find(
-        (x) => x.OutputKey === "BucketName",
-      )?.OutputValue;
-
-      if (!bucket) {
-        console.log(
-          useWorkspace(),
-          input.region,
-          bootstrap.Stacks?.at(0),
-          "no bucket found",
-        );
-        return;
-      }
-
-      return {
-        bucket,
-        version: "v2" as const,
-      };
-    }
-
-    // try to find stack if it's named something different
-    /*
-    let paging: string | undefined;
-    while (true) {
-      const all = await cf.send(new DescribeStacksCommand({}));
-      paging = all.NextToken;
-
-      const [bucket] = (all.Stacks || []).map(
-        (s) => s.Outputs?.find((o) => o.OutputKey === "BucketName")?.OutputValue
-      );
-      if (bucket) return { bucket };
-      if (!paging) break;
-    }
-    */
-  },
-);
-
-export const bootstrapIon = zod(
-  z.object({
-    credentials: z.custom<Credentials>(),
-    region: z.string(),
-  }),
-  async (input) => {
-    const ssm = new SSMClient(input);
-    try {
-      const param = await ssm
-        .send(
-          new GetParameterCommand({
-            Name: "/sst/bootstrap",
-          }),
-        )
-        .catch(() => {});
-      if (!param?.Parameter?.Value) return;
-      const parsed = JSON.parse(param.Parameter.Value);
-      return {
-        bucket: parsed.state,
-        asset: parsed.asset,
-        version: "v3" as const,
-      };
-    } catch {
-      return;
-    } finally {
-      ssm.destroy();
-    }
-  },
-);
-
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
 import { Replicache } from "../replicache";
 import { db } from "../drizzle";
@@ -259,6 +176,7 @@ import { Resource } from "sst";
 import { createEvent } from "../event";
 import { bus } from "sst/aws/bus";
 import { State } from "../state";
+import { Credentials } from ".";
 
 export const regions = zod(
   bootstrap.schema.shape.credentials,

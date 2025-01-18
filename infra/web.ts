@@ -1,4 +1,4 @@
-import { apiRouter, backend } from "./api";
+import { apiRouter } from "./api";
 import { authRouter } from "./auth";
 import { connectTemplateUrl } from "./connect";
 import { domain } from "./dns";

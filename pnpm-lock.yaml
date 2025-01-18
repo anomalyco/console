@@ -24,63 +24,11 @@ importers:
         specifier: 10.3.0
         version: 10.3.0
       sst:
-        specifier: 3.5.9
-        version: 3.5.9
+        specifier: 3.5.13
+        version: 3.5.13
       turbo:
         specifier: 2.3.3
         version: 2.3.3
-      typescript:
-        specifier: 5.5.4
-        version: 5.5.4
-
-  packages/backend:
-    dependencies:
-      '@aws-sdk/client-cloudwatch-logs':
-        specifier: 3.699.0
-        version: 3.699.0(aws-crt@1.25.0)
-      '@aws-sdk/client-s3':
-        specifier: 3.701.0
-        version: 3.701.0(aws-crt@1.25.0)
-      '@hono/zod-validator':
-        specifier: ^0.4.1
-        version: 0.4.2(hono@4.6.5)(zod@3.24.1)
-      '@openauthjs/openevent':
-        specifier: 0.0.24
-        version: 0.0.24(drizzle-orm@0.38.3(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@19.0.7)(kysely@0.27.5)(mysql2@3.12.0)(react@19.0.0))(mysql2@3.12.0)
-      hono:
-        specifier: 4.6.5
-        version: 4.6.5
-      luxon:
-        specifier: 3.5.0
-        version: 3.5.0
-      mysql2:
-        specifier: 3.12.0
-        version: 3.12.0
-      octokit:
-        specifier: ^4.0.2
-        version: 4.1.0
-      remeda:
-        specifier: ^2.17.3
-        version: 2.19.1
-      replicache:
-        specifier: 14.2.2
-        version: 14.2.2
-      strip-ansi:
-        specifier: ^7.1.0
-        version: 7.1.0
-      zod:
-        specifier: 3.24.1
-        version: 3.24.1
-    devDependencies:
-      '@types/luxon':
-        specifier: 3.4.2
-        version: 3.4.2
-      '@types/node':
-        specifier: ^22.10.1
-        version: 22.10.6
-      sst:
-        specifier: 3.5.9
-        version: 3.5.9
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -158,8 +106,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.1
       '@openauthjs/openevent':
-        specifier: 0.0.24
-        version: 0.0.24(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)
+        specifier: 0.0.27
+        version: 0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
@@ -184,9 +132,6 @@ importers:
       minimatch:
         specifier: ^9.0.4
         version: 9.0.5
-      mysql2:
-        specifier: 3.12.0
-        version: 3.12.0
       octokit:
         specifier: ^4.0.2
         version: 4.1.0
@@ -228,8 +173,8 @@ importers:
         specifier: 0.22.8
         version: 0.22.8
       sst:
-        specifier: 3.5.9
-        version: 3.5.9
+        specifier: 3.5.13
+        version: 3.5.13
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -325,8 +270,8 @@ importers:
         specifier: ^22.10.1
         version: 22.10.6
       sst:
-        specifier: 3.5.9
-        version: 3.5.9
+        specifier: 3.5.13
+        version: 3.5.13
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -364,8 +309,8 @@ importers:
         specifier: 3.5.0
         version: 3.5.0
       sst:
-        specifier: 3.5.9
-        version: 3.5.9
+        specifier: 3.5.13
+        version: 3.5.13
       tsx:
         specifier: ^3.12.7
         version: 3.14.0
@@ -1949,8 +1894,8 @@ packages:
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
-  '@openauthjs/openevent@0.0.24':
-    resolution: {integrity: sha512-1fgiBVtv3xOAwQgEmTaHUrwLi0QlhAcFXB9r6fGl01331bCObs1/4gofzVJr4x4feNjjLFgFe2unIbnpAUowCg==}
+  '@openauthjs/openevent@0.0.27':
+    resolution: {integrity: sha512-Peyl8hWGPmwTPC9gp3ufjEQ55mu64sSa9suBdW7SfHFBMnvxwD+XIoErneXyAH/ydomRghlh6t4N9mCCHjaF4g==}
     peerDependencies:
       drizzle-orm: ^0.x
       mysql2: ^3.x
@@ -2980,9 +2925,6 @@ packages:
   '@types/react@18.0.25':
     resolution: {integrity: sha512-xD6c0KDT4m7n9uD4ZHi02lzskaiqcBxf4zi+tXZY98a04wvc0hi/TcCPC2FOESZi51Nd7tlUeOJY8RofL799/g==}
 
-  '@types/react@19.0.7':
-    resolution: {integrity: sha512-MoFsEJKkAtZCrC1r6CM8U22GzhG7u2Wir8ons/aCKH6MBdD1ibV24zOSSkdZVUKqN5i396zG5VKLYZ3yaUZdLA==}
-
   '@types/relaxed-json@1.0.4':
     resolution: {integrity: sha512-MulPaZU5Hh81T8ROYhsWlC7tJuuapwUT1/wX1qS8/koMI8Ypf3tyEunFZKzewoLsjutDpuf4kXVhxkF82ZtXzg==}
 
@@ -3551,98 +3493,6 @@ packages:
       pg:
         optional: true
       postgres:
-        optional: true
-      react:
-        optional: true
-      sql.js:
-        optional: true
-      sqlite3:
-        optional: true
-
-  drizzle-orm@0.38.3:
-    resolution: {integrity: sha512-w41Y+PquMpSff/QDRGdItG0/aWca+/J3Sda9PPGkTxBtjWQvgU1jxlFBXdjog5tYvTu58uvi3PwR1NuCx0KeZg==}
-    peerDependencies:
-      '@aws-sdk/client-rds-data': '>=3'
-      '@cloudflare/workers-types': '>=4'
-      '@electric-sql/pglite': '>=0.2.0'
-      '@libsql/client': '>=0.10.0'
-      '@libsql/client-wasm': '>=0.10.0'
-      '@neondatabase/serverless': '>=0.10.0'
-      '@op-engineering/op-sqlite': '>=2'
-      '@opentelemetry/api': ^1.4.1
-      '@planetscale/database': '>=1'
-      '@prisma/client': '*'
-      '@tidbcloud/serverless': '*'
-      '@types/better-sqlite3': '*'
-      '@types/pg': '*'
-      '@types/react': '>=18'
-      '@types/sql.js': '*'
-      '@vercel/postgres': '>=0.8.0'
-      '@xata.io/client': '*'
-      better-sqlite3: '>=7'
-      bun-types: '*'
-      expo-sqlite: '>=14.0.0'
-      knex: '*'
-      kysely: '*'
-      mysql2: '>=2'
-      pg: '>=8'
-      postgres: '>=3'
-      prisma: '*'
-      react: '>=18'
-      sql.js: '>=1'
-      sqlite3: '>=5'
-    peerDependenciesMeta:
-      '@aws-sdk/client-rds-data':
-        optional: true
-      '@cloudflare/workers-types':
-        optional: true
-      '@electric-sql/pglite':
-        optional: true
-      '@libsql/client':
-        optional: true
-      '@libsql/client-wasm':
-        optional: true
-      '@neondatabase/serverless':
-        optional: true
-      '@op-engineering/op-sqlite':
-        optional: true
-      '@opentelemetry/api':
-        optional: true
-      '@planetscale/database':
-        optional: true
-      '@prisma/client':
-        optional: true
-      '@tidbcloud/serverless':
-        optional: true
-      '@types/better-sqlite3':
-        optional: true
-      '@types/pg':
-        optional: true
-      '@types/react':
-        optional: true
-      '@types/sql.js':
-        optional: true
-      '@vercel/postgres':
-        optional: true
-      '@xata.io/client':
-        optional: true
-      better-sqlite3:
-        optional: true
-      bun-types:
-        optional: true
-      expo-sqlite:
-        optional: true
-      knex:
-        optional: true
-      kysely:
-        optional: true
-      mysql2:
-        optional: true
-      pg:
-        optional: true
-      postgres:
-        optional: true
-      prisma:
         optional: true
       react:
         optional: true
@@ -5129,9 +4979,19 @@ packages:
     resolution: {integrity: sha512-qC9iz2FlN7DQl3+wjwn3802RTyjCx7sDvfQEXchwa6CWOx07/WVfh91gBmQ9fahw8snwGEWU3xGzOt4tFyHLxg==}
     engines: {node: '>= 0.6'}
 
+  sst-darwin-arm64@3.5.13:
+    resolution: {integrity: sha512-wVv4MCi8Og8J4nCKG2f3YmW8F2kuE6l5mbhj3h4A9+S4HHiTzTVMpEr8n1zru7ayz06W96tXbtpRmcZtkrNoxA==}
+    cpu: [arm64]
+    os: [darwin]
+
   sst-darwin-arm64@3.5.9:
     resolution: {integrity: sha512-1NMSSTNMHG4iiXVEjsCxdxo4/RCVsOxxY6E51syfCgHh6zrTlmENyaKuPPAqMQHlf4IBiq6UU/sCR2EQFo5D5w==}
     cpu: [arm64]
+    os: [darwin]
+
+  sst-darwin-x64@3.5.13:
+    resolution: {integrity: sha512-IrwBMUBo69dp3EIMNYsS/kPYSYT6dZ57OBAp2WnedydEnFOjCglkRCofcveaulFk+g5Wst+mRgWKHd7W8Mfieg==}
+    cpu: [x64]
     os: [darwin]
 
   sst-darwin-x64@3.5.9:
@@ -5139,9 +4999,19 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  sst-linux-arm64@3.5.13:
+    resolution: {integrity: sha512-++SDw86qx23c1OLaX7L430OFjPk++WJrc4SLGyA5sCDB5hZs039w4g55GCxqQyBcDtXN3qomJSKiz4tHKTZnhw==}
+    cpu: [arm64]
+    os: [linux]
+
   sst-linux-arm64@3.5.9:
     resolution: {integrity: sha512-/bjhT+u4PQRxe4LQAujgp2HUyfzz8hCnHO2eWU5YlL9798ldB/DBhEH4lMDvR/QvIaDCEYulDKdp603gRqPxYw==}
     cpu: [arm64]
+    os: [linux]
+
+  sst-linux-x64@3.5.13:
+    resolution: {integrity: sha512-+xehn+dSPxuzVGkT0WSLEeqw0PN+DrTXNp4GYReJTH/JQSvX00rRKG2+BW9uBOYwDFpe4t/ClkpG1Vi0Nng2VA==}
+    cpu: [x64]
     os: [linux]
 
   sst-linux-x64@3.5.9:
@@ -5149,10 +5019,19 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  sst-linux-x86@3.5.13:
+    resolution: {integrity: sha512-yTG0aZLUTq7B8SbOZe8ZEWX8hWJFfzB115UpnABBmDVinzx1Cw0IBKBul8UvqaWpkMGyiPFw3Jmdy0jrnjexfw==}
+    cpu: [x86]
+    os: [linux]
+
   sst-linux-x86@3.5.9:
     resolution: {integrity: sha512-Te2FRC+UVoM8H+x/j2SYUNl4THVDm38vebmW7gRC1U+PrEWZ7ds1F1nOolhoAKpc9JGtsCEA3S2Q2ce5OLF3LQ==}
     cpu: [x86]
     os: [linux]
+
+  sst@3.5.13:
+    resolution: {integrity: sha512-/8MdMw3FStjGNsHsrSwCbKuxJ3M+yAOKlLLBtFaNF2hD0Idn1fZxMUbOug8uiNPsXI0hjhxyt/ahtwtYeMgzsg==}
+    hasBin: true
 
   sst@3.5.9:
     resolution: {integrity: sha512-Te9DC6M4oZPelRcilSMPo8mTfFYU9501tRjc8KZMibgC+dnDV+tAKIhi9DdvLAzqa57RM/F3IBe2m1vWpD4yjg==}
@@ -7608,7 +7487,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.723.0(@aws-sdk/client-sso-oidc@3.726.0(@aws-sdk/client-sts@3.726.1(aws-crt@1.25.0))(aws-crt@1.25.0))':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.726.0(@aws-sdk/client-sts@3.726.1(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/client-sso-oidc': 3.726.0(@aws-sdk/client-sts@3.699.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/types': 3.723.0
       '@smithy/property-provider': 4.0.1
       '@smithy/shared-ini-file-loader': 4.0.1
@@ -8752,7 +8631,7 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
-  '@openauthjs/openevent@0.0.24(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)':
+  '@openauthjs/openevent@0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       aws4fetch: 1.0.20
@@ -8760,16 +8639,6 @@ snapshots:
       ulid: 2.3.0
     optionalDependencies:
       drizzle-orm: 0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0)
-      mysql2: 3.12.0
-
-  '@openauthjs/openevent@0.0.24(drizzle-orm@0.38.3(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@19.0.7)(kysely@0.27.5)(mysql2@3.12.0)(react@19.0.0))(mysql2@3.12.0)':
-    dependencies:
-      '@standard-schema/spec': 1.0.0-beta.3
-      aws4fetch: 1.0.20
-      jose: 5.9.6
-      ulid: 2.3.0
-    optionalDependencies:
-      drizzle-orm: 0.38.3(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@19.0.7)(kysely@0.27.5)(mysql2@3.12.0)(react@19.0.0)
       mysql2: 3.12.0
 
   '@paralleldrive/cuid2@2.2.2':
@@ -10005,11 +9874,6 @@ snapshots:
       '@types/scheduler': 0.23.0
       csstype: 3.1.3
 
-  '@types/react@19.0.7':
-    dependencies:
-      csstype: 3.1.3
-    optional: true
-
   '@types/relaxed-json@1.0.4': {}
 
   '@types/retry@0.12.0': {}
@@ -10229,7 +10093,8 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  aws-ssl-profiles@1.1.2: {}
+  aws-ssl-profiles@1.1.2:
+    optional: true
 
   aws4fetch@1.0.20: {}
 
@@ -10541,7 +10406,8 @@ snapshots:
 
   delayed-stream@1.0.0: {}
 
-  denque@2.1.0: {}
+  denque@2.1.0:
+    optional: true
 
   dequal@2.0.3: {}
 
@@ -10598,16 +10464,6 @@ snapshots:
       kysely: 0.27.5
       mysql2: 3.12.0
       react: 18.2.0
-
-  drizzle-orm@0.38.3(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@19.0.7)(kysely@0.27.5)(mysql2@3.12.0)(react@19.0.0):
-    optionalDependencies:
-      '@aws-sdk/client-rds-data': 3.726.1(aws-crt@1.25.0)
-      '@planetscale/database': 1.19.0
-      '@types/react': 19.0.7
-      kysely: 0.27.5
-      mysql2: 3.12.0
-      react: 19.0.0
-    optional: true
 
   drizzle-zod@0.5.1(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.726.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(zod@3.24.1):
     dependencies:
@@ -10998,6 +10854,7 @@ snapshots:
   generate-function@2.3.1:
     dependencies:
       is-property: 1.0.2
+    optional: true
 
   gensync@1.0.0-beta.2: {}
 
@@ -11154,6 +11011,7 @@ snapshots:
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
+    optional: true
 
   ieee754@1.2.1: {}
 
@@ -11228,7 +11086,8 @@ snapshots:
 
   is-number@7.0.0: {}
 
-  is-property@1.0.2: {}
+  is-property@1.0.2:
+    optional: true
 
   is-stream@1.1.0: {}
 
@@ -11332,7 +11191,8 @@ snapshots:
 
   loglevelnext@6.0.0: {}
 
-  long@5.2.4: {}
+  long@5.2.4:
+    optional: true
 
   loose-envify@1.4.0:
     dependencies:
@@ -11356,9 +11216,11 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  lru-cache@7.18.3: {}
+  lru-cache@7.18.3:
+    optional: true
 
-  lru.min@1.1.1: {}
+  lru.min@1.1.1:
+    optional: true
 
   luxon@3.5.0: {}
 
@@ -11515,6 +11377,7 @@ snapshots:
       named-placeholders: 1.1.3
       seq-queue: 0.0.5
       sqlstring: 2.3.3
+    optional: true
 
   mz@2.7.0:
     dependencies:
@@ -11525,6 +11388,7 @@ snapshots:
   named-placeholders@1.1.3:
     dependencies:
       lru-cache: 7.18.3
+    optional: true
 
   nanoid@3.3.7: {}
 
@@ -12034,7 +11898,8 @@ snapshots:
 
   semver@7.6.3: {}
 
-  seq-queue@0.0.5: {}
+  seq-queue@0.0.5:
+    optional: true
 
   seroval-plugins@1.1.1(seroval@1.1.1):
     dependencies:
@@ -12146,22 +12011,50 @@ snapshots:
     dependencies:
       readable-stream: 3.6.2
 
-  sqlstring@2.3.3: {}
+  sqlstring@2.3.3:
+    optional: true
+
+  sst-darwin-arm64@3.5.13:
+    optional: true
 
   sst-darwin-arm64@3.5.9:
+    optional: true
+
+  sst-darwin-x64@3.5.13:
     optional: true
 
   sst-darwin-x64@3.5.9:
     optional: true
 
+  sst-linux-arm64@3.5.13:
+    optional: true
+
   sst-linux-arm64@3.5.9:
+    optional: true
+
+  sst-linux-x64@3.5.13:
     optional: true
 
   sst-linux-x64@3.5.9:
     optional: true
 
+  sst-linux-x86@3.5.13:
+    optional: true
+
   sst-linux-x86@3.5.9:
     optional: true
+
+  sst@3.5.13:
+    dependencies:
+      aws4fetch: 1.0.20
+      jose: 5.2.3
+      openid-client: 5.6.4
+    optionalDependencies:
+      sst-darwin-arm64: 3.5.13
+      sst-darwin-x64: 3.5.13
+      sst-linux-arm64: 3.5.13
+      sst-linux-x64: 3.5.13
+      sst-linux-x86: 3.5.13
 
   sst@3.5.9:
     dependencies:

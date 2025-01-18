@@ -56,11 +56,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
-    "Backend": {
-      "service": string
-      "type": "sst.aws.Service"
-      "url": string
-    }
     "BillingQueue": {
       "type": "sst.aws.Queue"
       "url": string
@@ -109,6 +104,12 @@ declare module "sst" {
       "value": string
     }
     "IssueDestination": {
+      "cfn": string
+      "handler": {
+        "bucket": string
+        "key": string
+        "version": any
+      }
       "prefix": string
       "role": string
       "stream": string
@@ -117,6 +118,10 @@ declare module "sst" {
     "IssueDetectionQueue": {
       "type": "sst.aws.Queue"
       "url": string
+    }
+    "IssueLambda": {
+      "name": string
+      "type": "sst.aws.Function"
     }
     "IssueStream": {
       "name": string

@@ -534,7 +534,7 @@ export function AWS() {
           </HeaderIcon>
           <HeaderDescription>
             <Switch>
-              <Match when={search.view === "local" && !stage.connected}>
+              <Match when={(console.log("stage", stage.connected), search.view === "local" && !stage.connected)}>
                 Trying to connect to local `sst dev`
               </Match>
               <Match when={search.view === "local"}>

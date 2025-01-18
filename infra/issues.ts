@@ -1,8 +1,10 @@
+import { createHash } from "crypto";
 import { bus } from "./bus";
 import { identity } from "./connect";
 import { email } from "./email";
 import { database } from "./planetscale";
 import { storage } from "./storage";
+import { apiRouter } from "./api";
 
 const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   fifo: true,
@@ -36,7 +38,40 @@ stream.subscribe(
     },
   },
 );
+
+const issuePermissions = [
+  "logs:*",
+  "cloudformation:DescribeStacks",
+  "ssm:GetParameter",
+  "s3:ListBucket",
+  "s3:GetObject",
+];
+const issueLambda = new sst.aws.Function("IssueLambda", {
+  handler: "packages/functions/src/issues/subscriber-self-hosted.handler",
+  dev: false,
+  nodejs: {
+    install: ["source-map"],
+  },
+  environment: {
+    SST_API_URL: apiRouter.url,
+  },
+  permissions: [
+    {
+      actions: issuePermissions,
+      resources: ["*"],
+    },
+  ],
+});
 const regions = aws.getRegionsOutput();
+
+// regions.apply((regions) => {
+//   for (const region of regions.names) {
+//     console.log("made provider for", region);
+//     const provider = new aws.Provider("AwsProvider" + region, {
+//       region: region as any,
+//     });
+//   }
+// });
 
 const role = new aws.iam.Role("IssueRole", {
   assumeRolePolicy: aws.iam.getPolicyDocumentOutput({
@@ -68,11 +103,129 @@ new aws.iam.RolePolicy("IssuePolicy", {
   }).json,
 });
 
+const cfnTemplate = $jsonStringify({
+  AWSTemplateFormatVersion: "2010-09-09",
+  Description: "Process issues for SST Console",
+  Parameters: {
+    workspaceID: {
+      Type: "String",
+      Description: "This is the ID of your SST Console workspace, do not edit.",
+    },
+    template: {
+      Type: "String",
+      Description: "The template URL",
+    },
+  },
+  Resources: {
+    SubscriberRole: {
+      Type: "AWS::IAM::Role",
+      Properties: {
+        RoleName: {
+          "Fn::Sub": "sst-console-issue-${workspaceID}",
+        },
+        AssumeRolePolicyDocument: {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: {
+                Service: "lambda.amazonaws.com",
+              },
+              Action: "sts:AssumeRole",
+            },
+            {
+              Effect: "Allow",
+              Principal: {
+                Service: "logs.amazonaws.com",
+              },
+              Action: "sts:AssumeRole",
+            },
+          ],
+        },
+        Policies: [
+          {
+            PolicyName: "Permissions",
+            PolicyDocument: {
+              Version: "2012-10-17",
+              Statement: [
+                {
+                  Effect: "Allow",
+                  Action: issuePermissions,
+                  Resource: ["*"],
+                },
+              ],
+            },
+          },
+        ],
+        ManagedPolicyArns: [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+        ],
+      },
+    },
+    Subscriber: {
+      Type: "AWS::Lambda::Function",
+      Properties: {
+        FunctionName: {
+          "Fn::Sub": "sst-console-issue-${workspaceID}",
+        },
+        Code: {
+          S3Bucket: issueLambda.nodes.function.s3Bucket,
+          S3Key: issueLambda.nodes.function.s3Key,
+        },
+        Environment: issueLambda.nodes.function.environment.apply((env) => ({
+          Variables: {
+            ...env?.variables,
+            SST_WORKSPACE_ID: {
+              "Fn::Sub": "${workspaceID}",
+            },
+          },
+        })),
+        Handler: "bundle.handler",
+        Runtime: "nodejs22.x",
+        Role: { "Fn::GetAtt": ["SubscriberRole", "Arn"] },
+      },
+    },
+    SubscriberPermission: {
+      Type: "AWS::Lambda::Permission",
+      Properties: {
+        FunctionName: { Ref: "Subscriber" },
+        Action: "lambda:InvokeFunction",
+        Principal: "logs.amazonaws.com",
+        SourceArn: {
+          "Fn::Sub":
+            "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*",
+        },
+      },
+    },
+  },
+  Outputs: {
+    SubscriberARN: {
+      Value: { "Fn::GetAtt": ["Subscriber", "Arn"] },
+    },
+  },
+});
+const cfnHash = cfnTemplate.apply((input) =>
+  createHash("sha256").update(input).digest("hex"),
+);
+const cfn = new aws.s3.BucketObjectv2("IssueCfnTemplate", {
+  bucket: storage.name,
+  key: $interpolate`issue/template-${cfnHash}.json`,
+  acl: "public-read",
+  content: cfnTemplate,
+});
+
 export const issues = new sst.Linkable("IssueDestination", {
   properties: {
     role: role.arn,
     prefix: $interpolate`arn:aws:logs:<region>:${identity.accountId}:destination:`,
     stream: stream.arn,
+    cfn: $interpolate`https://${storage.nodes.bucket.bucketRegionalDomainName}/${cfn.key}`,
+
+    handler: {
+      bucket: issueLambda.nodes.function.s3Bucket,
+      key: issueLambda.nodes.function.s3Key,
+      version: issueLambda.nodes.function.s3ObjectVersion,
+    },
   },
 });
 

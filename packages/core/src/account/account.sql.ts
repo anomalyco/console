@@ -10,5 +10,5 @@ export const account = mysqlTable(
   },
   (user) => ({
     email: uniqueIndex("email").on(user.email),
-  })
+  }),
 );

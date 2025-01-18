@@ -17,7 +17,7 @@ import {
   ResourceNotFoundException,
   DeleteSubscriptionFilterCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
-import { Resource as SSTResource } from "sst";
+import { Resource, Resource as SSTResource } from "sst";
 import { z } from "zod";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Stage, StageCredentials } from "../app/stage";
@@ -26,9 +26,15 @@ import { Warning } from "../warning";
 import { useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
-import { filter, map, pipe, unique } from "remeda";
+import { flatMap, pipe, uniqueBy } from "remeda";
 import { warning } from "../warning/warning.sql";
 import { queue } from "../util/queue";
+import {
+  CloudFormationClient,
+  CreateStackCommand,
+  DescribeStacksCommand,
+  UpdateStackCommand,
+} from "@aws-sdk/client-cloudformation";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -205,6 +211,114 @@ export const subscribeIon = zod(
       retryStrategy: RETRY_STRATEGY,
     });
 
+    const destinations = new Map<string, string>();
+    const workspaceID = useWorkspace();
+    const stackName = "sst-console-issue-" + workspaceID;
+    async function getDestination(region: string) {
+      if (destinations.has(region)) return destinations.get(region)!;
+
+      const cfn = new CloudFormationClient({
+        region,
+        credentials: config.credentials,
+        retryStrategy: RETRY_STRATEGY,
+      });
+
+      /*
+      while (true) {
+        const result = await cfn.send(
+          new DescribeStacksCommand({
+            StackName: stackName,
+          }),
+        );
+        const stack = result.Stacks?.[0];
+        if (!stack) {
+          console.log(
+            "creating stack with template",
+            Resource.IssueDestination.cfn,
+          );
+          await cfn.send(
+            new CreateStackCommand({
+              StackName: stackName,
+              TemplateURL: Resource.IssueDestination.cfn,
+              Parameters: [
+                {
+                  ParameterKey: "workspaceID",
+                  ParameterValue: workspaceID,
+                },
+                {
+                  ParameterKey: "template",
+                  ParameterValue: Resource.IssueDestination.cfn,
+                },
+              ],
+              Capabilities: ["CAPABILITY_NAMED_IAM"],
+            }),
+          );
+          continue;
+        }
+        console.log(stack.StackStatus, stack.Outputs);
+
+        if (
+          [
+            "CREATE_COMPLETE",
+            "UPDATE_COMPLETE",
+            "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+          ].includes(stack.StackStatus || "")
+        ) {
+          if (
+            !stack.Parameters?.find(
+              (x) =>
+                x.ParameterKey === "template" &&
+                x.ParameterValue === Resource.IssueDestination.cfn,
+            )
+          ) {
+            console.log(
+              "updating stack with template",
+              Resource.IssueDestination.cfn,
+            );
+            await cfn.send(
+              new UpdateStackCommand({
+                StackName: stackName,
+                TemplateURL: Resource.IssueDestination.cfn,
+                Parameters: [
+                  {
+                    ParameterKey: "workspaceID",
+                    ParameterValue: workspaceID,
+                  },
+                  {
+                    ParameterKey: "template",
+                    ParameterValue: Resource.IssueDestination.cfn,
+                  },
+                ],
+                Capabilities: ["CAPABILITY_NAMED_IAM"],
+              }),
+            );
+            continue;
+          }
+          const outputs = stack.Outputs || [];
+          const functionArn = outputs.find(
+            (x) => x.OutputKey === "SubscriberARN",
+          )?.OutputValue;
+          if (functionArn) {
+            console.log(stack.StackStatus, stack.Outputs);
+            return destinations.set(region, functionArn!), functionArn;
+          }
+          break;
+        }
+
+        if (
+          !["CREATE_IN_PROGRESS", "UPDATE_IN_PROGRESS"].includes(
+            stack.StackStatus || "",
+          )
+        ) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      */
+
+      return destinations.set(region, destination), destination!;
+    }
+
     try {
       const limited = await db
         .select({
@@ -240,31 +354,58 @@ export const subscribeIon = zod(
 
       const groups = pipe(
         resources,
-        map((resource): string | undefined => {
+        flatMap((resource) => {
+          const arn = resource.outputs?.arn?.split(":");
+          const region = arn?.at(3);
+          const accountID = arn?.at(4);
           if (
             resource.type === "aws:lambda/function:Function" &&
             resource.outputs.loggingConfig
           ) {
-            return resource.outputs.loggingConfig.logGroup;
+            return [
+              {
+                logGroup: resource.outputs.loggingConfig.logGroup,
+                accountID,
+                region,
+              },
+            ];
           }
           if (resource.type === "aws:cloudwatch/logGroup:LogGroup") {
-            return resource.outputs.name;
+            return [
+              {
+                logGroup: resource.outputs.name,
+                accountID,
+                region,
+              },
+            ];
           }
-
           if (resource.type === "sstv2:aws:Function") {
-            return resource.outputs.enrichment?.logGroup;
+            return [
+              {
+                logGroup: resource.outputs.enrichment?.logGroup,
+                accountID,
+                region: config.region,
+              },
+            ];
           }
+          return [];
         }),
-        filter(Boolean),
-        unique(),
+        uniqueBy((x) => x.logGroup),
       );
       if (!groups.length) return;
-      await queue(5, groups as string[], subscribe);
-      async function subscribe(logGroup: string) {
-        console.log("subscribing", logGroup);
-        if (limited.has(logGroup)) {
-          console.log("skipping", logGroup, "because it's rate limited");
+      await queue(1, groups, async (item) => {
+        if (limited.has(item.logGroup)) {
+          console.log("skipping", item.logGroup, "because it's rate limited");
         }
+        const destination = await getDestination(item.region);
+        console.log(
+          "subscribing",
+          item.logGroup,
+          "in",
+          item.region,
+          "to",
+          destination,
+        );
         while (true) {
           try {
             await cw.send(
@@ -286,12 +427,12 @@ export const subscribeIon = zod(
                   //   ? [`?"\tERROR\t"`]
                   //   : []),
                 ].join(" "),
-                logGroupName: logGroup,
+                logGroupName: item.logGroup,
               }),
             );
 
             await Warning.remove({
-              target: logGroup,
+              target: item.logGroup,
               type: "log_subscription",
               stageID: config.stageID,
             });
@@ -308,7 +449,7 @@ export const subscribeIon = zod(
               await cw
                 .send(
                   new CreateLogGroupCommand({
-                    logGroupName: logGroup,
+                    logGroupName: item.logGroup,
                   }),
                 )
                 .catch((e) => {
@@ -322,7 +463,7 @@ export const subscribeIon = zod(
             if (e instanceof LimitExceededException) {
               await Warning.create({
                 stageID: config.stageID,
-                target: logGroup,
+                target: item.logGroup,
                 type: "log_subscription",
                 data: {
                   error: "limited",
@@ -335,7 +476,7 @@ export const subscribeIon = zod(
             if (e.name === "AccessDeniedException") {
               await Warning.create({
                 stageID: config.stageID,
-                target: logGroup,
+                target: item.logGroup,
                 type: "log_subscription",
                 data: {
                   error: "permissions",
@@ -356,7 +497,7 @@ export const subscribeIon = zod(
                 if (e.name === "AccessDeniedException") {
                   await Warning.create({
                     stageID: config.stageID,
-                    target: logGroup,
+                    target: item.logGroup,
                     type: "log_subscription",
                     data: {
                       error: "permissions",
@@ -371,7 +512,7 @@ export const subscribeIon = zod(
             console.error(e);
             await Warning.create({
               stageID: config.stageID,
-              target: logGroup,
+              target: item.logGroup,
               type: "log_subscription",
               data: {
                 error: "unknown",
@@ -381,7 +522,7 @@ export const subscribeIon = zod(
             break;
           }
         }
-      }
+      });
     } finally {
       cw.destroy();
     }
