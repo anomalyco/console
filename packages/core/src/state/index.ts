@@ -648,7 +648,7 @@ export module State {
           .values({
             id: input.updateID,
             index: max + 1,
-            runID: update.runID,
+            runID: update.runID || null,
             errors: update.errors,
             stageID: input.config.stageID,
             workspaceID: useWorkspace(),
