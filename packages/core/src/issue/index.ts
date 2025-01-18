@@ -224,12 +224,14 @@ export const subscribeIon = zod(
       });
 
       while (true && config.app === "console") {
-        const result = await cfn.send(
-          new DescribeStacksCommand({
-            StackName: stackName,
-          }),
-        );
-        const stack = result.Stacks?.[0];
+        const result = await cfn
+          .send(
+            new DescribeStacksCommand({
+              StackName: stackName,
+            }),
+          )
+          .catch(() => {});
+        const stack = result?.Stacks?.[0];
         if (!stack) {
           console.log(
             "creating stack with template",
