@@ -407,9 +407,8 @@ export const subscribeIon = zod(
           console.log("skipping", item.logGroup, "because it's rate limited");
         }
         if (
-          item.logGroup.includes(
-            "IssueStreamSubscriberIssueStreamSubscriberFunctionFunction",
-          )
+          config.app === "console" &&
+          item.logGroup.includes("IssueStreamSubscriberIssueStreamSubscriber")
         )
           return;
         const destination = await getDestination(item.region);
