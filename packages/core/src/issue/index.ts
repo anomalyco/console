@@ -406,6 +406,12 @@ export const subscribeIon = zod(
         if (limited.has(item.logGroup)) {
           console.log("skipping", item.logGroup, "because it's rate limited");
         }
+        if (
+          item.logGroup.includes(
+            "IssueStreamSubscriberIssueStreamSubscriberFunctionFunction",
+          )
+        )
+          return;
         const destination = await getDestination(item.region);
         console.log(
           "subscribing",
