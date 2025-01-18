@@ -21,9 +21,7 @@ export const bootstrap = zod(
           StackName: "SSTBootstrap",
         }),
       )
-      .catch((err) => {
-        console.error(err);
-      });
+      .catch((err) => {});
 
     if (bootstrap) {
       const bucket = bootstrap.Stacks?.at(0)?.Outputs?.find(
@@ -71,9 +69,7 @@ export const bootstrapIon = zod(
             Name: "/sst/bootstrap",
           }),
         )
-        .catch((err) => {
-          console.error(err);
-        });
+        .catch((err) => {});
       if (!param?.Parameter?.Value) return;
       const parsed = JSON.parse(param.Parameter.Value);
       return {
