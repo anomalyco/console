@@ -262,6 +262,8 @@ export const subscribeIon = zod(
           [
             "CREATE_COMPLETE",
             "UPDATE_COMPLETE",
+            "ROLLBACK_COMPLETE",
+            "ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
             "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
           ].includes(stack.StackStatus || "")
         ) {
