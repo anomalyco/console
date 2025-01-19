@@ -32,6 +32,7 @@ import { queue } from "../util/queue";
 import {
   CloudFormationClient,
   CreateStackCommand,
+  DeleteStackCommand,
   DescribeStacksCommand,
   UpdateStackCommand,
 } from "@aws-sdk/client-cloudformation";
@@ -241,7 +242,6 @@ export const subscribeIon = zod(
             new CreateStackCommand({
               StackName: stackName,
               TemplateURL: Resource.IssueDestination.cfn,
-              DisableRollback: true,
               Parameters: [
                 {
                   ParameterKey: "workspaceID",
@@ -258,6 +258,15 @@ export const subscribeIon = zod(
           continue;
         }
         console.log(stack.StackStatus, stack.Outputs);
+
+        if (["ROLLBACK_COMPLETE"].includes(stack.StackStatus || "")) {
+          await cfn.send(
+            new DeleteStackCommand({
+              StackName: stackName,
+            }),
+          );
+          continue;
+        }
 
         if (
           [
@@ -280,7 +289,6 @@ export const subscribeIon = zod(
             await cfn.send(
               new UpdateStackCommand({
                 StackName: stackName,
-                DisableRollback: true,
                 TemplateURL: Resource.IssueDestination.cfn,
                 Parameters: [
                   {
