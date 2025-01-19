@@ -603,55 +603,17 @@ export const disableLogGroup = zod(
 
 export async function cleanup() {
   {
-    const chunkSize = 1000;
-    let deletedCount = 0;
-
-    while (true) {
-      const toDelete = await db
-        .select({ id: issue.id })
-        .from(issue)
-        .where(lt(issue.timeSeen, sql`now() - interval 30 day`))
-        .limit(chunkSize);
-
-      if (toDelete.length === 0) {
-        break;
-      }
-
-      const result = await db.delete(issue).where(
-        inArray(
-          issue.id,
-          toDelete.map((row) => row.id),
-        ),
-      );
-      deletedCount += result.rowsAffected;
-    }
-    console.log("deleted", deletedCount, "issues");
+    const result = await db
+      .delete(issue)
+      .where(lt(issue.timeSeen, sql`now() - interval 30 day`));
+    console.log("deleted", result.rowsAffected, "issues");
   }
 
   {
-    const chunkSize = 1000;
-    let deletedCount = 0;
-
-    while (true) {
-      const toDelete = await db
-        .select({ id: issueCount.id })
-        .from(issueCount)
-        .where(lt(issueCount.hour, sql`now() - interval 24 hour`))
-        .limit(chunkSize);
-
-      if (toDelete.length === 0) {
-        break;
-      }
-
-      const result = await db.delete(issueCount).where(
-        inArray(
-          issueCount.id,
-          toDelete.map((row) => row.id),
-        ),
-      );
-      deletedCount += result.rowsAffected;
-    }
-    console.log("deleted", deletedCount, "issue counts");
+    const result = await db
+      .delete(issueCount)
+      .where(lt(issueCount.hour, sql`now() - interval 24 hour`));
+    console.log("deleted", result.rowsAffected, "issue counts");
   }
 
   {
