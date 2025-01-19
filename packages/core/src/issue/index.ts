@@ -241,6 +241,7 @@ export const subscribeIon = zod(
             new CreateStackCommand({
               StackName: stackName,
               TemplateURL: Resource.IssueDestination.cfn,
+              DisableRollback: true,
               Parameters: [
                 {
                   ParameterKey: "workspaceID",
@@ -262,8 +263,6 @@ export const subscribeIon = zod(
           [
             "CREATE_COMPLETE",
             "UPDATE_COMPLETE",
-            "ROLLBACK_COMPLETE",
-            "ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
             "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
           ].includes(stack.StackStatus || "")
         ) {
@@ -281,6 +280,7 @@ export const subscribeIon = zod(
             await cfn.send(
               new UpdateStackCommand({
                 StackName: stackName,
+                DisableRollback: true,
                 TemplateURL: Resource.IssueDestination.cfn,
                 Parameters: [
                   {
