@@ -15,7 +15,12 @@ export async function handler(input: CloudWatchLogsEvent) {
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
-  console.log("error from", decoded.logGroup);
+  console.log(
+    "error from",
+    decoded.logGroup,
+    decoded.logEvents.length,
+    "events",
+  );
   const [_prefix, region, accountID, appName, stageName] =
     decoded.subscriptionFilters[0]?.split("#") || [];
   const sourcemapKey =
@@ -102,7 +107,6 @@ export async function handler(input: CloudWatchLogsEvent) {
     },
     sha256: Sha256,
   });
-  console.log("sending", results.length, "issues");
   const url = await signer.presign({
     method: "GET",
     headers: {
@@ -119,6 +123,7 @@ export async function handler(input: CloudWatchLogsEvent) {
   });
   const identity = formatUrl(url);
   const unique = uniqueBy(results, (x) => x.group);
+  console.log("sending", unique.length, "issues");
   await fetch(process.env.SST_API_URL! + "/ingest", {
     headers: {
       "content-type": "application/json",
