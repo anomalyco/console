@@ -15,7 +15,7 @@ export async function handler(input: CloudWatchLogsEvent) {
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
-  console.log("error form", decoded.logGroup);
+  console.log("error from", decoded.logGroup);
   const [_prefix, region, accountID, appName, stageName] =
     decoded.subscriptionFilters[0]?.split("#") || [];
   const sourcemapKey =
@@ -40,6 +40,7 @@ export async function handler(input: CloudWatchLogsEvent) {
     const splits = item.message.split(`\t`).map((x) => x.trim());
     const extracted = extractError(splits);
     if (!extracted) {
+      console.log("no extracted error", item.id);
       continue;
     }
     const err = await applySourcemap(sourcemapCache, item.timestamp, extracted);
@@ -54,7 +55,7 @@ export async function handler(input: CloudWatchLogsEvent) {
 
     if (!err.error || !err.message) {
       console.log("error was undefined for some reason", item);
-      return;
+      continue;
     }
 
     const groupParts = (() => {
@@ -101,6 +102,7 @@ export async function handler(input: CloudWatchLogsEvent) {
     },
     sha256: Sha256,
   });
+  console.log("sending", results.length, "issues");
   const url = await signer.presign({
     method: "GET",
     headers: {
