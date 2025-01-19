@@ -94,7 +94,9 @@ function createBuildTimeoutMonitor() {
       secret.GithubAppID,
       secret.GithubPrivateKey,
     ],
-    permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
+    permissions: [
+      { actions: ["sts:*", "iot:*", "iam:PassRole"], resources: ["*"] },
+    ],
   });
   const role = new aws.iam.Role("AutodeployTimeoutMonitorRole", {
     assumeRolePolicy: aws.iam.getPolicyDocumentOutput({
