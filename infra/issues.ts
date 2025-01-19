@@ -185,6 +185,17 @@ const cfnTemplate = $jsonStringify({
         MaximumEventAgeInSeconds: 600,
       },
     },
+    SubscriberEventInvokeConfig: {
+      Type: "AWS::Lambda::EventInvokeConfig",
+      Properties: {
+        FunctionName: {
+          Ref: "Subscriber",
+        },
+        Qualifier: "$LATEST",
+        MaximumEventAgeInSeconds: 600,
+        MaximumRetryAttempts: 0,
+      },
+    },
     SubscriberLogGroup: {
       Type: "AWS::Logs::LogGroup",
       Properties: {
