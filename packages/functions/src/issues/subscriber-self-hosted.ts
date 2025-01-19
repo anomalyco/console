@@ -16,6 +16,7 @@ export async function handler(input: CloudWatchLogsEvent) {
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
+  console.log(decoded);
   console.log(
     "error from",
     decoded.logGroup,
