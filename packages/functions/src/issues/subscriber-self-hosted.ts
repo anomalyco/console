@@ -12,6 +12,7 @@ import { SignatureV4 } from "@aws-sdk/signature-v4";
 import { Sha256 } from "@aws-crypto/sha256-js";
 
 export async function handler(input: CloudWatchLogsEvent) {
+  console.log(input);
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
@@ -42,6 +43,7 @@ export async function handler(input: CloudWatchLogsEvent) {
   });
   const results = [];
   for (const item of decoded.logEvents) {
+    console.log("processing", item.id);
     const splits = item.message.split(`\t`).map((x) => x.trim());
     const extracted = extractError(splits);
     if (!extracted) {
