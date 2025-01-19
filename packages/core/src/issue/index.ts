@@ -629,19 +629,29 @@ export async function cleanup() {
   }
 
   {
-    for (let i = 1; i <= 24; i++) {
-      const result = await db
-        .delete(issueCount)
-        .where(lt(issueCount.hour, sql`now() - interval ${i} hour`));
-      console.log("deleted", result.rowsAffected, "issue counts");
-    }
-  }
+    const chunkSize = 1000;
+    let deletedCount = 0;
 
-  {
-    const result = await db
-      .delete(issueCount)
-      .where(lt(issueCount.hour, sql`now() - interval 24 hour`));
-    console.log("deleted", result.rowsAffected, "issue counts");
+    while (true) {
+      const toDelete = await db
+        .select({ id: issueCount.id })
+        .from(issueCount)
+        .where(lt(issueCount.hour, sql`now() - interval 24 hour`))
+        .limit(chunkSize);
+
+      if (toDelete.length === 0) {
+        break;
+      }
+
+      const result = await db.delete(issueCount).where(
+        inArray(
+          issueCount.id,
+          toDelete.map((row) => row.id),
+        ),
+      );
+      deletedCount += result.rowsAffected;
+    }
+    console.log("deleted", deletedCount, "issue counts");
   }
 
   {
