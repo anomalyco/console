@@ -179,6 +179,19 @@ const cfnTemplate = $jsonStringify({
         Handler: "bundle.handler",
         Runtime: "nodejs22.x",
         Role: { "Fn::GetAtt": ["SubscriberRole", "Arn"] },
+        MemorySize: 1024,
+        Timeout: 60,
+        MaximumRetryAttempts: 0,
+        MaximumEventAgeInSeconds: 600,
+      },
+    },
+    SubscriberLogGroup: {
+      Type: "AWS::Logs::LogGroup",
+      Properties: {
+        LogGroupName: {
+          "Fn::Sub": "/aws/lambda/sst-console-issue-${workspaceID}",
+        },
+        RetentionInDays: 1,
       },
     },
     SubscriberPermission: {
