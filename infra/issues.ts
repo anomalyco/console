@@ -181,6 +181,7 @@ const cfnTemplate = $jsonStringify({
         Role: { "Fn::GetAtt": ["SubscriberRole", "Arn"] },
         MemorySize: 1024,
         Timeout: 60,
+        ReservedConcurrentExecutions: 10,
       },
     },
     SubscriberEventInvokeConfig: {
