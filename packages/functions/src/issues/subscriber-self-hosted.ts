@@ -51,6 +51,7 @@ export async function handler(input: CloudWatchLogsEvent) {
       console.log("no extracted error", item.id);
       continue;
     }
+    console.log("applying sourcemap", item.id);
     const err = await applySourcemap(sourcemapCache, item.timestamp, extracted);
     if (
       err.error !== "Runtime.HandlerNotFound" &&
