@@ -48,6 +48,7 @@ const issuePermissions = [
 ];
 const issueLambda = new sst.aws.Function("IssueLambda", {
   handler: "packages/functions/src/issues/subscriber-self-hosted.handler",
+  dev: false,
   nodejs: {
     install: ["source-map"],
   },
@@ -103,7 +104,12 @@ new aws.iam.RolePolicy("IssuePolicy", {
 });
 
 const handlerCode = new aws.s3.BucketObjectv2("IssueHandlerCode", {
-  source: issueLambda.nodes.function.code,
+  source: $resolve(issueLambda.nodes.function.codeSha256).apply((v) => {
+    console.log(process.cwd() + "/.sst/artifacts/IssueLambda/code.zip");
+    return new $util.asset.FileAsset(
+      process.cwd() + "/.sst/artifacts/IssueLambda/code.zip",
+    );
+  }),
   bucket: storage.name,
   key: $interpolate`issue/handler/${issueLambda.nodes.function.codeSha256}.zip`,
   acl: "public-read",
