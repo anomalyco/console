@@ -255,10 +255,11 @@ export const LogRoute = new Hono()
             if (response.status === "Complete") {
               if (query.hint === "lambda") {
                 let index = 0;
+
                 async function flush() {
                   const data = processor.flush(-1);
                   if (data.length) {
-                    entries.push(...data);
+                    entries.push(...data.slice(0, 50 - entries.length));
                   }
                 }
 
@@ -270,6 +271,9 @@ export const LogRoute = new Hono()
                     line: result[1]?.value!,
                   });
                   index++;
+                  if (processor.ready > entries.length - 50) {
+                    break;
+                  }
                 }
                 await flush();
               }
