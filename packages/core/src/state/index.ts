@@ -35,6 +35,10 @@ import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
 import { DateTime } from "luxon";
+import {
+  CloudFormationClient,
+  DescribeStackResourcesCommand,
+} from "@aws-sdk/client-cloudformation";
 
 export module State {
   export const Event = {
@@ -969,6 +973,10 @@ export module State {
             }),
           )
           .catch(() => {});
+        const cfn = new CloudFormationClient({
+          ...input.config,
+          retryStrategy: RETRY_STRATEGY,
+        });
         if (list && list.Contents?.length) {
           console.log("found", list.Contents?.length, "stacks");
           for (const obj of list.Contents || []) {
@@ -991,6 +999,23 @@ export module State {
             const body = await result
               .Body!.transformToString()
               .then((x) => JSON.parse(x));
+            const cfnResult = await cfn
+              .send(
+                new DescribeStackResourcesCommand({
+                  StackName: stackID,
+                }),
+              )
+              .catch(() => {});
+            if (cfnResult) {
+              for (const resource of cfnResult.StackResources || []) {
+                body.push({
+                  type: resource.ResourceType!,
+                  id: resource.LogicalResourceId!,
+                  addr: resource.LogicalResourceId!,
+                  data: {},
+                });
+              }
+            }
             body.push({
               type: "Stack",
               id: stackID,
