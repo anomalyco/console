@@ -6,6 +6,7 @@ import { Stripe } from "@console/core/billing/stripe";
 import { Issue } from "@console/core/issue";
 import { Run } from "@console/core/run";
 import { State } from "@console/core/state";
+import { User } from "@console/core/user";
 import { Workspace } from "@console/core/workspace";
 import { bus } from "sst/aws/bus";
 
@@ -29,12 +30,16 @@ export const handler = bus.subscriber(
     Issue.Events.IssueDetected,
     Run.Event.Created,
     Run.Event.CreateFailed,
+    User.Events.UserCreated,
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
       console.log(JSON.stringify(evt));
       const now = Date.now();
       switch (evt.type) {
+        case User.Events.UserCreated.type:
+          await User.sendEmailInvite(evt.properties.userID);
+          break;
         case AWS.Account.Events.Created.type:
           const account = await AWS.Account.fromID(evt.properties.awsAccountID);
           if (!account) {
