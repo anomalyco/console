@@ -337,8 +337,8 @@ export const subscribeIon = zod(
           }
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-      } catch (ex) {
-        console.error(ex);
+      } catch (ex: any) {
+        if (ex.name !== "AccessDenied") throw ex;
       }
 
       await Warning.create({
