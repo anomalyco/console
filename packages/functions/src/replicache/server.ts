@@ -10,7 +10,10 @@ import { assertActor, withActor, useWorkspace } from "@console/core/actor";
 import { User } from "@console/core/user";
 import { Issue } from "@console/core/issue";
 import { and, eq, or } from "@console/core/drizzle";
-import { useTransaction } from "@console/core/util/transaction";
+import {
+  createTransactionEffect,
+  useTransaction,
+} from "@console/core/util/transaction";
 import { issueSubscriber } from "@console/core/issue/issue.sql";
 import { warning } from "@console/core/warning/warning.sql";
 import { Github } from "@console/core/git/github";
@@ -72,6 +75,12 @@ export const server = new Server()
             ),
           )
           .execute();
+
+        await createTransactionEffect(() =>
+          bus.publish(Resource.Bus, State.Event.StateRefreshed, {
+            stageID: input.stageID,
+          }),
+        );
       });
     },
   )
