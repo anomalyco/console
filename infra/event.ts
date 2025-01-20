@@ -23,6 +23,7 @@ bus.subscribe(
           "s3:*",
           "ssm:*",
           "cloudwatch:*",
+          "iam:PassRole",
         ],
         resources: ["*"],
       },
