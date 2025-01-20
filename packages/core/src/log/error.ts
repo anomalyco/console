@@ -241,7 +241,7 @@ export function createSourcemapCache(input: {
       const match = pipe(
         await sourcemapsMeta(),
         filter((x) => x.created < number),
-        firstBy((x) => [x.created, "desc"]),
+        firstBy([(x) => x.created, "desc"]),
       );
       if (!match) return;
       if (sourcemapCache.has(match.key)) {
