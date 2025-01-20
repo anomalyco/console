@@ -26,7 +26,7 @@ import { Warning } from "../warning";
 import { useTransaction } from "../util/transaction";
 import { Log } from "../log";
 import { stateResourceTable } from "../state/state.sql";
-import { flatMap, pipe, uniqueBy } from "remeda";
+import { filter, flatMap, pipe, uniqueBy } from "remeda";
 import { warning } from "../warning/warning.sql";
 import { queue } from "../util/queue";
 import {
@@ -419,6 +419,7 @@ export const subscribeIon = zod(
       );
       if (!groups.length) return;
       await queue(1, groups, async (item) => {
+        if (!item.logGroup) return;
         if (limited.has(item.logGroup)) {
           console.log("skipping", item.logGroup, "because it's rate limited");
         }
