@@ -244,23 +244,28 @@ export const subscribeIon = zod(
             "creating stack with template",
             Resource.IssueDestination.cfn,
           );
-          await cfn.send(
-            new CreateStackCommand({
-              StackName: stackName,
-              TemplateURL: Resource.IssueDestination.cfn,
-              Parameters: [
-                {
-                  ParameterKey: "workspaceID",
-                  ParameterValue: workspaceID,
-                },
-                {
-                  ParameterKey: "template",
-                  ParameterValue: Resource.IssueDestination.cfn,
-                },
-              ],
-              Capabilities: ["CAPABILITY_NAMED_IAM"],
-            }),
-          );
+          await cfn
+            .send(
+              new CreateStackCommand({
+                StackName: stackName,
+                TemplateURL: Resource.IssueDestination.cfn,
+                Parameters: [
+                  {
+                    ParameterKey: "workspaceID",
+                    ParameterValue: workspaceID,
+                  },
+                  {
+                    ParameterKey: "template",
+                    ParameterValue: Resource.IssueDestination.cfn,
+                  },
+                ],
+                Capabilities: ["CAPABILITY_NAMED_IAM"],
+              }),
+            )
+            .catch((ex) => {
+              if (ex.name === "AlreadyExistsException") return;
+              throw ex;
+            });
           continue;
         }
         console.log(stack.StackStatus, stack.Outputs);

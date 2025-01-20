@@ -2,8 +2,11 @@ import { withActor } from "@console/core/actor";
 import { db, inArray } from "@console/core/drizzle";
 import { stage } from "@console/core/app/app.sql";
 import { Stage } from "@console/core/app";
+import { State } from "@console/core/state";
 import { queue } from "@console/core/util/queue";
 import { promptWorkspaces } from "./common";
+import { bus } from "sst/aws/bus";
+import { Resource } from "sst";
 import { Issue } from "@console/core/issue";
 
 const stages = await db
@@ -23,11 +26,9 @@ await queue(
         },
       },
       async () => {
-        const config = await Stage.assumeRole(stage.id);
-        if (!config) return;
-        if (config.stage !== "prod-v3") return;
-        console.log(config);
-        await Issue.subscribeIon(config);
+        await bus.publish(Resource.Bus, State.Event.StateRefreshed, {
+          stageID: stage.id,
+        });
         console.log("done");
       },
     ),
