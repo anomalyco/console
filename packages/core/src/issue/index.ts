@@ -230,111 +230,115 @@ export const subscribeIon = zod(
         retryStrategy: RETRY_STRATEGY,
       });
 
-      while (true) {
-        const result = await cfn
-          .send(
-            new DescribeStacksCommand({
-              StackName: stackName,
-            }),
-          )
-          .catch(() => {});
-        const stack = result?.Stacks?.[0];
-        if (!stack) {
-          console.log(
-            "creating stack with template",
-            Resource.IssueDestination.cfn,
-          );
-          await cfn
+      try {
+        while (true) {
+          const result = await cfn
             .send(
-              new CreateStackCommand({
+              new DescribeStacksCommand({
                 StackName: stackName,
-                TemplateURL: Resource.IssueDestination.cfn,
-                Parameters: [
-                  {
-                    ParameterKey: "workspaceID",
-                    ParameterValue: workspaceID,
-                  },
-                  {
-                    ParameterKey: "template",
-                    ParameterValue: Resource.IssueDestination.cfn,
-                  },
-                ],
-                Capabilities: ["CAPABILITY_NAMED_IAM"],
               }),
             )
-            .catch((ex) => {
-              if (ex.name === "AlreadyExistsException") return;
-              throw ex;
-            });
-          continue;
-        }
-        console.log(stack.StackStatus, stack.Outputs);
-
-        if (["ROLLBACK_COMPLETE"].includes(stack.StackStatus || "")) {
-          await cfn.send(
-            new DeleteStackCommand({
-              StackName: stackName,
-            }),
-          );
-          continue;
-        }
-
-        if (
-          [
-            "CREATE_COMPLETE",
-            "UPDATE_COMPLETE",
-            "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
-          ].includes(stack.StackStatus || "")
-        ) {
-          if (
-            !stack.Parameters?.find(
-              (x) =>
-                x.ParameterKey === "template" &&
-                x.ParameterValue === Resource.IssueDestination.cfn,
-            )
-          ) {
+            .catch(() => {});
+          const stack = result?.Stacks?.[0];
+          if (!stack) {
             console.log(
-              "updating stack with template",
+              "creating stack with template",
               Resource.IssueDestination.cfn,
             );
+            await cfn
+              .send(
+                new CreateStackCommand({
+                  StackName: stackName,
+                  TemplateURL: Resource.IssueDestination.cfn,
+                  Parameters: [
+                    {
+                      ParameterKey: "workspaceID",
+                      ParameterValue: workspaceID,
+                    },
+                    {
+                      ParameterKey: "template",
+                      ParameterValue: Resource.IssueDestination.cfn,
+                    },
+                  ],
+                  Capabilities: ["CAPABILITY_NAMED_IAM"],
+                }),
+              )
+              .catch((ex) => {
+                if (ex.name === "AlreadyExistsException") return;
+                throw ex;
+              });
+            continue;
+          }
+          console.log(stack.StackStatus, stack.Outputs);
+
+          if (["ROLLBACK_COMPLETE"].includes(stack.StackStatus || "")) {
             await cfn.send(
-              new UpdateStackCommand({
+              new DeleteStackCommand({
                 StackName: stackName,
-                TemplateURL: Resource.IssueDestination.cfn,
-                Parameters: [
-                  {
-                    ParameterKey: "workspaceID",
-                    ParameterValue: workspaceID,
-                  },
-                  {
-                    ParameterKey: "template",
-                    ParameterValue: Resource.IssueDestination.cfn,
-                  },
-                ],
-                Capabilities: ["CAPABILITY_NAMED_IAM"],
               }),
             );
             continue;
           }
-          const outputs = stack.Outputs || [];
-          const functionArn = outputs.find(
-            (x) => x.OutputKey === "SubscriberARN",
-          )?.OutputValue;
-          if (functionArn) {
-            console.log(stack.StackStatus, stack.Outputs);
-            return destinations.set(region, functionArn!), functionArn;
-          }
-          break;
-        }
 
-        if (
-          !["CREATE_IN_PROGRESS", "UPDATE_IN_PROGRESS"].includes(
-            stack.StackStatus || "",
-          )
-        ) {
-          break;
+          if (
+            [
+              "CREATE_COMPLETE",
+              "UPDATE_COMPLETE",
+              "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+            ].includes(stack.StackStatus || "")
+          ) {
+            if (
+              !stack.Parameters?.find(
+                (x) =>
+                  x.ParameterKey === "template" &&
+                  x.ParameterValue === Resource.IssueDestination.cfn,
+              )
+            ) {
+              console.log(
+                "updating stack with template",
+                Resource.IssueDestination.cfn,
+              );
+              await cfn.send(
+                new UpdateStackCommand({
+                  StackName: stackName,
+                  TemplateURL: Resource.IssueDestination.cfn,
+                  Parameters: [
+                    {
+                      ParameterKey: "workspaceID",
+                      ParameterValue: workspaceID,
+                    },
+                    {
+                      ParameterKey: "template",
+                      ParameterValue: Resource.IssueDestination.cfn,
+                    },
+                  ],
+                  Capabilities: ["CAPABILITY_NAMED_IAM"],
+                }),
+              );
+              continue;
+            }
+            const outputs = stack.Outputs || [];
+            const functionArn = outputs.find(
+              (x) => x.OutputKey === "SubscriberARN",
+            )?.OutputValue;
+            if (functionArn) {
+              console.log(stack.StackStatus, stack.Outputs);
+              return destinations.set(region, functionArn!), functionArn;
+            }
+            break;
+          }
+
+          if (
+            !["CREATE_IN_PROGRESS", "UPDATE_IN_PROGRESS"].includes(
+              stack.StackStatus || "",
+            )
+          ) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (ex) {
+        console.error(ex);
       }
 
       await Warning.create({
