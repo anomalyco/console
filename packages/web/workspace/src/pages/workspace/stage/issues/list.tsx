@@ -24,7 +24,6 @@ import { filter, fromEntries, pipe, sortBy } from "remeda";
 import { WarningStore } from "$/data/warning";
 import { IssueCountStore } from "$/data/issue";
 import { useCommandBar } from "../../command-bar";
-import { getLogInfo } from "./common";
 import {
   KeyboardNavigator,
   createKeyboardNavigator,
@@ -35,6 +34,7 @@ import { Histogram } from "$/ui/histogram";
 import { utility } from "$/ui/utility";
 import { Text } from "$/ui/text";
 import { Button } from "$/ui/button";
+import { useWorkspace } from "../../context";
 
 const COL_COUNT_WIDTH = 260;
 const COL_TIME_WIDTH = 140;
@@ -354,6 +354,7 @@ export function List() {
   );
 
   const stage = useStageContext();
+  const workspace = useWorkspace();
 
   const subWarnings = WarningStore.forStage.watch(
     rep,
@@ -367,6 +368,14 @@ export function List() {
     (warnings) =>
       warnings.filter((warning) => warning.type === "issue_rate_limited"),
   );
+
+  const infraWarnings = WarningStore.forStage.watch(
+    rep,
+    () => [stage.stage.id],
+    (warnings) =>
+      warnings.filter((warning) => warning.type === "issue_infra"),
+  );
+
 
   const [selected, setSelected] = createSignal<string[]>([]);
   const [warningExpanded, setWarningExpanded] = createSignal(false);
@@ -391,22 +400,23 @@ export function List() {
               <IconExclamationTriangle />
             </WarningIcon>
             <WarningText>
-              <Show
-                when={rateWarnings().length > 0}
-                fallback={
-                  <>
-                    There was a problem enabling Issues for some of your
-                    functions.{" "}
-                  </>
-                }
-              >
-                You hit a rate limit for some of your functions. You can
-                re-enable them or contact us to have the limit lifted.{" "}
-              </Show>
+              <Switch>
+                <Match when={infraWarnings().length > 0}>
+                  The console now processes issues inside your own account - however we could not automatically create this infrastructure for you. You can fix the permissions of the SSTConsole iam role or manually create the cloudformation stack.{" "}
+                </Match>
+                <Match when={rateWarnings().length > 0}>
+                  You hit a rate limit for some of your functions. You can
+                  re-enable them or contact us to have the limit lifted.{" "}
+                </Match>
+                <Match when={subWarnings().length > 0}>
+                  There was a problem enabling Issues for some of your
+                  functions.{" "}
+                </Match>
+              </Switch>
               <WarningMoreButton
                 onClick={() => setWarningExpanded(!warningExpanded())}
               >
-                <Show when={!warningExpanded()} fallback="Hide details">
+                <Show when={!warningExpanded() && !infraWarnings().length} fallback="Hide details">
                   Show details
                 </Show>
               </WarningMoreButton>
@@ -425,7 +435,7 @@ export function List() {
             {rateWarnings().length > 0 ? "Enable" : "Retry"}
           </Button>
         </Row>
-        <Show when={warningExpanded()}>
+        <Show when={warningExpanded() || infraWarnings().length > 0}>
           <WarningDetails>
             <WarningDetailsScroll>
               <Show when={rateWarnings().length > 0}>
@@ -488,10 +498,28 @@ export function List() {
                   </WarningDetailsDesc>
                 </Stack>
               </Show>
+              <Show when={infraWarnings().length > 0}>
+                <Stack space="1">
+                  <WarningDetailsTitle>
+                    There was trouble creating issue processing infra in the following regions:
+                  </WarningDetailsTitle>
+                  <WarningDetailsDesc>
+                    <For
+                      each={infraWarnings()}
+                    >
+                      {(item) => <li>{item.target} - <a
+                        target="_blank"
+                        href={`https://${item.target}.console.aws.amazon.com/cloudformation/home?region=${item.target}#/stacks/quickcreate?region=${item.target}&param_workspaceID=${workspace().id}&param_template=${import.meta.env.VITE_ISSUES_URL}&stackName=sst-console-issue-${workspace().id}&templateURL=${import.meta.env.VITE_ISSUES_URL
+                          }`}
+                      >Create cloudformation stack</a></li>}
+                    </For>
+                  </WarningDetailsDesc>
+                </Stack>
+              </Show>
             </WarningDetailsScroll>
           </WarningDetails>
         </Show>
-      </Warning>
+      </Warning >
     );
   }
 
@@ -521,7 +549,7 @@ export function List() {
       </HeaderSlot>
       <Content>
         <Stack space="4">
-          <Show when={subWarnings().length > 0 || rateWarnings().length > 0}>
+          <Show when={subWarnings().length > 0 || rateWarnings().length > 0 || infraWarnings().length > 0}>
             {renderWarning()}
           </Show>
           <form

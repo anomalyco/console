@@ -105,11 +105,6 @@ declare module "sst" {
     }
     "IssueDestination": {
       "cfn": string
-      "handler": {
-        "bucket": string
-        "key": string
-        "version": any
-      }
       "prefix": string
       "role": string
       "stream": string

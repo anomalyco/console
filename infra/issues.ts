@@ -102,6 +102,13 @@ new aws.iam.RolePolicy("IssuePolicy", {
   }).json,
 });
 
+const handlerCode = new aws.s3.BucketObjectv2("IssueHandlerCode", {
+  source: issueLambda.nodes.function.code,
+  bucket: storage.name,
+  key: $interpolate`issue/handler/${issueLambda.nodes.function.codeSha256}.zip`,
+  acl: "public-read",
+});
+
 const cfnTemplate = $jsonStringify({
   AWSTemplateFormatVersion: "2010-09-09",
   Description: "Process issues for SST Console",
@@ -168,8 +175,8 @@ const cfnTemplate = $jsonStringify({
           "Fn::Sub": "sst-console-issue-${workspaceID}",
         },
         Code: {
-          S3Bucket: issueLambda.nodes.function.s3Bucket,
-          S3Key: issueLambda.nodes.function.s3Key,
+          S3Bucket: handlerCode.bucket,
+          S3Key: handlerCode.key,
         },
         Environment: issueLambda.nodes.function.environment.apply((env) => ({
           Variables: {
@@ -239,12 +246,6 @@ export const issues = new sst.Linkable("IssueDestination", {
     prefix: $interpolate`arn:aws:logs:<region>:${identity.accountId}:destination:`,
     stream: stream.arn,
     cfn: $interpolate`https://${storage.nodes.bucket.bucketRegionalDomainName}/${cfn.key}`,
-
-    handler: {
-      bucket: issueLambda.nodes.function.s3Bucket,
-      key: issueLambda.nodes.function.s3Key,
-      version: issueLambda.nodes.function.s3ObjectVersion,
-    },
   },
 });
 

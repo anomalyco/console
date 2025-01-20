@@ -59,15 +59,6 @@ export const server = new Server()
     async (input) => {
       await useTransaction(async (tx) => {
         await tx
-          .delete(issueSubscriber)
-          .where(
-            and(
-              eq(issueSubscriber.workspaceID, useWorkspace()),
-              eq(issueSubscriber.stageID, input.stageID),
-            ),
-          )
-          .execute();
-        await tx
           .delete(warning)
           .where(
             and(
@@ -76,6 +67,7 @@ export const server = new Server()
               or(
                 eq(warning.type, "log_subscription"),
                 eq(warning.type, "issue_rate_limited"),
+                eq(warning.type, "issue_infra"),
               ),
             ),
           )

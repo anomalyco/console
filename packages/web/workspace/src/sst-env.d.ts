@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_AUTH_URL: string
   readonly VITE_STAGE: string
   readonly VITE_CONNECT_URL: string
+  readonly VITE_ISSUES_URL: string
   readonly VITE_WEBSOCKET_HTTP: string
   readonly VITE_WEBSOCKET_REALTIME: string
 }

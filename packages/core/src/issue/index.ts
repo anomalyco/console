@@ -218,13 +218,19 @@ export const subscribeIon = zod(
     async function getDestination(region: string) {
       if (destinations.has(region)) return destinations.get(region)!;
 
+      await Warning.remove({
+        type: "issue_infra",
+        stageID: config.stageID,
+        target: config.region,
+      });
+
       const cfn = new CloudFormationClient({
         region,
         credentials: config.credentials,
         retryStrategy: RETRY_STRATEGY,
       });
 
-      while (true && config.app === "console") {
+      while (true) {
         const result = await cfn
           .send(
             new DescribeStacksCommand({
