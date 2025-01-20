@@ -162,8 +162,8 @@ export const sendEmailInvite = zod(Info.shape.id, async (id) => {
         Destination: {
           ToAddresses: [data.email],
         },
-        ReplyToAddresses: [`invite@${process.env.EMAIL_DOMAIN}`],
-        FromEmailAddress: `SST <invite@${process.env.EMAIL_DOMAIN}>`,
+        ReplyToAddresses: [`invite@${Resource.Email.sender}`],
+        FromEmailAddress: `SST <invite@${Resource.Email.sender}>`,
         Content: {
           Simple: {
             Body: {
