@@ -36,7 +36,6 @@ export const StageRoute = (
     component={(props) => {
       const ctx = createStageContext();
       const rep = useReplicache();
-      const header = useHeaderContext();
       return (
         <Show when={ctx.ready}>
           <Switch>
@@ -47,6 +46,7 @@ export const StageRoute = (
                     <IssuesProvider>
                       <HeaderProvider>
                         {(() => {
+                          const header = useHeaderContext();
                           const updates = StateUpdateStore.forStage.watch(
                             rep,
                             () => [ctx.stage.id],
