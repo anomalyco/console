@@ -72,7 +72,9 @@ bus.subscribe(
   {
     handler: "packages/functions/src/events/runner-updated-external.handler",
     link: [database, bus, email, autodeploy, ...allSecrets, websocket],
-    permissions: [{ actions: ["iot:*", "sts:*"], resources: ["*"] }],
+    permissions: [
+      { actions: ["iot:*", "sts:*", "iam:PassRole"], resources: ["*"] },
+    ],
   },
   {
     pattern: {
