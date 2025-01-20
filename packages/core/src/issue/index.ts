@@ -230,7 +230,7 @@ export const subscribeIon = zod(
         retryStrategy: RETRY_STRATEGY,
       });
 
-      while (true && config.app === "console") {
+      while (true) {
         const result = await cfn
           .send(
             new DescribeStacksCommand({
