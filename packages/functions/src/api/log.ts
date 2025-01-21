@@ -162,6 +162,9 @@ export const LogRoute = new Hono()
             streamName: event.logStreamName!,
             id: event.eventId!,
           });
+          if (processor.ready >= 50) {
+            break;
+          }
         }
         const data = processor.flush();
         for (const invocation of data) {
