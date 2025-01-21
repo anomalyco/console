@@ -133,7 +133,7 @@ const cfnTemplate = $jsonStringify({
       Type: "AWS::IAM::Role",
       Properties: {
         RoleName: {
-          "Fn::Sub": "sst-console-issue-${workspaceID}",
+          "Fn::Sub": "sst-console-issue-${workspaceID}-${AWS::Region}",
         },
         AssumeRolePolicyDocument: {
           Version: "2012-10-17",
