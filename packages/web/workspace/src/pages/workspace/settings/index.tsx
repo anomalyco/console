@@ -131,6 +131,14 @@ const UsageStatTier = styled("span", {
   },
 });
 
+const UsagePlanCopy = styled("p", {
+  base: {
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.secondary.base,
+    lineHeight: theme.font.lineHeight,
+  },
+});
+
 export function SettingsRoute() {
   const rep = useReplicache();
   const invocationsUsages = InvocationsUsageStore.list.watch(rep, () => []);
@@ -233,27 +241,100 @@ export function SettingsRoute() {
               Usage for the current billing period
             </Text>
           </Stack>
-          <Stack space="3.5">
+          <Stack space="7">
             <Show when={stripe()?.price === "invocations"}>
+              <Stack space="2">
+                <UsagePanel>
+                  <UsageStat stretch>
+                    <Text code uppercase size="mono_xs" color="dimmed">
+                      Invocations
+                    </Text>
+                    <Text code size="xl">
+                      {invocations()}
+                    </Text>
+                  </UsageStat>
+                  <UsageStat stretch>
+                    <Text code uppercase size="mono_xs" color="dimmed">
+                      Current Cost
+                    </Text>
+                    <Row space="0.5" vertical="center">
+                      <Text size="sm" color="secondary">
+                        $
+                      </Text>
+                      <Text code weight="medium" size="xl">
+                        {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                      </Text>
+                    </Row>
+                  </UsageStat>
+                  <UsageTiers>
+                    <Stack space="1">
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text size="mono_xs" on="surface" color="secondary">
+                          Free
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text code size="mono_xs" on="surface" color="secondary">
+                          ${INVOCATIONS_PRICING_PLAN[1].rate} per
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text code size="mono_xs" on="surface" color="secondary">
+                          ${INVOCATIONS_PRICING_PLAN[2].rate} per
+                        </Text>
+                      </Row>
+                    </Stack>
+                  </UsageTiers>
+                </UsagePanel>
+                <UsagePlanCopy>
+                  Below is the new pricing plan. If you'd like to switch, you can
+                  unsubscribe from the current plan and resubscribe.{" "}
+                  <a href="http://sst.dev/blog/console-pricing-update" target="_blank">
+                    Learn more
+                  </a>.
+                </UsagePlanCopy>
+              </Stack>
+            </Show>
+            <Stack space="2">
               <UsagePanel>
                 <UsageStat stretch>
                   <Text code uppercase size="mono_xs" color="dimmed">
-                    Invocations
+                    Resources
                   </Text>
                   <Text code size="xl">
-                    {invocations()}
+                    {resources()}
                   </Text>
                 </UsageStat>
                 <UsageStat stretch>
                   <Text code uppercase size="mono_xs" color="dimmed">
-                    Current Cost
+                    {stripe()?.price === "invocations" ? "New Cost" : "Current Cost"}
                   </Text>
                   <Row space="0.5" vertical="center">
                     <Text size="sm" color="secondary">
                       $
                     </Text>
                     <Text code weight="medium" size="xl">
-                      {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                      {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
                     </Text>
                   </Row>
                 </UsageStat>
@@ -261,8 +342,8 @@ export function SettingsRoute() {
                   <Stack space="1">
                     <Row space={TIER_LABEL_SPACE}>
                       <UsageStatTier>
-                        {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
-                        {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
+                        {"<= "}
+                        {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
                       </UsageStatTier>
                       <Text color="dimmed" on="surface" size="xs">
                         →
@@ -273,106 +354,37 @@ export function SettingsRoute() {
                     </Row>
                     <Row space={TIER_LABEL_SPACE}>
                       <UsageStatTier>
-                        {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
-                        {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
+                        {formatNumber(RESOURCES_PRICING_PLAN[0].from)} -{" "}
+                        {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
                       </UsageStatTier>
                       <Text color="dimmed" on="surface" size="xs">
                         →
                       </Text>
                       <Text code size="mono_xs" on="surface" color="secondary">
-                        ${INVOCATIONS_PRICING_PLAN[1].rate} per
+                        ${RESOURCES_PRICING_PLAN[1].rate} per
                       </Text>
                     </Row>
                     <Row space={TIER_LABEL_SPACE}>
                       <UsageStatTier>
-                        {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
+                        {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
                       </UsageStatTier>
                       <Text color="dimmed" on="surface" size="xs">
                         →
                       </Text>
                       <Text code size="mono_xs" on="surface" color="secondary">
-                        ${INVOCATIONS_PRICING_PLAN[2].rate} per
+                        ${RESOURCES_PRICING_PLAN[2].rate} per
                       </Text>
                     </Row>
                   </Stack>
                 </UsageTiers>
               </UsagePanel>
-              <p>
-                You can stay on the old plan. If you switched to the new plan,
-                you cost would be the following:
-              </p>
-            </Show>
-            <UsagePanel>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Resources
-                </Text>
-                <Text code size="xl">
-                  {resources()}
-                </Text>
-              </UsageStat>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Current Cost
-                </Text>
-                <Row space="0.5" vertical="center">
-                  <Text size="sm" color="secondary">
-                    $
-                  </Text>
-                  <Text code weight="medium" size="xl">
-                    {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
-                  </Text>
-                </Row>
-              </UsageStat>
-              <UsageTiers>
-                <Stack space="1">
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(RESOURCES_PRICING_PLAN[0].from)} -{" "}
-                      {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text size="mono_xs" on="surface" color="secondary">
-                      Free
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
-                      {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${RESOURCES_PRICING_PLAN[1].base} + $
-                      {RESOURCES_PRICING_PLAN[1].rate} per
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${RESOURCES_PRICING_PLAN[2].rate} per
-                    </Text>
-                  </Row>
-                </Stack>
-              </UsageTiers>
-            </UsagePanel>
-            <Text size="sm" color="secondary">
-              Calculated for the period of {cycle().start} — {cycle().end}.{" "}
-              <a href="https://docs.sst.dev/console#pricing" target="_blank">
-                Learn more
-              </a>{" "}
-              or <a href="mailto:hello@sst.dev">contact us</a> for volume
-              pricing.
-            </Text>
+              <UsagePlanCopy>
+                Calculated for the period of {cycle().start} — {cycle().end}.{" "}
+                <a href="https://sst.dev/docs/console#pricing" target="_blank">
+                  Learn more
+                </a>.
+              </UsagePlanCopy>
+            </Stack>
           </Stack>
         </Stack>
         <Divider />

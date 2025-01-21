@@ -9,57 +9,9 @@ declare module "sst" {
       "arn": string
       "type": "sst.aws.SnsTopic"
     }
-    "Api": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "ApiRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
     "Auth": {
       "publicKey": string
       "type": "sst.aws.Auth"
-    }
-    "AuthAuthenticator": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "AuthRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
-    "AutodeployConfig": {
-      "buildImage": string
-      "buildspecBucketName": string
-      "buildspecVersion": string
-      "configParserFunctionArn": string
-      "runnerRemoverFunctionArn": string
-      "runnerRemoverScheduleGroupName": string
-      "runnerRemoverScheduleRoleArn": string
-      "timeoutMonitorFunctionArn": string
-      "timeoutMonitorScheduleGroupName": string
-      "timeoutMonitorScheduleRoleArn": string
-      "type": "sst.sst.Linkable"
-    }
-    "AutodeployConfigParser": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployRunnerRemover": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployTimeoutMonitor": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "Backend": {
-      "service": string
-      "type": "sst.aws.Service"
-      "url": string
     }
     "BillingQueue": {
       "type": "sst.aws.Queue"
@@ -74,10 +26,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bus"
     }
-    "Connect": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "Database": {
       "database": string
       "host": string
@@ -90,11 +38,6 @@ declare module "sst" {
       "configSet": string
       "sender": string
       "type": "sst.aws.Email"
-    }
-    "Error": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
     }
     "GithubAppID": {
       "type": "sst.sst.Secret"
@@ -158,10 +101,6 @@ declare module "sst" {
       "realtime": string
       "token": string
       "type": "sst.sst.Linkable"
-    }
-    "WebsocketAuthorizer": {
-      "name": string
-      "type": "sst.aws.Function"
     }
     "WebsocketToken": {
       "type": "sst.sst.Secret"
