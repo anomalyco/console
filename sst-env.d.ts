@@ -122,6 +122,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.KinesisStream"
     }
+    "PublicStorage_us-east-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
     "SlackClientID": {
       "type": "sst.sst.Secret"
       "value": string

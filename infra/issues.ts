@@ -3,8 +3,9 @@ import { bus } from "./bus";
 import { identity } from "./connect";
 import { email } from "./email";
 import { database } from "./planetscale";
-import { storage } from "./storage";
+import { publicStorage, storage } from "./storage";
 import { domain } from "./dns";
+import { multiregion, regions } from "./regions";
 
 export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   fifo: true,
@@ -62,16 +63,6 @@ const issueLambda = new sst.aws.Function("IssueLambda", {
     },
   ],
 });
-const regions = aws.getRegionsOutput();
-
-// regions.apply((regions) => {
-//   for (const region of regions.names) {
-//     console.log("made provider for", region);
-//     const provider = new aws.Provider("AwsProvider" + region, {
-//       region: region as any,
-//     });
-//   }
-// });
 
 const role = new aws.iam.Role("IssueRole", {
   assumeRolePolicy: aws.iam.getPolicyDocumentOutput({
@@ -80,9 +71,7 @@ const role = new aws.iam.Role("IssueRole", {
         actions: ["sts:AssumeRole"],
         principals: [
           {
-            identifiers: regions.names.apply((regions) =>
-              regions.map((r) => `logs.${r}.amazonaws.com`),
-            ),
+            identifiers: regions.map((r) => `logs.${r}.amazonaws.com`),
             type: "Service",
           },
         ],
@@ -103,16 +92,24 @@ new aws.iam.RolePolicy("IssuePolicy", {
   }).json,
 });
 
-const handlerCode = new aws.s3.BucketObjectv2("IssueHandlerCode", {
-  source: $resolve(issueLambda.nodes.function.codeSha256).apply((v) => {
-    console.log(process.cwd() + "/.sst/artifacts/IssueLambda/code.zip");
-    return new $util.asset.FileAsset(
-      process.cwd() + "/.sst/artifacts/IssueLambda/code.zip",
-    );
-  }),
-  bucket: storage.name,
-  key: $interpolate`issue/handler/${issueLambda.nodes.function.codeSha256}.zip`,
-  acl: "public-read",
+const handlerCode = multiregion((region, provider) => {
+  const obj = new aws.s3.BucketObjectv2(
+    "IssueHandlerCode_" + region,
+    {
+      source: $resolve(issueLambda.nodes.function.codeSha256).apply((v) => {
+        console.log(process.cwd() + "/.sst/artifacts/IssueLambda/code.zip");
+        return new $util.asset.FileAsset(
+          process.cwd() + "/.sst/artifacts/IssueLambda/code.zip",
+        );
+      }),
+      bucket: publicStorage[region].name,
+      key: $interpolate`issue/handler/${issueLambda.nodes.function.codeSha256}.zip`,
+    },
+    {
+      provider,
+    },
+  );
+  return obj;
 });
 
 const cfnTemplate = $jsonStringify({
@@ -181,8 +178,10 @@ const cfnTemplate = $jsonStringify({
           "Fn::Sub": "sst-console-issue-${workspaceID}",
         },
         Code: {
-          S3Bucket: handlerCode.bucket,
-          S3Key: handlerCode.key,
+          S3Bucket: {
+            "Fn::Sub": `sst-public-${$app.stage}-\${AWS::Region}`,
+          },
+          S3Key: handlerCode["us-east-1"].key,
         },
         Environment: issueLambda.nodes.function.environment.apply((env) => ({
           Variables: {

@@ -1,3 +1,5 @@
+import { multiregion } from "./regions";
+
 export const storage = new sst.aws.Bucket("Storage", {
   transform: {
     publicAccessBlock: {
@@ -61,4 +63,23 @@ new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
       },
     },
   ],
+});
+
+export const publicStorage = multiregion((region, provider) => {
+  const bucket = new sst.aws.Bucket(
+    "PublicStorage_" + region,
+    {
+      access: "public",
+      transform: {
+        bucket: {
+          bucket: $interpolate`sst-public-${$app.stage}-${region}`,
+        },
+      },
+    },
+    {
+      provider,
+    },
+  );
+
+  return bucket;
 });
