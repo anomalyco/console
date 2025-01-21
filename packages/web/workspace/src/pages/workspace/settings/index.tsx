@@ -358,13 +358,11 @@ export function SettingsRoute() {
                 )
                   return;
 
-                await fetch(import.meta.env.VITE_API_URL + "/rest/workspace", {
+                await fetch(import.meta.env.VITE_API_URL + "/workspace/" + workspace().id, {
                   method: "DELETE",
                   headers: {
                     authorization: `Bearer ${auth.current.token}`,
-                    "content-type": "application/json",
                   },
-                  body: JSON.stringify(workspace().id),
                 });
                 await auth.refresh();
                 nav("/");

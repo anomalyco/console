@@ -7,7 +7,9 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@console/core/*": ["../core/src/*"]
+      "@console/core/*": [
+        "../core/src/*"
+      ]
     }
   }
 }
