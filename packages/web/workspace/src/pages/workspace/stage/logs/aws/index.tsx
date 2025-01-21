@@ -13,6 +13,7 @@ import { useSearchParams } from "@solidjs/router";
 import { createMultiList } from "solid-list";
 import {
   batch,
+  createEffect,
   createMemo,
   createSignal,
   Match,
@@ -504,6 +505,23 @@ export function AWS() {
   const showBorder = createMemo(() => rows().length > 0 && !scrollEnd());
   let invokeControl!: InvokeControl;
 
+  createEffect((old?: { size: number, rows: number }) => {
+    if (old?.rows !== rows().length && vlist?.scrollOffset !== 0) {
+      const oldSize = old?.size || 0;
+      const newSize = vlist?.scrollSize || 0;
+      const diff = newSize - oldSize;
+      console.log("diff", diff)
+      if (diff !== 0) {
+        vlist?.scrollTo(vlist?.scrollOffset! + diff);
+      }
+      console.log("size", old?.size, vlist?.scrollSize)
+    }
+    return {
+      size: vlist?.scrollSize || 0,
+      rows: rows().length
+    }
+  })
+
   return (
     <Root>
       <PageHeader>
@@ -682,7 +700,6 @@ export function AWS() {
         <VList
           class={Scroller}
           ref={(r) => (vlist = r)}
-          shift={true}
           data={rows()}
           overscan={10}
           onScroll={() => {
