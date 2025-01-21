@@ -325,7 +325,7 @@ export function InvocationRow(props: {
           {props.mixed
             ? props.mixed.description
             : props.invocation.errors[0]?.message ||
-              props.invocation.logs[0]?.message}
+            props.invocation.logs[0]?.message}
         </LogPreview>
       </Summary>
       <Show when={props.expanded}>

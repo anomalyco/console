@@ -279,7 +279,11 @@ const Row = styled("div", {
     borderStyle: "solid",
     borderWidth: "0 0 1px 0",
     borderColor: theme.color.divider.base,
+    height: 50,
     selectors: {
+      "&[data-expanded]": {
+        height: "auto",
+      },
       "&[data-focus]": {
         ...inputFocusStyles,
         outlineOffset: -1,
@@ -507,14 +511,11 @@ export function AWS() {
 
   createEffect((old?: { size: number, rows: number }) => {
     if (old?.rows !== rows().length && vlist?.scrollOffset !== 0) {
-      const oldSize = old?.size || 0;
-      const newSize = vlist?.scrollSize || 0;
-      const diff = newSize - oldSize;
-      console.log("diff", diff)
-      if (diff !== 0) {
+      const oldSize = old?.rows || 0;
+      const newSize = rows().length || 0;
+      const diff = (newSize - oldSize) * 50;
+      if (diff !== 0)
         vlist?.scrollTo(vlist?.scrollOffset! + diff);
-      }
-      console.log("size", old?.size, vlist?.scrollSize)
     }
     return {
       size: vlist?.scrollSize || 0,
@@ -715,6 +716,7 @@ export function AWS() {
             <Row
               data-focus={list.cursor() === entry.id ? true : undefined}
               data-row-id={entry.id}
+              data-expanded={list.selected().includes(entry.id) ? true : undefined}
               onClick={() => {
                 list.toggleSelected(entry.id);
                 list.setCursor(entry.id);
