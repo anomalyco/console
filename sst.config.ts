@@ -22,7 +22,7 @@ export default $config({
             stage: input.branch,
             runner: {
               engine: "codebuild",
-              compute: "medium",
+              compute: "large",
             },
           };
         }
