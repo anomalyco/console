@@ -46,6 +46,6 @@
     "solid-js": "1.9.3",
     "solid-list": "^0.3.0",
     "valibot": "1.0.0-beta.6",
-    "virtua": "^0.35.1"
+    "virtua": "^0.39.3"
   }
 }

@@ -682,7 +682,9 @@ export function AWS() {
         <VList
           class={Scroller}
           ref={(r) => (vlist = r)}
+          shift={true}
           data={rows()}
+          overscan={10}
           onScroll={() => {
             setScrollEnd(
               vlist?.scrollOffset! -
