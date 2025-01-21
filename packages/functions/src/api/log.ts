@@ -259,7 +259,7 @@ export const LogRoute = new Hono()
                 async function flush() {
                   const data = processor.flush(-1);
                   if (data.length) {
-                    entries.push(...data.slice(0, 50 - entries.length));
+                    entries.push(...data);
                   }
                 }
 
