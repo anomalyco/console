@@ -271,7 +271,7 @@ export const LogRoute = new Hono()
                     line: result[1]?.value!,
                   });
                   index++;
-                  if (processor.ready > entries.length - 50) {
+                  if (processor.ready > 50 - entries.length) {
                     break;
                   }
                 }
@@ -287,6 +287,8 @@ export const LogRoute = new Hono()
                   });
                 }
               }
+
+              console.log(entries.length, "in buffer");
 
               if (entries.length >= 50) {
                 return false;
