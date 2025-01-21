@@ -71,8 +71,10 @@ export const publicStorage = multiregion((region, provider) => {
     {
       access: "public",
       transform: {
-        bucket: {
-          bucket: $interpolate`sst-public-${$app.stage}-${region}`,
+        bucket(args, opts) {
+          args.bucket = `sst-public-${$app.stage}-${region}`;
+          // opts.import = args.bucket;
+          // opts.ignoreChanges = ["*"];
         },
       },
     },

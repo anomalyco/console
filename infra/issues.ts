@@ -97,7 +97,6 @@ const handlerCode = multiregion((region, provider) => {
     "IssueHandlerCode_" + region,
     {
       source: $resolve(issueLambda.nodes.function.codeSha256).apply((v) => {
-        console.log(process.cwd() + "/.sst/artifacts/IssueLambda/code.zip");
         return new $util.asset.FileAsset(
           process.cwd() + "/.sst/artifacts/IssueLambda/code.zip",
         );
