@@ -366,13 +366,16 @@ export module Run {
           .innerJoin(appRepoTable, eq(runTable.appID, appRepoTable.appID))
           .innerJoin(
             githubRepoTable,
-            eq(appRepoTable.repoID, githubRepoTable.id)
+            and(
+              eq(githubRepoTable.id, appRepoTable.repoID),
+              isNull(githubRepoTable.timeDisconnected)
+            )
           )
           .innerJoin(
             githubOrgTable,
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
-              eq(githubRepoTable.githubOrgID, githubOrgTable.id)
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID)
             )
           )
           .where(
@@ -404,10 +407,44 @@ export module Run {
       trigger: z.custom<GitTrigger>(),
     }),
     async ({ octokit, trigger }) => {
-      const repoID = trigger.repo.id;
+      const externalRepoID = trigger.repo.id;
 
       // Loop through all apps connected to the repo
-      const appRepos = await Github.listAppReposByExternalRepoID(repoID);
+      const appRepos = await useTransaction((tx) =>
+        tx
+          .select({
+            id: appRepoTable.id,
+            workspaceID: appRepoTable.workspaceID,
+            appID: appRepoTable.appID,
+            repoID: appRepoTable.repoID,
+            path: appRepoTable.path,
+          })
+          .from(githubRepoTable)
+          .innerJoin(
+            githubOrgTable,
+            and(
+              eq(githubOrgTable.workspaceID, githubRepoTable.workspaceID),
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              isNull(githubOrgTable.timeDisconnected)
+            )
+          )
+          .innerJoin(
+            appRepoTable,
+            and(
+              eq(appRepoTable.workspaceID, githubRepoTable.workspaceID),
+              eq(appRepoTable.type, "github"),
+              eq(appRepoTable.repoID, githubRepoTable.id)
+            )
+          )
+          .where(
+            and(
+              eq(githubRepoTable.externalRepoID, externalRepoID),
+              isNull(githubRepoTable.timeDisconnected)
+            )
+          )
+          .execute()
+      );
+
       for (const appRepo of appRepos) {
         const appID = appRepo.appID;
         await withActor(
@@ -449,13 +486,16 @@ export module Run {
           .from(appRepoTable)
           .innerJoin(
             githubRepoTable,
-            eq(appRepoTable.repoID, githubRepoTable.id)
+            and(
+              eq(githubRepoTable.id, appRepoTable.repoID),
+              isNull(githubRepoTable.timeDisconnected)
+            )
           )
           .innerJoin(
             githubOrgTable,
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
-              eq(githubRepoTable.githubOrgID, githubOrgTable.id)
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID)
             )
           )
           .where(
@@ -809,8 +849,34 @@ export module Run {
 
         // Build cloneUrl
         context = "start runner";
-        const gitRepo = await Github.getExternalInfoByRepoID(appRepo.repoID);
-        if (!gitRepo) throw new Error("Github Repo not found");
+        const gitRepo = await useTransaction(async (tx) =>
+          tx
+            .select({
+              installationID: githubOrgTable.installationID,
+              owner: githubOrgTable.login,
+              repo: githubRepoTable.name,
+              timeDisconnected: githubRepoTable.timeDisconnected,
+            })
+            .from(githubRepoTable)
+            .innerJoin(
+              githubOrgTable,
+              and(
+                eq(githubOrgTable.workspaceID, useWorkspace()),
+                eq(githubOrgTable.id, githubRepoTable.githubOrgID)
+              )
+            )
+            .where(
+              and(
+                eq(githubRepoTable.id, appRepo.repoID),
+                eq(githubRepoTable.workspaceID, useWorkspace())
+              )
+            )
+            .execute()
+            .then((x) => x[0])
+        );
+        if (!gitRepo) throw new Error("GitHub Repo not found");
+        if (gitRepo.timeDisconnected)
+          throw new Error("GitHub Repo is disconnected");
         const cloneUrl = await Github.getCloneUrl(gitRepo);
 
         // Check if build is cancelled

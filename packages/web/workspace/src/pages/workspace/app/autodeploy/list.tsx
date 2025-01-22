@@ -22,12 +22,15 @@ import {
   githubRef,
   githubCommit,
 } from "$/common/url-builder";
-import { RunStore } from "$/data/app";
+import { AppRepoStore, GithubRepoStore, RunStore } from "$/data/app";
 import { UserStore } from "$/data/user";
 import { StageStore } from "$/data/stage";
 import { For, Show, Match, Switch, Suspense } from "solid-js";
 import { theme } from "$/ui/theme";
 import { utility } from "$/ui/utility";
+import { Alert } from "$/ui/alert";
+import { Stack } from "$/ui/layout";
+import { PANEL_HEADER_SPACE } from "../../settings";
 
 export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   switch (error.type) {
@@ -562,6 +565,12 @@ function RunItem({ run }: { run: Run.Run }) {
 
 export function List() {
   const ctx = useAppContext();
+  const disconnected = createSubscription(() => async (tx) => {
+    const appRepo = await AppRepoStore.forApp(tx, ctx.app.id);
+    if (!appRepo.length) return;
+    const repo = await GithubRepoStore.get(tx, appRepo[0].repoID);
+    return repo.time.disconnected;
+  });
   const runs = createSubscription(() => async (tx) => {
     const all = await RunStore.all(tx);
     return pipe(
@@ -575,27 +584,39 @@ export function List() {
     <>
       <PageHeader />
       <Content>
-        <Show when={runs.value && runs.value.length === 0}>
-          <EmptyRunsSign>
-            <EmptyRunsHelper>
-              <EmptyRunsHelperHeader>Autodeploy your app</EmptyRunsHelperHeader>
-              <EmptyRunsHint>
-                <li>Connect your app to its GitHub repo</li>
-                <li>
-                  Add an environment for your{" "}
-                  <EmptyRunsHintCode>`production`</EmptyRunsHintCode> branch
-                </li>
-                <li>
-                  Git push to deploy{" "}
-                  <EmptyRunsHintCode>
-                    `git push origin main:production`
-                  </EmptyRunsHintCode>
-                </li>
-              </EmptyRunsHint>
-            </EmptyRunsHelper>
-          </EmptyRunsSign>
-        </Show>
-        <For each={runs.value}>{(run) => <RunItem run={run} />}</For>
+        <Stack space={PANEL_HEADER_SPACE}>
+          <Show when={disconnected.value}>
+            <Alert level="danger">
+              This GitHub repo can no longer be accessed. Reconnect your GitHub
+              organization and try again.
+            </Alert>
+          </Show>
+          <Show when={runs.value && runs.value.length === 0}>
+            <EmptyRunsSign>
+              <EmptyRunsHelper>
+                <EmptyRunsHelperHeader>
+                  Autodeploy your app
+                </EmptyRunsHelperHeader>
+                <EmptyRunsHint>
+                  <li>Connect your app to its GitHub repo</li>
+                  <li>
+                    Add an environment for your{" "}
+                    <EmptyRunsHintCode>`production`</EmptyRunsHintCode> branch
+                  </li>
+                  <li>
+                    Git push to deploy{" "}
+                    <EmptyRunsHintCode>
+                      `git push origin main:production`
+                    </EmptyRunsHintCode>
+                  </li>
+                </EmptyRunsHint>
+              </EmptyRunsHelper>
+            </EmptyRunsSign>
+          </Show>
+          <div>
+            <For each={runs.value}>{(run) => <RunItem run={run} />}</For>
+          </div>
+        </Stack>
       </Content>
     </>
   );

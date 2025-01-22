@@ -36,6 +36,7 @@ export const githubRepoTable = mysqlTable(
   {
     ...workspaceID,
     ...timestampsNext,
+    timeDisconnected: timestamp("time_disconnected"),
     githubOrgID: cuid("github_org_id").notNull(),
     externalRepoID: bigint("external_repo_id", { mode: "number" }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),

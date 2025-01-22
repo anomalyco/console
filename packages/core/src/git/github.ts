@@ -35,6 +35,7 @@ export module Github {
       created: z.string(),
       deleted: z.string().optional(),
       updated: z.string(),
+      disconnected: z.string().optional(),
     }),
   });
   export type Repo = z.infer<typeof Repo>;
@@ -66,6 +67,7 @@ export module Github {
         created: input.timeCreated.toISOString(),
         updated: input.timeUpdated.toISOString(),
         deleted: input.timeDeleted?.toISOString(),
+        disconnected: input.timeDisconnected?.toISOString(),
       },
     };
   }
@@ -199,67 +201,6 @@ export module Github {
     })
   );
 
-  export const listAppReposByExternalRepoID = zod(
-    Repo.shape.externalRepoID,
-    (externalRepoID) =>
-      useTransaction((tx) =>
-        tx
-          .select({
-            id: appRepoTable.id,
-            workspaceID: appRepoTable.workspaceID,
-            appID: appRepoTable.appID,
-            repoID: appRepoTable.repoID,
-            path: appRepoTable.path,
-          })
-          .from(githubRepoTable)
-          .innerJoin(
-            githubOrgTable,
-            and(
-              eq(githubOrgTable.workspaceID, githubRepoTable.workspaceID),
-              eq(githubOrgTable.id, githubRepoTable.githubOrgID),
-              isNull(githubOrgTable.timeDisconnected)
-            )
-          )
-          .innerJoin(
-            appRepoTable,
-            and(
-              eq(appRepoTable.workspaceID, githubRepoTable.workspaceID),
-              eq(appRepoTable.type, "github"),
-              eq(appRepoTable.repoID, githubRepoTable.id)
-            )
-          )
-          .where(eq(githubRepoTable.externalRepoID, externalRepoID))
-          .execute()
-      )
-  );
-
-  export const getExternalInfoByRepoID = zod(Repo.shape.id, (repoID) =>
-    useTransaction(async (tx) =>
-      tx
-        .select({
-          installationID: githubOrgTable.installationID,
-          owner: githubOrgTable.login,
-          repo: githubRepoTable.name,
-        })
-        .from(githubRepoTable)
-        .innerJoin(
-          githubOrgTable,
-          and(
-            eq(githubOrgTable.workspaceID, useWorkspace()),
-            eq(githubOrgTable.id, githubRepoTable.githubOrgID)
-          )
-        )
-        .where(
-          and(
-            eq(githubRepoTable.id, repoID),
-            eq(githubRepoTable.workspaceID, useWorkspace())
-          )
-        )
-        .execute()
-        .then((x) => x[0])
-    )
-  );
-
   export const syncRepos = zod(
     Org.shape.installationID,
     async (installationID) => {
@@ -293,7 +234,10 @@ export module Github {
       // store repos for each workspace
       await createTransaction(async (tx) => {
         await tx
-          .delete(githubRepoTable)
+          .update(githubRepoTable)
+          .set({
+            timeDisconnected: new Date(),
+          })
           .where(
             or(
               ...orgs.map((org) =>
@@ -331,7 +275,10 @@ export module Github {
             )
           )
           .onDuplicateKeyUpdate({
-            set: { name: sql`VALUES(name)` },
+            set: {
+              name: sql`VALUES(name)`,
+              timeDisconnected: null,
+            },
           })
           .execute();
       });
