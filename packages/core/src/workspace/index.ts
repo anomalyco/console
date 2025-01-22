@@ -9,7 +9,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { createTransactionEffect, useTransaction } from "../util/transaction";
 import { createEvent } from "../event";
 import { VisibleError } from "../util/error";
-import { assertActor } from "../actor";
+import { assertActor, useWorkspace } from "../actor";
 import { user } from "../user/user.sql";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
@@ -126,4 +126,18 @@ export const fromSlug = zod(z.string().min(1), async (input) =>
       .execute()
       .then((rows) => rows[0]);
   }),
+);
+
+export const setSettingIssue = zod(
+  z.object({ workspaceID: z.string(), value: z.boolean() }),
+  (input) =>
+    useTransaction(async (tx) => {
+      await tx
+        .update(workspace)
+        .set({
+          settingIssue: input.value,
+        })
+        .where(eq(workspace.id, useWorkspace()))
+        .execute();
+    }),
 );

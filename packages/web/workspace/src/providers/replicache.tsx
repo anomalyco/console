@@ -1,4 +1,5 @@
 import { ReadTransaction, ReadonlyJSONValue, Replicache } from "replicache";
+import { WorkspaceStore } from "../data/workspace"
 import {
   Accessor,
   ParentProps,
@@ -36,8 +37,8 @@ import { createStore, reconcile } from "solid-js/store";
 import { Splash } from "$/ui/splash";
 
 const mutators = new Client<ServerType>()
-  .mutation("app_stage_sync", async () => {})
-  .mutation("log_poller_subscribe", async () => {})
+  .mutation("app_stage_sync", async () => { })
+  .mutation("log_poller_subscribe", async () => { })
   .mutation("log_search", async (tx, input) => {
     console.log(input);
     await LogSearchStore.put(tx, [input.id], input);
@@ -54,7 +55,7 @@ const mutators = new Client<ServerType>()
       item.timeDeleted = DateTime.now().toUTC().toSQL({ includeOffset: false });
     });
   })
-  .mutation("function_invoke", async () => {})
+  .mutation("function_invoke", async () => { })
   .mutation("function_payload_save", async (tx, input) => {
     await LambdaPayloadStore.put(tx, [input.id!], {
       id: input.id!,
@@ -213,6 +214,11 @@ const mutators = new Client<ServerType>()
   })
   .mutation("run_config_remove", async (tx, input) => {
     await RunConfigStore.remove(tx, input);
+  })
+  .mutation("workspace_setting_issue", async (tx, input) => {
+    await WorkspaceStore.update(tx, input.workspaceID, (item) => {
+      item.settingIssue = input.value;
+    });
   })
   .build();
 

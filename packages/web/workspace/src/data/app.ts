@@ -2,6 +2,7 @@ import type { App } from "@console/core/app";
 import { Store } from "./store";
 import type { Github } from "@console/core/git/github";
 import type { Slack } from "@console/core/slack";
+import type { Workspace } from "@console/core/workspace";
 import type { Billing } from "@console/core/billing";
 import type { AppRepo } from "@console/core/app/repo";
 import type { State } from "@console/core/state";

@@ -40,6 +40,7 @@ export const server = new Server()
   .expose("alert_remove", Alert.remove)
   .expose("github_disconnect", Github.disconnect)
   .expose("slack_disconnect", Slack.disconnect)
+  .expose("workspace_setting_issue", Workspace.setSettingIssue)
   .expose("workspace_remove", Workspace.remove)
   .mutation("aws_account_remove", z.string(), async (input) => {
     await AWS.Account.disconnect(input);

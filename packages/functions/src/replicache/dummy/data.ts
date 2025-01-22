@@ -53,7 +53,7 @@ export type DummyMode =
   | "overview:base;usage:overage;resources:base;workspace:gated;subscription:overdue";
 
 export function* generateData(
-  mode: DummyMode
+  mode: DummyMode,
 ): Generator<DummyData, void, unknown> {
   console.log("generating for", mode);
 
@@ -635,7 +635,7 @@ function* appsFull(): Generator<DummyData, void, unknown> {
     appID: APP_ID_LONG,
     status: "error",
     error: unknownRunError(
-      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside"
+      "Areallylongerrormessagethatshouldoverflowbecauseitstoolonganditkeepsongoingandgoinganditshouldoverflowthecontaineritsbeingheldinside",
     ),
     branch: "main",
     commitID: "11b2661dab38cb264be29b7d1b552802bcca32ce",
@@ -803,7 +803,7 @@ function* stageIonBase(): Generator<DummyData, void, unknown> {
 }
 
 function* stageIonUpdateLinks(
-  parent: string
+  parent: string,
 ): Generator<DummyData, void, unknown> {
   const UPDATE_1 = 1;
   const UPDATE_2 = 2;
@@ -906,7 +906,7 @@ function* stageIonUpdateLinks(
 }
 
 function* stageIonBaseIconCase(
-  parent: string
+  parent: string,
 ): Generator<DummyData, void, unknown> {
   yield stateResource({
     parent,
@@ -3174,6 +3174,7 @@ function workspace({ id, gated }: WorkspaceProps): DummyData {
     _type: "workspace",
     id,
     slug: id,
+    settingIssue: true,
     timeDeleted: null,
     timeGated: gated ? DateTime.now().startOf("day").toSQL()! : null,
     ...timestamps,

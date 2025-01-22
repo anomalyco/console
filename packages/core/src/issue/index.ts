@@ -36,6 +36,7 @@ import {
   DescribeStacksCommand,
   UpdateStackCommand,
 } from "@aws-sdk/client-cloudformation";
+import { workspace } from "../workspace/workspace.sql";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -206,14 +207,19 @@ export const subscribeIon = zod(
     const destination =
       SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
       uniqueIdentifier;
+    const workspaceID = useWorkspace();
     const cw = new CloudWatchLogsClient({
       region: config.region,
       credentials: config.credentials,
       retryStrategy: RETRY_STRATEGY,
     });
-
+    const enabled = await db
+      .select({ enabled: workspace.settingIssue })
+      .from(workspace)
+      .where(eq(workspace.id, workspaceID))
+      .then((rows) => rows.at(0)?.enabled);
+    if (!enabled) return;
     const destinations = new Map<string, string>();
-    const workspaceID = useWorkspace();
     const stackName = "sst-console-issue-" + workspaceID;
     async function getDestination(region: string) {
       if (destinations.has(region)) return destinations.get(region)!;

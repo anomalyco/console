@@ -1,4 +1,5 @@
 import {
+  boolean,
   foreignKey,
   mysqlTable,
   primaryKey,
@@ -7,7 +8,6 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { timestamps, id } from "../util/sql";
-import { sql } from "drizzle-orm";
 
 export const workspace = mysqlTable(
   "workspace",
@@ -15,6 +15,7 @@ export const workspace = mysqlTable(
     ...id,
     ...timestamps,
     slug: varchar("slug", { length: 255 }).notNull(),
+    settingIssue: boolean("setting_issue").notNull().default(true),
     timeGated: timestamp("time_gated", {
       mode: "string",
     }),

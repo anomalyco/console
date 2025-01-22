@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `setting_issue` boolean DEFAULT true NOT NULL;

@@ -6,8 +6,9 @@ import { utility } from "$/ui/utility";
 import { Toggle } from "$/ui/switch";
 import { IconLogosSlack, IconLogosGitHub } from "$/ui/icons/custom";
 import { formatNumber } from "$/common/format";
-import { useReplicache } from "$/providers/replicache";
+import { createSubscription, useReplicache } from "$/providers/replicache";
 import { PRICING_PLAN, PricingPlan, UsageStore } from "$/data/usage";
+import { WorkspaceStore } from "$/data/workspace";
 import { Header } from "../header";
 import { SlackTeamStore, StripeStore, GithubOrgStore } from "$/data/app";
 import { createEventListener } from "@solid-primitives/event-listener";
@@ -194,6 +195,12 @@ export function SettingsRoute() {
   const stripe = StripeStore.get.watch(rep, () => []);
   const nav = useNavigate();
 
+  console.log(WorkspaceStore)
+  const workspaceInfo = createSubscription(() => {
+    const workspaceID = useWorkspace()
+    return tx => WorkspaceStore.get(tx, workspace().id)
+  });
+
   return (
     <Suspense>
       <Header />
@@ -208,6 +215,24 @@ export function SettingsRoute() {
         </Stack>
         <Divider />
         <Alerts />
+        <Divider />
+        <Row space="3.5" horizontal="between" vertical="center" id="slack">
+          <Stack space="1.5">
+            <Text weight="medium">Issues</Text>
+            <Text size="sm" color="dimmed">
+              Process issues that occur in your apps
+            </Text>
+          </Stack>
+          <Toggle
+            checked={workspaceInfo.value?.settingIssue}
+            onClick={(e) => {
+              rep().mutate.workspace_setting_issue({
+                workspaceID: workspaceInfo.value?.id,
+                value: !workspaceInfo.value?.settingIssue
+              });
+            }}
+          />
+        </Row>
         <Divider />
         <Stack space={PANEL_CONTENT_SPACE}>
           <Stack space={PANEL_HEADER_SPACE}>
