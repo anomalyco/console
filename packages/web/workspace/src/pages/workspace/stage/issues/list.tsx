@@ -362,6 +362,7 @@ export function List() {
     (warnings) =>
       warnings.filter((warning) => warning.type === "log_subscription"),
   );
+
   const rateWarnings = WarningStore.forStage.watch(
     rep,
     () => [stage.stage.id],
@@ -402,7 +403,7 @@ export function List() {
             <WarningText>
               <Switch>
                 <Match when={infraWarnings().length > 0}>
-                  The console now processes issues inside your own account - however we could not automatically create this infrastructure for you. You can fix the permissions of the SSTConsole iam role or manually create the cloudformation stack.{" "}
+                  We don't have the permissions to create the necessary resources in your AWS account. You can fix this by creating these manually and trying again
                 </Match>
                 <Match when={rateWarnings().length > 0}>
                   You hit a rate limit for some of your functions. You can
@@ -413,13 +414,15 @@ export function List() {
                   functions.{" "}
                 </Match>
               </Switch>
-              <WarningMoreButton
-                onClick={() => setWarningExpanded(!warningExpanded())}
-              >
-                <Show when={!warningExpanded() && !infraWarnings().length} fallback="Hide details">
-                  Show details
-                </Show>
-              </WarningMoreButton>
+              <Show when={infraWarnings().length === 0}>
+                <WarningMoreButton
+                  onClick={() => setWarningExpanded(!warningExpanded())}
+                >
+                  <Show when={!warningExpanded()} fallback="Hide details">
+                    Show details
+                  </Show>
+                </WarningMoreButton>
+              </Show>
               .
             </WarningText>
           </Row>
@@ -476,7 +479,7 @@ export function List() {
                       each={subWarnings()
                         .map((item) => {
                           if (item.type === "log_subscription") {
-                            const reason = (function () {
+                            const reason = (function() {
                               switch (item.data.error) {
                                 case "unknown":
                                   return "Unknown error: " + item.data.message;
@@ -501,17 +504,23 @@ export function List() {
               <Show when={infraWarnings().length > 0}>
                 <Stack space="1">
                   <WarningDetailsTitle>
-                    There was trouble creating issue processing infra in the following regions:
+                    Create the following CloudFormation stacks in your account.{" "}
+                    <a
+                      target="_blank"
+                      href="https://sst.dev/docs/console#log-subscriber"
+                    >
+                      Learn more.
+                    </a>
                   </WarningDetailsTitle>
                   <WarningDetailsDesc>
                     <For
                       each={infraWarnings()}
                     >
-                      {(item) => <li>{item.target} - <a
+                      {(item) => <li><a
                         target="_blank"
                         href={`https://${item.target}.console.aws.amazon.com/cloudformation/home?region=${item.target}#/stacks/quickcreate?region=${item.target}&param_workspaceID=${workspace().id}&param_template=${import.meta.env.VITE_ISSUES_URL}&stackName=sst-console-issue-${workspace().id}&templateURL=${import.meta.env.VITE_ISSUES_URL
                           }`}
-                      >Create cloudformation stack</a></li>}
+                      >Create stack in {item.target}</a></li>}
                     </For>
                   </WarningDetailsDesc>
                 </Stack>
