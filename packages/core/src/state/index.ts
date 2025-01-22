@@ -39,6 +39,7 @@ import {
   CloudFormationClient,
   DescribeStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
+import { runTable } from "../run/run.sql";
 
 export module State {
   export const Event = {
@@ -484,6 +485,18 @@ export module State {
       if (!command.success) return;
       console.log(lock);
       await createTransaction(async (tx) => {
+        const runID = lock.runID
+          ? await tx
+              .select({ id: runTable.id })
+              .from(runTable)
+              .where(
+                and(
+                  eq(runTable.workspaceID, useWorkspace()),
+                  eq(runTable.id, lock.runID),
+                ),
+              )
+              .then((r) => r.at(0)?.id || null)
+          : null;
         const result = await tx
           .select({
             count: count(),
@@ -502,7 +515,7 @@ export module State {
           .values({
             workspaceID: useWorkspace(),
             command: command.data,
-            runID: lock.runID || null,
+            runID,
             id: lock.updateID,
             index: result + 1,
             stageID: input.config.stageID,

@@ -322,7 +322,6 @@ export const subscribeIon = zod(
               (x) => x.OutputKey === "SubscriberARN",
             )?.OutputValue;
             if (functionArn) {
-              console.log(stack.StackStatus, stack.Outputs);
               return destinations.set(region, functionArn!), functionArn;
             }
             break;
