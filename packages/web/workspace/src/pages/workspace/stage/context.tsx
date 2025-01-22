@@ -163,7 +163,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
             return [
               {
                 name,
-                title: r.outputs?._metadata.handler,
+                title: r.outputs?._metadata?.handler,
                 link: dev
                   ? `functionID=${r.urn}&view=local&hint=lambda`
                   : `logGroup=${logGroup}&view=past&hint=lambda`,
