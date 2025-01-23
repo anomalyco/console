@@ -11,6 +11,9 @@ cluster.addService("CDC", {
     context: ".",
     dockerfile: "./packages/cdc/Dockerfile",
   },
+  environment: {
+    NO_COLOR: "1",
+  },
   link: [postgres, database],
   dev: {
     directory: "./packages/cdc",
