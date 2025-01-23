@@ -9,7 +9,7 @@ new sst.aws.StaticSite("Workspace", {
   path: "./packages/web/workspace",
   build: {
     output: "./dist",
-    command: "pnpm build",
+    command: "bun run build",
   },
   domain: {
     name: domain,

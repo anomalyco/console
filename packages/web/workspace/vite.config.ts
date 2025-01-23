@@ -5,7 +5,6 @@ import inspect from "vite-plugin-inspect";
 import path from "path";
 
 export default defineConfig({
-  // @ts-expect-error
   plugins: [inspect(), macaronVitePlugin(), solidPlugin()],
   server: {
     port: 3000,
