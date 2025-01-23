@@ -2,10 +2,12 @@ import { Resource } from "sst";
 import { PlanetScaleVStream, TableCursor } from "planetscale-stream-ts";
 import { postgres, sql } from "@console/core/drizzle/index";
 import { workspaceTable } from "@console/core/workspace/workspace.pg";
-import { PgTableWithColumns } from "drizzle-orm/pg-core";
+import { IndexColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
+import { Column } from "drizzle-orm";
 
 async function sync<Table extends PgTableWithColumns<any>>(
   table: Table,
+  pk: IndexColumn[],
   transform: (input: any) => Table["$inferInsert"],
 ) {
   console.log("syncing", table._.name);
@@ -48,7 +50,7 @@ async function sync<Table extends PgTableWithColumns<any>>(
           ...data,
         })
         .onConflictDoUpdate({
-          target: [workspaceTable.id],
+          target: pk,
           set: data,
         })
         .then(console.log);
@@ -56,7 +58,7 @@ async function sync<Table extends PgTableWithColumns<any>>(
   }
 }
 
-await sync(workspaceTable, (input) => {
+await sync(workspaceTable, [workspaceTable.id], (input) => {
   return {
     slug: input.slug,
     settingIssue: input.setting_issue === 1,
