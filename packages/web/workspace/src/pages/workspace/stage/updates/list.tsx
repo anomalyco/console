@@ -2,18 +2,18 @@ import { sortBy } from "remeda";
 import { DateTime } from "luxon";
 import { A } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
-import { IconCommandLine, IconTag } from "$/ui/icons";
-import { inputFocusStyles } from "$/ui/form";
+import { IconCommandLine, IconTag } from "@console/web/ui/icons";
+import { inputFocusStyles } from "@console/web/ui/form";
 import { useStageContext } from "../context";
 import { globalKeyframes } from "@macaron-css/core";
-import { IconPr, IconGit } from "$/ui/icons/custom";
-import { formatSinceTime } from "$/common/format";
-import { createSubscription } from "$/providers/replicache";
-import { githubPr, githubRepo, githubRef } from "$/common/url-builder";
-import { RunStore, StateUpdateStore } from "$/data/app";
+import { IconPr, IconGit } from "@console/web/ui/icons/custom";
+import { formatSinceTime } from "@console/web/common/format";
+import { createSubscription } from "@console/web/providers/replicache";
+import { githubPr, githubRepo, githubRef } from "@console/web/common/url-builder";
+import { RunStore, StateUpdateStore } from "@console/web/data/app";
 import { For, Show, Match, Switch, createMemo } from "solid-js";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 
 const LEGEND_RES = 2;
 const LEGEND_WIDTH = 160;
@@ -422,9 +422,8 @@ function Update(props: UpdateProps) {
                   <img
                     width="24"
                     height="24"
-                    src={`https://avatars.githubusercontent.com/u/${
-                      runInfo()!.gitUser!.id
-                    }?s=48&v=4`}
+                    src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
+                      }?s=48&v=4`}
                   />
                 </UpdateSenderAvatar>
               </Show>

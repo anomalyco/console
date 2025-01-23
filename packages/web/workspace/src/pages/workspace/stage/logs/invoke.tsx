@@ -1,9 +1,9 @@
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import {
   IconSubRight,
   IconCaretRight,
   IconCaretRightOutline,
-} from "$/ui/icons/custom";
+} from "@console/web/ui/icons/custom";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import { createStore } from "solid-js/store";
@@ -16,19 +16,19 @@ import {
   DialogPayloadManageControl,
 } from "./dialog-payload-manage";
 import { useCommandBar } from "../../command-bar";
-import { IconBookmark } from "$/ui/icons";
-import { LambdaPayloadStore } from "$/data/lambda-payload";
+import { IconBookmark } from "@console/web/ui/icons";
+import { LambdaPayloadStore } from "@console/web/data/lambda-payload";
 import { useStageContext } from "../context";
 import { Show, createEffect, createMemo } from "solid-js";
-import { createScan2 } from "$/data/store";
+import { createScan2 } from "@console/web/data/store";
 import { useApi, useWorkspace } from "../../context";
-import { bus } from "$/providers/bus";
-import { TextButton, IconButton } from "$/ui/button";
-import { Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { bus } from "@console/web/providers/bus";
+import { TextButton, IconButton } from "@console/web/ui/button";
+import { Row } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const InvokeRoot = styled("div", {
   base: {

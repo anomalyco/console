@@ -1,15 +1,15 @@
-import { useReplicache } from "$/providers/replicache";
-import { TextButton } from "$/ui/button";
-import { FormField, Input } from "$/ui/form";
-import { Stack, Row } from "$/ui/layout";
-import { Modal } from "$/ui/modal";
-import { theme } from "$/ui/theme";
+import { useReplicache } from "@console/web/providers/replicache";
+import { TextButton } from "@console/web/ui/button";
+import { FormField, Input } from "@console/web/ui/form";
+import { Stack, Row } from "@console/web/ui/layout";
+import { Modal } from "@console/web/ui/modal";
+import { theme } from "@console/web/ui/theme";
 import { styled } from "@macaron-css/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { batch, createEffect } from "solid-js";
 import { createStore, unwrap } from "solid-js/store";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 function init() {
   const [state, setState] = createStore<{

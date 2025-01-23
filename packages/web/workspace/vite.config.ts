@@ -21,9 +21,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@console/functions": path.resolve(__dirname, "../../functions/src"),
-      "@console/core": path.resolve(__dirname, "../../core/src"),
-      $: path.resolve(__dirname, "./src"),
+      "@console/web": path.resolve(__dirname, "./src"),
     },
   },
 });

@@ -1,5 +1,5 @@
-import { bus } from "$/providers/bus";
-import { LogEvent, StackFrame } from "@console/core/log";
+import { bus } from "@console/web/providers/bus";
+import { LogEvent, StackFrame } from "@console/core/log/index";
 import { pipe, sortBy, uniqueBy } from "remeda";
 import { createStore, produce } from "solid-js/store";
 

@@ -1,5 +1,5 @@
 import { withActor } from "@console/core/actor";
-import { Run } from "@console/core/run";
+import { Run } from "@console/core/run/index";
 import { bus } from "sst/aws/bus";
 
 export const handler = bus.subscriber(
@@ -33,9 +33,9 @@ export const handler = bus.subscriber(
             });
             break;
         }
-      }
+      },
     );
-  }
+  },
 );
 
 interface Events {
@@ -89,11 +89,11 @@ export const codebuildHandler = async (evt: Payload) => {
               status === "TIMED_OUT"
                 ? "CodeBuild run timed out"
                 : status === "STOPPED"
-                ? "CodeBuild run stopped"
-                : "CodeBuild run failed",
+                  ? "CodeBuild run stopped"
+                  : "CodeBuild run failed",
           },
         },
       });
-    }
+    },
   );
 };

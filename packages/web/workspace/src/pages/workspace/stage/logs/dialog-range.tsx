@@ -1,16 +1,16 @@
-import { Modal } from "$/ui/modal";
-import { utility } from "$/ui/utility";
+import { Modal } from "@console/web/ui/modal";
+import { utility } from "@console/web/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
 import { DateTime } from "luxon";
-import { DATETIME_LONG } from "$/common/format";
-import { LinkButton } from "$/ui/button";
-import { FormField, Input } from "$/ui/form";
-import { Stack, Row, Grower } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { DATETIME_LONG } from "@console/web/common/format";
+import { LinkButton } from "@console/web/ui/button";
+import { FormField, Input } from "@console/web/ui/form";
+import { Stack, Row, Grower } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 function init() {
   const [state, setState] = createStore<{

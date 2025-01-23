@@ -3,7 +3,7 @@ import { theme } from "./theme";
 import { createEffect, createSignal, ParentProps, untrack } from "solid-js";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Portal } from "solid-js/web";
-import { bus } from "$/providers/bus";
+import { bus } from "../providers/bus";
 
 const Root = styled("div", {
   base: {

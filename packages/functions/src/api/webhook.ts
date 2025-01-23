@@ -1,6 +1,6 @@
 import { withActor } from "@console/core/actor";
-import { Billing } from "@console/core/billing";
-import { stripe } from "@console/core/stripe";
+import { Billing } from "@console/core/billing/index";
+import { stripe } from "@console/core/stripe/index";
 import { Hono } from "hono";
 import { Resource } from "sst";
 
@@ -11,7 +11,7 @@ WebhookRoute.post("/stripe", async (c) => {
   const body = stripe.webhooks.constructEvent(
     await c.req.text(),
     c.req.header("stripe-signature")!,
-    Resource.StripeWebhookSigningSecret.value
+    Resource.StripeWebhookSigningSecret.value,
   );
 
   console.log(body.type, body);
@@ -41,7 +41,7 @@ WebhookRoute.post("/stripe", async (c) => {
           priceID,
         });
         await Billing.updateGatingStatus();
-      }
+      },
     );
   } else if (body.type === "customer.subscription.updated") {
     const { id: subscriptionID, customer, status } = body.data.object;
@@ -75,7 +75,7 @@ WebhookRoute.post("/stripe", async (c) => {
           });
           await Billing.updateGatingStatus();
         }
-      }
+      },
     );
   } else if (body.type === "customer.subscription.deleted") {
     const { id: subscriptionID, customer } = body.data.object;
@@ -95,7 +95,7 @@ WebhookRoute.post("/stripe", async (c) => {
       },
       async () => {
         await Billing.updateGatingStatus();
-      }
+      },
     );
   }
 
@@ -110,7 +110,7 @@ WebhookRoute.post("/stripe", async (c) => {
         invoice: id,
         customer,
         created: new Date(created * 1000),
-      }
+      },
     );
   }
 

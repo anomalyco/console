@@ -1,9 +1,4 @@
 import { CSSProperties } from "@macaron-css/core";
-import { Workspace } from "@console/core/workspace";
-import { IconApp } from "$/ui/icons/custom";
-import { IconChevronUpDown, IconMagnifyingGlass } from "$/ui/icons";
-import { utility } from "$/ui/utility";
-import { TextButton } from "$/ui/button";
 import { styled } from "@macaron-css/solid";
 import { A } from "@solidjs/router";
 import { WorkspaceContext } from "./context";
@@ -19,11 +14,15 @@ import {
   createEffect,
   createSignal,
 } from "solid-js";
-import { createInitializedContext } from "$/common/context";
 import { dropAllDatabases } from "replicache";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
+import { createInitializedContext } from "../../common/context";
+import { AvatarInitialsIcon } from "../../ui/avatar-icon";
+import { TextButton } from "../../ui/button";
+import { IconChevronUpDown, IconMagnifyingGlass } from "../../ui/icons";
+import { IconApp } from "../../ui/icons/custom";
+import { Row } from "../../ui/layout";
+import { theme } from "../../ui/theme";
+import { utility } from "../../ui/utility";
 
 const breadCrumbStyles: CSSProperties = {
   flexShrink: 0,

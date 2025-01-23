@@ -1,23 +1,16 @@
-import { globalStyle, globalKeyframes, CSSProperties } from "@macaron-css/core";
-import { SpanSpacer, Grower, Stack, Row, Hr } from "$/ui/layout";
+import { Grower, Stack, Row } from "@console/web/ui/layout";
 import { styled } from "@macaron-css/solid";
-import { theme } from "$/ui/theme";
-import { IconBookmark, IconCheck } from "$/ui/icons";
-import * as CI from "$/ui/icons/custom";
-import { Histogram } from "$/ui/histogram";
-import { Text } from "$/ui/text";
-import { Tag } from "$/ui/tag";
-import { Alert } from "$/ui/alert";
-import { Toggle } from "$/ui/switch";
 import {
   Input,
   Textarea,
   FormField,
   SplitOptions,
   SplitOptionsOption,
-} from "$/ui/form";
-import { Select, MultiSelect } from "$/ui/select";
-import { Dropdown } from "$/ui/dropdown";
+} from "@console/web/ui/form";
+import { Select, MultiSelect } from "@console/web/ui/select";
+import { Dropdown } from "@console/web/ui/dropdown";
+import { Text } from "@console/web/ui/text";
+import { Alert } from "@console/web/ui/alert";
 import {
   Button,
   TabTitle,
@@ -27,18 +20,18 @@ import {
   ButtonIcon,
   ButtonGroup,
   ChevronLink,
-} from "$/ui/button";
-import { utility } from "$/ui/utility";
-import { IconGitHub } from "$/ui/icons/custom";
+} from "@console/web/ui/button";
+import { IconAdd, IconAddCircle, IconApi, IconApiGatewayV1Api, IconApp, IconAppSync, IconArrowPathSpin, IconAstroSite, IconAuth, IconAws, IconBucket, IconCaretRight, IconCaretRightOutline, IconCognito, IconConfig, IconConnect, IconConstruct, IconContainerRuntime, IconCron, IconDotNetRuntime, IconEventBus, IconFunction, IconGitHub, IconGoRuntime, IconJob, IconKinesisStream, IconLogosSlack, IconLogout, IconPythonRuntime, IconQueue, IconRDS, IconRemixSite, IconScript, IconSolidStartSite, IconStack, IconStage, IconSubRight, IconSvelteKitSite, IconTable, IconTopic, IconUserAdd, IconWebSocketApi, IconWorkspace } from "@console/web/ui/icons/custom";
 import {
-  For,
   JSX,
-  Show,
-  createMemo,
-  createSignal,
   ComponentProps,
 } from "solid-js";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
+import { Histogram } from "@console/web/ui/histogram";
+import { IconBookmark, IconCheck, IconUser } from "@console/web/ui/icons";
+import { Toggle } from "@console/web/ui/switch";
+import { Tag } from "@console/web/ui/tag";
+import { theme } from "@console/web/ui/theme";
 
 const ComponentRoot = styled("div", {
   base: {
@@ -89,14 +82,6 @@ const VariantContent = styled("div", {
     border: `1px solid ${theme.color.divider.base}`,
     padding: theme.space[4],
     borderRadius: theme.borderRadius,
-  },
-});
-
-const VariantThemes = styled("div", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.space[2],
   },
 });
 
@@ -1007,136 +992,136 @@ export function Design() {
       <ComponentType name="Icons">
         <Variant name="Base">
           <IconContainer title="IconAdd">
-            <CI.IconAdd />
+            <IconAdd />
           </IconContainer>
           <IconContainer title="IconApi">
-            <CI.IconApi />
+            <IconApi />
           </IconContainer>
           <IconContainer title="IconApp">
-            <CI.IconApp />
+            <IconApp />
           </IconContainer>
           <IconContainer title="IconAws">
-            <CI.IconAws />
+            <IconAws />
           </IconContainer>
           <IconContainer title="IconJob">
-            <CI.IconJob />
+            <IconJob />
           </IconContainer>
           <IconContainer title="IconRDS">
-            <CI.IconRDS />
+            <IconRDS />
           </IconContainer>
           <IconContainer title="IconAuth">
-            <CI.IconAuth />
+            <IconAuth />
           </IconContainer>
           <IconContainer title="IconCron">
-            <CI.IconCron />
+            <IconCron />
           </IconContainer>
           <IconContainer title="IconUser">
-            <CI.IconUser />
+            <IconUser />
           </IconContainer>
           <IconContainer title="IconQueue">
-            <CI.IconQueue />
+            <IconQueue />
           </IconContainer>
           <IconContainer title="IconStack">
-            <CI.IconStack />
+            <IconStack />
           </IconContainer>
           <IconContainer title="IconStage">
-            <CI.IconStage />
+            <IconStage />
           </IconContainer>
           <IconContainer title="IconTable">
-            <CI.IconTable />
+            <IconTable />
           </IconContainer>
           <IconContainer title="IconTopic">
-            <CI.IconTopic />
+            <IconTopic />
           </IconContainer>
           <IconContainer title="IconBucket">
-            <CI.IconBucket />
+            <IconBucket />
           </IconContainer>
           <IconContainer title="IconConfig">
-            <CI.IconConfig />
+            <IconConfig />
           </IconContainer>
           <IconContainer title="IconGitHub">
-            <CI.IconGitHub />
+            <IconGitHub />
           </IconContainer>
           <IconContainer title="IconLogout">
-            <CI.IconLogout />
+            <IconLogout />
           </IconContainer>
           <IconContainer title="IconScript">
-            <CI.IconScript />
+            <IconScript />
           </IconContainer>
           <IconContainer title="IconAppSync">
-            <CI.IconAppSync />
+            <IconAppSync />
           </IconContainer>
           <IconContainer title="IconCognito">
-            <CI.IconCognito />
+            <IconCognito />
           </IconContainer>
           <IconContainer title="IconConnect">
-            <CI.IconConnect />
+            <IconConnect />
           </IconContainer>
           <IconContainer title="IconUserAdd">
-            <CI.IconUserAdd />
+            <IconUserAdd />
           </IconContainer>
           <IconContainer title="IconEventBus">
-            <CI.IconEventBus />
+            <IconEventBus />
           </IconContainer>
           <IconContainer title="IconFunction">
-            <CI.IconFunction />
+            <IconFunction />
           </IconContainer>
           <IconContainer title="IconSubRight">
-            <CI.IconSubRight />
+            <IconSubRight />
           </IconContainer>
           <IconContainer title="IconAddCircle">
-            <CI.IconAddCircle />
+            <IconAddCircle />
           </IconContainer>
           <IconContainer title="IconAstroSite">
-            <CI.IconAstroSite />
+            <IconAstroSite />
           </IconContainer>
           <IconContainer title="IconConstruct">
-            <CI.IconConstruct />
+            <IconConstruct />
           </IconContainer>
           <IconContainer title="IconGoRuntime">
-            <CI.IconGoRuntime />
+            <IconGoRuntime />
           </IconContainer>
           <IconContainer title="IconRemixSite">
-            <CI.IconRemixSite />
+            <IconRemixSite />
           </IconContainer>
           <IconContainer title="IconWorkspace">
-            <CI.IconWorkspace />
+            <IconWorkspace />
           </IconContainer>
           <IconContainer title="IconCaretRight">
-            <CI.IconCaretRight />
+            <IconCaretRight />
           </IconContainer>
           <IconContainer title="IconLogosSlack">
-            <CI.IconLogosSlack />
+            <IconLogosSlack />
           </IconContainer>
           <IconContainer title="IconWebSocketApi">
-            <CI.IconWebSocketApi />
+            <IconWebSocketApi />
           </IconContainer>
           <IconContainer title="IconArrowPathSpin">
-            <CI.IconArrowPathSpin />
+            <IconArrowPathSpin />
           </IconContainer>
           <IconContainer title="IconDotNetRuntime">
-            <CI.IconDotNetRuntime />
+            <IconDotNetRuntime />
           </IconContainer>
           <IconContainer title="IconKinesisStream">
-            <CI.IconKinesisStream />
+            <IconKinesisStream />
           </IconContainer>
           <IconContainer title="IconPythonRuntime">
-            <CI.IconPythonRuntime />
+            <IconPythonRuntime />
           </IconContainer>
           <IconContainer title="IconSvelteKitSite">
-            <CI.IconSvelteKitSite />
+            <IconSvelteKitSite />
           </IconContainer>
           <IconContainer title="IconSolidStartSite">
-            <CI.IconSolidStartSite />
+            <IconSolidStartSite />
           </IconContainer>
           <IconContainer title="IconApiGatewayV1Api">
-            <CI.IconApiGatewayV1Api />
+            <IconApiGatewayV1Api />
           </IconContainer>
           <IconContainer title="IconContainerRuntime">
-            <CI.IconContainerRuntime />
+            <IconContainerRuntime />
           </IconContainer>
           <IconContainer title="IconCaretRightOutline">
-            <CI.IconCaretRightOutline />
+            <IconCaretRightOutline />
           </IconContainer>
         </Variant>
       </ComponentType>

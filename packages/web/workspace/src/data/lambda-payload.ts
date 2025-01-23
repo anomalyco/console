@@ -1,4 +1,4 @@
-import type { LambdaPayload } from "@console/core/lambda";
+import type { LambdaPayload } from "@console/core/lambda/index";
 import { Store } from "./store";
 
 export const LambdaPayloadStore = new Store()

@@ -1,15 +1,15 @@
 import { Server } from "./framework";
-import { App, Stage } from "@console/core/app";
+import { App, Stage } from "@console/core/app/index";
 import { LogPoller } from "@console/core/log/poller";
-import { Log } from "@console/core/log/";
-import { AWS } from "@console/core/aws";
+import { Log } from "@console/core/log/index";
+import { AWS } from "@console/core/aws/index";
 import { z } from "zod";
-import { Workspace } from "@console/core/workspace";
-import { Lambda } from "@console/core/lambda";
+import { Workspace } from "@console/core/workspace/index";
+import { Lambda } from "@console/core/lambda/index";
 import { assertActor, withActor, useWorkspace } from "@console/core/actor";
-import { User } from "@console/core/user";
-import { Issue } from "@console/core/issue";
-import { and, eq, or } from "@console/core/drizzle";
+import { User } from "@console/core/user/index";
+import { Issue } from "@console/core/issue/index";
+import { and, eq, or } from "@console/core/drizzle/index";
 import {
   createTransactionEffect,
   useTransaction,
@@ -17,14 +17,14 @@ import {
 import { issueSubscriber } from "@console/core/issue/issue.sql";
 import { warning } from "@console/core/warning/warning.sql";
 import { Github } from "@console/core/git/github";
-import { Slack } from "@console/core/slack";
+import { Slack } from "@console/core/slack/index";
 import { AppRepo } from "@console/core/app/repo";
 import { RunConfig } from "@console/core/run/config";
-import { Alert } from "@console/core/alert";
+import { Alert } from "@console/core/alert/index";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
-import { Run } from "@console/core/run";
-import { State } from "@console/core/state";
+import { Run } from "@console/core/run/index";
+import { State } from "@console/core/state/index";
 
 export const server = new Server()
   .expose("log_poller_subscribe", LogPoller.subscribe)

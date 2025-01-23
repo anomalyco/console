@@ -1,8 +1,8 @@
-import { Splash } from "$/ui/splash";
-import { useLocalContext } from "$/providers/local";
 import { useNavigate } from "@solidjs/router";
 import { createEffect } from "solid-js";
-import { useAuth2 } from "$/providers/auth2";
+import { useAuth2 } from "../providers/auth2";
+import { useLocalContext } from "../providers/local";
+import { Splash } from "../ui/splash";
 
 export function Local() {
   const ctx = useLocalContext();
@@ -14,11 +14,11 @@ export function Local() {
     for (const account of auth.all) {
       const result = await fetch(
         import.meta.env.VITE_API_URL +
-          "/local?" +
-          new URLSearchParams({
-            app,
-            stage,
-          }).toString(),
+        "/local?" +
+        new URLSearchParams({
+          app,
+          stage,
+        }).toString(),
         {
           headers: {
             authorization: `Bearer ${account.token}`,

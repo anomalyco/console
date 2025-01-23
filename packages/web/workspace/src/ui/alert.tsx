@@ -1,9 +1,9 @@
-import { theme } from "$/ui/theme";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
 import { ComponentProps } from "solid-js";
-import { IconXCircle, IconExclamationTriangle } from "$/ui/icons";
 import { Row, Stack } from "./layout";
+import { IconXCircle, IconExclamationTriangle } from "./icons";
+import { theme } from "./theme";
 
 const AlertRoot = styled("div", {
   base: {

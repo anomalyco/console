@@ -1,9 +1,9 @@
 import { withActor } from "@console/core/actor";
 import { Stage } from "@console/core/app/stage";
 import { awsAccount } from "@console/core/aws/aws.sql";
-import { State } from "@console/core/state";
+import { State } from "@console/core/state/index";
 import { useTransaction } from "@console/core/util/transaction";
-import { and, eq } from "@console/core/drizzle";
+import { and, eq } from "@console/core/drizzle/index";
 import { Resource } from "sst";
 import { bus } from "sst/aws/bus";
 

@@ -1,6 +1,6 @@
-import { ErrorList, ErrorItem } from "$/pages/workspace/stage/logs/error";
-import { IconBookmark, IconArrowPath } from "$/ui/icons";
-import { IconCaretRight } from "$/ui/icons/custom";
+import { ErrorList, ErrorItem } from "@console/web/pages/workspace/stage/logs/error";
+import { IconBookmark, IconArrowPath } from "@console/web/ui/icons";
+import { IconCaretRight } from "@console/web/ui/icons/custom";
 import {
   For,
   Match,
@@ -14,12 +14,12 @@ import { formatDuration, formatBytes } from "./format";
 import { styled } from "@macaron-css/solid";
 import { A } from "@solidjs/router";
 import { DateTime } from "luxon";
-import { TabTitle, TextButton } from "$/ui/button";
-import { Row, Stack } from "$/ui/layout";
-import { Tag } from "$/ui/tag";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Invocation } from "@console/core/log";
+import { TabTitle, TextButton } from "@console/web/ui/button";
+import { Row, Stack } from "@console/web/ui/layout";
+import { Tag } from "@console/web/ui/tag";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { type Invocation } from "@console/core/log/index";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",

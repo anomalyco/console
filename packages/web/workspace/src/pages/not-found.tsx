@@ -1,10 +1,10 @@
 import { Show } from "solid-js";
 import { styled } from "@macaron-css/solid";
 import { A } from "@solidjs/router";
-import { Text } from "$/ui/text";
-import { Stack, Fullscreen } from "$/ui/layout";
+import { Text } from "@console/web/ui/text";
+import { Stack, Fullscreen } from "@console/web/ui/layout";
 import { Header } from "./workspace/header";
-import { theme } from "$/ui/theme";
+import { theme } from "@console/web/ui/theme";
 
 const HomeLink = styled(A, {
   base: {

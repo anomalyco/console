@@ -3,9 +3,9 @@ import {
   RunConfigStore,
   GithubOrgStore,
   GithubRepoStore,
-} from "$/data/app";
-import { Select } from "$/ui/select";
-import { Dropdown } from "$/ui/dropdown";
+} from "../../../../data/app";
+import { Select } from "../../../../ui/select";
+import { Dropdown } from "../../../../ui/dropdown";
 import {
   Divider,
   SettingsRoot,
@@ -19,9 +19,9 @@ import type { RunConfig } from "@console/core/run/config";
 import { styled } from "@macaron-css/solid";
 import { useAppContext } from "../context";
 import { useWorkspace } from "../../context";
-import { useAuth2 } from "$/providers/auth2";
+import { useAuth2 } from "../../../../providers/auth2";
 import { createId } from "@paralleldrive/cuid2";
-import { IconEllipsisVertical } from "$/ui/icons";
+import { IconEllipsisVertical } from "../../../../ui/icons";
 import { createEventListener } from "@solid-primitives/event-listener";
 import {
   For,
@@ -33,8 +33,8 @@ import {
   createSignal,
   batch,
 } from "solid-js";
-import { useReplicache, createSubscription } from "$/providers/replicache";
-import { githubRepo } from "$/common/url-builder";
+import { useReplicache, createSubscription } from "../../../../providers/replicache";
+import { githubRepo } from "../../../../common/url-builder";
 import {
   getValue,
   valiForm,
@@ -46,19 +46,19 @@ import {
   clearError,
   insert,
 } from "@modular-forms/solid";
-import { IconAdd, IconGitHub } from "$/ui/icons/custom";
+import { IconAdd, IconGitHub } from "@console/web/ui/icons/custom";
 import * as v from "valibot";
-import { AWS } from "$/data/aws";
+import { AWS } from "@console/web/data/aws";
 import { createStore } from "solid-js/store";
 import { fromEntries, map, pipe, sortBy, filter } from "remeda";
-import { TextButton, ButtonIcon } from "$/ui/button";
-import { FormField, Input } from "$/ui/form";
-import { Grower, Row, Stack } from "$/ui/layout";
-import { Tag } from "$/ui/tag";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { TextButton, ButtonIcon } from "@console/web/ui/button";
+import { FormField, Input } from "@console/web/ui/form";
+import { Grower, Row, Stack } from "@console/web/ui/layout";
+import { Tag } from "@console/web/ui/tag";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const HEADER_HEIGHT = 54;
 

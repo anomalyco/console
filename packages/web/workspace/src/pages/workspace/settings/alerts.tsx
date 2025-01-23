@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   For,
   Match,
@@ -7,32 +8,30 @@ import {
   createSignal,
   createMemo,
 } from "solid-js";
-import { utility } from "$/ui/utility";
-import { Dropdown } from "$/ui/dropdown";
+import { utility } from "@console/web/ui/utility";
+import { Dropdown } from "@console/web/ui/dropdown";
 import {
   IconEnvelopeSolid,
   IconArrowLongRight,
   IconEllipsisVertical,
   IconEllipsisHorizontal,
   IconExclamationTriangle,
-} from "$/ui/icons";
-import { IconLogosSlackBW } from "$/ui/icons/custom";
-import { createSubscription, useReplicache } from "$/providers/replicache";
-import { AppStore, AlertStore, SlackTeamStore } from "$/data/app";
-import { Alert } from "@console/core/alert";
+} from "@console/web/ui/icons";
+import { IconLogosSlackBW } from "@console/web/ui/icons/custom";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
+import { AppStore, AlertStore, SlackTeamStore } from "@console/web/data/app";
+import { Alert } from "@console/core/alert/index";
 import { createStore, unwrap } from "solid-js/store";
-import { MultiSelect, Select } from "$/ui/select";
-import { UserStore } from "$/data/user";
-import { ActiveStages } from "$/data/stage";
+import { MultiSelect, Select } from "@console/web/ui/select";
+import { UserStore } from "@console/web/data/user";
+import { ActiveStages } from "@console/web/data/stage";
 import { filter, map, pipe, unique } from "remeda";
 import { createId } from "@paralleldrive/cuid2";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
-import { array, literal, object, string, union, minLength } from "valibot";
 import {
   reset,
   validate,
-  valiForm,
   setValue,
   toCustom,
   getValue,
@@ -40,14 +39,15 @@ import {
   getErrors,
   getValues,
   createForm,
+  zodForm,
 } from "@modular-forms/solid";
-import { WarningStore } from "$/data/warning";
-import { TextButton } from "$/ui/button";
-import { FormField, Input } from "$/ui/form";
-import { Stack, Row, Grower } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { WarningStore } from "@console/web/data/warning";
+import { TextButton } from "@console/web/ui/button";
+import { FormField, Input } from "@console/web/ui/form";
+import { Stack, Row, Grower } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const PANEL_CONTENT_SPACE = "10";
 const PANEL_HEADER_SPACE = "3";
@@ -276,24 +276,25 @@ function joinWithAnd(arr: string[]): string {
   return `${allButLast}, and ${arr[length - 1]}`;
 }
 
-const PutForm = object({
-  destination: object({
-    type: union([literal("email"), literal("slack")], "Must select channel"),
-    email: object({
-      users: array(string(), [minLength(1)]),
+const ZodPutForm = z.object({
+  destination: z.object({
+    type: z.union([z.literal("email"), z.literal("slack")]),
+    email: z.object({
+      users: z.array(z.string()),
     }),
-    slack: object({
-      channel: string([minLength(1, "Slack channel is required")]),
+    slack: z.object({
+      channel: z.string(),
     }),
   }),
-  source: object({
-    app: array(string(), [minLength(1, "Must select at least one app")]),
-    stage: string([minLength(1)]),
+  source: z.object({
+    app: z.array(z.string()),
+    stage: z.string(),
   }),
-  event: union(
-    [literal("issue"), literal("autodeploy"), literal("autodeploy.error")],
-    "Must select event",
-  ),
+  event: z.union([
+    z.literal("issue"),
+    z.literal("autodeploy"),
+    z.literal("autodeploy.error"),
+  ]),
 });
 
 export function Alerts() {
@@ -311,7 +312,7 @@ export function Alerts() {
   );
 
   const [putForm, { Form, Field }] = createForm({
-    validate: valiForm(PutForm),
+    validate: zodForm(ZodPutForm),
   });
   const [editing, setEditing] = createStore<{
     id?: string;
@@ -468,7 +469,7 @@ export function Alerts() {
                     color={field.error ? "danger" : "primary"}
                     hint={
                       getValue(putForm, "destination.type") === "slack" &&
-                      !slackTeam() ? (
+                        !slackTeam() ? (
                         <span>
                           <a href="#slack">Connect your Slack</a> workspace{" "}
                           below.
@@ -753,19 +754,19 @@ export function Alerts() {
                 destination:
                   cloned.destination!.type === "slack"
                     ? {
-                        type: "slack",
-                        properties: {
-                          channel: cloned.destination!.slack?.channel!,
-                        },
-                      }
-                    : {
-                        type: "email",
-                        properties: {
-                          users: cloned.destination!.email!.users!.includes("*")
-                            ? "*"
-                            : cloned.destination!.email!.users!,
-                        },
+                      type: "slack",
+                      properties: {
+                        channel: cloned.destination!.slack?.channel!,
                       },
+                    }
+                    : {
+                      type: "email",
+                      properties: {
+                        users: cloned.destination!.email!.users!.includes("*")
+                          ? "*"
+                          : cloned.destination!.email!.users!,
+                      },
+                    },
                 event: cloned.event!,
               });
               setEditing("active", false);
@@ -889,7 +890,7 @@ export function Alerts() {
                                     alert.source.stage.join(", ")}
                                 </AlertsPanelFromKeyword>{" "}
                                 {alert.source.app !== "*" &&
-                                alert.source.app.length === 1
+                                  alert.source.app.length === 1
                                   ? "stage"
                                   : "stages"}
                               </>
@@ -915,16 +916,16 @@ export function Alerts() {
                                       {destination().properties.users === "*"
                                         ? "To all users in the workspace"
                                         : (
-                                            destination().properties
-                                              .users as string[]
+                                          destination().properties
+                                            .users as string[]
+                                        )
+                                          .map(
+                                            (id) =>
+                                              users.value.find(
+                                                (u) => u.id === id,
+                                              )?.email,
                                           )
-                                            .map(
-                                              (id) =>
-                                                users.value.find(
-                                                  (u) => u.id === id,
-                                                )?.email,
-                                            )
-                                            .join(", ")}
+                                          .join(", ")}
                                     </AlertsPanelToLabel>
                                   </>
                                 )}

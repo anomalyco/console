@@ -1,9 +1,8 @@
-import { Issue } from "@console/core/issue";
+import { Issue } from "@console/core/issue/index";
 import { unzipSync } from "zlib";
 import { withActor } from "@console/core/actor";
 import { KinesisStreamEvent } from "aws-lambda";
 import { queue } from "@console/core/util/queue";
-import { CloudWatchClient } from "@aws-sdk/client-cloudwatch";
 
 export const handler = async (event: KinesisStreamEvent) =>
   withActor(

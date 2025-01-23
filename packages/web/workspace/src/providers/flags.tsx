@@ -1,4 +1,4 @@
-import { createInitializedContext } from "$/common/context";
+import { createInitializedContext } from "@console/web/common/context";
 import { createMemo } from "solid-js";
 import { useSearchParams } from "@solidjs/router";
 import { useAuth2 } from "./auth2";

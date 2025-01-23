@@ -1,4 +1,4 @@
-import type { User } from "@console/core/user";
+import type { User } from "@console/core/user/index";
 import { Store } from "./store";
 
 export const UserStore = new Store()

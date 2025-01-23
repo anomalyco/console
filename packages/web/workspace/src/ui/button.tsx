@@ -2,10 +2,9 @@ import { A } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { JSX, Show, ComponentProps } from "solid-js";
 import { theme } from "./theme";
-import { Tag } from "$/ui/tag";
-import { Row } from "$/ui/layout";
-import { utility } from "$/ui/utility";
-import { IconCheck, IconChevronRight } from "$/ui/icons";
+import { Row } from "@console/web/ui/layout";
+import { utility } from "@console/web/ui/utility";
+import { IconCheck, IconChevronRight } from "@console/web/ui/icons";
 import { CSSProperties } from "@macaron-css/core";
 
 const activeBase: CSSProperties = {

@@ -11,7 +11,7 @@ import {
   useContext,
 } from "solid-js";
 import { styled } from "@macaron-css/solid";
-import { theme } from "$/ui/theme";
+import { theme } from "@console/web/ui/theme";
 import { filter, groupBy, pipe } from "remeda";
 import { globalStyle } from "@macaron-css/core";
 import { Portal } from "solid-js/web";
@@ -20,11 +20,11 @@ import {
   makeEventListener,
 } from "@solid-primitives/event-listener";
 import { createMutationObserver } from "@solid-primitives/mutation-observer";
-import { utility } from "$/ui/utility";
-import { IconSubRight } from "$/ui/icons/custom";
+import { utility } from "@console/web/ui/utility";
+import { IconSubRight } from "@console/web/ui/icons/custom";
 import { Navigator, useLocation } from "@solidjs/router";
-import { Text } from "$/ui/text";
-import { bus } from "$/providers/bus";
+import { Text } from "@console/web/ui/text";
+import { bus } from "@console/web/providers/bus";
 
 export interface Action {
   icon: (props: any) => JSX.Element;

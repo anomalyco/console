@@ -1,19 +1,19 @@
 import { DateTime } from "luxon";
 import { createHash } from "crypto";
-import { AWS } from "@console/core/aws";
-import { User } from "@console/core/user";
-import { Issue } from "@console/core/issue";
-import { State } from "@console/core/state";
-import { App, Stage } from "@console/core/app";
-import { Warning } from "@console/core/warning";
+import { AWS } from "@console/core/aws/index";
+import { User } from "@console/core/user/index";
+import { Issue } from "@console/core/issue/index";
+import { State } from "@console/core/state/index";
+import { App, Stage } from "@console/core/app/index";
+import { Warning } from "@console/core/warning/index";
 import { AppRepo } from "@console/core/app/repo";
 import { Github } from "@console/core/git/github";
-import { Run, RunConfig } from "@console/core/run";
-import { Workspace } from "@console/core/workspace";
+import { Run, RunConfig } from "@console/core/run/index";
+import { Workspace } from "@console/core/workspace/index";
 import { Resource } from "@console/core/app/resource";
-import { Usage, Billing } from "@console/core/billing";
-import { StackFrame, ParsedError, Invocation } from "@console/core/log";
-import { Alert } from "@console/core/alert";
+import { Usage, Billing } from "@console/core/billing/index";
+import { StackFrame, ParsedError, Invocation } from "@console/core/log/index";
+import { Alert } from "@console/core/alert/index";
 
 export type DummyMode =
   // Waiting to connect

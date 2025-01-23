@@ -3,13 +3,13 @@ import {
   IconFunction,
   IconConstruct,
   IconContainerRuntime,
-} from "$/ui/icons/custom";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+} from "@console/web/ui/icons/custom";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { useLogsContext } from "../context";
 import { A } from "@solidjs/router";
-import { Row, Stack, Fullscreen } from "$/ui/layout";
+import { Row, Stack, Fullscreen } from "@console/web/ui/layout";
 
 const Content = styled("div", {
   base: {

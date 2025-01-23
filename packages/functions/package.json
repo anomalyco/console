@@ -7,6 +7,9 @@
     "test": "sst bind vitest",
     "typecheck": "tsc --noEmit --incremental"
   },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.114",
     "@types/luxon": "3.4.2",
@@ -30,6 +33,7 @@
     "@aws-sdk/util-format-url": "^3.731.0",
     "@botpoison/node": "^0.1.10",
     "@console/mail": "workspace:*",
+    "@console/core": "workspace:*",
     "@esbuild/linux-arm64": "0.21.4",
     "@hono/zod-validator": "^0.4.1",
     "esbuild": "0.21.4",

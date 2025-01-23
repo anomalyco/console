@@ -6,7 +6,7 @@ import {
   IconCheck,
   IconEllipsisHorizontal,
   IconEllipsisVertical,
-} from "$/ui/icons";
+} from "@console/web/ui/icons";
 import { VList, VirtualizerHandle } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
 import { useSearchParams } from "@solidjs/router";
@@ -24,26 +24,26 @@ import {
 } from "solid-js";
 import { useStageContext, useStateResources } from "../../context";
 import { DateTime } from "luxon";
-import { DATETIME_LONG } from "$/common/format";
-import { Dropdown } from "$/ui/dropdown";
+import { DATETIME_LONG } from "@console/web/common/format";
+import { Dropdown } from "@console/web/ui/dropdown";
 import { Invoke, InvokeControl } from "../invoke";
-import { TextButton, IconButton } from "$/ui/button";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { InvocationRow } from "$/common/invocation";
-import { useApi } from "$/pages/workspace/context";
-import { IconArrowPathSpin } from "$/ui/icons/custom";
+import { TextButton, IconButton } from "@console/web/ui/button";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { InvocationRow } from "@console/web/common/invocation";
+import { useApi } from "@console/web/pages/workspace/context";
+import { IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { createStore } from "solid-js/store";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { style } from "@macaron-css/core";
-import { inputFocusStyles } from "$/ui/form";
+import { inputFocusStyles } from "@console/web/ui/form";
 import {
   createLogStore,
   isInvocation,
   isLog,
   useLocalLogs,
-} from "$/providers/invocation";
-import { DivSpacer } from "$/ui/layout";
+} from "@console/web/providers/invocation";
+import { DivSpacer } from "@console/web/ui/layout";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -358,7 +358,7 @@ function LogRow(props: LogRowProps) {
 }
 
 export function AWS() {
-  const [search, setSearch] = useSearchParams<
+  const [s, setSearch] = useSearchParams<
     | {
       logGroup: string;
       hint: "normal" | "lambda";
@@ -370,6 +370,7 @@ export function AWS() {
       functionID: string;
     }
   >();
+  const search = s as Required<typeof s>;
 
   const stage = useStageContext();
   const api = useApi();

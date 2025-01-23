@@ -1,12 +1,14 @@
-import { createInitializedContext } from "$/common/context";
-import { DummyMode } from "@console/functions/replicache/dummy/data";
+import { createInitializedContext } from "@console/web/common/context";
+import type { DummyMode } from "@console/functions/replicache/dummy/data";
 import { useSearchParams } from "@solidjs/router";
 import { useStorage } from "./account";
 
 export const { use: useDummy, provider: DummyProvider } =
   createInitializedContext("dummy", () => {
     const storage = useStorage();
-    const [search] = useSearchParams();
+    const [search] = useSearchParams<{
+      dummy: DummyMode;
+    }>();
     storage.set("dummy", search.dummy || storage.value.dummy || "base");
     const splits = location.hostname.split(".");
     const isDummy = splits[0] === "dummy" && splits[1] === "localhost";
@@ -24,12 +26,12 @@ export const { use: useDummyConfig, provider: DummyConfigProvider } =
     const result = () =>
       dummy()
         ? {
-            user: "me@example.com",
-            local: {
-              app: "my-sst-app",
-              stage: "local",
-            },
-          }
+          user: "me@example.com",
+          local: {
+            app: "my-sst-app",
+            stage: "local",
+          },
+        }
         : undefined;
     result.ready = true;
     return result;

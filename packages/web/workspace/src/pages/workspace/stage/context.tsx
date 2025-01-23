@@ -1,17 +1,17 @@
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import {
   createContext,
   createMemo,
   useContext,
 } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
-import { StageStore } from "$/data/stage";
-import { AppStore, StateResourceStore } from "$/data/app";
+import { StageStore } from "@console/web/data/stage";
+import { AppStore, StateResourceStore } from "@console/web/data/app";
 import { NavigationAction, useCommandBar } from "../command-bar";
-import { useLocalContext } from "$/providers/local";
-import { createInitializedContext } from "$/common/context";
-import { IssueStore } from "$/data/issue";
-import { UsageStore } from "$/data/usage";
+import { useLocalContext } from "@console/web/providers/local";
+import { createInitializedContext } from "@console/web/common/context";
+import { IssueStore } from "@console/web/data/issue";
+import { UsageStore } from "@console/web/data/usage";
 import {
   flatMap,
   groupBy,

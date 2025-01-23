@@ -6,7 +6,7 @@ import { Warning } from "../";
 import { NotFound } from "../../../not-found";
 import { useWorkspace } from "../../context";
 import { useStageContext } from "../context";
-import { Fullscreen } from "$/ui/layout";
+import { Fullscreen } from "@console/web/ui/layout";
 
 export const Issues = (
   <Route

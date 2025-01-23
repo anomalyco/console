@@ -1,5 +1,5 @@
 import { withActor } from "@console/core/actor";
-import { Run } from "@console/core/run";
+import { Run } from "@console/core/run/index";
 
 export async function handler(evt: Run.RunTimeoutMonitorEvent) {
   const { workspaceID, runID } = evt;
@@ -18,6 +18,6 @@ export async function handler(evt: Run.RunTimeoutMonitorEvent) {
           properties: { message: "Build timed out" },
         },
       });
-    }
+    },
   );
 }

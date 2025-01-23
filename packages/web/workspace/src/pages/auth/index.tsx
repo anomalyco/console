@@ -1,23 +1,21 @@
 import { DateTime } from "luxon";
-import { IconApp } from "$/ui/icons/custom";
+import { IconApp } from "@console/web/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
-import { IconChevronRight } from "$/ui/icons";
+import { IconChevronRight } from "@console/web/ui/icons";
 import {
   Navigate,
   Route,
-  RouteProps,
-  Router,
   useSearchParams,
 } from "@solidjs/router";
 import { For, Show, createSignal } from "solid-js";
 import Botpoison from "@botpoison/browser";
 import { NotFound } from "../not-found";
-import { FormField, Input } from "$/ui/form";
-import { Fullscreen, Stack, Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { FormField, Input } from "@console/web/ui/form";
+import { Fullscreen, Stack, Row } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const Root = styled("div", {
   base: {

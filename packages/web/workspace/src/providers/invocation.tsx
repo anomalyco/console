@@ -1,8 +1,8 @@
-import { createInitializedContext } from "$/common/context";
-import type { Invocation, Log, LogEntry, ParsedError } from "@console/core/log";
+import type { Invocation, Log, LogEntry } from "@console/core/log/index";
 import { bus } from "./bus";
 import { createStore, produce } from "solid-js/store";
 import { pipe, sortBy, uniqueBy } from "remeda";
+import { createInitializedContext } from "../common/context";
 
 export function isInvocation(entry: LogEntry): entry is Invocation {
   return "start" in entry;

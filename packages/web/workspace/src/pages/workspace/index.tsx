@@ -1,7 +1,5 @@
 import {
   Route,
-  RouteProps,
-  RouteSectionProps,
   useNavigate,
   useParams,
 } from "@solidjs/router";
@@ -9,22 +7,22 @@ import {
   ReplicacheProvider,
   createSubscription,
   useReplicache,
-} from "$/providers/replicache";
+} from "@console/web/providers/replicache";
 import { NavigationAction, useCommandBar } from "./command-bar";
 import { AppRoute } from "./app";
 import { Match, Switch, createEffect, createMemo } from "solid-js";
-import { IconWrenchScrewdriver } from "$/ui/icons";
+import { IconWrenchScrewdriver } from "@console/web/ui/icons";
 import { UserRoute } from "./user";
 import { AccountRoute } from "./account";
 import { SettingsRoute } from "./settings";
 import { ApiProvider, WorkspaceContext } from "./context";
-import { AppStore } from "$/data/app";
-import { IconApp, IconUserAdd, IconConnect } from "$/ui/icons/custom";
-import { StageStore } from "$/data/stage";
-import { useStorage } from "$/providers/account";
+import { AppStore } from "@console/web/data/app";
+import { IconApp, IconUserAdd, IconConnect } from "@console/web/ui/icons/custom";
+import { StageStore } from "@console/web/data/stage";
+import { useStorage } from "@console/web/providers/account";
 import { NotFound, NotAllowed } from "../not-found";
 import { DebugRoute } from "../debug";
-import { useAuth2 } from "$/providers/auth2";
+import { useAuth2 } from "@console/web/providers/auth2";
 import { OverviewRoute } from "./overview-next";
 
 export const WorkspaceRoute = (

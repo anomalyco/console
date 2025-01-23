@@ -1,4 +1,4 @@
-import type { Search } from "@console/core/log";
+import type { Search } from "@console/core/log/index";
 import { Store } from "./store";
 
 export const LogSearchStore = new Store()

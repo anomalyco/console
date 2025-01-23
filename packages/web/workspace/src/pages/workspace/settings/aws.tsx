@@ -1,16 +1,16 @@
-import { AccountStore } from "$/data/aws";
-import { createSubscription, useReplicache } from "$/providers/replicache";
-import { Dropdown } from "$/ui/dropdown";
-import { IconEllipsisVertical, IconExclamationTriangle } from "$/ui/icons";
-import { IconAws, IconAdd, IconArrowPathSpin } from "$/ui/icons/custom";
-import { Stack } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { AccountStore } from "@console/web/data/aws";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
+import { Dropdown } from "@console/web/ui/dropdown";
+import { IconEllipsisVertical, IconExclamationTriangle } from "@console/web/ui/icons";
+import { IconAws, IconAdd, IconArrowPathSpin } from "@console/web/ui/icons/custom";
+import { Stack } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 import { styled } from "@macaron-css/solid";
 import { A } from "@solidjs/router";
 import { For, Show, Switch, Match } from "solid-js";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 import { DateTime } from "luxon";
 
 const Root = styled("div", {
@@ -191,7 +191,7 @@ export function AWS() {
                           (account.timeDiscovered === null ||
                             account.timeFailed !== null) &&
                           account.timeUpdated >
-                            DateTime.now().toUTC().minus({ minute: 1 }).toSQL()
+                          DateTime.now().toUTC().minus({ minute: 1 }).toSQL()
                         }
                         onClick={() => {
                           rep().mutate.aws_account_scan(account.id);

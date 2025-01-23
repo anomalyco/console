@@ -5,7 +5,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { Realtime } from "../realtime";
 import { compress, decompress } from "../util/compress";
 import { Resource } from "sst";
 import { Websocket } from "../websocket";

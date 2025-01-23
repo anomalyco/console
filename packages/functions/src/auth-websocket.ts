@@ -1,7 +1,7 @@
 import { withActor } from "@console/core/actor";
 import { sessions } from "./sessions";
-import { User } from "@console/core/user";
-import { db, eq, sql } from "@console/core/drizzle";
+import { User } from "@console/core/user/index";
+import { db, eq, sql } from "@console/core/drizzle/index";
 import { user } from "@console/core/user/user.sql";
 
 export async function handler(event: any) {

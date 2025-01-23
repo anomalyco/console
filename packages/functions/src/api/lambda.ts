@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { notPublic } from "./auth";
 import { zValidator } from "@hono/zod-validator";
-import { Lambda } from "@console/core/lambda";
+import { Lambda } from "@console/core/lambda/index";
 
 export const LambdaRoute = new Hono()
   .use(notPublic)

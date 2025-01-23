@@ -1,4 +1,4 @@
-import type { Issue } from "@console/core/issue";
+import type { Issue } from "@console/core/issue/index";
 import { Store } from "./store";
 
 export const IssueCountStore = new Store()

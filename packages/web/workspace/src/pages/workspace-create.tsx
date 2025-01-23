@@ -2,22 +2,22 @@ import { styled } from "@macaron-css/solid";
 import {
   getValue,
   setError,
-  valiForm,
   createForm,
+  zodForm,
 } from "@modular-forms/solid";
 import { useNavigate } from "@solidjs/router";
 import { Show } from "solid-js";
 import { Header } from "./workspace/header";
-import { useAuth2 } from "$/providers/auth2";
-import { Workspace } from "@console/core/workspace";
-import { utility } from "$/ui/utility";
-import { theme } from "$/ui/theme";
-import { Fullscreen, Stack } from "$/ui/layout";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { FormField, Input } from "$/ui/form";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
-import { pipe, object, string, regex, minLength } from "valibot";
+import type { Workspace } from "@console/core/workspace/index";
+import { useAuth2 } from "../providers/auth2";
+import { AvatarInitialsIcon } from "../ui/avatar-icon";
+import { Button } from "../ui/button";
+import { FormField, Input } from "../ui/form";
+import { Text } from "../ui/text";
+import { Fullscreen, Stack } from "../ui/layout";
+import { theme } from "../ui/theme";
+import { utility } from "../ui/utility";
+import { z } from "zod";
 
 const CreateWorkspaceHint = styled("ul", {
   base: {
@@ -41,13 +41,9 @@ const FieldList = styled("div", {
 
 export function WorkspaceCreate() {
   const [form, { Form, Field }] = createForm({
-    validate: valiForm(
-      object({
-        slug: pipe(
-          string(),
-          regex(/^[a-z0-9\-]+$/, "Must be lowercase, URL friendly."),
-          minLength(3, "Must be at least 3 characters long."),
-        ),
+    validate: zodForm(
+      z.object({
+        slug: z.string().regex(/^[a-z0-9\-]+$/, "Must be lowercase, URL friendly.").min(3, "Must be at least 3 characters long."),
       }),
     ),
   });

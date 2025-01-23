@@ -1,30 +1,30 @@
-import { theme } from "$/ui/theme";
+import { theme } from "@console/web/ui/theme";
 import { A, useParams } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
 import { Show, Switch, Match, createMemo, createEffect, For } from "solid-js";
-import { IconCheck, IconNoSymbol } from "$/ui/icons";
-import { IconCaretRight, IconArrowPathSpin } from "$/ui/icons/custom";
-import { formatSinceTime, parseTime } from "$/common/format";
-import { IssueCountStore, IssueStore } from "$/data/issue";
-import { useReplicache } from "$/providers/replicache";
+import { IconCheck, IconNoSymbol } from "@console/web/ui/icons";
+import { IconCaretRight, IconArrowPathSpin } from "@console/web/ui/icons/custom";
+import { formatSinceTime, parseTime } from "@console/web/common/format";
+import { IssueCountStore, IssueStore } from "@console/web/data/issue";
+import { useReplicache } from "@console/web/providers/replicache";
 import { DateTime, Interval } from "luxon";
 import { StackTrace } from "../logs/error";
-import { Log, LogTime, LogMessage } from "$/common/invocation";
+import { Log, LogTime, LogMessage } from "@console/web/common/invocation";
 import { fromEntries } from "remeda";
 import { useStageContext } from "../context";
-import { useLocalLogs } from "$/providers/invocation";
+import { useLocalLogs } from "@console/web/providers/invocation";
 import { useCommandBar } from "../../command-bar";
-import { useReplicacheStatus } from "$/providers/replicache-status";
-import { NotFound } from "$/pages/not-found";
-import { ButtonGroup } from "$/ui/button";
-import { Histogram } from "$/ui/histogram";
-import { Stack, Row } from "$/ui/layout";
-import { Tag } from "$/ui/tag";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
-import { Alert } from "$/ui/alert";
-import { Invocation } from "@console/core/log";
+import { useReplicacheStatus } from "@console/web/providers/replicache-status";
+import { NotFound } from "@console/web/pages/not-found";
+import { ButtonGroup } from "@console/web/ui/button";
+import { Histogram } from "@console/web/ui/histogram";
+import { Stack, Row } from "@console/web/ui/layout";
+import { Tag } from "@console/web/ui/tag";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
+import { Alert } from "@console/web/ui/alert";
+import { Invocation } from "@console/core/log/index";
 import { useApi } from "../../context";
 
 const DATETIME_NO_TIME = {
@@ -171,12 +171,12 @@ export function Detail() {
     if (issue()?.invocation) return;
     await fetch(
       import.meta.env.VITE_API_URL +
-        "/log?" +
-        new URLSearchParams({
-          pointer: JSON.stringify(issue()!.pointer),
-          stageID: issue()!.stageID,
-          groupID: issue()!.group,
-        }),
+      "/log?" +
+      new URLSearchParams({
+        pointer: JSON.stringify(issue()!.pointer),
+        stageID: issue()!.stageID,
+        groupID: issue()!.group,
+      }),
       {
         headers: {
           authorization: rep().auth,

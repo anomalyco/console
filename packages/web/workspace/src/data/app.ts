@@ -1,15 +1,14 @@
-import type { App } from "@console/core/app";
+import type { App } from "@console/core/app/index";
 import { Store } from "./store";
 import type { Github } from "@console/core/git/github";
-import type { Slack } from "@console/core/slack";
-import type { Workspace } from "@console/core/workspace";
-import type { Billing } from "@console/core/billing";
+import type { Slack } from "@console/core/slack/index";
+import type { Billing } from "@console/core/billing/index";
 import type { AppRepo } from "@console/core/app/repo";
-import type { State } from "@console/core/state";
-import type { Run } from "@console/core/run";
+import type { State } from "@console/core/state/index";
+import type { Run } from "@console/core/run/index";
 import type { RunConfig } from "@console/core/run/config";
 import { ReadTransaction } from "replicache";
-import { Alert } from "@console/core/alert";
+import { Alert } from "@console/core/alert/index";
 
 export const AppStore = new Store()
   .type<App.Info>()

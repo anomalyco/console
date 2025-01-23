@@ -9,11 +9,11 @@ import {
   createMemo,
   createResource,
 } from "solid-js";
-import { createSubscription, useReplicache } from "$/providers/replicache";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
 import { A, useNavigate, useParams } from "@solidjs/router";
-import { UserStore } from "$/data/user";
-import { RunStore, StateUpdateStore } from "$/data/app";
-import { StageStore } from "$/data/stage";
+import { UserStore } from "@console/web/data/user";
+import { RunStore, StateUpdateStore } from "@console/web/data/app";
+import { StageStore } from "@console/web/data/stage";
 import { DateTime } from "luxon";
 import { ERROR_MAP, STATUS_MAP } from "./list";
 import {
@@ -22,7 +22,7 @@ import {
   PanelEmptyCopy,
   LogsLoadingIcon,
 } from "../../stage/issues/detail";
-import { NotFound } from "$/pages/not-found";
+import { NotFound } from "@console/web/pages/not-found";
 import { styled } from "@macaron-css/solid";
 import { globalKeyframes } from "@macaron-css/core";
 import {
@@ -30,26 +30,26 @@ import {
   IconGit,
   IconCommit,
   IconArrowPathSpin,
-} from "$/ui/icons/custom";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { Log, LogTime, LogMessage } from "$/common/invocation";
-import { formatCommit, formatDuration, formatSinceTime } from "$/common/format";
-import { useReplicacheStatus } from "$/providers/replicache-status";
+} from "@console/web/ui/icons/custom";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
+import { Log, LogTime, LogMessage } from "@console/web/common/invocation";
+import { formatCommit, formatDuration, formatSinceTime } from "@console/web/common/format";
+import { useReplicacheStatus } from "@console/web/providers/replicache-status";
 import {
   githubPr,
   githubRepo,
   githubRef,
   githubCommit,
-} from "$/common/url-builder";
+} from "@console/web/common/url-builder";
 import { pipe, dropWhile, drop, takeWhile, filter } from "remeda";
 import { useWorkspace } from "../../context";
-import { useAuth2 } from "$/providers/auth2";
-import { IconTag, IconXCircle } from "$/ui/icons";
-import { utility } from "$/ui/utility";
-import { theme } from "$/ui/theme";
-import { Stack, Row } from "$/ui/layout";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { useAuth2 } from "@console/web/providers/auth2";
+import { IconTag, IconXCircle } from "@console/web/ui/icons";
+import { utility } from "@console/web/ui/utility";
+import { theme } from "@console/web/ui/theme";
+import { Stack, Row } from "@console/web/ui/layout";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 import { createId } from "@paralleldrive/cuid2";
 
 const DATETIME_NO_TIME = {
@@ -430,18 +430,18 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.type === "branch"
-          ? trigger.branch
-          : trigger.ref;
+            ? trigger.tag
+            : trigger.type === "branch"
+              ? trigger.branch
+              : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL, trigger.number)
           : trigger.type === "tag"
-          ? githubRef(repoURL, trigger.tag)
-          : trigger.type === "branch"
-          ? githubRef(repoURL, trigger.branch)
-          : githubRef(repoURL, trigger.ref);
+            ? githubRef(repoURL, trigger.tag)
+            : trigger.type === "branch"
+              ? githubRef(repoURL, trigger.branch)
+              : githubRef(repoURL, trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       const actor =
@@ -508,9 +508,8 @@ export function Detail() {
                             <img
                               width={AVATAR_SIZE}
                               height={AVATAR_SIZE}
-                              src={`https://avatars.githubusercontent.com/u/${
-                                r.value!.gitUser!.id
-                              }?s=${2 * AVATAR_SIZE}&v=4`}
+                              src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
+                                }?s=${2 * AVATAR_SIZE}&v=4`}
                             />
                           </ActorAvatar>
                         </Match>
@@ -571,9 +570,8 @@ export function Detail() {
                   <Stack space="1.5">
                     <PanelTitle>Update</PanelTitle>
                     <PanelValueLink
-                      href={`${appPath}/${data.value!.stage!.name!}/updates/${
-                        data.value!.update!.id
-                      }`}
+                      href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
+                        }`}
                     >
                       #{data.value!.update!.index}
                     </PanelValueLink>
@@ -586,18 +584,18 @@ export function Detail() {
                     title={
                       data.value!.run.time.created
                         ? DateTime.fromISO(
-                            data.value!.run.time.created!
-                          ).toLocaleString(DateTime.DATETIME_FULL)
+                          data.value!.run.time.created!
+                        ).toLocaleString(DateTime.DATETIME_FULL)
                         : undefined
                     }
                   >
                     {data.value!.run.time.created
                       ? formatSinceTime(
-                          DateTime.fromISO(
-                            data.value!.run.time.created!
-                          ).toSQL()!,
-                          true
-                        )
+                        DateTime.fromISO(
+                          data.value!.run.time.created!
+                        ).toSQL()!,
+                        true
+                      )
                       : "—"}
                   </Text>
                 </Stack>
@@ -612,15 +610,15 @@ export function Detail() {
                     }
                   >
                     {data.value!.run.time.started &&
-                    data.value!.run.time.completed
+                      data.value!.run.time.completed
                       ? formatDuration(
-                          DateTime.fromISO(data.value!.run.time.completed!)
-                            .diff(
-                              DateTime.fromISO(data.value!.run.time.started!)
-                            )
-                            .as("milliseconds"),
-                          true
-                        )
+                        DateTime.fromISO(data.value!.run.time.completed!)
+                          .diff(
+                            DateTime.fromISO(data.value!.run.time.started!)
+                          )
+                          .as("milliseconds"),
+                        true
+                      )
                       : "—"}
                   </Text>
                 </Stack>
@@ -646,12 +644,12 @@ export function Detail() {
         if (log === true || log === false) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-            "/log/aws/scan?" +
-            new URLSearchParams({
-              stageID: data.value!.stage!.id,
-              logStream: log.logStream,
-              logGroup: log.logGroup,
-            }).toString(),
+          "/log/aws/scan?" +
+          new URLSearchParams({
+            stageID: data.value!.stage!.id,
+            logStream: log.logStream,
+            logGroup: log.logGroup,
+          }).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,

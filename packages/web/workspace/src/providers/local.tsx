@@ -1,8 +1,6 @@
 import {
-  Accessor,
   ParentProps,
   createContext,
-  createSignal,
   onCleanup,
   onMount,
   useContext,

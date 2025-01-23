@@ -1,4 +1,4 @@
-import { Info } from "@console/core/workspace";
+import type { Info } from "@console/core/workspace/index";
 import { Store } from "./store";
 
 export const WorkspaceStore = new Store()

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { notPublic } from "./auth";
-import { Billing } from "@console/core/billing";
-import { stripe } from "@console/core/stripe";
+import { Billing } from "@console/core/billing/index";
+import { stripe } from "@console/core/stripe/index";
 import { DateTime } from "luxon";
 import { Resource } from "sst";
 

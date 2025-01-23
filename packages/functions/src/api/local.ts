@@ -3,7 +3,7 @@ import { notPublic } from "./auth";
 import { assertActor } from "@console/core/actor";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { and, db, eq } from "@console/core/drizzle";
+import { and, db, eq } from "@console/core/drizzle/index";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { user } from "@console/core/user/user.sql";
 import { stage, app } from "@console/core/app/app.sql";

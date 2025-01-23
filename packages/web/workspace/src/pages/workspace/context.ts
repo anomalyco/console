@@ -1,7 +1,7 @@
-import { createInitializedContext } from "$/common/context";
-import { useAuth2 } from "$/providers/auth2";
-import { Workspace } from "@console/core/workspace";
-import { app } from "@console/functions/api/api";
+import { createInitializedContext } from "@console/web/common/context";
+import { useAuth2 } from "@console/web/providers/auth2";
+import { Workspace } from "@console/core/workspace/index";
+import { type app } from "@console/functions/api/api";
 import { hc } from "hono/client";
 import { Accessor, createContext, useContext } from "solid-js";
 

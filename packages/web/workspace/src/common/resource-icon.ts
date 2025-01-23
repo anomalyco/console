@@ -23,7 +23,7 @@ import {
   IconSvelteKitSite,
   IconSolidStartSite,
   IconApiGatewayV1Api,
-} from "$/ui/icons/custom";
+} from "@console/web/ui/icons/custom";
 import { JSX } from "solid-js";
 import type { Resource } from "@console/core/app/resource";
 

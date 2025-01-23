@@ -1,8 +1,8 @@
 import { A, Navigate, Route, useNavigate } from "@solidjs/router";
 import { JSX, Match, Show, Switch, createMemo } from "solid-js";
-import { StateUpdateStore } from "$/data/app";
-import { NavigationAction, useCommandBar } from "$/pages/workspace/command-bar";
-import { useReplicache } from "$/providers/replicache";
+import { StateUpdateStore } from "@console/web/data/app";
+import { NavigationAction, useCommandBar } from "@console/web/pages/workspace/command-bar";
+import { useReplicache } from "@console/web/providers/replicache";
 import {
   StageContext,
   IssuesProvider,
@@ -16,20 +16,20 @@ import { Logs } from "./logs";
 import { Issues } from "./issues";
 import { Updates } from "./updates";
 import { Resources } from "./resources";
-import { IconSubRight } from "$/ui/icons/custom";
+import { IconSubRight } from "@console/web/ui/icons/custom";
 import {
   Header,
   PageHeader,
   HeaderProvider,
   useHeaderContext,
 } from "../header";
-import { IconExclamationTriangle } from "$/ui/icons";
+import { IconExclamationTriangle } from "@console/web/ui/icons";
 import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
-import { TabTitle } from "$/ui/button";
-import { Stack, Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { TabTitle } from "@console/web/ui/button";
+import { Stack, Row } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 
 export const StageRoute = (
   <Route

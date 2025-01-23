@@ -1,9 +1,9 @@
 import { useActor, withActor } from "@console/core/actor";
-import { User } from "@console/core/user";
+import { User } from "@console/core/user/index";
 import { VisibleError } from "@console/core/util/error";
 import { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { sessions } from "src/sessions";
+import { sessions } from "../sessions";
 
 export const notPublic: MiddlewareHandler = async (c, next) => {
   const actor = useActor();

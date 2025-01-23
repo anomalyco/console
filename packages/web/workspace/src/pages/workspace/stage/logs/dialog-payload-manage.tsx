@@ -1,16 +1,16 @@
-import { UserStore } from "$/data/user";
-import { useReplicache } from "$/providers/replicache";
-import { IconBookmark, IconTrash, IconXMark } from "$/ui/icons";
-import { Stack, Row } from "$/ui/layout";
-import { Modal } from "$/ui/modal";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { UserStore } from "@console/web/data/user";
+import { useReplicache } from "@console/web/providers/replicache";
+import { IconBookmark, IconTrash, IconXMark } from "@console/web/ui/icons";
+import { Stack, Row } from "@console/web/ui/layout";
+import { Modal } from "@console/web/ui/modal";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 import { Actor, UserActor } from "@console/core/actor";
-import type { LambdaPayload } from "@console/core/lambda";
+import type { LambdaPayload } from "@console/core/lambda/index";
 import { styled } from "@macaron-css/solid";
 import { For, Show, createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Text } from "$/ui/text";
+import { Text } from "@console/web/ui/text";
 
 const Header = styled("div", {
   base: {

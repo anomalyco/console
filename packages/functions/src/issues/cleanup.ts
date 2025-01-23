@@ -1,5 +1,5 @@
-import { Issue } from "@console/core/issue";
-import { Log } from "@console/core/log";
+import { Issue } from "@console/core/issue/index";
+import { Log } from "@console/core/log/index";
 
 export async function handler() {
   await Issue.cleanup();

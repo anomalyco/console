@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { ParsedError } from "@console/core/log/error";
-import { and, db, eq, isNull, sql } from "@console/core/drizzle";
+import { and, db, eq, isNull, sql } from "@console/core/drizzle/index";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import { app, stage } from "@console/core/app/app.sql";
 import {
@@ -13,7 +13,7 @@ import { issue, issueCount } from "@console/core/issue/issue.sql";
 import { createId } from "@console/core/util/sql";
 import { DateTime } from "luxon";
 import { withActor } from "@console/core/actor";
-import { Events } from "@console/core/issue";
+import { Events } from "@console/core/issue/index";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Resource } from "sst";
 

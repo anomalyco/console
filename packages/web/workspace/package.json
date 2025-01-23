@@ -6,7 +6,8 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "typecheck": "tsc --noEmit --incremental"
   },
   "type": "module",
   "license": "MIT",
@@ -20,6 +21,8 @@
   },
   "dependencies": {
     "@botpoison/browser": "0.1.30",
+    "@console/core": "workspace:*",
+    "@console/functions": "workspace:*",
     "@fontsource/ibm-plex-mono": "4.5.13",
     "@fontsource/rubik": "4.5.14",
     "@kobalte/core": "0.13.7",
@@ -45,6 +48,7 @@
     "solid-js": "1.9.3",
     "solid-list": "^0.3.0",
     "valibot": "1.0.0-beta.6",
-    "virtua": "0.39.3"
+    "virtua": "0.39.3",
+    "zod": "3.24.1"
   }
 }

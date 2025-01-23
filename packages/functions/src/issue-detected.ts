@@ -1,5 +1,5 @@
 import { withActor } from "@console/core/actor";
-import { Issue } from "@console/core/issue";
+import { Issue } from "@console/core/issue/index";
 import { SQSHandler } from "aws-lambda";
 
 export const handler: SQSHandler = async (event) => {

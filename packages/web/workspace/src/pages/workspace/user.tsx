@@ -1,18 +1,18 @@
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "./context";
-import { utility } from "$/ui/utility";
-import { Input, FormField } from "$/ui/form";
+import { utility } from "@console/web/ui/utility";
+import { Input, FormField } from "@console/web/ui/form";
 import { createId } from "@paralleldrive/cuid2";
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import { useNavigate } from "@solidjs/router";
 import { Header } from "./header";
 import { createForm, setError, submit, valiForm } from "@modular-forms/solid";
 import { object, string, InferOutput } from "valibot";
-import { UserStore } from "$/data/user";
-import { Fullscreen, Stack } from "$/ui/layout";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { UserStore } from "@console/web/data/user";
+import { Fullscreen, Stack } from "@console/web/ui/layout";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const FieldList = styled("form", {
   base: {

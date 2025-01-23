@@ -6,13 +6,13 @@ import {
 } from "@aws-sdk/client-cloudwatch";
 import { withActor, useWorkspace } from "@console/core/actor";
 import { Stage } from "@console/core/app/stage";
-import { Billing } from "@console/core/billing";
-import { stripe } from "@console/core/stripe";
-import { Warning } from "@console/core/warning";
+import { Billing } from "@console/core/billing/index";
+import { stripe } from "@console/core/stripe/index";
+import { Warning } from "@console/core/warning/index";
 import { unique } from "remeda";
-import { Workspace } from "@console/core/workspace";
+import { Workspace } from "@console/core/workspace/index";
 import { usage } from "@console/core/billing/billing.sql";
-import { and, desc, eq, inArray } from "@console/core/drizzle";
+import { and, desc, eq, inArray } from "@console/core/drizzle/index";
 import { useTransaction } from "@console/core/util/transaction";
 import { stateResourceTable } from "@console/core/state/state.sql";
 
@@ -36,7 +36,7 @@ export async function handler(event: SQSEvent) {
         if (stage?.unsupported) return;
 
         await processStage(stageID);
-      }
+      },
     );
   }
 }
@@ -53,12 +53,12 @@ async function processStage(stageID: string) {
       .select()
       .from(usage)
       .where(
-        and(eq(usage.workspaceID, useWorkspace()), eq(usage.stageID, stageID))
+        and(eq(usage.workspaceID, useWorkspace()), eq(usage.stageID, stageID)),
       )
       .orderBy(desc(usage.day))
       .limit(1)
       .execute()
-      .then((x) => x[0])
+      .then((x) => x[0]),
   );
 
   // Get stage credentials
@@ -86,10 +86,10 @@ async function processStage(stageID: string) {
           inArray(stateResourceTable.type, [
             "aws:lambda/function:Function",
             "sstv2:aws:Function",
-          ])
-        )
+          ]),
+        ),
       )
-      .execute()
+      .execute(),
   );
   const functions = unique(
     allResources
@@ -98,9 +98,9 @@ async function processStage(stageID: string) {
         (fn.type === "aws:lambda/function:Function" &&
           !fn.outputs?.description?.includes("live"))
           ? [fn.outputs.arn]
-          : []
+          : [],
       )
-      .map((item) => item.split(":").pop()!)
+      .map((item) => item.split(":").pop()!),
   );
   console.log(`> functions ${functions.length}/${allResources.length}`);
   if (!functions.length) {
@@ -188,11 +188,11 @@ async function processStage(stageID: string) {
             })),
             StartTime: startDate.toJSDate(),
             EndTime: endDate.toJSDate(),
-          })
+          }),
         );
         return (metrics.MetricDataResults || [])?.reduce(
           (acc, result) => acc + (result.Values?.[0] ?? 0),
-          0
+          0,
         );
       };
 
@@ -235,7 +235,7 @@ async function processStage(stageID: string) {
         },
         {
           idempotencyKey: `${useWorkspace()}-${stageID}-${timestamp}`,
-        }
+        },
       );
     } catch (e: any) {
       console.log(e.message);
@@ -245,7 +245,7 @@ async function processStage(stageID: string) {
       }
       if (
         e.message.startsWith(
-          "Cannot create the usage record with this timestamp"
+          "Cannot create the usage record with this timestamp",
         )
       ) {
         return;

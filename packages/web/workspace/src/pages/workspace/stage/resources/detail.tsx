@@ -8,20 +8,20 @@ import {
   createSignal,
 } from "solid-js";
 import { sortBy } from "remeda";
-import { IconCheck, IconClipboard, IconDocumentDuplicate } from "$/ui/icons";
+import { IconCheck, IconClipboard, IconDocumentDuplicate } from "@console/web/ui/icons";
 import { DateTime } from "luxon";
-import { formatSinceTime } from "$/common/format";
+import { formatSinceTime } from "@console/web/common/format";
 import { styled } from "@macaron-css/solid";
-import { NotFound } from "$/pages/not-found";
+import { NotFound } from "@console/web/pages/not-found";
 import { A, useNavigate, useParams } from "@solidjs/router";
-import { useReplicache } from "$/providers/replicache";
-import { useReplicacheStatus } from "$/providers/replicache-status";
+import { useReplicache } from "@console/web/providers/replicache";
+import { useReplicacheStatus } from "@console/web/providers/replicache-status";
 import { useStageContext } from "../context";
-import { StateResourceStore } from "$/data/app";
+import { StateResourceStore } from "@console/web/data/app";
 import { NavigationAction, useCommandBar } from "../../command-bar";
-import { Row, Stack } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { Row, Stack } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 
 const Container = styled("div", {
   base: {
@@ -207,9 +207,9 @@ export function Detail() {
   const outputs = createMemo(() =>
     resource() && Object.keys(resource()!.outputs).length
       ? Object.keys(resource()!.outputs).map((key) => ({
-          key,
-          value: resource()!.outputs[key],
-        }))
+        key,
+        value: resource()!.outputs[key],
+      }))
       : [],
   );
 
@@ -217,13 +217,13 @@ export function Detail() {
     return [
       ...(resource()?.parent
         ? [
-            NavigationAction({
-              category: "Resource",
-              title: "Go to parent",
-              nav,
-              path: "../" + encodeURIComponent(resource()!.parent!),
-            }),
-          ]
+          NavigationAction({
+            category: "Resource",
+            title: "Go to parent",
+            nav,
+            path: "../" + encodeURIComponent(resource()!.parent!),
+          }),
+        ]
         : []),
       {
         icon: IconClipboard,
@@ -406,7 +406,7 @@ export function Detail() {
                         when={
                           resource()!.time.stateModified &&
                           resource()!.time.stateCreated !==
-                            resource()!.time.stateModified
+                          resource()!.time.stateModified
                         }
                         fallback={<PanelValueEmpty>—</PanelValueEmpty>}
                       >

@@ -1,4 +1,4 @@
-import type { Info } from "@console/core/warning";
+import type { Info } from "@console/core/warning/index";
 import { Store } from "./store";
 
 export const WarningStore = new Store()

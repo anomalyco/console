@@ -2,7 +2,7 @@ import { Show } from "solid-js";
 import { AppContext, createAppContext, useAppContext } from "./context";
 import { HeaderProvider } from "../header";
 import { Route, useNavigate } from "@solidjs/router";
-import { NotFound } from "$/pages/not-found";
+import { NotFound } from "@console/web/pages/not-found";
 import { StageRoute } from "../stage";
 import { Settings } from "./settings";
 import { Autodeploy } from "./autodeploy";

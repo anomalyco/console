@@ -1,35 +1,35 @@
 import { DateTime } from "luxon";
-import { AppStore } from "$/data/app";
-import { UserStore } from "$/data/user";
-import { AccountStore } from "$/data/aws";
-import { StageStore } from "$/data/stage";
-import { useReplicache } from "$/providers/replicache";
-import { Fullscreen, Row, Stack } from "$/ui/layout";
-import { Dropdown } from "$/ui/dropdown";
+import { AppStore } from "@console/web/data/app";
+import { UserStore } from "@console/web/data/user";
+import { AccountStore } from "@console/web/data/aws";
+import { StageStore } from "@console/web/data/stage";
+import { useReplicache } from "@console/web/providers/replicache";
+import { Fullscreen, Row, Stack } from "@console/web/ui/layout";
+import { Dropdown } from "@console/web/ui/dropdown";
 import {
   IconChevronRight,
   IconEllipsisVertical,
   IconExclamationTriangle,
-} from "$/ui/icons";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { Syncing } from "$/ui/loader";
-import { IconApp, IconArrowPathSpin } from "$/ui/icons/custom";
-import type { Stage } from "@console/core/app";
+} from "@console/web/ui/icons";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
+import { Syncing } from "@console/web/ui/loader";
+import { IconApp, IconArrowPathSpin } from "@console/web/ui/icons/custom";
+import type { Stage } from "@console/core/app/index";
 import type { Account } from "@console/core/aws/account";
 import { styled } from "@macaron-css/solid";
 import { A, useNavigate, useSearchParams } from "@solidjs/router";
 import { For, Match, Show, Switch, createEffect, createMemo } from "solid-js";
 import { Header } from "./header";
-import { useLocalContext } from "$/providers/local";
+import { useLocalContext } from "@console/web/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
-import { User } from "@console/core/user";
-import { useAuth2 } from "$/providers/auth2";
-import { TextButton } from "$/ui/button";
-import { Tag } from "$/ui/tag";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { User } from "@console/core/user/index";
+import { useAuth2 } from "@console/web/providers/auth2";
+import { TextButton } from "@console/web/ui/button";
+import { Tag } from "@console/web/ui/tag";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -263,7 +263,7 @@ export function Overview() {
         stages().filter((stage) => stage.awsAccountID === account.id),
         (c) =>
           apps().find((app) => app.id === c.appID)?.name === local.app &&
-          c.name === local.stage
+            c.name === local.stage
             ? 0
             : 1,
         (c) => (c.unsupported ? 1 : 0),
@@ -559,9 +559,8 @@ function StageCard(props: StageCardProps) {
   const local = useLocalContext();
   return (
     <StageRoot
-      href={`${app()?.name}/${
-        props.ambiguous ? props.stage.id : props.stage.name
-      }`}
+      href={`${app()?.name}/${props.ambiguous ? props.stage.id : props.stage.name
+        }`}
     >
       <Row space="2" vertical="center">
         <StageIcon dimmed={props.stage.unsupported || false}>

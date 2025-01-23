@@ -1,12 +1,12 @@
 import { styled } from "@macaron-css/solid";
-import { Row, Stack } from "$/ui/layout";
-import { IconCheck, IconNoSymbol, IconExclamationTriangle } from "$/ui/icons";
-import { inputFocusStyles, SplitOptions, SplitOptionsOption } from "$/ui/form";
-import { IconCaretRight, IconSubRight } from "$/ui/icons/custom";
-import { formatSinceTime, parseTime } from "$/common/format";
+import { Row, Stack } from "@console/web/ui/layout";
+import { IconCheck, IconNoSymbol, IconExclamationTriangle } from "@console/web/ui/icons";
+import { inputFocusStyles, SplitOptions, SplitOptionsOption } from "@console/web/ui/form";
+import { IconCaretRight, IconSubRight } from "@console/web/ui/icons/custom";
+import { formatSinceTime, parseTime } from "@console/web/common/format";
 import { A, useSearchParams } from "@solidjs/router";
-import { theme } from "$/ui/theme";
-import type { Issue } from "@console/core/issue";
+import { theme } from "@console/web/ui/theme";
+import type { Issue } from "@console/core/issue/index";
 import {
   For,
   Show,
@@ -17,23 +17,23 @@ import {
   createSignal,
 } from "solid-js";
 import { useIssuesContext, useStageContext } from "../context";
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import { HeaderSlot } from "../../header";
 import { DateTime, Interval } from "luxon";
 import { filter, fromEntries, pipe, sortBy } from "remeda";
-import { WarningStore } from "$/data/warning";
-import { IssueCountStore } from "$/data/issue";
+import { WarningStore } from "@console/web/data/warning";
+import { IssueCountStore } from "@console/web/data/issue";
 import { useCommandBar } from "../../command-bar";
 import {
   KeyboardNavigator,
   createKeyboardNavigator,
   useKeyboardNavigator,
-} from "$/common/keyboard-navigator";
-import { ButtonGroup } from "$/ui/button";
-import { Histogram } from "$/ui/histogram";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+} from "@console/web/common/keyboard-navigator";
+import { ButtonGroup } from "@console/web/ui/button";
+import { Histogram } from "@console/web/ui/histogram";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 import { useWorkspace } from "../../context";
 
 const COL_COUNT_WIDTH = 260;
@@ -479,7 +479,7 @@ export function List() {
                       each={subWarnings()
                         .map((item) => {
                           if (item.type === "log_subscription") {
-                            const reason = (function() {
+                            const reason = (function () {
                               switch (item.data.error) {
                                 case "unknown":
                                   return "Unknown error: " + item.data.message;

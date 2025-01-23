@@ -8,29 +8,29 @@ import {
   IconArrowLongRight,
   IconExclamationTriangle,
   IconTag,
-} from "$/ui/icons";
-import { inputFocusStyles } from "$/ui/form";
-import type { Run } from "@console/core/run";
+} from "@console/web/ui/icons";
+import { inputFocusStyles } from "@console/web/ui/form";
+import type { Run } from "@console/core/run/index";
 import { globalKeyframes } from "@macaron-css/core";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
-import { formatCommit, formatSinceTime } from "$/common/format";
-import { createSubscription } from "$/providers/replicache";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
+import { IconPr, IconGit, IconCommit } from "@console/web/ui/icons/custom";
+import { formatCommit, formatSinceTime } from "@console/web/common/format";
+import { createSubscription } from "@console/web/providers/replicache";
 import {
   githubPr,
   githubRepo,
   githubRef,
   githubCommit,
-} from "$/common/url-builder";
-import { AppRepoStore, GithubRepoStore, RunStore } from "$/data/app";
-import { UserStore } from "$/data/user";
-import { StageStore } from "$/data/stage";
-import { For, Show, Match, Switch, Suspense } from "solid-js";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Alert } from "$/ui/alert";
-import { Stack } from "$/ui/layout";
+} from "@console/web/common/url-builder";
+import { AppRepoStore, GithubRepoStore } from "@console/web/data/app";
+import { Alert } from "@console/web/ui/alert";
+import { Stack } from "@console/web/ui/layout";
 import { PANEL_HEADER_SPACE } from "../../settings";
+import { RunStore } from "@console/web/data/app";
+import { UserStore } from "@console/web/data/user";
+import { For, Show, Match, Switch, Suspense } from "solid-js";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 
 export function ERROR_MAP(error: Exclude<Run.Run["error"], undefined>) {
   switch (error.type) {
@@ -406,18 +406,18 @@ function RunItem({ run }: { run: Run.Run }) {
       trigger.type === "pull_request"
         ? `pr#${trigger.number}`
         : trigger.type === "tag"
-        ? trigger.tag
-        : trigger.type === "branch"
-        ? trigger.branch
-        : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+            ? trigger.branch
+            : trigger.ref;
     const uri =
       trigger.type === "pull_request"
         ? githubPr(repoURL, trigger.number)
         : trigger.type === "tag"
-        ? githubRef(repoURL, trigger.tag)
-        : trigger.type === "branch"
-        ? githubRef(repoURL, trigger.branch)
-        : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+            ? githubRef(repoURL, trigger.branch)
+            : githubRef(repoURL, trigger.ref);
     const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
     const actor =
@@ -463,9 +463,8 @@ function RunItem({ run }: { run: Run.Run }) {
                   <img
                     width="24"
                     height="24"
-                    src={`https://avatars.githubusercontent.com/u/${
-                      r.value!.gitUser!.id
-                    }?s=48&v=4`}
+                    src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
+                      }?s=48&v=4`}
                   />
                 </RunSenderAvatar>
               </Match>

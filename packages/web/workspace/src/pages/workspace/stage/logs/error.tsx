@@ -1,11 +1,11 @@
-import { IconChevronDown, IconChevronRight } from "$/ui/icons";
-import { SpanSpacer } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Invocation, StackFrame } from "@console/core/log";
+import { IconChevronDown, IconChevronRight } from "@console/web/ui/icons";
+import { SpanSpacer } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Invocation, StackFrame } from "@console/core/log/index";
 import { styled } from "@macaron-css/solid";
 import { For, Show, createMemo, createSignal } from "solid-js";
-import { Text } from "$/ui/text";
+import { Text } from "@console/web/ui/text";
 
 export const ErrorList = styled("div", {
   base: {

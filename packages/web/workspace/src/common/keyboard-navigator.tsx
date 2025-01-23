@@ -1,5 +1,5 @@
 import { createEventListener } from "@solid-primitives/event-listener";
-import { ParentProps, createContext, useContext } from "solid-js";
+import { createContext, useContext } from "solid-js";
 
 interface Props {
   target: string;

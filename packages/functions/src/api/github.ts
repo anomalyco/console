@@ -4,7 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { withActor } from "@console/core/actor";
 import { Github } from "@console/core/git/github";
 import { Resource } from "sst";
-import { Run } from "@console/core/run";
+import { Run } from "@console/core/run/index";
 
 export const GithubRoute = new Hono();
 

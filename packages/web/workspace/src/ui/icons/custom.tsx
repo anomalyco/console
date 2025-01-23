@@ -1,6 +1,6 @@
 import { globalKeyframes } from "@macaron-css/core";
 import { JSX, ComponentProps } from "solid-js";
-import { IconArrowPath } from "$/ui/icons";
+import { IconArrowPath } from "./index";
 
 export function IconApi(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
   return (
@@ -1117,7 +1117,7 @@ export function IconPr(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
 // https://api.iconify.design/ion:pricetag-outline.svg
 export function IconTag(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M435.25 48h-122.9a14.46 14.46 0 0 0-10.2 4.2L56.45 297.9a28.85 28.85 0 0 0 0 40.7l117 117a28.85 28.85 0 0 0 40.7 0L459.75 210a14.46 14.46 0 0 0 4.2-10.2v-123a28.66 28.66 0 0 0-28.7-28.8"/><path fill="currentColor" d="M384 160a32 32 0 1 1 32-32a32 32 0 0 1-32 32"/>
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M435.25 48h-122.9a14.46 14.46 0 0 0-10.2 4.2L56.45 297.9a28.85 28.85 0 0 0 0 40.7l117 117a28.85 28.85 0 0 0 40.7 0L459.75 210a14.46 14.46 0 0 0 4.2-10.2v-123a28.66 28.66 0 0 0-28.7-28.8" /><path fill="currentColor" d="M384 160a32 32 0 1 1 32-32a32 32 0 0 1-32 32" />
     </svg>
   );
 }

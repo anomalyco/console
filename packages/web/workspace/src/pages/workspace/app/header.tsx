@@ -3,19 +3,19 @@ import { createMemo, Show, Switch, Match, Suspense } from "solid-js";
 import { styled } from "@macaron-css/solid";
 import { A, useMatch } from "@solidjs/router";
 
-import { theme } from "$/ui/theme";
-import { Button } from "$/ui/button";
-import { utility } from "$/ui/utility";
-import { Row } from "$/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { Button } from "@console/web/ui/button";
+import { utility } from "@console/web/ui/utility";
+import { Row } from "@console/web/ui/layout";
 import {
   RunStore,
   AppRepoStore,
   GithubOrgStore,
   GithubRepoStore,
-} from "$/data/app";
-import { IconGitHub } from "$/ui/icons/custom";
-import { TabTitle, ButtonIcon } from "$/ui/button";
-import { createSubscription, useReplicache } from "$/providers/replicache";
+} from "@console/web/data/app";
+import { IconGitHub } from "@console/web/ui/icons/custom";
+import { TabTitle, ButtonIcon } from "@console/web/ui/button";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
 
 import { Header } from "../header";
 import { useWorkspace } from "../context";

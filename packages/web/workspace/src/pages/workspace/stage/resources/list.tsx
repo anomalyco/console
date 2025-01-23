@@ -12,10 +12,9 @@ import {
 import { useStageContext, useStateResources } from "../context";
 import { styled } from "@macaron-css/solid";
 import { style } from "@macaron-css/core";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Dropdown } from "$/ui/dropdown";
-import { Fullscreen, Row, Stack } from "$/ui/layout";
+import { utility } from "../../../../ui/utility";
+import { Dropdown } from "../../../../ui/dropdown";
+import { Fullscreen, Row, Stack } from "../../../../ui/layout";
 import {
   IconApi,
   IconRDS,
@@ -45,28 +44,29 @@ import {
   IconSolidStartSite,
   IconApiGatewayV1Api,
   IconContainerRuntime,
-} from "$/ui/icons/custom";
+} from "../../../../ui/icons/custom";
 import { Resource } from "@console/core/app/resource";
-import type { State } from "@console/core/state";
+import type { State } from "@console/core/state/index";
 import { A } from "@solidjs/router";
-import { Syncing } from "$/ui/loader";
+import { Syncing } from "../../../../ui/loader";
 import {
   IconCheck,
   IconEnvelope,
   IconEllipsisVertical,
   IconDocumentDuplicate,
-} from "$/ui/icons";
+} from "../../../../ui/icons";
 import { PageStatusIcon } from "../updates/detail";
 import { sortBy } from "remeda";
 import { Dynamic } from "solid-js/web";
 import { } from "@solid-primitives/keyboard";
-import { formatSinceTime } from "$/common/format";
-import { ResourceIcon } from "$/common/resource-icon";
-import { createSubscription } from "$/providers/replicache";
-import { StateUpdateStore } from "$/data/app";
+import { formatSinceTime } from "../../../../common/format";
+import { ResourceIcon } from "../../../../common/resource-icon";
+import { createSubscription } from "../../../../providers/replicache";
+import { StateUpdateStore } from "../../../../data/app";
 import { DateTime } from "luxon";
-import { ChevronLink } from "$/ui/button";
-import { Text } from "$/ui/text";
+import { ChevronLink } from "../../../../ui/button";
+import { Text } from "../../../../ui/text";
+import { theme } from "../../../../ui/theme";
 
 const ION_ICON_MAP: { [key: string]: Component } = {
   "sst:aws:Cdn": IconApi,
@@ -358,17 +358,6 @@ const Children = styled("div", {
   },
 });
 
-const OutputsEmpty = styled("div", {
-  base: {
-    height: 140,
-    backgroundColor: theme.color.background.surface,
-    borderRadius: theme.borderRadius,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: theme.color.text.dimmed.surface,
-  },
-});
 
 export const Child = styled("div", {
   base: {

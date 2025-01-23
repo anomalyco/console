@@ -1,21 +1,20 @@
 import { createId } from "@paralleldrive/cuid2";
-import { createForm, valiForm } from "@modular-forms/solid";
-import { boolean, minLength, object, string } from "valibot";
-import { useReplicache } from "$/providers/replicache";
+import { createForm, zodForm } from "@modular-forms/solid";
+import { useReplicache } from "@console/web/providers/replicache";
 import { useNavigate } from "@solidjs/router";
-import { IconXMark } from "$/ui/icons";
-import { Stack, Row } from "$/ui/layout";
-import { Modal } from "$/ui/modal";
-import { theme } from "$/ui/theme";
-import { Text } from "$/ui/text";
-import { utility } from "$/ui/utility";
-import { FormField, Input, inputFocusStyles } from "$/ui/form";
+import { IconXMark } from "@console/web/ui/icons";
+import { Stack } from "@console/web/ui/layout";
+import { Modal } from "@console/web/ui/modal";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { FormField, Input } from "@console/web/ui/form";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
-import { Button, TextButton } from "$/ui/button";
-import { For, Show, createEffect } from "solid-js";
+import { Button, TextButton } from "@console/web/ui/button";
+import { createEffect } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useAppContext } from "../context";
+import { z } from "zod";
 
 const Root = styled("div", {
   base: {
@@ -121,14 +120,12 @@ export function DialogDeploy(props: {
 
   const ctx = useAppContext();
   const nav = useNavigate();
-  const [form, { Form, Field }] = createForm({
-    validate: valiForm(
-      object({
-        ref: string([minLength(1, "Enter a branch, tag, or commit hash")]),
-        stage: string([minLength(1, "Enter a stage")]),
-        force: boolean(),
-      })
-    ),
+  const [_form, { Form, Field }] = createForm({
+    validate: zodForm(z.object({
+      ref: z.string({ message: "Enter a branch, tag, or commit hash" }).min(1),
+      stage: z.string({ message: "Enter a stage" }).min(1),
+      force: z.boolean({ message: "Force deploy" }),
+    })),
   });
 
   createEffect(() => {

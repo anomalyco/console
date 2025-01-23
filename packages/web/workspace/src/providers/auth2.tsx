@@ -1,12 +1,12 @@
 import { makePersisted } from "@solid-primitives/storage";
-import { createInitializedContext } from "$/common/context";
+import { createInitializedContext } from "@console/web/common/context";
 import { createStore, produce, reconcile } from "solid-js/store";
 import { createEffect, createMemo } from "solid-js";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { IconUserPlus, IconUsers } from "../ui/icons";
-import { useCommandBar, Action } from "$/pages/workspace/command-bar";
-import type { Workspace } from "@console/core/workspace";
-import { IconLogout } from "$/ui/icons/custom";
+import { useCommandBar, Action } from "@console/web/pages/workspace/command-bar";
+import type { Workspace } from "@console/core/workspace/index";
+import { IconLogout } from "@console/web/ui/icons/custom";
 
 interface AccountInfo {
   id: string;

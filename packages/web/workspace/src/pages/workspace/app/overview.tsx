@@ -1,25 +1,25 @@
 import { DateTime } from "luxon";
 import { For, Show, Match, Switch } from "solid-js";
-import { RunStore, StateUpdateStore } from "$/data/app";
+import { RunStore, StateUpdateStore } from "../../../data/app";
 import { PageHeader } from "./header";
 import { A } from "@solidjs/router";
 import { useAppContext } from "./context";
 import { style } from "@macaron-css/core";
 import { styled } from "@macaron-css/solid";
-import type { Stage } from "@console/core/app";
-import { IconPr, IconGit, IconCommit } from "$/ui/icons/custom";
-import { createSubscription } from "$/providers/replicache";
-import { parseTime, formatSinceTime, formatCommit } from "$/common/format";
-import { ActiveStagesForApp } from "$/data/stage";
-import { useLocalContext } from "$/providers/local";
-import { AWS } from "$/data/aws";
-import { githubCommit, githubRepo } from "$/common/url-builder";
+import type { Stage } from "@console/core/app/stage"
 import { sortBy } from "remeda";
-import { IconTag } from "$/ui/icons";
-import { Row, Stack } from "$/ui/layout";
-import { Tag } from "$/ui/tag";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { parseTime, formatSinceTime, formatCommit } from "../../../common/format";
+import { githubRepo, githubCommit } from "../../../common/url-builder";
+import { ActiveStagesForApp } from "../../../data/stage";
+import { useLocalContext } from "../../../providers/local";
+import { createSubscription } from "../../../providers/replicache";
+import { IconTag } from "../../../ui/icons";
+import { IconCommit, IconPr, IconGit } from "../../../ui/icons/custom";
+import { Row, Stack } from "../../../ui/layout";
+import { Tag } from "../../../ui/tag";
+import { theme } from "../../../ui/theme";
+import { utility } from "../../../ui/utility";
+import { AccountStore } from "@console/web/data/aws/account";
 
 const Root = styled("div", {
   base: {
@@ -277,7 +277,7 @@ export function Overview() {
     });
     const local = useLocalContext();
     const aws = createSubscription(
-      () => async (tx) => AWS.AccountStore.get(tx, props.stage.awsAccountID),
+      () => async (tx) => AccountStore.get(tx, props.stage.awsAccountID),
     );
     return (
       <CardRoot>
@@ -354,7 +354,7 @@ export function Overview() {
                       <IconCommit />
                     </CardGitIcon>
                     <CardGitCommit>
-                      {formatCommit(v().trigger.commit.id)}
+                      {formatCommit(v().trigger.commit?.id || "")}
                     </CardGitCommit>
                   </CardGitLink>
                   <CardGitLink target="_blank" href={v().url}>
@@ -376,12 +376,13 @@ export function Overview() {
                         const trigger = v().trigger;
                         if (trigger.type === "branch") return trigger.branch;
                         if (trigger.type === "tag") return trigger.tag;
+                        // @ts-expect-error TODO
                         return trigger.base;
                       })()}
                     </CardGitBranch>
                   </CardGitLink>
                 </Row>
-                <CardGitMessage>{v().trigger.commit.message}</CardGitMessage>
+                <CardGitMessage>{v().trigger.commit?.message}</CardGitMessage>
               </CardGit>
             )}
           </Show>

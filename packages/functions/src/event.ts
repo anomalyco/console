@@ -1,13 +1,13 @@
 import { withActor } from "@console/core/actor";
-import { Alert } from "@console/core/alert";
-import { App, Stage } from "@console/core/app";
-import { AWS } from "@console/core/aws";
+import { Alert } from "@console/core/alert/index";
+import { App, Stage } from "@console/core/app/index";
+import { AWS } from "@console/core/aws/index";
 import { Stripe } from "@console/core/billing/stripe";
-import { Issue } from "@console/core/issue";
-import { Run } from "@console/core/run";
-import { State } from "@console/core/state";
-import { User } from "@console/core/user";
-import { Workspace } from "@console/core/workspace";
+import { Issue } from "@console/core/issue/index";
+import { Run } from "@console/core/run/index";
+import { State } from "@console/core/state/index";
+import { User } from "@console/core/user/index";
+import { Workspace } from "@console/core/workspace/index";
 import { bus } from "sst/aws/bus";
 
 export const handler = bus.subscriber(

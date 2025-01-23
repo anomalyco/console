@@ -1,7 +1,7 @@
-import { NavigationAction, useCommandBar } from "$/pages/workspace/command-bar";
-import { useStageContext } from "$/pages/workspace/stage/context";
+import { NavigationAction, useCommandBar } from "@console/web/pages/workspace/command-bar";
+import { useStageContext } from "@console/web/pages/workspace/stage/context";
 import { Route, useNavigate } from "@solidjs/router";
-import { IconSubRight } from "$/ui/icons/custom";
+import { IconSubRight } from "@console/web/ui/icons/custom";
 import { NotFound } from "../../../not-found";
 import { Detail } from "./detail";
 import { List } from "./list";

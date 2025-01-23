@@ -8,6 +8,9 @@
     "typecheck": "tsc --noEmit --incremental",
     "db": "sst shell drizzle-kit"
   },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
   "devDependencies": {
     "@types/luxon": "3.4.2",
     "@types/node": "^22.10.1",

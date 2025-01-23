@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 import { build } from "esbuild";
-import { Run } from "@console/core/run";
+import { Run } from "@console/core/run/index";
 import { spawnSync } from "child_process";
 
 export async function handler(evt: Run.ConfigParserEvent) {
@@ -82,7 +82,7 @@ export async function handler(evt: Run.ConfigParserEvent) {
       // Resolve app config
       `const app = mod.app({stage});`,
       `fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({app, stage, runner, isDefaultStage}));`,
-    ].join("\n")
+    ].join("\n"),
   );
   const evalRet = spawnSync("node /tmp/eval.mjs", {
     stdio: "pipe",

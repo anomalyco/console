@@ -1,5 +1,5 @@
 import { createEmitter } from "@solid-primitives/event-bus";
-import type { Invocation, LogEvent } from "@console/core/log";
+import type { Invocation, LogEvent } from "@console/core/log/index";
 
 export const bus = createEmitter<{
   poke: {

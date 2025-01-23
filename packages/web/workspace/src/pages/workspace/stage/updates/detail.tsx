@@ -1,30 +1,30 @@
 import { For, Show, Match, Switch, createMemo, createSignal } from "solid-js";
-import { createSubscription, useReplicache } from "$/providers/replicache";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
 import { A, useParams } from "@solidjs/router";
-import { RunStore, StateUpdateStore, StateEventStore } from "$/data/app";
-import { State } from "@console/core/state";
+import { RunStore, StateUpdateStore, StateEventStore } from "@console/web/data/app";
+import { State } from "@console/core/state/index";
 import { DateTime } from "luxon";
-import { Dropdown } from "$/ui/dropdown";
+import { Dropdown } from "@console/web/ui/dropdown";
 import { useStageContext } from "../context";
 import { CMD_MAP, STATUS_MAP, errorCountCopy } from "./list";
-import { NotFound } from "$/pages/not-found";
-import { inputFocusStyles } from "$/ui/form";
+import { NotFound } from "@console/web/pages/not-found";
+import { inputFocusStyles } from "@console/web/ui/form";
 import { styled } from "@macaron-css/solid";
-import { IconPr, IconGit } from "$/ui/icons/custom";
-import { formatDuration, formatSinceTime } from "$/common/format";
-import { useReplicacheStatus } from "$/providers/replicache-status";
+import { IconPr, IconGit } from "@console/web/ui/icons/custom";
+import { formatDuration, formatSinceTime } from "@console/web/common/format";
+import { useReplicacheStatus } from "@console/web/providers/replicache-status";
 import {
   IconTag,
   IconCheck,
   IconXCircle,
   IconEllipsisVertical,
-} from "$/ui/icons";
-import { githubPr, githubRepo, githubRef } from "$/common/url-builder";
+} from "@console/web/ui/icons";
+import { githubPr, githubRepo, githubRef } from "@console/web/common/url-builder";
 import { sortBy } from "remeda";
-import { Stack, Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
+import { Stack, Row } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
+import { Text } from "@console/web/ui/text";
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -427,9 +427,8 @@ export function Detail() {
                       <img
                         width={AVATAR_SIZE}
                         height={AVATAR_SIZE}
-                        src={`https://avatars.githubusercontent.com/u/${
-                          runInfo()!.gitUser!.id
-                        }?s=${2 * AVATAR_SIZE}&v=4`}
+                        src={`https://avatars.githubusercontent.com/u/${runInfo()!.gitUser!.id
+                          }?s=${2 * AVATAR_SIZE}&v=4`}
                       />
                     </GitAvatar>
                   </Show>
@@ -463,16 +462,16 @@ export function Detail() {
                 title={
                   update.value!.time.started
                     ? DateTime.fromISO(
-                        update.value!.time.started!,
-                      ).toLocaleString(DateTime.DATETIME_FULL)
+                      update.value!.time.started!,
+                    ).toLocaleString(DateTime.DATETIME_FULL)
                     : undefined
                 }
               >
                 {update.value!.time.started
                   ? formatSinceTime(
-                      DateTime.fromISO(update.value!.time.started!).toSQL()!,
-                      true,
-                    )
+                    DateTime.fromISO(update.value!.time.started!).toSQL()!,
+                    true,
+                  )
                   : "—"}
               </Text>
             </Stack>
@@ -488,11 +487,11 @@ export function Detail() {
               >
                 {update.value!.time.started && update.value!.time.completed
                   ? formatDuration(
-                      DateTime.fromISO(update.value!.time.completed!)
-                        .diff(DateTime.fromISO(update.value!.time.started!))
-                        .as("milliseconds"),
-                      true,
-                    )
+                    DateTime.fromISO(update.value!.time.completed!)
+                      .diff(DateTime.fromISO(update.value!.time.started!))
+                      .as("milliseconds"),
+                    true,
+                  )
                   : "—"}
               </Text>
             </Stack>

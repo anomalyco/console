@@ -1,7 +1,7 @@
 import type { Context } from "aws-lambda";
 import { withActor } from "@console/core/actor";
-import { AWS } from "@console/core/aws";
-import { Run } from "@console/core/run";
+import { AWS } from "@console/core/aws/index";
+import { Run } from "@console/core/run/index";
 
 export async function handler(evt: Run.RunnerRemoverEvent, context: Context) {
   const { workspaceID, runnerID, removeIfNotUsedAfter } = evt;
@@ -29,6 +29,6 @@ export async function handler(evt: Run.RunnerRemoverEvent, context: Context) {
       const credentials = await AWS.assumeRole(awsAccount?.accountID!);
       if (!credentials) return;
       await Run.removeRunner({ runner, credentials });
-    }
+    },
   );
 }

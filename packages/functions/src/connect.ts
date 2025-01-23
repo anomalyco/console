@@ -3,9 +3,9 @@ import {
   CloudFormationCustomResourceEvent,
   CloudFormationCustomResourceResponse,
 } from "aws-lambda";
-import { AWS } from "@console/core/aws";
+import { AWS } from "@console/core/aws/index";
 import { withActor } from "@console/core/actor";
-import { Replicache } from "@console/core/replicache";
+import { Replicache } from "@console/core/replicache/index";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 

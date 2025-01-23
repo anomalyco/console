@@ -1,9 +1,8 @@
-import { iot, mqtt } from "aws-iot-device-sdk-v2";
-import { onCleanup, onMount } from "solid-js";
+import { mqtt } from "aws-iot-device-sdk-v2";
+import { onCleanup } from "solid-js";
 import { bus } from "./bus";
 import { useDummy } from "./dummy";
 import { useAuth2 } from "./auth2";
-import { createId } from "@paralleldrive/cuid2";
 
 export function RealtimeProvider() {
   let connection: mqtt.MqttClientConnection;

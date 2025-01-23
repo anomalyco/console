@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { notPublic } from "./auth";
 import { assertActor, withActor } from "@console/core/actor";
-import { Account } from "@console/core/account";
+import { Account } from "@console/core/account/index";
 import { zValidator } from "@hono/zod-validator";
-import { Workspace } from "@console/core/workspace";
-import { User } from "@console/core/user";
+import { Workspace } from "@console/core/workspace/index";
+import { User } from "@console/core/user/index";
 import { VisibleError } from "@console/core/util/error";
 
 export const AccountRoute = new Hono()

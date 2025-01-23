@@ -1,25 +1,25 @@
 import { Show, createMemo, createSignal, Suspense } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
-import { useApi, useWorkspace } from "../context";
-import { utility } from "$/ui/utility";
-import { Toggle } from "$/ui/switch";
-import { IconLogosSlack, IconLogosGitHub } from "$/ui/icons/custom";
-import { formatNumber } from "$/common/format";
-import { createSubscription, useReplicache } from "$/providers/replicache";
-import { PRICING_PLAN, PricingPlan, UsageStore } from "$/data/usage";
-import { WorkspaceStore } from "$/data/workspace";
+import { useWorkspace } from "../context";
+import { utility } from "@console/web/ui/utility";
+import { Toggle } from "@console/web/ui/switch";
+import { IconLogosSlack, IconLogosGitHub } from "@console/web/ui/icons/custom";
+import { formatNumber } from "@console/web/common/format";
+import { createSubscription, useReplicache } from "@console/web/providers/replicache";
+import { PRICING_PLAN, PricingPlan, UsageStore } from "@console/web/data/usage";
+import { WorkspaceStore } from "@console/web/data/workspace";
 import { Header } from "../header";
-import { SlackTeamStore, StripeStore, GithubOrgStore } from "$/data/app";
+import { SlackTeamStore, StripeStore, GithubOrgStore } from "@console/web/data/app";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Alerts } from "./alerts";
 import { useNavigate } from "@solidjs/router";
-import { useAuth2 } from "$/providers/auth2";
+import { useAuth2 } from "@console/web/providers/auth2";
 import { AWS } from "./aws";
-import { theme } from "$/ui/theme";
-import { Stack, Row } from "$/ui/layout";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { theme } from "@console/web/ui/theme";
+import { Stack, Row } from "@console/web/ui/layout";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 export const PANEL_CONTENT_SPACE = "10";
 export const PANEL_HEADER_SPACE = "3";
@@ -128,8 +128,6 @@ export function SettingsRoute() {
       .map((usage) => usage.invocations)
       .reduce((a, b) => a + b, 0),
   );
-  const api = useApi();
-  console.log("usages", usages().length);
   const auth = useAuth2();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
@@ -198,7 +196,7 @@ export function SettingsRoute() {
   console.log(WorkspaceStore)
   const workspaceInfo = createSubscription(() => {
     const workspaceID = useWorkspace()
-    return tx => WorkspaceStore.get(tx, workspace().id)
+    return tx => WorkspaceStore.get(tx, workspaceID().id)
   });
 
   return (
@@ -227,7 +225,7 @@ export function SettingsRoute() {
             checked={workspaceInfo.value?.settingIssue}
             onClick={(e) => {
               rep().mutate.workspace_setting_issue({
-                workspaceID: workspaceInfo.value?.id,
+                workspaceID: workspaceInfo.value?.id!,
                 value: !workspaceInfo.value?.settingIssue
               });
             }}

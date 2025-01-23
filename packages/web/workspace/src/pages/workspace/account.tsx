@@ -1,15 +1,15 @@
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
+import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "./context";
-import { utility } from "$/ui/utility";
+import { utility } from "@console/web/ui/utility";
 import { A, useNavigate } from "@solidjs/router";
-import { IconArrowsRightLeft } from "$/ui/icons";
-import { IconAws } from "$/ui/icons/custom";
+import { IconArrowsRightLeft } from "@console/web/ui/icons";
+import { IconAws } from "@console/web/ui/icons/custom";
 import { Header } from "./header";
-import { Fullscreen, Stack, Row } from "$/ui/layout";
-import { theme } from "$/ui/theme";
-import { Text } from "$/ui/text";
-import { Button } from "$/ui/button";
+import { Fullscreen, Stack, Row } from "@console/web/ui/layout";
+import { theme } from "@console/web/ui/theme";
+import { Text } from "@console/web/ui/text";
+import { Button } from "@console/web/ui/button";
 
 const AddAccountGraphicAwsIcon = styled("div", {
   base: {
@@ -108,11 +108,9 @@ export function AccountRoute() {
               <a
                 target="_blank"
                 onClick={() => nav(`../?force=true`)}
-                href={`https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?region=us-east-1&param_workspaceID=${
-                  workspace().id
-                }&stackName=SSTConsole-${workspace().id}&templateURL=${
-                  import.meta.env.VITE_CONNECT_URL
-                }`}
+                href={`https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?region=us-east-1&param_workspaceID=${workspace().id
+                  }&stackName=SSTConsole-${workspace().id}&templateURL=${import.meta.env.VITE_CONNECT_URL
+                  }`}
               >
                 <Button style={{ width: "100%" }} color="primary">
                   Connect an AWS Account

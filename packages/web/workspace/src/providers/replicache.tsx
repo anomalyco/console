@@ -1,7 +1,6 @@
-import { ReadTransaction, ReadonlyJSONValue, Replicache } from "replicache";
+import { ReadTransaction, Replicache } from "replicache";
 import { WorkspaceStore } from "../data/workspace"
 import {
-  Accessor,
   ParentProps,
   Show,
   createContext,
@@ -13,16 +12,16 @@ import {
 import { Client } from "@console/functions/replicache/framework";
 import type { ServerType } from "@console/functions/replicache/server";
 import { bus } from "./bus";
-import { UserStore } from "$/data/user";
-import { LambdaPayloadStore } from "$/data/lambda-payload";
-import { LogSearchStore } from "$/data/log-search";
+import { UserStore } from "@console/web/data/user";
+import { LambdaPayloadStore } from "@console/web/data/lambda-payload";
+import { LogSearchStore } from "@console/web/data/log-search";
 import { makeEventListener } from "@solid-primitives/event-listener";
-import { IssueStore } from "$/data/issue";
+import { IssueStore } from "@console/web/data/issue";
 import { DateTime } from "luxon";
-import { WarningStore } from "$/data/warning";
+import { WarningStore } from "@console/web/data/warning";
 import { useDummy } from "./dummy";
-import { createGet } from "$/data/store";
-import { AWS } from "$/data/aws";
+import { createGet } from "@console/web/data/store";
+import { AWS } from "@console/web/data/aws";
 import {
   AlertStore,
   SlackTeamStore,
@@ -30,11 +29,11 @@ import {
   AppRepoStore,
   RunConfigStore,
   RunStore,
-} from "$/data/app";
+} from "@console/web/data/app";
 import { useReplicacheStatus } from "./replicache-status";
 import { useAuth2 } from "./auth2";
 import { createStore, reconcile } from "solid-js/store";
-import { Splash } from "$/ui/splash";
+import { Splash } from "@console/web/ui/splash";
 
 const mutators = new Client<ServerType>()
   .mutation("app_stage_sync", async () => { })

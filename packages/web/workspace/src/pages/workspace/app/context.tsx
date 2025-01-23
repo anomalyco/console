@@ -1,7 +1,7 @@
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import { createContext, useContext } from "solid-js";
 import { useParams } from "@solidjs/router";
-import { AppStore } from "$/data/app";
+import { AppStore } from "@console/web/data/app";
 
 export const AppContext = createContext<ReturnType<typeof createAppContext>>();
 

@@ -1,4 +1,4 @@
-import type { Usage } from "@console/core/billing";
+import type { Usage } from "@console/core/billing/index";
 import { Store } from "./store";
 
 type PricingTier = {

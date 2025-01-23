@@ -6,7 +6,7 @@ import { getCookie, setCookie } from "hono/cookie";
 import { useWorkspace, withActor } from "@console/core/actor";
 import { createId } from "@console/core/util/sql";
 import { HTTPException } from "hono/http-exception";
-import { Slack } from "@console/core/slack";
+import { Slack } from "@console/core/slack/index";
 
 export const SlackRoute = new Hono()
   .get("/authorize", async (c) => {

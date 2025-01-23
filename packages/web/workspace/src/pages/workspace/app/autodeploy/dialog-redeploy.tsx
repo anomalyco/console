@@ -1,12 +1,12 @@
 import { createEffect } from "solid-js";
 import { createId } from "@paralleldrive/cuid2";
-import { useReplicache } from "$/providers/replicache";
+import { useReplicache } from "@console/web/providers/replicache";
 import { useNavigate } from "@solidjs/router";
-import { Modal } from "$/ui/modal";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
+import { Modal } from "@console/web/ui/modal";
+import { theme } from "@console/web/ui/theme";
+import { utility } from "@console/web/ui/utility";
 import { styled } from "@macaron-css/solid";
-import { Button, TextButton } from "$/ui/button";
+import { Button, TextButton } from "@console/web/ui/button";
 import { createStore } from "solid-js/store";
 
 const Root = styled("div", {

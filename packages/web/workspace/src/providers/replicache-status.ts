@@ -1,4 +1,4 @@
-import { createInitializedContext } from "$/common/context";
+import { createInitializedContext } from "@console/web/common/context";
 import { createStore } from "solid-js/store";
 
 export const { use: useReplicacheStatus, provider: ReplicacheStatusProvider } =

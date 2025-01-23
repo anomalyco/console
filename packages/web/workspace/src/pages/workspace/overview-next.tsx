@@ -1,49 +1,33 @@
-import { DateTime } from "luxon";
-import { AppStore, RunStore, RepoFromApp, StateUpdateStore } from "$/data/app";
-import { UserStore } from "$/data/user";
-import { AccountStore } from "$/data/aws";
-import { ActiveStages } from "$/data/stage";
-import { createSubscription, useReplicache } from "$/providers/replicache";
-import { Fullscreen, Row, Stack } from "$/ui/layout";
-import { Dropdown } from "$/ui/dropdown";
-import {
-  IconChevronRight,
-  IconEllipsisVertical,
-  IconExclamationTriangle,
-} from "$/ui/icons";
-import { AvatarInitialsIcon } from "$/ui/avatar-icon";
-import { Syncing } from "$/ui/loader";
-import type { App, Stage } from "@console/core/app";
-import {
-  IconApp,
-  IconCommit,
-  IconGitHub,
-  IconArrowPathSpin,
-} from "$/ui/icons/custom";
+import { App } from "@console/core/app/index";
+import { Stage } from "@console/core/app/stage";
+import { User } from "@console/core/user/index";
 import { styled } from "@macaron-css/solid";
-import { A, useNavigate, useSearchParams } from "@solidjs/router";
-import {
-  For,
-  Match,
-  Show,
-  Switch,
-  Suspense,
-  createEffect,
-  createMemo,
-} from "solid-js";
+import { A, useSearchParams, useNavigate } from "@solidjs/router";
+import { DateTime } from "luxon";
+import { sortBy, filter, groupBy, entries, flatMap } from "remeda";
+import { createMemo, createEffect, Show, Switch, Match, For, Suspense } from "solid-js";
+import { pipe, map } from "remeda";
+import { formatCommit, parseTime, formatSinceTime } from "../../common/format";
+import { githubRepo, githubCommit } from "../../common/url-builder";
+import { AppStore, RepoFromApp, RunStore, StateUpdateStore } from "../../data/app";
+import { AccountStore } from "../../data/aws";
+import { ActiveStages } from "../../data/stage";
+import { UserStore } from "../../data/user";
+import { useAuth2 } from "../../providers/auth2";
+import { useLocalContext } from "../../providers/local";
+import { useReplicache, createSubscription } from "../../providers/replicache";
+import { AvatarInitialsIcon } from "../../ui/avatar-icon";
+import { TextButton, ChevronLink, Button } from "../../ui/button";
+import { Dropdown } from "../../ui/dropdown";
+import { Text } from "../../ui/text";
+import { IconExclamationTriangle, IconChevronRight, IconEllipsisVertical } from "../../ui/icons";
+import { IconApp, IconGitHub, IconArrowPathSpin, IconCommit } from "../../ui/icons/custom";
+import { Fullscreen, Stack, Row } from "../../ui/layout";
+import { Syncing } from "../../ui/loader";
+import { Tag } from "../../ui/tag";
+import { theme } from "../../ui/theme";
+import { utility } from "../../ui/utility";
 import { Header } from "./header";
-import { useLocalContext } from "$/providers/local";
-import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
-import { User } from "@console/core/user";
-import { useAuth2 } from "$/providers/auth2";
-import { parseTime, formatSinceTime, formatCommit } from "$/common/format";
-import { githubCommit, githubRepo } from "$/common/url-builder";
-import { TextButton } from "$/ui/button";
-import { Tag } from "$/ui/tag";
-import { theme } from "$/ui/theme";
-import { utility } from "$/ui/utility";
-import { Text } from "$/ui/text";
-import { Button, ChevronLink } from "$/ui/button";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -150,11 +134,6 @@ const CardTitle = styled(A, {
   },
 });
 
-const CardTitleErrorLink = styled(A, {
-  base: {
-    zIndex: 2,
-  },
-});
 
 const CardTitleTeam = styled("p", {
   base: {

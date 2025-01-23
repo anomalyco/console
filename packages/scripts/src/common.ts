@@ -1,4 +1,4 @@
-import { db, inArray, or } from "@console/core/drizzle";
+import { db, inArray, or } from "@console/core/drizzle/index";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import readline from "readline";
 
@@ -17,7 +17,7 @@ export function prompt(question: string) {
 
 export async function promptWorkspaces() {
   const workspaceFilter: string[] = await prompt("workspaces: ").then((x) =>
-    x.split(" ").filter(Boolean)
+    x.split(" ").filter(Boolean),
   );
 
   const results = await db
@@ -29,14 +29,14 @@ export async function promptWorkspaces() {
     .where(
       or(
         inArray(workspace.slug, workspaceFilter),
-        inArray(workspace.id, workspaceFilter)
-      )
+        inArray(workspace.id, workspaceFilter),
+      ),
     )
     .execute();
 
   console.log(
     "found:",
-    results.map((x) => x.slug)
+    results.map((x) => x.slug),
   );
 
   return results.map((x) => x.workspaceID);

@@ -9,14 +9,16 @@
     "esModuleInterop": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "noEmit": true,
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@console/functions/*": ["../../functions/src/*"],
-      "@console/core/*": ["../../core/src/*"],
-      "$/*": ["./src/*"]
+      "@console/web/*": [
+        "./src/*"
+      ]
     }
   }
 }
