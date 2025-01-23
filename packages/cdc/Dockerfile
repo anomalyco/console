@@ -3,6 +3,7 @@ from oven/bun:latest
 copy ./package.json .
 copy ./packages/core/package.json ./packages/core/
 copy ./packages/cdc/package.json ./packages/cdc/
+copy ./packages/mail/package.json ./packages/mail/
 
 # do not run scripts
 run bun install --frozen-lockfile --ignore-scripts
