@@ -1,2 +1,2 @@
 #!/bin/sh
-pnpm typecheck
+bun typecheck
