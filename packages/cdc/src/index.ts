@@ -26,19 +26,25 @@ for await (const item of stream) {
   if (!item.inserts.length && !item.updates.length && !item.deletes.length)
     continue;
   for (const update of item.updates) {
-    console.log("update", update.after);
     if (!update.after) continue;
     const data = {
-      id: update.after.id,
       slug: update.after.slug,
-      settingIssue: update.after.settingIssue || true,
-      timeGated: update.after.timeGated,
-      timeCreated: update.after.timeCreated,
-      timeDeleted: update.after.timeDeleted,
+      settingIssue: update.after.setting_issue === 1,
+      timeGated: update.after.time_gated,
+      timeCreated: update.after.time_created,
+      timeDeleted: update.after.time_deleted,
     };
-    await postgres.insert(workspaceTable).values(data).onConflictDoUpdate({
-      target: workspaceTable.id,
-      set: data,
-    });
+    console.log("inserting", data);
+    await postgres
+      .insert(workspaceTable)
+      .values({
+        id: update.after.id,
+        ...data,
+      })
+      .onConflictDoUpdate({
+        target: [workspaceTable.id],
+        set: data,
+      })
+      .then(console.log);
   }
 }

@@ -1,9 +1,10 @@
 import { auth } from "./auth";
 import { database } from "./planetscale";
+import { postgres } from "./postgres";
 
 const websocketAuthorizer = new sst.aws.Function("WebsocketAuthorizer", {
   handler: "packages/functions/src/auth-websocket.handler",
-  link: [database, auth],
+  link: [postgres, database, auth],
 });
 
 export const websocket = new sst.Linkable("Websocket", {

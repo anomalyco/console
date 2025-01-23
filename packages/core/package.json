@@ -41,7 +41,6 @@
     "@aws-sdk/client-sts": "3.699.0",
     "@aws-sdk/middleware-retry": "3.374.0",
     "@aws-sdk/s3-request-presigner": "3.701.0",
-    "@console/mail": "workspace:*",
     "@jsx-email/render": "^1.1.0",
     "@openauthjs/openevent": "0.0.27",
     "@paralleldrive/cuid2": "2.2.2",

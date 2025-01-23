@@ -1,4 +1,5 @@
 import { vpc } from "./network";
+import { database } from "./planetscale";
 import { postgres } from "./postgres";
 
 export const cluster = new sst.aws.Cluster("Cluster", {
@@ -10,7 +11,7 @@ cluster.addService("CDC", {
     context: ".",
     dockerfile: "./packages/cdc/Dockerfile",
   },
-  link: [postgres, planetscale],
+  link: [postgres, database],
   dev: {
     directory: "./packages/cdc",
     command: "bun run --hot ./src/index.ts",

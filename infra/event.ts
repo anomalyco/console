@@ -3,6 +3,7 @@ import { bus } from "./bus";
 import { email } from "./email";
 import { issues } from "./issues";
 import { database } from "./planetscale";
+import { postgres } from "./postgres";
 import { secret, allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
@@ -36,6 +37,7 @@ bus.subscribe(
       },
     ],
     link: [
+      postgres,
       database,
       bus,
       issues,
@@ -58,7 +60,7 @@ bus.subscribe(
   "StackUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/stack-updated-external.handler",
-    link: [bus, database, websocket],
+    link: [bus, postgres, database, websocket],
   },
   {
     pattern: {
@@ -71,7 +73,15 @@ bus.subscribe(
   "RunnerUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/runner-updated-external.handler",
-    link: [database, bus, email, autodeploy, ...allSecrets, websocket],
+    link: [
+      postgres,
+      database,
+      bus,
+      email,
+      autodeploy,
+      ...allSecrets,
+      websocket,
+    ],
     permissions: [
       { actions: ["iot:*", "sts:*", "iam:PassRole"], resources: ["*"] },
     ],
@@ -88,7 +98,15 @@ bus.subscribe(
   {
     handler:
       "packages/functions/src/events/runner-updated-external.codebuildHandler",
-    link: [database, bus, email, autodeploy, ...allSecrets, websocket],
+    link: [
+      postgres,
+      database,
+      bus,
+      email,
+      autodeploy,
+      ...allSecrets,
+      websocket,
+    ],
     permissions: [{ actions: ["iot:*", "sts:*"], resources: ["*"] }],
   },
   {

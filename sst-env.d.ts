@@ -69,6 +69,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bus"
     }
+    "CDC": {
+      "service": string
+      "type": "sst.aws.Service"
+    }
     "Connect": {
       "name": string
       "type": "sst.aws.Function"

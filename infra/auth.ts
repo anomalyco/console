@@ -1,6 +1,7 @@
 import { domain } from "./dns";
 import { email } from "./email";
 import { database } from "./planetscale";
+import { postgres } from "./postgres";
 import { secret } from "./secret";
 
 export const auth = new sst.aws.Auth.v1("Auth", {
@@ -12,6 +13,7 @@ export const auth = new sst.aws.Auth.v1("Auth", {
       secret.SlackClientSecret,
       secret.BotpoisonSecretKey,
       database,
+      postgres,
     ],
     permissions: [{ actions: ["ses:*"], resources: ["*"] }],
     url: true,

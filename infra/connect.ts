@@ -1,5 +1,6 @@
 import { bus } from "./bus";
 import { database } from "./planetscale";
+import { postgres } from "./postgres";
 import { storage } from "./storage";
 import { websocket } from "./websocket";
 
@@ -7,7 +8,7 @@ export const identity = aws.getCallerIdentityOutput();
 const connect = new sst.aws.Function("Connect", {
   handler: "packages/functions/src/connect.handler",
   permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
-  link: [bus, database, websocket],
+  link: [bus, postgres, database, websocket],
 });
 
 new aws.lambda.Permission("ConnectInvoke", {
