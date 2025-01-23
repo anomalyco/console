@@ -6,7 +6,8 @@
   "scripts": {
     "test": "sst shell vitest",
     "typecheck": "tsc --noEmit --incremental",
-    "db": "sst shell drizzle-kit"
+    "db": "sst shell drizzle-kit",
+    "pg": "sst shell -- drizzle-kit --config drizzle.pg.ts"
   },
   "exports": {
     "./*": "./src/*.ts"
@@ -17,7 +18,7 @@
     "@types/react": "18.0.25",
     "@types/relaxed-json": "^1.0.1",
     "drizzle-kit": "0.22.8",
-    "sst": "3.6.7",
+    "sst": "3.6.9",
     "typescript": "5.5.4",
     "vitest": "^0.25.3"
   },
@@ -52,6 +53,7 @@
     "luxon": "3.5.0",
     "minimatch": "^9.0.4",
     "octokit": "^4.0.2",
+    "postgres": "^3.4.5",
     "react": "18.2.0",
     "relaxed-json": "^1.0.3",
     "remeda": "^2.17.3",

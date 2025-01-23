@@ -1,4 +1,4 @@
-export const regions = ["production", "dev"].includes($app.stage)
+export const regions = ["production"].includes($app.stage)
   ? await aws.getRegions().then((r) => r.names)
   : ["us-east-1"];
 

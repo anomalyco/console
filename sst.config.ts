@@ -35,6 +35,7 @@ export default $config({
     await import("./infra/network");
     await import("./infra/planetscale");
     await import("./infra/websocket");
+    await import("./infra/postgres");
     await import("./infra/bus");
     await import("./infra/event");
     await import("./infra/email");

@@ -27,8 +27,8 @@ importers:
         specifier: 10.3.0
         version: 10.3.0
       sst:
-        specifier: 3.6.7
-        version: 3.6.7
+        specifier: 3.6.9
+        version: 3.6.9
       turbo:
         specifier: 2.3.3
         version: 2.3.3
@@ -45,6 +45,18 @@ importers:
       '@types/aws-lambda':
         specifier: ^8.10.114
         version: 8.10.147
+
+  packages/cdc:
+    dependencies:
+      '@console/core':
+        specifier: workspace:*
+        version: link:../core
+      planetscale-stream-ts:
+        specifier: ^1.1.0
+        version: 1.1.0
+      sst:
+        specifier: 3.6.9
+        version: 3.6.9
 
   packages/core:
     dependencies:
@@ -110,7 +122,7 @@ importers:
         version: 1.1.1
       '@openauthjs/openevent':
         specifier: 0.0.27
-        version: 0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)
+        version: 0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0))(mysql2@3.12.0)(postgres@3.4.5)
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
@@ -122,10 +134,10 @@ importers:
         version: 6.13.0
       drizzle-orm:
         specifier: 0.31.2
-        version: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0)
+        version: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(zod@3.24.1)
+        version: 0.5.1(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0))(zod@3.24.1)
       hono:
         specifier: 4.6.5
         version: 4.6.5
@@ -138,6 +150,9 @@ importers:
       octokit:
         specifier: ^4.0.2
         version: 4.1.0
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.5
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -176,8 +191,8 @@ importers:
         specifier: 0.22.8
         version: 0.22.8
       sst:
-        specifier: 3.6.7
-        version: 3.6.7
+        specifier: 3.6.9
+        version: 3.6.9
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -288,8 +303,8 @@ importers:
         specifier: ^22.10.1
         version: 22.10.7
       sst:
-        specifier: 3.6.7
-        version: 3.6.7
+        specifier: 3.6.9
+        version: 3.6.9
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -330,8 +345,8 @@ importers:
         specifier: 3.5.0
         version: 3.5.0
       sst:
-        specifier: 3.6.7
-        version: 3.6.7
+        specifier: 3.6.9
+        version: 3.6.9
       tsx:
         specifier: ^3.12.7
         version: 3.14.0
@@ -1092,6 +1107,21 @@ packages:
     resolution: {integrity: sha512-sKkiQyfACvGYLvN6KUVwFTDru4tlutxYPoihsDMs6Pklso9ADfb78jShGfhvBYVXn6Vhf5z19yalaUmzU2yjfA==}
     engines: {node: '>=10'}
 
+  '@bufbuild/protobuf@1.10.0':
+    resolution: {integrity: sha512-QDdVFLoN93Zjg36NoQPZfsVH9tZew7wKDKyV5qRdj8ntT4wQCOradQjRaTdwMhWUYsgKsvCINKKm87FdEk96Ag==}
+
+  '@connectrpc/connect-node@1.6.1':
+    resolution: {integrity: sha512-DxcD1wsF/aX9GegjAtl7VbpiZNjVJozy87VbaFoN6AF0Ln1Q757r5dgV59Gz0wmlk5f17txUsrEr1f2inlnnAg==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@bufbuild/protobuf': ^1.10.0
+      '@connectrpc/connect': 1.6.1
+
+  '@connectrpc/connect@1.6.1':
+    resolution: {integrity: sha512-KchMDNtU4CDTdkyf0qG7ugJ6qHTOR/aI7XebYn3OTCNagaDYWiZUVKgRgwH79yeMkpNgvEUaXSK7wKjaBK9b/Q==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^1.10.0
+
   '@corvu/utils@0.4.2':
     resolution: {integrity: sha512-Ox2kYyxy7NoXdKWdHeDEjZxClwzO4SKM8plAaVwmAJPxHMqA0rLOoAsa+hBDwRLpctf+ZRnAd/ykguuJidnaTA==}
     peerDependencies:
@@ -1274,7 +1304,6 @@ packages:
   '@esbuild/linux-arm64@0.21.4':
     resolution: {integrity: sha512-/GLD2orjNU50v9PcxNpYZi+y8dJ7e7/LhQukN3S4jNDXCKkyyiyAz9zDw3siZ7Eh1tRcnCHAo/WcqKMzmi4eMQ==}
     engines: {node: '>=12'}
-    cpu: [arm64]
     os: [linux]
 
   '@esbuild/linux-arm@0.18.20':
@@ -4690,6 +4719,10 @@ packages:
   pkg-types@1.1.3:
     resolution: {integrity: sha512-+JrgthZG6m3ckicaOB74TwQ+tBWsFl3qVQg7mN8ulwSOElJ7gBhKzj2VkCPnZ4NlF6kEquYU+RIYNVAvzd54UA==}
 
+  planetscale-stream-ts@1.1.0:
+    resolution: {integrity: sha512-YQZkn3KTe6pV+JQ0YeY+EEUsInM2UgURhpcPRQr1k6S5/01gt1a7krMNBuUWX62s55PtqR08my4yruHUFqFUQQ==}
+    engines: {node: '>=20'}
+
   postcss-css-variables@0.18.0:
     resolution: {integrity: sha512-lYS802gHbzn1GI+lXvy9MYIYDuGnl1WB4FTKoqMQqJ3Mab09A7a/1wZvGTkCEZJTM8mSbIyb1mJYn8f0aPye0Q==}
     peerDependencies:
@@ -4743,6 +4776,10 @@ packages:
   postcss@8.5.1:
     resolution: {integrity: sha512-6oz2beyjc5VMn/KV1pPw8fliQkhBXrVn1Z3TVyqZxU8kZpzEKhBdmCFqI6ZbmGtamQvQGuU1sgPTk8ZrXDD7jQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  postgres@3.4.5:
+    resolution: {integrity: sha512-cDWgoah1Gez9rN3H4165peY9qfpEo+SA61oQv65O3cRUE1pOEoJWwddwcqKE8XZYjbblOJlYDlLV4h67HrEVDg==}
+    engines: {node: '>=12'}
 
   posthog-js@1.154.5:
     resolution: {integrity: sha512-YYhWckDIRObfCrQpiLq+fdcDTIbQp8ebiKi0ueGohMRgugIG9LJVSpBgCeCHZm2C7sOxDUNcAr3T5VBDUSQoOg==}
@@ -5084,8 +5121,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  sst-darwin-arm64@3.6.7:
-    resolution: {integrity: sha512-sibkNjNUZVbSo6Ag7y3sxFkNOrq/blJ+w4rakaufFq5wK6sgePMF7DLNoUfhmuNiQAB7ZluCCeVI6WYGQtW6qw==}
+  sst-darwin-arm64@3.6.9:
+    resolution: {integrity: sha512-GYeZqo9JnD/ZJIUxAuVXX9N7Yj7xsgWbpQbfNcRr0dPd+qCFNUQEDpQToebo+iNyHmK6ATrtofV2rnTxsZbZrQ==}
     cpu: [arm64]
     os: [darwin]
 
@@ -5094,8 +5131,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  sst-darwin-x64@3.6.7:
-    resolution: {integrity: sha512-CfwYN8hILL8ErA2p/NhX3esJ6+pxIFDIQprysLBWSp2lXxrJetPjMZGrq4vvm9pCNlySBuhoiH4/FCxfZhvgww==}
+  sst-darwin-x64@3.6.9:
+    resolution: {integrity: sha512-Ds1vRDNL18gISDSySLm1n+kLJIHvF3ihqSP3wcZ6Y6VLGHRy3uq/4hLBY4Rw2nCpbVC3nY5yO3e3oKitcfzxDQ==}
     cpu: [x64]
     os: [darwin]
 
@@ -5104,8 +5141,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  sst-linux-arm64@3.6.7:
-    resolution: {integrity: sha512-gUFNTUtolZXB/LDO6p8JMa5fpY3bUeddOsMXDYhiRTwiIBsuJpld1nEgd0DkGxLMq6VYvks1DO8Bv7mJApxM4A==}
+  sst-linux-arm64@3.6.9:
+    resolution: {integrity: sha512-SYLKHjuvXn9Zg+Ez1u/ZoMbzsJjDy4uqRbSolcZGg0OtGpL3YF38R0gwM6TkmVt2KVplDHx/+Zvv56ZtAS204w==}
     cpu: [arm64]
     os: [linux]
 
@@ -5114,8 +5151,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  sst-linux-x64@3.6.7:
-    resolution: {integrity: sha512-yjOwTW631UKSozd88MWxXmNU+J0WnishKEKJltwvF4awxh9JD8MFRGSsQAndKZabPFJgFoAi6WSvlcGS/qwe6w==}
+  sst-linux-x64@3.6.9:
+    resolution: {integrity: sha512-+391/HBccCHHDunc9yYiAz0e44W8uvHRVAcd1xOtVKDEZFvaX3JoFvcvSRmzsVBmynZhmJoxUnliFpEDOzhOxQ==}
     cpu: [x64]
     os: [linux]
 
@@ -5124,8 +5161,8 @@ packages:
     cpu: [x86]
     os: [linux]
 
-  sst-linux-x86@3.6.7:
-    resolution: {integrity: sha512-F1G7LrTzlC7P2LyVmI2DSR1q6GfpBfqbZ/RyTzxRICBrnwvgfB1xkIH72BEOzqvdfhwgc5Liw8Zic03wCwKDJA==}
+  sst-linux-x86@3.6.9:
+    resolution: {integrity: sha512-ISjZUs9eqr7lzyHkX1JKuKzGGj+jOkC7Aios0LZtD/qSXKMYivBOWolavfWJCMB7Aua9o7QDQtuMd/AwM/oU2w==}
     cpu: [x86]
     os: [linux]
 
@@ -5133,8 +5170,8 @@ packages:
     resolution: {integrity: sha512-Te9DC6M4oZPelRcilSMPo8mTfFYU9501tRjc8KZMibgC+dnDV+tAKIhi9DdvLAzqa57RM/F3IBe2m1vWpD4yjg==}
     hasBin: true
 
-  sst@3.6.7:
-    resolution: {integrity: sha512-Ja0NlhOkRHZ7JbytEkk3f+Dk5Cu63UVqnMWPYXPbu1jgOIwOGwbBHwQketmX2aBjl1rYyj7RYuxt4FsZ2YMPjQ==}
+  sst@3.6.9:
+    resolution: {integrity: sha512-JOxSjcgyqcILSPaW1T7D9Xg5ikfRRRvIyiUOJI9WoP247tBzz8l4iYlJhiCeEjxCTpkpsN5HaQD6ARfS7Meyug==}
     hasBin: true
 
   stream-shift@1.0.3:
@@ -5839,7 +5876,7 @@ snapshots:
       '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/client-sts': 3.600.0(aws-crt@1.25.0)
       '@aws-sdk/core': 3.598.0
-      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/middleware-host-header': 3.598.0
       '@aws-sdk/middleware-logger': 3.598.0
       '@aws-sdk/middleware-recursion-detection': 3.598.0
@@ -6615,7 +6652,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-sdk/client-sts': 3.600.0(aws-crt@1.25.0)
       '@aws-sdk/core': 3.598.0
-      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/middleware-host-header': 3.598.0
       '@aws-sdk/middleware-logger': 3.598.0
       '@aws-sdk/middleware-recursion-detection': 3.598.0
@@ -6835,7 +6872,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/core': 3.598.0
-      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/middleware-host-header': 3.598.0
       '@aws-sdk/middleware-logger': 3.598.0
       '@aws-sdk/middleware-recursion-detection': 3.598.0
@@ -7018,13 +7055,13 @@ snapshots:
       '@smithy/util-stream': 4.0.2
       tslib: 2.8.1
 
-  '@aws-sdk/credential-provider-ini@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)':
+  '@aws-sdk/credential-provider-ini@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)':
     dependencies:
       '@aws-sdk/client-sts': 3.600.0(aws-crt@1.25.0)
       '@aws-sdk/credential-provider-env': 3.598.0
       '@aws-sdk/credential-provider-http': 3.598.0
       '@aws-sdk/credential-provider-process': 3.598.0
-      '@aws-sdk/credential-provider-sso': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-sso': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/credential-provider-web-identity': 3.598.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))
       '@aws-sdk/types': 3.598.0
       '@smithy/credential-provider-imds': 3.2.8
@@ -7073,13 +7110,13 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/credential-provider-node@3.600.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)':
+  '@aws-sdk/credential-provider-node@3.600.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)':
     dependencies:
       '@aws-sdk/credential-provider-env': 3.598.0
       '@aws-sdk/credential-provider-http': 3.598.0
-      '@aws-sdk/credential-provider-ini': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-ini': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/credential-provider-process': 3.598.0
-      '@aws-sdk/credential-provider-sso': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(aws-crt@1.25.0)
+      '@aws-sdk/credential-provider-sso': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/credential-provider-web-identity': 3.598.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))
       '@aws-sdk/types': 3.598.0
       '@smithy/credential-provider-imds': 3.2.8
@@ -7154,10 +7191,10 @@ snapshots:
       '@smithy/types': 4.1.0
       tslib: 2.8.1
 
-  '@aws-sdk/credential-provider-sso@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))(aws-crt@1.25.0)':
+  '@aws-sdk/credential-provider-sso@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)':
     dependencies:
       '@aws-sdk/client-sso': 3.598.0(aws-crt@1.25.0)
-      '@aws-sdk/token-providers': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))
+      '@aws-sdk/token-providers': 3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/shared-ini-file-loader': 3.1.12
@@ -7502,7 +7539,7 @@ snapshots:
       '@smithy/signature-v4': 1.1.0
       tslib: 2.8.1
 
-  '@aws-sdk/token-providers@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0))':
+  '@aws-sdk/token-providers@3.598.0(@aws-sdk/client-sso-oidc@3.600.0(aws-crt@1.25.0))':
     dependencies:
       '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0(aws-crt@1.25.0))(aws-crt@1.25.0)
       '@aws-sdk/types': 3.598.0
@@ -7877,6 +7914,18 @@ snapshots:
       js-sha512: 0.8.0
 
   '@botpoison/node@0.1.10': {}
+
+  '@bufbuild/protobuf@1.10.0': {}
+
+  '@connectrpc/connect-node@1.6.1(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))':
+    dependencies:
+      '@bufbuild/protobuf': 1.10.0
+      '@connectrpc/connect': 1.6.1(@bufbuild/protobuf@1.10.0)
+      undici: 5.28.5
+
+  '@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0)':
+    dependencies:
+      '@bufbuild/protobuf': 1.10.0
 
   '@corvu/utils@0.4.2(solid-js@1.9.3)':
     dependencies:
@@ -8680,15 +8729,16 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
-  '@openauthjs/openevent@0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(mysql2@3.12.0)':
+  '@openauthjs/openevent@0.0.27(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0))(mysql2@3.12.0)(postgres@3.4.5)':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.3
       aws4fetch: 1.0.20
       jose: 5.9.6
       ulid: 2.3.0
     optionalDependencies:
-      drizzle-orm: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0)
+      drizzle-orm: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0)
       mysql2: 3.12.0
+      postgres: 3.4.5
 
   '@paralleldrive/cuid2@2.2.2':
     dependencies:
@@ -10622,7 +10672,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0):
+  drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0):
     optionalDependencies:
       '@aws-sdk/client-rds-data': 3.731.1(aws-crt@1.25.0)
       '@planetscale/database': 1.19.0
@@ -10630,11 +10680,12 @@ snapshots:
       bun-types: 1.1.44
       kysely: 0.27.5
       mysql2: 3.12.0
+      postgres: 3.4.5
       react: 18.2.0
 
-  drizzle-zod@0.5.1(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0))(zod@3.24.1):
+  drizzle-zod@0.5.1(drizzle-orm@0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0))(zod@3.24.1):
     dependencies:
-      drizzle-orm: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(react@18.2.0)
+      drizzle-orm: 0.31.2(@aws-sdk/client-rds-data@3.731.1(aws-crt@1.25.0))(@planetscale/database@1.19.0)(@types/react@18.0.25)(bun-types@1.1.44)(kysely@0.27.5)(mysql2@3.12.0)(postgres@3.4.5)(react@18.2.0)
       zod: 3.24.1
 
   dunder-proto@1.0.1:
@@ -11769,6 +11820,12 @@ snapshots:
       mlly: 1.7.1
       pathe: 1.1.2
 
+  planetscale-stream-ts@1.1.0:
+    dependencies:
+      '@bufbuild/protobuf': 1.10.0
+      '@connectrpc/connect': 1.6.1(@bufbuild/protobuf@1.10.0)
+      '@connectrpc/connect-node': 1.6.1(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))
+
   postcss-css-variables@0.18.0(postcss@8.4.31):
     dependencies:
       balanced-match: 1.0.2
@@ -11831,6 +11888,8 @@ snapshots:
       nanoid: 3.3.8
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  postgres@3.4.5: {}
 
   posthog-js@1.154.5:
     dependencies:
@@ -12184,31 +12243,31 @@ snapshots:
   sst-darwin-arm64@3.5.9:
     optional: true
 
-  sst-darwin-arm64@3.6.7:
+  sst-darwin-arm64@3.6.9:
     optional: true
 
   sst-darwin-x64@3.5.9:
     optional: true
 
-  sst-darwin-x64@3.6.7:
+  sst-darwin-x64@3.6.9:
     optional: true
 
   sst-linux-arm64@3.5.9:
     optional: true
 
-  sst-linux-arm64@3.6.7:
+  sst-linux-arm64@3.6.9:
     optional: true
 
   sst-linux-x64@3.5.9:
     optional: true
 
-  sst-linux-x64@3.6.7:
+  sst-linux-x64@3.6.9:
     optional: true
 
   sst-linux-x86@3.5.9:
     optional: true
 
-  sst-linux-x86@3.6.7:
+  sst-linux-x86@3.6.9:
     optional: true
 
   sst@3.5.9:
@@ -12223,17 +12282,17 @@ snapshots:
       sst-linux-x64: 3.5.9
       sst-linux-x86: 3.5.9
 
-  sst@3.6.7:
+  sst@3.6.9:
     dependencies:
       aws4fetch: 1.0.20
       jose: 5.2.3
       openid-client: 5.6.4
     optionalDependencies:
-      sst-darwin-arm64: 3.6.7
-      sst-darwin-x64: 3.6.7
-      sst-linux-arm64: 3.6.7
-      sst-linux-x64: 3.6.7
-      sst-linux-x86: 3.6.7
+      sst-darwin-arm64: 3.6.9
+      sst-darwin-x64: 3.6.9
+      sst-linux-arm64: 3.6.9
+      sst-linux-x64: 3.6.9
+      sst-linux-x86: 3.6.9
 
   stream-shift@1.0.3: {}
 

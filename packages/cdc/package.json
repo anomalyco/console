@@ -1,0 +1,9 @@
+{
+  "name": "@console/cdc",
+  "version": "0.0.0",
+  "dependencies": {
+    "planetscale-stream-ts": "^1.1.0",
+    "sst": "3.6.9",
+    "@console/core": "workspace:*"
+  }
+}

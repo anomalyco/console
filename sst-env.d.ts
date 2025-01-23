@@ -122,6 +122,16 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.KinesisStream"
     }
+    "Postgres": {
+      "clusterArn": string
+      "database": string
+      "host": string
+      "password": string
+      "port": number
+      "secretArn": string
+      "type": "sst.aws.Aurora"
+      "username": string
+    }
     "PublicStorage_us-east-1": {
       "name": string
       "type": "sst.aws.Bucket"
@@ -155,6 +165,7 @@ declare module "sst" {
       "value": string
     }
     "VPC": {
+      "bastion": string
       "type": "sst.aws.Vpc"
     }
     "Websocket": {

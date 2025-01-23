@@ -27,7 +27,7 @@
     "@tsconfig/node16": "^16.1.0",
     "@types/bun": "^1.1.18",
     "constructs": "10.3.0",
-    "sst": "3.6.7",
+    "sst": "3.6.9",
     "turbo": "2.3.3",
     "typescript": "5.5.4"
   },
