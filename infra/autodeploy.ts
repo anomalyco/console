@@ -137,7 +137,7 @@ function createRunnerRemover() {
   );
   const handler = new sst.aws.Function("AutodeployRunnerRemover", {
     handler: "packages/functions/src/run/runner-remover.handler",
-    link: [database, websocket],
+    link: [postgres, database, websocket],
     environment: {
       RUNNER_REMOVER_SCHEDULE_GROUP_NAME: scheduleGroup.name!,
       RUNNER_REMOVER_SCHEDULE_ROLE_ARN: monitor.role.arn,

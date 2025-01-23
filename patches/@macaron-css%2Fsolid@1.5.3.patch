@@ -1,5 +1,11 @@
+diff --git a/node_modules/@macaron-css/solid/.bun-tag-1514d668548fb0b3 b/.bun-tag-1514d668548fb0b3
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@macaron-css/solid/.bun-tag-9d48210b8d0a8094 b/.bun-tag-9d48210b8d0a8094
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/package.json b/package.json
-index c3f06bb43f13f07c712043f8e3beac3a0ea1b8fa..970a66f819dcf9c71b0657f67ea2fbf94df907a1 100644
+index c3f06bb43f13f07c712043f8e3beac3a0ea1b8fa..86af93a7f500de2117b91ee3424f3e109b1ea597 100644
 --- a/package.json
 +++ b/package.json
 @@ -2,7 +2,6 @@
@@ -27,8 +33,3 @@ index c3f06bb43f13f07c712043f8e3beac3a0ea1b8fa..970a66f819dcf9c71b0657f67ea2fbf9
      }
    },
    "dependencies": {
-@@ -35,3 +36,4 @@
-     "src"
-   ]
- }
-+

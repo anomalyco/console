@@ -1,9 +1,11 @@
 {
   "name": "@console/cdc",
   "version": "0.0.0",
+  "type": "module",
   "dependencies": {
+    "@console/core": "workspace:*",
+    "drizzle-orm": "0.31.2",
     "planetscale-stream-ts": "^1.1.0",
-    "sst": "3.6.9",
-    "@console/core": "workspace:*"
+    "sst": "3.6.9"
   }
 }
