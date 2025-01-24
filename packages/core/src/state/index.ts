@@ -962,6 +962,7 @@ export module State {
       const workspaceID = useWorkspace();
 
       const v3bootstrap = await AWS.Account.bootstrapIon(input.config);
+      let timestamp = DateTime.now();
       if (v3bootstrap) {
         const key = `app/${input.config.app}/${input.config.stage}.json`;
         console.log("looking for v3", key);
@@ -978,6 +979,9 @@ export module State {
                 .latest || {},
           )
           .catch(() => {});
+
+        const parsed = DateTime.fromISO(state.manifest.time);
+        if (parsed.isValid) timestamp = parsed;
         for (const resource of state?.resources || []) {
           resource.inputs = resource.inputs || {};
           resource.outputs = resource.outputs || {};
@@ -1022,6 +1026,8 @@ export module State {
         if (list && list.Contents?.length) {
           console.log("found", list.Contents?.length, "stacks");
           for (const obj of list.Contents || []) {
+            const parsed = DateTime.fromJSDate(obj.LastModified!);
+            if (parsed.isValid) timestamp = parsed;
             console.log("processing", obj.Key);
             const stackID = obj.Key?.split("/").pop()!.split(".")[1];
             const result = await s3
@@ -1105,6 +1111,7 @@ export module State {
         }
       }
 
+      console.log("timestamp", timestamp.toISO());
       await createTransaction(
         async (tx) => {
           if (resourceInserts.length)
@@ -1168,7 +1175,7 @@ export module State {
                 id: createId(),
                 workspaceID: workspaceID,
                 stageID: input.config.stageID,
-                month: DateTime.now().startOf("month").toSQLDate()!,
+                month: timestamp.startOf("month").toSQLDate()!,
                 count: total,
               })
               .onDuplicateKeyUpdate({
