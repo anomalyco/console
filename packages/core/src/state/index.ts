@@ -980,7 +980,7 @@ export module State {
           )
           .catch(() => {});
 
-        const parsed = DateTime.fromISO(state.manifest.time);
+        const parsed = DateTime.fromISO(state?.manifest?.time);
         if (parsed.isValid && (!timestamp || parsed >= timestamp))
           timestamp = parsed;
         for (const resource of state?.resources || []) {
