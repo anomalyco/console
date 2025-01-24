@@ -246,24 +246,6 @@ export function SettingsRoute() {
         <Divider />
         <Alerts />
         <Divider />
-        <Row space="3.5" horizontal="between" vertical="center" id="slack">
-          <Stack space="1.5">
-            <Text weight="medium">Issues</Text>
-            <Text size="sm" color="dimmed">
-              Process issues that occur in your apps
-            </Text>
-          </Stack>
-          <Toggle
-            checked={workspaceInfo.value?.settingIssue}
-            onClick={(e) => {
-              rep().mutate.workspace_setting_issue({
-                workspaceID: workspaceInfo.value?.id!,
-                value: !workspaceInfo.value?.settingIssue,
-              });
-            }}
-          />
-        </Row>
-        <Divider />
         <Stack space={PANEL_CONTENT_SPACE}>
           <Stack space={PANEL_HEADER_SPACE}>
             <Text size="lg" weight="medium">
@@ -273,7 +255,14 @@ export function SettingsRoute() {
               Usage for the current billing period
             </Text>
           </Stack>
-          <Stack space="7">
+          <Stack space="3">
+            <UsagePlanCopy>
+              Calculated for the period of {cycle().start} — {cycle().end}.{" "}
+              <a href="https://sst.dev/docs/console#old-pricing" target="_blank">
+                Learn more
+              </a>
+              .
+            </UsagePlanCopy>
             <UsagePanel>
               <UsageStat stretch>
                 <Text code uppercase size="mono_xs" color="dimmed">
@@ -336,22 +325,15 @@ export function SettingsRoute() {
                 </Stack>
               </UsageTiers>
             </UsagePanel>
-            <UsagePlanCopy>
-              Calculated for the period of {cycle().start} — {cycle().end}.{" "}
-              <a href="https://sst.dev/docs/console#pricing" target="_blank">
-                Learn more
-              </a>
-              .
-            </UsagePlanCopy>
           </Stack>
-          <Stack space="2">
+          <Stack space="3">
             <UsagePlanCopy>
-              Below will be the new pricing plan.{" "}
+              Starting Feb 1, we'll be using the following pricing plan.{" "}
               <a
-                href="http://sst.dev/blog/console-pricing-update"
+                href="https://sst.dev/blog/console-pricing-update"
                 target="_blank"
               >
-                Learn more
+                Read the announcement
               </a>
               .
             </UsagePlanCopy>
@@ -417,6 +399,9 @@ export function SettingsRoute() {
                 </Stack>
               </UsageTiers>
             </UsagePanel>
+            <UsagePlanCopy>
+              Feel free to <a href="mailto:hello@sst.dev">contact us</a> if you have any questions.
+            </UsagePlanCopy>
           </Stack>
         </Stack>
         <Divider />
@@ -464,6 +449,26 @@ export function SettingsRoute() {
         </Stack>
         <Divider />
         <AWS />
+        <Divider />
+        <Row space="3.5" horizontal="between" vertical="center" id="issues">
+          <Stack space={PANEL_HEADER_SPACE}>
+            <Text size="lg" weight="medium">
+              Issues
+            </Text>
+            <Text size="sm" color="dimmed">
+              Process your application logs for issues
+            </Text>
+          </Stack>
+          <Toggle
+            checked={workspaceInfo.value?.settingIssue}
+            onClick={(e) => {
+              rep().mutate.workspace_setting_issue({
+                workspaceID: workspaceInfo.value?.id!,
+                value: !workspaceInfo.value?.settingIssue,
+              });
+            }}
+          />
+        </Row>
         <Integrations />
         <Divider />
         <Stack space={PANEL_CONTENT_SPACE} horizontal="start" id="billing">

@@ -407,7 +407,7 @@ export function Overview() {
         </Match>
         <Match when={true}>
           <>
-            <Show when={DateTime.now() < DateTime.fromISO("2024-03-28")}>
+            <Show when={DateTime.now() < DateTime.fromISO("2025-02-07")}>
               <Announcement>
                 <AnnouncementTag>New</AnnouncementTag>
                 <Text size="sm" on="surface" color="dimmed">
