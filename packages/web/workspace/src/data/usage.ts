@@ -17,7 +17,7 @@ export const INVOCATIONS_PRICING_PLAN: PricingPlan = [
 ];
 
 export const RESOURCES_PRICING_PLAN: PricingPlan = [
-  { from: 0, to: 200, rate: 0 },
+  { from: 0, to: 350, rate: 0 },
   { from: 0, to: 2000, rate: 0.086 },
   { from: 2000, to: Infinity, rate: 0.032 },
 ];
