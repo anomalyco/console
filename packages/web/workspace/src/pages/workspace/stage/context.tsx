@@ -1,9 +1,5 @@
 import { useReplicache } from "@console/web/providers/replicache";
-import {
-  createContext,
-  createMemo,
-  useContext,
-} from "solid-js";
+import { createContext, createMemo, useContext } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { StageStore } from "@console/web/data/stage";
 import { AppStore, StateResourceStore } from "@console/web/data/app";
@@ -11,7 +7,7 @@ import { NavigationAction, useCommandBar } from "../command-bar";
 import { useLocalContext } from "@console/web/providers/local";
 import { createInitializedContext } from "@console/web/common/context";
 import { IssueStore } from "@console/web/data/issue";
-import { UsageStore } from "@console/web/data/usage";
+import { InvocationsUsageStore } from "@console/web/data/usage";
 import {
   flatMap,
   groupBy,
@@ -47,7 +43,7 @@ export function createStageContext() {
       ),
   );
   const local = useLocalContext();
-  const usage = UsageStore.forStage.watch(
+  const usage = InvocationsUsageStore.forStage.watch(
     rep,
     () => [stage()?.id || "unknown"],
     (items) => sumBy(items, (item) => item.invocations),
@@ -220,8 +216,9 @@ export const { use: useLogsContext, provider: LogsProvider } =
         map((item) => ({
           ...item,
           link:
-            `/${workspace().slug}/${stage.app.name}/${stage.stage.name}/logs/aws?` +
-            item.link,
+            `/${workspace().slug}/${stage.app.name}/${
+              stage.stage.name
+            }/logs/aws?` + item.link,
         })),
       ),
     );

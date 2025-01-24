@@ -157,6 +157,19 @@ export module State {
   });
   export type ResourceEvent = z.infer<typeof ResourceEvent>;
 
+  export const Count = z.object({
+    id: z.string().cuid2(),
+    stageID: z.string().cuid2(),
+    month: z.string(),
+    count: z.number(),
+    time: z.object({
+      created: z.string(),
+      deleted: z.string().optional(),
+      updated: z.string(),
+    }),
+  });
+  export type Count = z.infer<typeof Count>;
+
   export function serializeUpdate(
     input: typeof stateUpdateTable.$inferSelect,
   ): Update {
@@ -230,6 +243,22 @@ export module State {
       inputs: input.inputs,
       parent: input.parent || undefined,
       outputs: input.outputs,
+    };
+  }
+
+  export function serializeCount(
+    input: typeof stateCountTable.$inferSelect,
+  ): Count {
+    return {
+      id: input.id,
+      time: {
+        created: input.timeCreated.toISOString(),
+        updated: input.timeUpdated.toISOString(),
+        deleted: input.timeDeleted?.toISOString(),
+      },
+      stageID: input.stageID,
+      count: input.count,
+      month: input.month,
     };
   }
 

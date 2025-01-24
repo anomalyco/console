@@ -43,6 +43,7 @@ import {
 import { githubOrgTable, githubRepoTable } from "@console/core/git/git.sql";
 import { slackTeam } from "@console/core/slack/slack.sql";
 import {
+  stateCountTable,
   stateEventTable,
   stateResourceTable,
   stateUpdateTable,
@@ -67,6 +68,7 @@ export const TABLES = {
   stateUpdate: stateUpdateTable,
   stateResource: stateResourceTable,
   stateEvent: stateEventTable,
+  stateCount: stateCountTable,
   workspace,
   stripe: stripeTable,
   user,
@@ -107,6 +109,7 @@ const TABLE_KEY = {
     stateEventTable.updateID,
     stateEventTable.id,
   ],
+  stateCount: [stateCountTable.stageID, stateCountTable.id],
   run: [runTable.id],
   stripe: [],
 } as {
@@ -130,6 +133,7 @@ const TABLE_PROJECTION = {
   stateUpdate: (input) => State.serializeUpdate(input),
   stateEvent: (input) => State.serializeEvent(input),
   stateResource: (input) => State.serializeResource(input),
+  stateCount: (input) => State.serializeCount(input),
   runConfig: (input) => {
     if (!input.env) return input;
     for (const key of Object.keys(input.env)) {
@@ -286,6 +290,10 @@ ReplicacheRoute.post("/pull1", async (c) => {
           stateResource: deletedStages.length
             ? notInArray(stateResourceTable.stageID, deletedStages)
             : undefined,
+          stateCount: gte(
+            stateCountTable.month,
+            DateTime.now().toUTC().startOf("month").toSQLDate()!,
+          ),
           run: runs.length ? inArray(runTable.id, runs) : undefined,
         } satisfies {
           [key in keyof typeof TABLES]?: SQLWrapper;
