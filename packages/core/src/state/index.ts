@@ -1112,7 +1112,6 @@ export module State {
         }
       }
 
-      console.log("timestamp", timestamp.toISO());
       await createTransaction(
         async (tx) => {
           if (resourceInserts.length)
@@ -1176,7 +1175,9 @@ export module State {
                 id: createId(),
                 workspaceID: workspaceID,
                 stageID: input.config.stageID,
-                month: timestamp.startOf("month").toSQLDate()!,
+                month: (timestamp || DateTime.now())
+                  .startOf("month")
+                  .toSQLDate()!,
                 count: total,
               })
               .onDuplicateKeyUpdate({
