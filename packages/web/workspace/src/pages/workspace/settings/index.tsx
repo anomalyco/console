@@ -146,12 +146,12 @@ export function SettingsRoute() {
   const invocations = createMemo(() =>
     invocationsUsages()
       .map((usage) => usage.invocations)
-      .reduce((a, b) => a + b, 0)
+      .reduce((a, b) => a + b, 0),
   );
   const resources = createMemo(() =>
     resourcesUsages()
       .map((usage) => usage.count)
-      .reduce((a, b) => a + b, 0)
+      .reduce((a, b) => a + b, 0),
   );
   const auth = useAuth2();
   const nav = useNavigate();
@@ -288,7 +288,12 @@ export function SettingsRoute() {
                         <Text color="dimmed" on="surface" size="xs">
                           →
                         </Text>
-                        <Text code size="mono_xs" on="surface" color="secondary">
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
                           ${INVOCATIONS_PRICING_PLAN[1].rate} per
                         </Text>
                       </Row>
@@ -299,7 +304,12 @@ export function SettingsRoute() {
                         <Text color="dimmed" on="surface" size="xs">
                           →
                         </Text>
-                        <Text code size="mono_xs" on="surface" color="secondary">
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
                           ${INVOCATIONS_PRICING_PLAN[2].rate} per
                         </Text>
                       </Row>
@@ -307,11 +317,15 @@ export function SettingsRoute() {
                   </UsageTiers>
                 </UsagePanel>
                 <UsagePlanCopy>
-                  Below is the new pricing plan. If you'd like to switch, you can
-                  unsubscribe from the current plan and resubscribe.{" "}
-                  <a href="http://sst.dev/blog/console-pricing-update" target="_blank">
+                  Below is the new pricing plan. If you'd like to switch, you
+                  can unsubscribe from the current plan and resubscribe.{" "}
+                  <a
+                    href="http://sst.dev/blog/console-pricing-update"
+                    target="_blank"
+                  >
                     Learn more
-                  </a>.
+                  </a>
+                  .
                 </UsagePlanCopy>
               </Stack>
             </Show>
@@ -327,7 +341,9 @@ export function SettingsRoute() {
                 </UsageStat>
                 <UsageStat stretch>
                   <Text code uppercase size="mono_xs" color="dimmed">
-                    {stripe()?.price === "invocations" ? "New Cost" : "Current Cost"}
+                    {stripe()?.price === "invocations"
+                      ? "New Cost"
+                      : "Current Cost"}
                   </Text>
                   <Row space="0.5" vertical="center">
                     <Text size="sm" color="secondary">
@@ -382,7 +398,8 @@ export function SettingsRoute() {
                 Calculated for the period of {cycle().start} — {cycle().end}.{" "}
                 <a href="https://sst.dev/docs/console#pricing" target="_blank">
                   Learn more
-                </a>.
+                </a>
+                .
               </UsagePlanCopy>
             </Stack>
           </Stack>
@@ -449,7 +466,7 @@ export function SettingsRoute() {
               onClick={async () => {
                 if (
                   !confirm(
-                    "Are you sure you want to remove this workspace?\n\nYou cannot undo this."
+                    "Are you sure you want to remove this workspace?\n\nYou cannot undo this.",
                   )
                 )
                   return;
@@ -482,12 +499,12 @@ function Integrations() {
   const slackTeam = SlackTeamStore.all.watch(
     rep,
     () => [],
-    (all) => all.at(0)
+    (all) => all.at(0),
   );
   const githubOrg = GithubOrgStore.all.watch(
     rep,
     () => [],
-    (orgs) => orgs.find((org) => !org.time.disconnected)
+    (orgs) => orgs.find((org) => !org.time.disconnected),
   );
 
   const [overrideSlack, setOverrideSlack] = createSignal(false);
@@ -499,7 +516,7 @@ function Integrations() {
     (e) => {
       if (e.data === "slack.success") setOverrideSlack(true);
       if (e.data === "github.success") setOverrideGithub(true);
-    }
+    },
   );
 
   return (
