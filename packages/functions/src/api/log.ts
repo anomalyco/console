@@ -281,11 +281,14 @@ export const LogRoute = new Hono()
 
               if (query.hint === "normal") {
                 for (const result of results) {
-                  entries.push({
+                  const length = entries.push({
                     id: result[3]!.value!,
                     message: result[1]?.value!,
                     timestamp: new Date(result[0]?.value! + " Z").getTime(),
                   });
+                  if (length >= 50) {
+                    break;
+                  }
                 }
               }
 
