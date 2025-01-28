@@ -24,6 +24,7 @@ import {
 } from "@aws-sdk/client-ssm";
 import {
   CreateBucketCommand,
+  DeleteObjectCommand,
   GetBucketLifecycleConfigurationCommand,
   PutBucketLifecycleConfigurationCommand,
   S3Client,
@@ -67,6 +68,7 @@ import { AutodeployEmail } from "@console/mail/emails/templates/AutodeployEmail"
 import path from "path";
 import { bus } from "sst/aws/bus";
 import { githubOrgTable, githubRepoTable } from "../git/git.sql";
+import { bootstrapIon } from "../aws/bootstrap";
 
 export { RunConfig } from "./config";
 
@@ -197,13 +199,13 @@ export module Run {
         stageName: z.string().min(1),
         region: z.string().min(1),
         awsAccountExternalID: z.string().min(1),
-      })
+      }),
     ),
     CreateFailed: createEvent(
       "run.create-failed",
       z.object({
         runID: z.string().min(1),
-      })
+      }),
     ),
     RunnerStarted: createEvent(
       "runner.started",
@@ -211,7 +213,7 @@ export module Run {
         workspaceID: z.string().min(1),
         engine: z.enum(Engine),
         runID: z.string().min(1),
-      })
+      }),
     ),
     RunnerCompleted: createEvent(
       "runner.completed",
@@ -219,7 +221,7 @@ export module Run {
         workspaceID: z.string().min(1),
         runID: z.string().min(1),
         error: z.string().min(1).optional(),
-      })
+      }),
     ),
   };
 
@@ -333,7 +335,7 @@ export module Run {
                 ? `pr-${input.trigger.number}`
                 : input.trigger.stageName,
           } satisfies ConfigParserEvent),
-        })
+        }),
       );
 
       const payload = ret.FunctionError
@@ -343,7 +345,7 @@ export module Run {
       return payload.error
         ? SstConfigParseError.parse(payload)
         : SstConfig.parse(payload);
-    }
+    },
   );
 
   export const triggerRetry = zod(
@@ -368,24 +370,24 @@ export module Run {
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
-              isNull(githubRepoTable.timeDisconnected)
-            )
+              isNull(githubRepoTable.timeDisconnected),
+            ),
           )
           .innerJoin(
             githubOrgTable,
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
-              eq(githubOrgTable.id, githubRepoTable.githubOrgID)
-            )
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+            ),
           )
           .where(
             and(
               eq(runTable.id, runID),
-              eq(runTable.workspaceID, useWorkspace())
-            )
+              eq(runTable.workspaceID, useWorkspace()),
+            ),
           )
           .execute()
-          .then((x) => x[0])
+          .then((x) => x[0]),
       );
       if (!result) return;
 
@@ -398,7 +400,7 @@ export module Run {
         retrier: useActor(),
         force: (result.force || force) === true ? true : undefined,
       });
-    }
+    },
   );
 
   export const triggerGitDeploy = zod(
@@ -425,24 +427,24 @@ export module Run {
             and(
               eq(githubOrgTable.workspaceID, githubRepoTable.workspaceID),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
-              isNull(githubOrgTable.timeDisconnected)
-            )
+              isNull(githubOrgTable.timeDisconnected),
+            ),
           )
           .innerJoin(
             appRepoTable,
             and(
               eq(appRepoTable.workspaceID, githubRepoTable.workspaceID),
               eq(appRepoTable.type, "github"),
-              eq(appRepoTable.repoID, githubRepoTable.id)
-            )
+              eq(appRepoTable.repoID, githubRepoTable.id),
+            ),
           )
           .where(
             and(
               eq(githubRepoTable.externalRepoID, externalRepoID),
-              isNull(githubRepoTable.timeDisconnected)
-            )
+              isNull(githubRepoTable.timeDisconnected),
+            ),
           )
-          .execute()
+          .execute(),
       );
 
       for (const appRepo of appRepos) {
@@ -459,10 +461,10 @@ export module Run {
               appID,
               pathToConfig: appRepo.path ?? undefined,
             });
-          }
+          },
         );
       }
-    }
+    },
   );
 
   export const triggerManualDeploy = zod(
@@ -488,24 +490,24 @@ export module Run {
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
-              isNull(githubRepoTable.timeDisconnected)
-            )
+              isNull(githubRepoTable.timeDisconnected),
+            ),
           )
           .innerJoin(
             githubOrgTable,
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
-              eq(githubOrgTable.id, githubRepoTable.githubOrgID)
-            )
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+            ),
           )
           .where(
             and(
               eq(appRepoTable.appID, appID),
-              eq(appRepoTable.workspaceID, useWorkspace())
-            )
+              eq(appRepoTable.workspaceID, useWorkspace()),
+            ),
           )
           .execute()
-          .then((x) => x[0])
+          .then((x) => x[0]),
       );
       if (!result) return;
 
@@ -545,7 +547,7 @@ export module Run {
         pathToConfig: result.path ?? undefined,
         force: force === true ? true : undefined,
       });
-    }
+    },
   );
 
   const createRun = zod(
@@ -629,7 +631,7 @@ export module Run {
           const allEnv = await RunConfig.list(input.appID);
           if (!allEnv.length) return { type: "target_not_found" as const };
           const env = allEnv.find((row) =>
-            minimatch(stageName, row.stagePattern)
+            minimatch(stageName, row.stagePattern),
           );
           if (!env)
             return {
@@ -642,7 +644,7 @@ export module Run {
               properties: { target: env.stagePattern },
             };
           const awsAccount = await AWS.Account.fromExternalID(
-            env.awsAccountExternalID
+            env.awsAccountExternalID,
           );
           if (!awsAccount)
             return {
@@ -678,7 +680,7 @@ export module Run {
                 stageName,
                 region,
                 awsAccountExternalID: env.awsAccountExternalID,
-              })
+              }),
             );
           });
         })();
@@ -703,10 +705,10 @@ export module Run {
           })
           .execute();
         await createTransactionEffect(() =>
-          bus.publish(SSTResource.Bus, Event.CreateFailed, { runID })
+          bus.publish(SSTResource.Bus, Event.CreateFailed, { runID }),
         );
       });
-    }
+    },
   );
 
   export const orchestrate = zod(
@@ -727,11 +729,11 @@ export module Run {
               eq(runTable.stageName, stageName),
               eq(runTable.region, region),
               eq(runTable.awsAccountExternalID, awsAccountExternalID),
-              isNull(runTable.timeCompleted)
-            )
+              isNull(runTable.timeCompleted),
+            ),
           )
           .orderBy(runTable.timeCreated)
-          .execute()
+          .execute(),
       );
       if (!runs.length) return;
       if (runs.some((r) => r.active)) return;
@@ -750,9 +752,9 @@ export module Run {
             .where(
               and(
                 eq(runTable.workspaceID, useWorkspace()),
-                eq(runTable.id, run.id)
-              )
-            )
+                eq(runTable.id, run.id),
+              ),
+            ),
         );
       } catch (e: any) {
         // A run is already active
@@ -776,12 +778,12 @@ export module Run {
                 eq(runTable.workspaceID, useWorkspace()),
                 inArray(
                   runTable.id,
-                  runsToSkip.map((r) => r.id)
+                  runsToSkip.map((r) => r.id),
                 ),
-                isNull(runTable.timeCompleted)
-              )
+                isNull(runTable.timeCompleted),
+              ),
             )
-            .execute()
+            .execute(),
         );
       }
 
@@ -799,16 +801,16 @@ export module Run {
 
         context = "assume AWS role";
         const awsAccount = await AWS.Account.fromExternalID(
-          run.awsAccountExternalID
+          run.awsAccountExternalID,
         );
         if (!awsAccount)
           throw new Error(
-            `AWS account ${run.awsAccountExternalID} not linked to workspace`
+            `AWS account ${run.awsAccountExternalID} not linked to workspace`,
           );
         const credentials = await AWS.assumeRole(run.awsAccountExternalID);
         if (!credentials)
           throw new Error(
-            `Fail to assume role for AWS account ${run.awsAccountExternalID}`
+            `Fail to assume role for AWS account ${run.awsAccountExternalID}`,
           );
 
         // Get runner (create if not exist)
@@ -843,7 +845,7 @@ export module Run {
 
         // Get run env
         const env = (await RunConfig.list(run.appID)).find((row) =>
-          minimatch(stageName, row.stagePattern)
+          minimatch(stageName, row.stagePattern),
         );
         if (!env) throw new Error("AWS Account ID is not set in Run Env");
 
@@ -862,17 +864,17 @@ export module Run {
               githubOrgTable,
               and(
                 eq(githubOrgTable.workspaceID, useWorkspace()),
-                eq(githubOrgTable.id, githubRepoTable.githubOrgID)
-              )
+                eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              ),
             )
             .where(
               and(
                 eq(githubRepoTable.id, appRepo.repoID),
-                eq(githubRepoTable.workspaceID, useWorkspace())
-              )
+                eq(githubRepoTable.workspaceID, useWorkspace()),
+              ),
             )
             .execute()
-            .then((x) => x[0])
+            .then((x) => x[0]),
         );
         if (!gitRepo) throw new Error("GitHub Repo not found");
         if (gitRepo.timeDisconnected)
@@ -889,15 +891,34 @@ export module Run {
             .where(
               and(
                 eq(runTable.workspaceID, useWorkspace()),
-                eq(runTable.id, run.id)
-              )
+                eq(runTable.id, run.id),
+              ),
             )
             .execute()
-            .then((x) => x[0])
+            .then((x) => x[0]),
         );
         if (runCheck?.timeCompleted) {
           await orchestrate({ stageName, region, awsAccountExternalID });
           return;
+        }
+
+        // Unlock stage
+        if (run.force) {
+          const bootstrap = await bootstrapIon({ credentials, region });
+          if (bootstrap) {
+            const app = await App.fromID(run.appID);
+            const s3 = new S3Client({
+              credentials,
+              region,
+              retryStrategy: RETRY_STRATEGY,
+            });
+            await s3.send(
+              new DeleteObjectCommand({
+                Bucket: bootstrap.bucket,
+                Key: `lock/${app?.name}/${stageName}.json`,
+              }),
+            );
+          }
         }
 
         // Run runner
@@ -961,8 +982,8 @@ export module Run {
             .where(
               and(
                 eq(runTable.id, run.id),
-                eq(runTable.workspaceID, useWorkspace())
-              )
+                eq(runTable.workspaceID, useWorkspace()),
+              ),
             )
             .execute();
 
@@ -972,8 +993,8 @@ export module Run {
             .where(
               and(
                 eq(runnerTable.id, runnerID),
-                eq(runnerTable.workspaceID, useWorkspace())
-              )
+                eq(runnerTable.workspaceID, useWorkspace()),
+              ),
             )
             .execute();
         });
@@ -1020,9 +1041,9 @@ export module Run {
             } satisfies RunTimeoutMonitorEvent),
           },
           ActionAfterCompletion: "DELETE",
-        })
+        }),
       );
-    }
+    },
   );
 
   export const cancelRun = zod(
@@ -1043,11 +1064,11 @@ export module Run {
             and(
               eq(runTable.id, runID),
               eq(runTable.workspaceID, useWorkspace()),
-              isNull(runTable.timeCompleted)
-            )
+              isNull(runTable.timeCompleted),
+            ),
           )
           .execute()
-          .then((x) => x[0])
+          .then((x) => x[0]),
       );
       if (!run) return;
 
@@ -1070,7 +1091,7 @@ export module Run {
           properties: { message: "Build cancelled" },
         },
       });
-    }
+    },
   );
 
   export const markRunCompleted = zod(
@@ -1087,11 +1108,11 @@ export module Run {
             and(
               eq(runTable.id, runID),
               eq(runTable.workspaceID, useWorkspace()),
-              isNull(runTable.timeCompleted)
-            )
+              isNull(runTable.timeCompleted),
+            ),
           )
           .execute()
-          .then((x) => x[0])
+          .then((x) => x[0]),
       );
       if (!run) return;
       if (run.timeCompleted) return;
@@ -1108,8 +1129,8 @@ export module Run {
             and(
               eq(runTable.id, runID),
               eq(runTable.workspaceID, useWorkspace()),
-              isNull(runTable.timeCompleted)
-            )
+              isNull(runTable.timeCompleted),
+            ),
           )
           .execute();
       });
@@ -1120,7 +1141,7 @@ export module Run {
         awsAccountExternalID: run.awsAccountExternalID!,
       });
       await alert(runID);
-    }
+    },
   );
 
   export const markRunStarted = zod(
@@ -1136,12 +1157,12 @@ export module Run {
           .where(
             and(
               eq(runTable.id, input.runID),
-              eq(runTable.workspaceID, useWorkspace())
-            )
+              eq(runTable.workspaceID, useWorkspace()),
+            ),
           )
           .execute();
         await createTransactionEffect(() => Replicache.poke());
-      })
+      }),
   );
 
   const lookupCacheBucket = zod(
@@ -1163,7 +1184,7 @@ export module Run {
           const param = await ssm.send(
             new GetParameterCommand({
               Name: paramName,
-            })
+            }),
           );
           if (param.Parameter?.Value) return param.Parameter.Value;
         } catch (e) {
@@ -1179,7 +1200,7 @@ export module Run {
             Name: paramName,
             Value: bucketName,
             Type: "String",
-          })
+          }),
         );
         return bucketName;
       })();
@@ -1191,12 +1212,12 @@ export module Run {
           const config = await s3.send(
             new GetBucketLifecycleConfigurationCommand({
               Bucket: bucketName,
-            })
+            }),
           );
           const rule = config.Rules?.find(
             (x) =>
               x.Filter?.Prefix === "autodeploy/cache/" &&
-              x.Expiration?.Days === 14
+              x.Expiration?.Days === 14,
           );
           if (rule) return;
         } catch (e: any) {
@@ -1215,12 +1236,12 @@ export module Run {
                 },
               ],
             },
-          })
+          }),
         );
       })();
 
       return bucketName;
-    }
+    },
   );
 
   export const getRunnerByID = zod(z.string().cuid2(), async (runnerID) => {
@@ -1231,11 +1252,11 @@ export module Run {
         .where(
           and(
             eq(runnerTable.workspaceID, useWorkspace()),
-            eq(runnerTable.id, runnerID)
-          )
+            eq(runnerTable.id, runnerID),
+          ),
         )
         .execute()
-        .then((x) => x[0])
+        .then((x) => x[0]),
     );
   });
 
@@ -1263,7 +1284,7 @@ export module Run {
               image,
               compute,
               vpc,
-            })
+            }),
           )
           .digest("hex")
           .substring(0, 8) + "-20241204";
@@ -1278,13 +1299,13 @@ export module Run {
               eq(runnerTable.appRepoID, input.appRepoID),
               eq(runnerTable.region, input.region),
               eq(runnerTable.engine, engine),
-              eq(runnerTable.type, type)
-            )
+              eq(runnerTable.type, type),
+            ),
           )
           .execute()
-          .then((x) => x[0])
+          .then((x) => x[0]),
       );
-    }
+    },
   );
 
   const createRunner = zod(
@@ -1316,7 +1337,7 @@ export module Run {
               image,
               compute,
               vpc,
-            })
+            }),
           )
           .digest("hex")
           .substring(0, 8) + "-20241204";
@@ -1344,7 +1365,7 @@ export module Run {
               engine,
               type,
             })
-            .execute()
+            .execute(),
         );
 
         // Create resources
@@ -1373,7 +1394,7 @@ export module Run {
           const roleRet = await iam.send(
             new GetRoleCommand({
               RoleName: "SSTConsolePublisher" + suffix,
-            })
+            }),
           );
           roleArn = roleRet.Role?.Arn!;
           return roleArn;
@@ -1391,12 +1412,12 @@ export module Run {
           const targetId = "SSTConsoleExternal";
           try {
             const rule = await eb.send(
-              new DescribeRuleCommand({ Name: ruleName })
+              new DescribeRuleCommand({ Name: ruleName }),
             );
             const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
             if (eventPattern.source?.includes(ruleSource)) return;
             await eb.send(
-              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] }),
             );
             await eb.send(new DeleteRuleCommand({ Name: ruleName }));
           } catch (e) {
@@ -1407,7 +1428,7 @@ export module Run {
               Name: ruleName,
               State: "ENABLED",
               EventPattern: JSON.stringify({ source: [ruleSource] }),
-            })
+            }),
           );
           await eb.send(
             new PutTargetsCommand({
@@ -1419,7 +1440,7 @@ export module Run {
                   RoleArn: await useRoleArn(),
                 },
               ],
-            })
+            }),
           );
         })();
 
@@ -1431,7 +1452,7 @@ export module Run {
           const targetId = "SSTConsoleCodebuild";
           try {
             const rule = await eb.send(
-              new DescribeRuleCommand({ Name: ruleName })
+              new DescribeRuleCommand({ Name: ruleName }),
             );
             const eventPattern = JSON.parse(rule.EventPattern ?? "{}");
             if (
@@ -1444,7 +1465,7 @@ export module Run {
             )
               return;
             await eb.send(
-              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] })
+              new RemoveTargetsCommand({ Rule: ruleName, Ids: [targetId] }),
             );
             await eb.send(new DeleteRuleCommand({ Name: ruleName }));
           } catch (e) {
@@ -1461,7 +1482,7 @@ export module Run {
                   "build-status": ["FAILED", "FAULT", "STOPPED", "TIMED_OUT"],
                 },
               }),
-            })
+            }),
           );
           await eb.send(
             new PutTargetsCommand({
@@ -1473,7 +1494,7 @@ export module Run {
                   RoleArn: await useRoleArn(),
                 },
               ],
-            })
+            }),
           );
         })();
 
@@ -1485,10 +1506,10 @@ export module Run {
             .where(
               and(
                 eq(runnerTable.id, runnerID),
-                eq(runnerTable.workspaceID, useWorkspace())
-              )
+                eq(runnerTable.workspaceID, useWorkspace()),
+              ),
             )
-            .execute()
+            .execute(),
         );
       } catch (e) {
         console.error(e);
@@ -1499,10 +1520,10 @@ export module Run {
             .where(
               and(
                 eq(runnerTable.id, runnerID),
-                eq(runnerTable.workspaceID, useWorkspace())
-              )
+                eq(runnerTable.workspaceID, useWorkspace()),
+              ),
             )
-            .execute()
+            .execute(),
         );
         throw e;
       }
@@ -1510,7 +1531,7 @@ export module Run {
       await scheduleRunnerRemover(runnerID);
 
       return { id: runnerID, region, engine, resource };
-    }
+    },
   );
 
   export const removeRunner = zod(
@@ -1532,7 +1553,7 @@ export module Run {
 
       // Remove db entry
       return removeRunnerFromDB({ runnerID: runner.id });
-    }
+    },
   );
 
   const removeRunnerFromDB = zod(
@@ -1548,12 +1569,12 @@ export module Run {
           .where(
             and(
               eq(runnerTable.id, runnerID),
-              eq(runnerTable.workspaceID, useWorkspace())
-            )
+              eq(runnerTable.workspaceID, useWorkspace()),
+            ),
           )
-          .execute()
+          .execute(),
       );
-    }
+    },
   );
 
   export const scheduleRunnerRemover = zod(
@@ -1594,9 +1615,9 @@ export module Run {
             } satisfies RunnerRemoverEvent),
           },
           ActionAfterCompletion: "DELETE",
-        })
+        }),
       );
-    }
+    },
   );
 
   export const alert = zod(Run.shape.id, async (runID) => {
@@ -1611,13 +1632,13 @@ export module Run {
         .innerJoin(workspace, eq(workspace.id, runTable.workspaceID))
         .innerJoin(
           app,
-          and(eq(app.id, runTable.appID), eq(app.workspaceID, useWorkspace()))
+          and(eq(app.id, runTable.appID), eq(app.workspaceID, useWorkspace())),
         )
         .where(
-          and(eq(runTable.workspaceID, useWorkspace()), eq(runTable.id, runID))
+          and(eq(runTable.workspaceID, useWorkspace()), eq(runTable.id, runID)),
         )
         .execute()
-        .then((x) => x[0])
+        .then((x) => x[0]),
     );
     if (!run) return;
 
@@ -1730,7 +1751,7 @@ export module Run {
               consoleUrl,
               runUrl,
               workspace: run.workspaceSlug,
-            })
+            }),
           ),
           plain: message,
           replyToAddress: `alert+autodeploy@${SSTResource.Email.sender}`,

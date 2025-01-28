@@ -15,33 +15,61 @@ const s3 = new S3Client({});
 /**
  * @param {RunnerEvent} event
  */
-export async function handler(event) {
+export async function handler({
+  runID,
+  stage,
+  trigger,
+  repo,
+  engine,
+  workspaceID,
+  env,
+  cache,
+  force,
+}) {
+  const SST_CONFIG_PATH = "/tmp/sst.config.mjs";
   const ROOT_PATH = "/root";
   const REPO_DIR_NAME = "repo";
   const REPO_PATH = `${ROOT_PATH}/${REPO_DIR_NAME}`;
-  const APP_PATH = path.join(REPO_PATH, event.repo.path ?? "");
+  const APP_PATH = path.join(REPO_PATH, repo.path ?? "");
 
   console.log("[sst.deploy.start]");
 
   let error;
   let packageJson;
   let sstConfig;
+  let bun;
 
   try {
     await publish("runner.started");
 
-    resetCache();
-    await restore(".git");
-    checkout();
-    for (const item of event.cache?.paths ?? []) await restore(item);
-    packageJson = await loadPackageJson();
-    await installNode();
-    await installUv();
-    sstConfig = await loadSstConfig();
-    await runWorkflow();
+    // set SST required environment variable
+    process.env.SST_AWS_NO_PROFILE = "1";
+    process.env.SST_RUN_ID = runID;
+    process.env.SST_STAGE = stage;
+    Object.entries(env).map(([k, v]) => (process.env[k] = v));
 
-    for (const item of [".git", ...(event.cache?.paths ?? [])])
-      await cache(item);
+    await resetCache();
+    await restoreCache(".git");
+    await checkout();
+    for (const item of cache?.paths ?? []) await restoreCache(item);
+    packageJson = await loadPackageJson();
+    installNode();
+    installUv();
+    sstConfig = await loadSstConfig();
+    installSstGlobally();
+
+    sstConfig.console?.autodeploy?.workflow
+      ? runWorkflow()
+      : (() => {
+          installNodeDeps();
+          const sstPath = findLocalSstBinary() ?? "sst";
+          trigger.action === "removed" || trigger.action === "remove"
+            ? shell(`${sstPath} remove`)
+            : shell(`${sstPath} deploy`);
+        })();
+
+    for (const item of [".git", ...(cache?.paths ?? [])])
+      await storeCache(item);
   } catch (e) {
     console.error(e);
     error = e.message;
@@ -50,9 +78,7 @@ export async function handler(event) {
     console.log("[sst.deploy.end]");
   }
 
-  function checkout() {
-    const { repo, trigger } = event;
-
+  async function checkout() {
     // Clone or fetch the repo
     if (fs.existsSync(path.join(REPO_PATH, ".git"))) {
       process.chdir(REPO_PATH);
@@ -81,8 +107,7 @@ export async function handler(event) {
   async function loadSstConfig() {
     process.chdir(APP_PATH);
 
-    const OUTPUT_PATH = "/tmp/sst.config.mjs";
-    fs.rmSync(OUTPUT_PATH, { force: true });
+    fs.rmSync(SST_CONFIG_PATH, { force: true });
 
     const buildRet = await build({
       mainFields: ["module", "main"],
@@ -97,7 +122,7 @@ export async function handler(event) {
         sourcefile: "sst.config.ts",
         loader: "ts",
       },
-      outfile: OUTPUT_PATH,
+      outfile: SST_CONFIG_PATH,
       write: true,
       bundle: false,
       banner: {
@@ -109,10 +134,10 @@ export async function handler(event) {
       throw new Error("Failed to load sst.config.ts");
     }
 
-    return (await import(OUTPUT_PATH)).default;
+    return (await import(SST_CONFIG_PATH)).default;
   }
 
-  async function installNode() {
+  function installNode() {
     if (
       findUp(".n-node-version") ||
       findUp(".node-version") ||
@@ -121,48 +146,31 @@ export async function handler(event) {
     )
       shell(`n auto`);
   }
-
-  async function installUv() {
+  function installUv() {
     if (findInRepo("uv.lock")) shell("pip install uv");
   }
+  function installBun() {
+    if (bun) return;
+    shell("npm install -g bun");
+    bun = true;
+  }
 
-  async function resetCache() {
-    const { cache, force } = event;
-
-    if (!force) return;
-
-    console.log("Clearing all cache because of force deploy");
-
-    try {
-      shell(`aws s3 rm --recursive s3://${cache.bucket}/${cache.prefix}`);
-    } catch (e) {
-      console.error("Failed to clear cache", e);
+  function installSstGlobally() {
+    // Check if SST will be installed locally
+    if (packageJson.dependencies?.sst || packageJson.devDependencies?.sst) {
+      console.log("SST binary will be isntalled locally");
+      return;
     }
+
+    // Install SST globally
+    const semverPattern = sstConfig.app({ stage }).version;
+    console.log("Installing SST globally, version:", semverPattern ?? "Latest");
+
+    shell(`npm -g install sst@${semverPattern ?? "latest"}`);
+    return "sst";
   }
 
-  /* Workflow */
-
-  async function runWorkflow() {
-    const context = {
-      stage: event.stage,
-      trigger: event.trigger,
-      unlock,
-      install,
-      installSst,
-      deploy,
-      remove,
-      shell,
-      options: {
-        force: event.force,
-      },
-    };
-
-    return sstConfig.console?.autodeploy?.workflow
-      ? await sstConfig.console.autodeploy.workflow(context)
-      : workflow(context);
-  }
-
-  function install() {
+  function installNodeDeps() {
     process.chdir(APP_PATH);
 
     if (findUp("yarn.lock")) {
@@ -175,97 +183,28 @@ export async function handler(event) {
         : shell("npm install -g pnpm");
       shell("pnpm install --frozen-lockfile");
     } else if (findUp("bun.lockb") || findUp("bun.lock")) {
-      shell("npm install -g bun");
+      installBun();
       shell("bun install --frozen-lockfile");
     } else if (findUp("package-lock.json")) shell("npm ci");
     else if (findUp("package.json")) shell("npm install");
   }
 
-  async function installSst() {
-    // Check if SST is installed locally
-    const localPath = findLocalSstBinary();
-    if (localPath) {
-      console.log("Using locally installed SST binary at", localPath);
-      return;
+  async function resetCache() {
+    if (!force) return;
+
+    console.log("Clearing all cache because of force deploy");
+
+    try {
+      shell(`aws s3 rm --recursive s3://${cache.bucket}/${cache.prefix}`);
+    } catch (e) {
+      console.error("Failed to clear cache", e);
     }
-
-    // Install SST globally
-    const { stage } = event;
-    const semverPattern = sstConfig.app({ stage }).version;
-    console.log("Installing SST globally, version:", semverPattern ?? "Latest");
-
-    shell(`npm -g install sst@${semverPattern ?? "latest"}`);
-    return "sst";
-  }
-
-  function unlock() {
-    process.chdir(APP_PATH);
-
-    const { stage } = event;
-    const sstPath = findLocalSstBinary() ?? "sst";
-    shell(`${sstPath} unlock --stage ${stage}`, {
-      env: {
-        SST_AWS_NO_PROFILE: "1",
-      },
-    });
-  }
-
-  function deploy() {
-    process.chdir(APP_PATH);
-
-    const { stage, runID } = event;
-    const sstPath = findLocalSstBinary() ?? "sst";
-    shell(`${sstPath} deploy --stage ${stage}`, {
-      env: {
-        SST_AWS_NO_PROFILE: "1",
-        SST_RUN_ID: runID,
-      },
-    });
-  }
-
-  function remove() {
-    process.chdir(APP_PATH);
-
-    const { stage, runID } = event;
-    const sstPath = findLocalSstBinary() ?? "sst";
-    shell(`${sstPath} remove --stage ${stage}`, {
-      env: {
-        SST_AWS_NO_PROFILE: "1",
-        SST_RUN_ID: runID,
-      },
-    });
-  }
-
-  /**
-   * @param {string} command
-   * @param {any} options
-   */
-  function shell(command, options = {}) {
-    const { env } = event;
-
-    console.log(`Running: ${command}`);
-    const ret = spawnSync(command, {
-      stdio: "inherit",
-      shell: true,
-      ...options,
-      env: {
-        ...process.env,
-        ...env,
-        ...options.env,
-      },
-    });
-
-    if (ret.status !== 0) {
-      throw new Error(`Failed to run: ${command}`);
-    }
-    return ret;
   }
 
   /**
    * @param {string} path
    */
-  async function cache(item) {
-    const { cache } = event;
+  async function storeCache(item) {
     const cacheKey = createHash("sha256").update(item).digest("hex");
     const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
     const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
@@ -276,7 +215,7 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       const basename = path.basename(itemPath);
       shell(
-        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`
+        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`,
       );
     } catch (e) {
       console.error("Failed to store cache", e);
@@ -286,8 +225,7 @@ export async function handler(event) {
   /**
    * @param {string} path
    */
-  async function restore(item) {
-    const { cache } = event;
+  async function restoreCache(item) {
     const cacheKey = createHash("sha256").update(item).digest("hex");
     const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
     const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
@@ -299,7 +237,7 @@ export async function handler(event) {
         new HeadObjectCommand({
           Bucket: cache.bucket,
           Key: s3Key,
-        })
+        }),
       );
     } catch (e) {
       if (e.name === "NotFound") {
@@ -314,11 +252,30 @@ export async function handler(event) {
       const dirname = path.dirname(itemPath);
       shell(`mkdir -p ${dirname}`);
       shell(
-        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`
+        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`,
       );
     } catch (e) {
       console.error("Failed to restore cache", e);
     }
+  }
+
+  /**
+   * @param {string} command
+   */
+  function shell(command) {
+    console.log(`Running: ${command}`);
+    const ret = spawnSync(command, {
+      stdio: "inherit",
+      shell: true,
+      env: {
+        ...process.env,
+      },
+    });
+
+    if (ret.status !== 0) {
+      throw new Error(`Failed to run: ${command}`);
+    }
+    return ret;
   }
 
   /* Helpers */
@@ -328,8 +285,6 @@ export async function handler(event) {
    * @param {any} payload
    */
   async function publish(type, payload) {
-    const { engine, workspaceID, runID } = event;
-
     await eb.send(
       new PutEventsCommand({
         Entries: [
@@ -346,7 +301,7 @@ export async function handler(event) {
             }),
           },
         ],
-      })
+      }),
     );
   }
 
@@ -381,14 +336,42 @@ export async function handler(event) {
       searchPath = path.resolve(searchPath, "..");
     }
   }
-}
 
-/**
- * @param {any} context
- */
-async function workflow(context) {
-  context.install();
-  await context.installSst();
-  if (context.options.force) context.unlock();
-  context.trigger.action === "removed" ? context.remove() : context.deploy();
+  function runWorkflow() {
+    installBun();
+
+    const WORKFLOW_SCRIPT = "sst.workflow.ts";
+    const WORKFLOW_RESULT = "sst.workflow.result.json";
+    console.log("Creating workflow file", WORKFLOW_SCRIPT);
+    fs.writeFileSync(
+      WORKFLOW_SCRIPT,
+      [
+        `import { default as sstConfig } from "${SST_CONFIG_PATH}";`,
+        `import { $ } from "bun";`,
+        `import fs from "fs";`,
+        `try {`,
+        `  await sstConfig.console.autodeploy.workflow({ $, trigger: ${JSON.stringify(
+          trigger,
+        )} });`,
+        `} catch (e) {`,
+        `  const result = e.name === "ShellError"`,
+        `    ? { error: e.stderr.toString().trim() }`,
+        `    : { error: e.message };`,
+        `  fs.writeFileSync("${WORKFLOW_RESULT}", JSON.stringify(result));`,
+        `  process.exit(1);`,
+        `}`,
+      ].join("\n"),
+    );
+
+    try {
+      shell(`bun ${WORKFLOW_SCRIPT}`);
+    } catch (shellError) {
+      try {
+        shellError = new Error(
+          JSON.parse(fs.readFileSync(WORKFLOW_RESULT, "utf8")).error,
+        );
+      } catch (_) {}
+      throw shellError;
+    }
+  }
 }
