@@ -161,6 +161,7 @@ export function SettingsRoute() {
       .map((usage) => usage.count)
       .reduce((a, b) => a + b, 0),
   );
+  const resourceStages = createMemo(() => resourcesUsages().length);
   const auth = useAuth2();
   const nav = useNavigate();
   const workspace = useWorkspace();
@@ -258,7 +259,10 @@ export function SettingsRoute() {
           <Stack space="3">
             <UsagePlanCopy>
               Calculated for the period of {cycle().start} — {cycle().end}.{" "}
-              <a href="https://sst.dev/docs/console#old-pricing" target="_blank">
+              <a
+                href="https://sst.dev/docs/console#old-pricing"
+                target="_blank"
+              >
                 Learn more
               </a>
               .
@@ -340,7 +344,7 @@ export function SettingsRoute() {
             <UsagePanel>
               <UsageStat stretch>
                 <Text code uppercase size="mono_xs" color="dimmed">
-                  Resources
+                  Active Resources
                 </Text>
                 <Text code size="xl">
                   {resources()}
@@ -400,7 +404,13 @@ export function SettingsRoute() {
               </UsageTiers>
             </UsagePanel>
             <UsagePlanCopy>
-              Feel free to <a href="mailto:hello@sst.dev">contact us</a> if you have any questions.
+              Active resources from{" "}
+              {resourceStages() === 1
+                ? "1 updated stage"
+                : `${resourceStages()} updated stages`}{" "}
+              during {cycle().start} — {cycle().end}. Feel free to{" "}
+              <a href="mailto:hello@sst.dev">contact us</a> if you have any
+              questions.
             </UsagePlanCopy>
           </Stack>
         </Stack>
