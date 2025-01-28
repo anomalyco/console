@@ -350,7 +350,7 @@ export async function handler({
         `import { $ } from "bun";`,
         `import fs from "fs";`,
         `try {`,
-        `  await sstConfig.console.autodeploy.workflow({ $, trigger: ${JSON.stringify(
+        `  await sstConfig.console.autodeploy.workflow({ $, event: ${JSON.stringify(
           trigger,
         )} });`,
         `} catch (e) {`,
