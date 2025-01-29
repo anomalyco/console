@@ -27,12 +27,6 @@ export default $config({
           };
         }
       },
-      async workflow({ $, event }) {
-        await $`npm i -g bun`;
-        await $`bun i`;
-        await $`docker buildx create --driver docker-container --driver-opt image=mirror.gcr.io/moby/buildkit --name sst-builder`;
-        await $`BUILDX_BUILDER=sst-builder bun sst deploy`;
-      },
     },
   },
   async run() {
