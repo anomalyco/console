@@ -151,7 +151,9 @@ export async function handler({
   }
   function installBun() {
     if (bun) return;
-    shell("npm install -g bun");
+    packageJson.packageManager?.startsWith("bun@")
+      ? shell(`npm install -g ${packageJson.packageManager}`)
+      : shell("npm install -g bun");
     bun = true;
   }
 
