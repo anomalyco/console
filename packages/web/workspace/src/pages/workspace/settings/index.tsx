@@ -33,7 +33,7 @@ import {
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Alerts } from "./alerts";
 import { useNavigate } from "@solidjs/router";
-import { useAuth2 } from "@console/web/providers/auth2";
+import { useAuth } from "@console/web/providers/auth";
 import { AWS } from "./aws";
 import { theme } from "@console/web/ui/theme";
 import { Stack, Row } from "@console/web/ui/layout";
@@ -162,7 +162,7 @@ export function SettingsRoute() {
       .reduce((a, b) => a + b, 0),
   );
   const resourceStages = createMemo(() => resourcesUsages().length);
-  const auth = useAuth2();
+  const auth = useAuth();
   const nav = useNavigate();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
@@ -471,7 +471,7 @@ export function SettingsRoute() {
           </Stack>
           <Toggle
             checked={workspaceInfo.value?.settingIssue}
-            onClick={(e) => {
+            onClick={() => {
               rep().mutate.workspace_setting_issue({
                 workspaceID: workspaceInfo.value?.id!,
                 value: !workspaceInfo.value?.settingIssue,
@@ -506,12 +506,11 @@ export function SettingsRoute() {
                   {
                     method: "DELETE",
                     headers: {
-                      authorization: `Bearer ${auth.current.token}`,
+                      authorization: `Bearer ${auth.current.access}`,
                     },
                   },
                 );
-                await auth.refresh();
-                nav("/");
+                location.href = "/";
               }}
             >
               Remove Workspace
@@ -526,7 +525,7 @@ export function SettingsRoute() {
 function Integrations() {
   const rep = useReplicache();
   const workspace = useWorkspace();
-  const auth = useAuth2();
+  const auth = useAuth();
   const slackTeam = SlackTeamStore.all.watch(
     rep,
     () => [],
@@ -603,7 +602,7 @@ function Integrations() {
             <input
               type="hidden"
               name="authorization"
-              value={"Bearer " + auth.current.token}
+              value={"Bearer " + auth.current.access}
             />
             <input type="hidden" name="workspaceID" value={workspace().id} />
           </form>
@@ -648,7 +647,7 @@ function Integrations() {
             />
             <input type="hidden" name="provider" value="github" />
             <input type="hidden" name="workspaceID" value={workspace().id} />
-            <input type="hidden" name="token" value={auth.current.token} />
+            <input type="hidden" name="token" value={auth.current.access} />
           </form>
         </Row>
       </Stack>

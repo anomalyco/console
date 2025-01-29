@@ -18,19 +18,6 @@ declare module "sst" {
       "type": "sst.aws.Router"
       "url": string
     }
-    "Auth": {
-      "publicKey": string
-      "type": "sst.aws.Auth"
-    }
-    "AuthAuthenticator": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "AuthRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
     "AutodeployConfig": {
       "buildImage": string
       "buildspecBucketName": string
@@ -85,6 +72,10 @@ declare module "sst" {
       "type": "sst.sst.Linkable"
       "username": string
     }
+    "DatabaseMigrator": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "Email": {
       "configSet": string
       "sender": string
@@ -125,6 +116,10 @@ declare module "sst" {
     "IssueStream": {
       "name": string
       "type": "sst.aws.KinesisStream"
+    }
+    "OpenAuth": {
+      "type": "sst.aws.Auth"
+      "url": string
     }
     "Postgres": {
       "clusterArn": string
@@ -188,6 +183,11 @@ declare module "sst" {
     }
     "Workspace": {
       "type": "sst.aws.StaticSite"
+      "url": string
+    }
+    "Zero": {
+      "service": string
+      "type": "sst.aws.Service"
       "url": string
     }
   }

@@ -113,7 +113,7 @@ export const LogRoute = new Hono()
             }),
           );
 
-          for (const event of response.events || []) {
+          for (const event of (response.events || []).toReversed()) {
             yield event;
           }
 
@@ -141,6 +141,7 @@ export const LogRoute = new Hono()
             timestamp: event.timestamp!,
             message: stripAnsi(event.message!),
           });
+          if (events.length >= 50) break;
         }
         return c.json(events);
       }

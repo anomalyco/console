@@ -9,7 +9,6 @@ import { useNavigate } from "@solidjs/router";
 import { Show } from "solid-js";
 import { Header } from "./workspace/header";
 import type { Workspace } from "@console/core/workspace/index";
-import { useAuth2 } from "../providers/auth2";
 import { AvatarInitialsIcon } from "../ui/avatar-icon";
 import { Button } from "../ui/button";
 import { FormField, Input } from "../ui/form";
@@ -18,6 +17,7 @@ import { Fullscreen, Stack } from "../ui/layout";
 import { theme } from "../ui/theme";
 import { utility } from "../ui/utility";
 import { z } from "zod";
+import { useAuth } from "../providers/auth";
 
 const CreateWorkspaceHint = styled("ul", {
   base: {
@@ -47,7 +47,7 @@ export function WorkspaceCreate() {
       }),
     ),
   });
-  const auth = useAuth2();
+  const auth = useAuth();
   const nav = useNavigate();
 
   return (
@@ -81,7 +81,7 @@ export function WorkspaceCreate() {
                 {
                   method: "POST",
                   headers: {
-                    authorization: `Bearer ${auth.current.token}`,
+                    authorization: `Bearer ${auth.current.access}`,
                     "content-type": "application/json",
                   },
                   body: JSON.stringify(data),

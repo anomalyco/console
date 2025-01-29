@@ -7,7 +7,7 @@ import { darkClass, lightClass, theme } from "./ui/theme";
 import { globalStyle, macaron$ } from "@macaron-css/core";
 import { Match, Switch, onCleanup, Component, createSignal } from "solid-js";
 import { Navigate, Route, Router, useNavigate } from "@solidjs/router";
-import { Auth, Code } from "./pages/auth";
+import { Auth } from "./pages/auth";
 import { CommandBar, useCommandBar } from "./pages/workspace/command-bar";
 import { DebugRoute } from "./pages/debug";
 import { Design } from "./pages/design";
@@ -22,9 +22,8 @@ import { FlagsProvider } from "./providers/flags";
 import { NotFound } from "./pages/not-found";
 import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
-import { AuthProvider2, useAuth2 } from "./providers/auth2";
 import { RealtimeProvider } from "./providers/realtime";
-import { Fullscreen } from "./ui/layout";
+import { AuthProvider, useAuth } from "./providers/auth";
 
 const Root = styled("div", {
   base: {
@@ -163,7 +162,7 @@ export const App: Component = () => {
             path="*"
             component={(props) => (
               <CommandBar>
-                <AuthProvider2>
+                <AuthProvider>
                   <ReplicacheStatusProvider>
                     <DummyProvider>
                       <DummyConfigProvider>
@@ -179,7 +178,7 @@ export const App: Component = () => {
                       </DummyConfigProvider>
                     </DummyProvider>
                   </ReplicacheStatusProvider>
-                </AuthProvider2>
+                </AuthProvider>
               </CommandBar>
             )}
           >
@@ -192,18 +191,17 @@ export const App: Component = () => {
               path="/"
               component={() => {
                 console.log("here");
-                const auth = useAuth2();
+                const auth = useAuth();
                 return (
                   <Switch>
                     <Match when={auth.current.workspaces.length > 0}>
                       <Navigate
-                        href={`/${
-                          (
-                            auth.current.workspaces.find(
-                              (w) => w.id === storage.value.workspace,
-                            ) || auth.current.workspaces[0]
-                          ).slug
-                        }`}
+                        href={`/${(
+                          auth.current.workspaces.find(
+                            (w) => w.id === storage.value.workspace,
+                          ) || auth.current.workspaces[0]
+                        ).slug
+                          }`}
                       />
                     </Match>
                     <Match when={true}>
@@ -223,13 +221,12 @@ export const App: Component = () => {
 
 function GlobalCommands() {
   const bar = useCommandBar();
-  const auth = useAuth2();
-  const storage = useStorage();
+  const auth = useAuth();
   const nav = useNavigate();
   bar.register("workspace-switcher", async () => {
-    const workspaces = auth.all.flatMap((account) =>
+    const workspaces = auth.all().flatMap((account) =>
       account.workspaces.map((w) => ({
-        accountID: account.token,
+        accountID: account.id,
         workspace: w,
       })),
     );

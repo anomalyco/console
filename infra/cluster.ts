@@ -1,22 +1,11 @@
+import { readFileSync } from "fs";
 import { vpc } from "./network";
 import { database } from "./planetscale";
 import { postgres } from "./postgres";
+import { domain } from "./dns";
+import { isPermanent } from "./stage";
+import { storage } from "./storage";
 
 export const cluster = new sst.aws.Cluster("Cluster", {
   vpc,
-});
-
-cluster.addService("CDC", {
-  image: {
-    context: ".",
-    dockerfile: "./packages/cdc/Dockerfile",
-  },
-  environment: {
-    NO_COLOR: "1",
-  },
-  link: [postgres, database],
-  dev: {
-    directory: "./packages/cdc",
-    command: "bun run --hot ./src/index.ts",
-  },
 });

@@ -22,14 +22,15 @@ import { StageStore } from "@console/web/data/stage";
 import { useStorage } from "@console/web/providers/account";
 import { NotFound, NotAllowed } from "../not-found";
 import { DebugRoute } from "../debug";
-import { useAuth2 } from "@console/web/providers/auth2";
+import { useAuth } from "@console/web/providers/auth";
 import { OverviewRoute } from "./overview-next";
+import { ZeroProvider } from "./zero";
 
 export const WorkspaceRoute = (
   <Route
     component={(props) => {
       const params = useParams();
-      const auth = useAuth2();
+      const auth = useAuth();
       const storage = useStorage();
       const nav = useNavigate();
       const workspace = createMemo(() =>
@@ -132,7 +133,9 @@ export const WorkspaceRoute = (
 
                   return null;
                 })()}
-                <ApiProvider>{props.children}</ApiProvider>
+                <ZeroProvider>
+                  <ApiProvider>{props.children}</ApiProvider>
+                </ZeroProvider>
               </WorkspaceContext.Provider>
             </ReplicacheProvider>
           </Match>

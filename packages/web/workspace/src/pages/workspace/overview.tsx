@@ -23,7 +23,7 @@ import { Header } from "./header";
 import { useLocalContext } from "@console/web/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
 import { User } from "@console/core/user/index";
-import { useAuth2 } from "@console/web/providers/auth2";
+import { useAuth } from "@console/web/providers/auth";
 import { TextButton } from "@console/web/ui/button";
 import { Tag } from "@console/web/ui/tag";
 import { theme } from "@console/web/ui/theme";
@@ -197,7 +197,7 @@ export function Overview() {
     () => [],
     (accounts) => accounts.filter((a) => !a.timeDeleted),
   );
-  const auth = useAuth2();
+  const auth = useAuth();
   const users = UserStore.list.watch(rep, () => []);
   const cols = createMemo(() => splitCols(accounts() || []));
   const stages = StageStore.list.watch(rep, () => []);
@@ -628,7 +628,7 @@ type UserCardProps = {
 function UserCard(props: UserCardProps) {
   const rep = useReplicache();
   const user = UserStore.get.watch(rep, () => [props.id]);
-  const auth = useAuth2();
+  const auth = useAuth();
 
   return (
     <UserRoot>

@@ -1,0 +1,11 @@
+{
+  "name": "@console/zero",
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@rocicorp/zero": "0.12.2025012501"
+  },
+  "scripts": {
+    "dev": "zero-build-schema && zero-cache"
+  }
+}

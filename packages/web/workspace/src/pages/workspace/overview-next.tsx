@@ -13,7 +13,7 @@ import { AppStore, RepoFromApp, RunStore, StateUpdateStore } from "../../data/ap
 import { AccountStore } from "../../data/aws";
 import { ActiveStages } from "../../data/stage";
 import { UserStore } from "../../data/user";
-import { useAuth2 } from "../../providers/auth2";
+import { useAuth } from "../../providers/auth";
 import { useLocalContext } from "../../providers/local";
 import { useReplicache, createSubscription } from "../../providers/replicache";
 import { AvatarInitialsIcon } from "../../ui/avatar-icon";
@@ -300,7 +300,7 @@ export function OverviewRoute() {
     () => [],
     (accounts) => accounts.filter((a) => !a.timeDeleted),
   );
-  const auth = useAuth2();
+  const auth = useAuth();
   const local = useLocalContext();
   const users = UserStore.list.watch(rep, () => []);
   const r = createSubscription(() => async (tx) => {
@@ -934,7 +934,7 @@ type UserCardProps = {
 function UserCard(props: UserCardProps) {
   const rep = useReplicache();
   const user = UserStore.get.watch(rep, () => [props.id]);
-  const auth = useAuth2();
+  const auth = useAuth();
 
   return (
     <UserRoot>

@@ -32,6 +32,38 @@ export const handler = async (evt: Payload) => {
   const region = evt.region;
 
   if (
+    evt.detail.object.key.startsWith("eventlog/") &&
+    evt["detail-type"] === "Object Created"
+  ) {
+    let [, appHint, stageHint] = evt.detail.object.key.split("/");
+    [stageHint] = stageHint!.split(".");
+    const accounts = await findAccounts(evt.account);
+    const updateID = evt.detail.object.key.split("/").at(-1)!.split(".")[0]!;
+    for (const row of accounts) {
+      await withActor(
+        {
+          type: "system",
+          properties: {
+            workspaceID: row.workspaceID,
+          },
+        },
+        async () => {
+          const { stageID } = await Stage.put({
+            stageName: stageHint!,
+            appName: appHint!,
+            region,
+            awsAccountID: row.id,
+          });
+          await bus.publish(Resource.Bus, State.Event.EventLogCreated, {
+            stageID,
+            updateID,
+          });
+        },
+      );
+    }
+  }
+
+  if (
     evt.detail.object.key.startsWith("update/") &&
     evt["detail-type"] === "Object Created"
   ) {

@@ -10,7 +10,7 @@ const connection = {
 console.log(connection);
 
 export default defineConfig({
-  out: "./migrations/",
+  out: "./migrations-pg/",
   strict: true,
   schema: "./src/**/*.pg.ts",
   verbose: true,

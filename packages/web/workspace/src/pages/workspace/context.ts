@@ -1,5 +1,5 @@
 import { createInitializedContext } from "@console/web/common/context";
-import { useAuth2 } from "@console/web/providers/auth2";
+import { useAuth } from "@console/web/providers/auth";
 import { Workspace } from "@console/core/workspace/index";
 import { type app } from "@console/functions/api/api";
 import { hc } from "hono/client";
@@ -16,11 +16,11 @@ export function useWorkspace() {
 export const { use: useApi, provider: ApiProvider } = createInitializedContext(
   "Api",
   () => {
-    const auth = useAuth2();
+    const auth = useAuth();
     const workspace = useWorkspace();
     const client = hc<typeof app>(import.meta.env.VITE_API_URL, {
       headers: {
-        Authorization: `Bearer ${auth.current.token}`,
+        Authorization: `Bearer ${auth.current.access}`,
         "x-sst-workspace": workspace().id,
       },
     });

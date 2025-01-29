@@ -61,6 +61,7 @@ bus.subscribe(
   {
     handler: "packages/functions/src/events/stack-updated-external.handler",
     link: [bus, postgres, database, websocket],
+    timeout: "1 minute",
   },
   {
     pattern: {

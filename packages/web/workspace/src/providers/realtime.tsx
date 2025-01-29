@@ -2,16 +2,16 @@ import { mqtt } from "aws-iot-device-sdk-v2";
 import { onCleanup } from "solid-js";
 import { bus } from "./bus";
 import { useDummy } from "./dummy";
-import { useAuth2 } from "./auth2";
+import { useAuth } from "./auth";
 
 export function RealtimeProvider() {
   let connection: mqtt.MqttClientConnection;
-  const auth = useAuth2();
+  const auth = useAuth();
   const dummy = useDummy();
   const header = btoa(
     JSON.stringify({
       host: import.meta.env.VITE_WEBSOCKET_HTTP,
-      Authorization: auth.current.token,
+      Authorization: auth.current.access,
     }),
   )
     .replace(/\+/g, "-")
@@ -41,7 +41,7 @@ export function RealtimeProvider() {
             channel: "/workspace/" + workspace.id,
             authorization: {
               host: import.meta.env.VITE_WEBSOCKET_HTTP,
-              Authorization: auth.current.token,
+              Authorization: auth.current.access,
             },
           }),
         );

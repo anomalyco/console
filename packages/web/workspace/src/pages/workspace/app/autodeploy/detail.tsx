@@ -43,7 +43,7 @@ import {
 } from "@console/web/common/url-builder";
 import { pipe, dropWhile, drop, takeWhile, filter } from "remeda";
 import { useWorkspace } from "../../context";
-import { useAuth2 } from "@console/web/providers/auth2";
+import { useAuth } from "@console/web/providers/auth";
 import { IconTag, IconXCircle } from "@console/web/ui/icons";
 import { utility } from "@console/web/ui/utility";
 import { theme } from "@console/web/ui/theme";
@@ -632,7 +632,7 @@ export function Detail() {
 
   function Logs() {
     const workspace = useWorkspace();
-    const auth = useAuth2();
+    const auth = useAuth();
     const [logs, logsAction] = createResource(
       () => {
         if (data.value?.stage && data.value?.run.log) return data.value.run.log;
@@ -653,7 +653,7 @@ export function Detail() {
           {
             headers: {
               "x-sst-workspace": workspace().id,
-              Authorization: "Bearer " + auth.current.token,
+              Authorization: "Bearer " + auth.current.access,
             },
           }
         ).then(
