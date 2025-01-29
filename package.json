@@ -35,5 +35,9 @@
   },
   "patchedDependencies": {
     "@macaron-css/solid@1.5.3": "patches/@macaron-css%2Fsolid@1.5.3.patch"
-  }
+  },
+  "trustedDependencies": [
+    "@rocicorp/zero-sqlite3",
+    "protobufjs"
+  ]
 }

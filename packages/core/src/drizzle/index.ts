@@ -29,6 +29,7 @@ export const db = drizzle(client, {
 import { drizzle as drizzlePG } from "drizzle-orm/postgres-js";
 
 import { default as pg } from "postgres";
+
 const pgClient = pg({
   idle_timeout: 30000,
   connect_timeout: 30000,
@@ -37,7 +38,7 @@ const pgClient = pg({
   user: Resource.Postgres.username,
   password: Resource.Postgres.password,
   port: Resource.Postgres.port,
-  max: 1,
+  max: parseInt(process.env.POSTGRES_POOL_MAX || "1"),
 });
 
 export const postgres = drizzlePG(pgClient, {});

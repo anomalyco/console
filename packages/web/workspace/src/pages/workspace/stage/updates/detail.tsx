@@ -1,4 +1,4 @@
-import { For, Show, Match, Switch, createMemo, createSignal } from "solid-js";
+import { For, Show, Match, Switch, createMemo, createSignal, createEffect } from "solid-js";
 import { createSubscription, useReplicache } from "@console/web/providers/replicache";
 import { A, useParams } from "@solidjs/router";
 import { RunStore, StateUpdateStore, StateEventStore } from "@console/web/data/app";
@@ -25,6 +25,9 @@ import { Stack, Row } from "@console/web/ui/layout";
 import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
+import { usePersistentQuery, useZero } from "../../zero";
+import { DiagnosticEvent, ResOpFailedEvent, ResourcePreEvent, ResOutputsEvent } from "@console/web/common/pulumi";
+import { useFlags } from "@console/web/providers/flags";
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -505,9 +508,106 @@ export function Detail() {
     );
   }
 
+  const zero = useZero()
+  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", params.updateID).orderBy("sequence", "asc"))
+  const stateEventSummary = createMemo(() => {
+
+    const resources = {} as Record<string, {
+      urn: string
+      name: string
+      error: {
+        timestamp: number
+        data: DiagnosticEvent
+      }[]
+      info: {
+        timestamp: number
+        data: DiagnosticEvent
+      }[]
+      pre: {
+        timestamp: number
+        sequence: number
+        data: ResourcePreEvent
+      },
+      output?: {
+        timestamp: number
+        data: ResOutputsEvent
+      }
+      failed?: {
+        timestamp: number
+        data: ResOpFailedEvent
+      }
+    }>
+
+    for (let item of stateEvents()) {
+      if (item.type === "pulumi.resourcePreEvent") {
+        if (["same", "read"].includes(item.data.metadata.op)) continue
+        resources[item.data.metadata.urn] = {
+          urn: item.data.metadata.urn,
+          name: item.data.metadata.urn.split("::").at(-1),
+          pre: item,
+          info: [],
+          error: []
+        }
+      }
+
+      if (item.type === "pulumi.resOutputsEvent") {
+        const resource = resources[item.data.metadata.urn]
+        if (!resource) continue
+        resource.output = item.data
+      }
+
+      if (item.type === "pulumi.resourceFailedEvent") {
+        const resource = resources[item.data.metadata.urn]
+        if (!resource) continue
+        resource.failed = item.data
+      }
+
+      if (item.type === "pulumi.diagnosticEvent") {
+        const resource = resources[item.data.urn]
+        if (!resource) continue
+        if (item.data.severity === "error") {
+          resource.error.push(item)
+        }
+        resource.info.push(item)
+      }
+    }
+    return Object.values(resources).toSorted((a, b) => a.pre.sequence - b.pre.sequence)
+  })
+
+  const stateEventTiming = createMemo(() => Object.fromEntries(stateEvents().filter((item) => item.type === "pulumi.resourcePreEvent").map((item) => [item.data.metadata.urn, item.timestamp])) as Record<string, number>)
+
+  createEffect(() => {
+    console.log("stateEvent", stateEventSummary())
+    console.log("stateEventTiming", stateEventTiming())
+  })
+
+  const flags = useFlags()
+
   function renderResources() {
     return (
       <>
+        <Show when={flags.zero}>
+          <Stack space="2">
+            <PanelTitle id="raw">Raw</PanelTitle>
+            <ResourceRoot>
+              <For each={stateEventSummary()}>
+                {(item) => {
+                  return (
+                    <>
+                      <ResourceChild>
+                        <ResourceKey>{item.name} - {item.pre.data.metadata.op} - {formatDuration((item.output?.timestamp || item.failed?.timestamp || 0) - item.pre.timestamp)}</ResourceKey>
+                        <ResourceValue>{item.pre.data.metadata.type}</ResourceValue>
+                      </ResourceChild>
+                      <pre>
+                        {JSON.stringify(item, null, 2)}
+                      </pre>
+                    </>
+                  )
+                }}
+              </For>
+            </ResourceRoot>
+          </Stack>
+        </Show>
         <Show when={deleted().length}>
           <Stack space="2">
             <PanelTitle id="removed">Removed</PanelTitle>

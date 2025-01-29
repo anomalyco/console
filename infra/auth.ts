@@ -2,35 +2,14 @@ import { domain } from "./dns";
 import { email } from "./email";
 import { database } from "./planetscale";
 import { postgres } from "./postgres";
-import { secret } from "./secret";
 
-export const auth = new sst.aws.Auth.v1("Auth", {
-  authenticator: {
-    handler: "packages/functions/src/auth.handler",
-    link: [
-      email,
-      secret.SlackClientID,
-      secret.SlackClientSecret,
-      secret.BotpoisonSecretKey,
-      database,
-      postgres,
-    ],
-    permissions: [{ actions: ["ses:*"], resources: ["*"] }],
-    url: true,
+export const auth = new sst.aws.Auth("OpenAuth", {
+  domain: "openauth." + domain,
+  issuer: {
+    link: [database, postgres, email],
+    handler: "packages/functions/src/issuer.handler",
     environment: {
       AUTH_FRONTEND_URL: $dev ? "http://localhost:3000" : "https://" + domain,
     },
-  },
-});
-
-export const authRouter = new sst.aws.Router("AuthRouter", {
-  routes: {
-    "/*": auth.url,
-  },
-  domain: {
-    name: "auth." + domain,
-    dns: sst.aws.dns({
-      override: true,
-    }),
   },
 });

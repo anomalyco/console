@@ -31,9 +31,9 @@ import {
   RunStore,
 } from "@console/web/data/app";
 import { useReplicacheStatus } from "./replicache-status";
-import { useAuth2 } from "./auth2";
 import { createStore, reconcile } from "solid-js/store";
 import { Splash } from "@console/web/ui/splash";
+import { useAuth } from "./auth";
 
 const mutators = new Client<ServerType>()
   .mutation("app_stage_sync", async () => { })
@@ -294,9 +294,9 @@ function createReplicache(workspaceID: string, token: string) {
 export function ReplicacheProvider(
   props: ParentProps<{ workspaceID: string }>,
 ) {
-  const auth = useAuth2();
+  const auth = useAuth();
   const rep = createMemo(() => {
-    return createReplicache(props.workspaceID, auth.current.token);
+    return createReplicache(props.workspaceID, auth.current.access);
   });
   makeEventListener(window, "focus", () => {
     console.log("refocused");

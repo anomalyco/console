@@ -19,7 +19,7 @@ import type { RunConfig } from "@console/core/run/config";
 import { styled } from "@macaron-css/solid";
 import { useAppContext } from "../context";
 import { useWorkspace } from "../../context";
-import { useAuth2 } from "../../../../providers/auth2";
+import { useAuth } from "../../../../providers/auth";
 import { createId } from "@paralleldrive/cuid2";
 import { IconEllipsisVertical } from "../../../../ui/icons";
 import { createEventListener } from "@solid-primitives/event-listener";
@@ -431,7 +431,7 @@ const EditRepoForm = v.object({
 });
 
 export function Settings() {
-  const auth = useAuth2();
+  const auth = useAuth();
   const rep = useReplicache();
   const app = useAppContext();
   const workspace = useWorkspace();
@@ -1017,7 +1017,7 @@ export function Settings() {
                       <input
                         type="hidden"
                         name="token"
-                        value={auth.current.token}
+                        value={auth.current.access}
                       />
                     </form>
                   </GitOrgError>

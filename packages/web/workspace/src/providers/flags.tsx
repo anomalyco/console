@@ -1,12 +1,11 @@
 import { createInitializedContext } from "@console/web/common/context";
 import { createMemo } from "solid-js";
 import { useSearchParams } from "@solidjs/router";
-import { useAuth2 } from "./auth2";
+import { useAuth } from "./auth";
 
 export const { use: useFlags, provider: FlagsProvider } =
   createInitializedContext("FlagsContext", () => {
-    const auth = useAuth2();
-    console.log(auth);
+    const auth = useAuth();
     const email = createMemo(() => auth.current.email);
     const [search] = useSearchParams();
     const internal = createMemo(
@@ -16,5 +15,8 @@ export const { use: useFlags, provider: FlagsProvider } =
 
     return {
       ready: true,
+      get zero() {
+        return internal() || local;
+      }
     };
   });

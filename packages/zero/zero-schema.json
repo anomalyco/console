@@ -1,0 +1,415 @@
+{
+  "permissions": {
+    "state_update": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "workspace_id"
+                  ],
+                  "childField": [
+                    "workspace_id"
+                  ]
+                },
+                "subquery": {
+                  "table": "user",
+                  "alias": "zsubq_users",
+                  "where": {
+                    "type": "simple",
+                    "left": {
+                      "type": "column",
+                      "name": "email"
+                    },
+                    "right": {
+                      "type": "static",
+                      "anchor": "authData",
+                      "field": "sub"
+                    },
+                    "op": "="
+                  },
+                  "orderBy": [
+                    [
+                      "workspace_id",
+                      "asc"
+                    ],
+                    [
+                      "id",
+                      "asc"
+                    ]
+                  ]
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "update": {}
+      }
+    },
+    "user": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "workspace_id"
+                  ],
+                  "childField": [
+                    "workspace_id"
+                  ]
+                },
+                "subquery": {
+                  "table": "user",
+                  "alias": "zsubq_users",
+                  "where": {
+                    "type": "simple",
+                    "left": {
+                      "type": "column",
+                      "name": "email"
+                    },
+                    "right": {
+                      "type": "static",
+                      "anchor": "authData",
+                      "field": "sub"
+                    },
+                    "op": "="
+                  },
+                  "orderBy": [
+                    [
+                      "workspace_id",
+                      "asc"
+                    ],
+                    [
+                      "id",
+                      "asc"
+                    ]
+                  ]
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "update": {}
+      }
+    }
+  },
+  "schema": {
+    "version": 1,
+    "tables": {
+      "workspace": {
+        "name": "workspace",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "slug": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "time_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_deleted": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "state_update": {
+        "name": "state_update",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "workspace_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "stage_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "run_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "command": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "index": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_started": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_completed": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "resource_deleted": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "resource_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "resource_updated": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "resource_same": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "errors": {
+            "type": "json",
+            "optional": false,
+            "customType": null
+          },
+          "time_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_deleted": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "workspace_id",
+          "id"
+        ]
+      },
+      "user": {
+        "name": "user",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "workspace_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "email": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "time_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_deleted": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          },
+          "time_seen": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "workspace_id",
+          "id"
+        ]
+      },
+      "state_event": {
+        "name": "state_event",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "workspace_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "stage_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "update_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "type": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "sequence": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "timestamp": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "data": {
+            "type": "json",
+            "optional": false,
+            "customType": null
+          },
+          "time_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_deleted": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "workspace_id",
+          "id"
+        ]
+      }
+    },
+    "relationships": {
+      "state_update": {
+        "workspace": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "workspace",
+            "cardinality": "one"
+          }
+        ],
+        "users": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "user": {
+        "workspace": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "workspace",
+            "cardinality": "one"
+          }
+        ],
+        "users": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "state_event": {
+        "workspace": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "workspace",
+            "cardinality": "one"
+          }
+        ],
+        "stage": [
+          {
+            "sourceField": [
+              "stage_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "workspace",
+            "cardinality": "one"
+          }
+        ],
+        "update": [
+          {
+            "sourceField": [
+              "update_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "state_update",
+            "cardinality": "one"
+          }
+        ]
+      }
+    }
+  }
+}

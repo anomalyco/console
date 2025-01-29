@@ -6,6 +6,7 @@ import { Stripe } from "@console/core/billing/stripe";
 import { Issue } from "@console/core/issue/index";
 import { Run } from "@console/core/run/index";
 import { State } from "@console/core/state/index";
+import { stateReceiveEventLog } from "@console/core/state/pg";
 import { User } from "@console/core/user/index";
 import { Workspace } from "@console/core/workspace/index";
 import { bus } from "sst/aws/bus";
@@ -21,6 +22,7 @@ export const handler = bus.subscriber(
     State.Event.HistoryCreated,
     State.Event.HistorySynced,
     State.Event.StateRefreshed,
+    State.Event.EventLogCreated,
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
     State.Event.UpdateCreated,
@@ -135,6 +137,16 @@ export const handler = bus.subscriber(
           if (!config) return;
           await State.refreshState({
             config,
+          });
+          break;
+        }
+
+        case State.Event.EventLogCreated.type: {
+          const config = await Stage.assumeRole(evt.properties.stageID);
+          if (!config) return;
+          await stateReceiveEventLog({
+            config,
+            updateID: evt.properties.updateID,
           });
           break;
         }

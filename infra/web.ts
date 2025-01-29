@@ -1,5 +1,6 @@
 import { apiRouter } from "./api";
-import { authRouter } from "./auth";
+import { auth } from "./auth";
+import { zero } from "./zero";
 import { connectTemplateUrl } from "./connect";
 import { domain } from "./dns";
 import { issues } from "./issues";
@@ -19,8 +20,9 @@ new sst.aws.StaticSite("Workspace", {
   },
   environment: {
     VITE_API_URL: apiRouter.url,
-    VITE_AUTH_URL: authRouter.url,
+    VITE_AUTH_URL: auth.url,
     VITE_STAGE: $app.stage,
+    VITE_ZERO_URL: zero.url,
     VITE_CONNECT_URL: connectTemplateUrl,
     VITE_ISSUES_URL: issues.properties.cfn,
     VITE_WEBSOCKET_HTTP: websocket.properties.http,

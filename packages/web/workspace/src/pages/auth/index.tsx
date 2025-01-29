@@ -175,14 +175,10 @@ export function Email() {
         </Stack>
       </Stack>
       <Form
-        method="get"
+        method="post"
         action={import.meta.env.VITE_AUTH_URL + "/email/authorize"}
-        onSubmit={async (e) => {
+        onSubmit={async () => {
           setSubmitting(true);
-          e.preventDefault();
-          const form = e.currentTarget;
-          await ready;
-          form.submit();
         }}
       >
         <FormField>
@@ -197,15 +193,7 @@ export function Email() {
             />
           </FormField>
         </Show>
-        <input type="hidden" name="client_id" value="solid" />
-        <input
-          type="hidden"
-          name="redirect_uri"
-          value={location.origin + "/"}
-        />
-        <input type="hidden" name="response_type" value="token" />
-        <input type="hidden" name="provider" value="email" />
-        <input type="hidden" name="challenge" value={challenge()} />
+        <input type="hidden" name="action" value="request" />
         <Stack space="3">
           <Button type="submit" disabled={submitting()}>
             {submitting() ? "Submitting" : "Continue"}
@@ -222,23 +210,15 @@ export function Email() {
 export function Code() {
   const [disabled, setDisabled] = createSignal(false);
 
-  function submit() {
-    setDisabled(true);
-    const code = [...document.querySelectorAll("[data-element=code]")]
-      .map((el) => (el as HTMLInputElement).value)
-      .join("");
-    location.href =
-      import.meta.env.VITE_AUTH_URL +
-      "/email/callback?" +
-      new URLSearchParams({
-        code,
-      }).toString();
-  }
-
   function inputs() {
     return [
       ...document.querySelectorAll<HTMLInputElement>("[data-element=code]"),
     ];
+  }
+
+  function setValue(value: string) {
+    const element = document.querySelector<HTMLFormElement>("input[name=code]")
+    element!.value = value;
   }
 
   return (
@@ -256,7 +236,11 @@ export function Code() {
           </Text>
         </Stack>
       </Stack>
-      <Form method="get" action={import.meta.env.VITE_AUTH_URL + "/authorize"}>
+      <Form
+        onSubmit={async (e) => {
+          setDisabled(true)
+        }}
+        method="post" action={import.meta.env.VITE_AUTH_URL + "/email/authorize"}>
         <Row horizontal="between">
           <For each={Array(6).fill(0)}>
             {() => (
@@ -281,7 +265,8 @@ export function Code() {
                     item.value = code[index];
                   });
                   e.preventDefault();
-                  submit();
+                  setValue(code);
+                  e.currentTarget.closest("form")?.submit();
                 }}
                 onFocus={(e) => {
                   e.currentTarget.select();
@@ -295,8 +280,11 @@ export function Code() {
                     if (previous instanceof HTMLInputElement) {
                       previous.focus();
                     }
-                    return;
                   }
+                  const code = [...document.querySelectorAll("[data-element=code]")]
+                    .map((el) => (el as HTMLInputElement).value)
+                    .join("");
+                  setValue(code);
                 }}
                 onInput={(e) => {
                   const all = inputs();
@@ -316,12 +304,14 @@ export function Code() {
                     return;
                   }
 
-                  if (!next) submit();
+                  e.currentTarget.closest("form")?.submit();
                 }}
               />
             )}
           </For>
         </Row>
+        <input type="hidden" name="action" value="verify" />
+        <input type="hidden" name="code" value="" />
       </Form>
     </Root>
   );

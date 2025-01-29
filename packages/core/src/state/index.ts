@@ -40,11 +40,18 @@ import {
   DescribeStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
 import { runTable } from "../run/run.sql";
+import { Readable } from "stream";
+import { createInterface } from "readline";
+import { postgres } from "../drizzle";
 
 export module State {
   export const Event = {
     UpdateCreated: createEvent(
       "state.update.created",
+      z.object({ stageID: z.string(), updateID: z.string() }),
+    ),
+    EventLogCreated: createEvent(
+      "state.eventlog.created",
       z.object({ stageID: z.string(), updateID: z.string() }),
     ),
     SnapshotCreated: createEvent(

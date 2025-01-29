@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD CONSTRAINT "user_workspace_id_id_pk" PRIMARY KEY("workspace_id","id");
