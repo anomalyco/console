@@ -2,13 +2,11 @@ import type { Error } from "@console/core/state/state.sql";
 import {
   createSchema,
   definePermissions,
-  TableSchema,
   table,
   string,
   number,
   relationships,
   json,
-  ExpressionBuilder,
 } from "@rocicorp/zero";
 
 const timestamps = {
@@ -54,14 +52,6 @@ const state_update = table("state_update")
   })
   .primaryKey("workspace_id", "id");
 
-/* 
-    stageID: cuid("stage_id").notNull(),
-    updateID: cuid("update_id").notNull(),
-    type: varchar("type", { length: 255 }).notNull(),
-    sequence: integer("sequence").notNull(),
-    timestamp: utc("timestamp").notNull(),
-    data: jsonb("data").notNull(),
-    */
 const state_event = table("state_event")
   .columns({
     id: string(),
@@ -145,5 +135,8 @@ export const permissions = definePermissions<Auth, Schema>(schema, () => {
   return {
     state_update: readonly,
     user: readonly,
+    workspace: readonly,
+    state_event: readonly,
+    stage: readonly,
   };
 });

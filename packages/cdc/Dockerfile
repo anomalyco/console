@@ -1,4 +1,4 @@
-from oven/bun:latest
+from mirror.gcr.io/oven/bun:latest
 
 copy ./package.json .
 copy ./packages/core/package.json ./packages/core/
