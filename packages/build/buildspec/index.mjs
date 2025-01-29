@@ -55,6 +55,7 @@ export async function handler({
     packageJson = await loadPackageJson();
     installNode();
     installUv();
+    createDockerBuilder();
     sstConfig = await loadSstConfig();
     installSstGlobally();
 
@@ -148,6 +149,13 @@ export async function handler({
   }
   function installUv() {
     if (findInRepo("uv.lock")) shell("pip install uv");
+  }
+  function createDockerBuilder() {
+    const builder = "sst-builder";
+    shell(
+      `docker buildx create --driver docker-container --driver-opt image=mirror.gcr.io/moby/buildkit --name ${builder}`,
+    );
+    process.env.BUILDX_BUILDER = builder;
   }
   function installBun() {
     if (bun) return;
