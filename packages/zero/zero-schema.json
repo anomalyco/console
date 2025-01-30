@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "state_update": {
+    "workspace": {
       "row": {
         "select": [
           [
@@ -11,7 +11,7 @@
                 "system": "permissions",
                 "correlation": {
                   "parentField": [
-                    "workspace_id"
+                    "id"
                   ],
                   "childField": [
                     "workspace_id"
@@ -52,6 +52,83 @@
         "update": {}
       }
     },
+    "state_event": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "workspace_id"
+                  ],
+                  "childField": [
+                    "id"
+                  ]
+                },
+                "subquery": {
+                  "table": "workspace",
+                  "alias": "zsubq_workspace",
+                  "where": {
+                    "type": "correlatedSubquery",
+                    "related": {
+                      "system": "permissions",
+                      "correlation": {
+                        "parentField": [
+                          "id"
+                        ],
+                        "childField": [
+                          "workspace_id"
+                        ]
+                      },
+                      "subquery": {
+                        "table": "user",
+                        "alias": "zsubq_users",
+                        "where": {
+                          "type": "simple",
+                          "left": {
+                            "type": "column",
+                            "name": "email"
+                          },
+                          "right": {
+                            "type": "static",
+                            "anchor": "authData",
+                            "field": "sub"
+                          },
+                          "op": "="
+                        },
+                        "orderBy": [
+                          [
+                            "workspace_id",
+                            "asc"
+                          ],
+                          [
+                            "id",
+                            "asc"
+                          ]
+                        ]
+                      }
+                    },
+                    "op": "EXISTS"
+                  },
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc"
+                    ]
+                  ]
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "update": {}
+      }
+    },
     "user": {
       "row": {
         "select": [
@@ -66,30 +143,132 @@
                     "workspace_id"
                   ],
                   "childField": [
-                    "workspace_id"
+                    "id"
                   ]
                 },
                 "subquery": {
-                  "table": "user",
-                  "alias": "zsubq_users",
+                  "table": "workspace",
+                  "alias": "zsubq_workspace",
                   "where": {
-                    "type": "simple",
-                    "left": {
-                      "type": "column",
-                      "name": "email"
+                    "type": "correlatedSubquery",
+                    "related": {
+                      "system": "permissions",
+                      "correlation": {
+                        "parentField": [
+                          "id"
+                        ],
+                        "childField": [
+                          "workspace_id"
+                        ]
+                      },
+                      "subquery": {
+                        "table": "user",
+                        "alias": "zsubq_users",
+                        "where": {
+                          "type": "simple",
+                          "left": {
+                            "type": "column",
+                            "name": "email"
+                          },
+                          "right": {
+                            "type": "static",
+                            "anchor": "authData",
+                            "field": "sub"
+                          },
+                          "op": "="
+                        },
+                        "orderBy": [
+                          [
+                            "workspace_id",
+                            "asc"
+                          ],
+                          [
+                            "id",
+                            "asc"
+                          ]
+                        ]
+                      }
                     },
-                    "right": {
-                      "type": "static",
-                      "anchor": "authData",
-                      "field": "sub"
-                    },
-                    "op": "="
+                    "op": "EXISTS"
                   },
                   "orderBy": [
                     [
-                      "workspace_id",
+                      "id",
                       "asc"
-                    ],
+                    ]
+                  ]
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "update": {}
+      }
+    },
+    "state_update": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "workspace_id"
+                  ],
+                  "childField": [
+                    "id"
+                  ]
+                },
+                "subquery": {
+                  "table": "workspace",
+                  "alias": "zsubq_workspace",
+                  "where": {
+                    "type": "correlatedSubquery",
+                    "related": {
+                      "system": "permissions",
+                      "correlation": {
+                        "parentField": [
+                          "id"
+                        ],
+                        "childField": [
+                          "workspace_id"
+                        ]
+                      },
+                      "subquery": {
+                        "table": "user",
+                        "alias": "zsubq_users",
+                        "where": {
+                          "type": "simple",
+                          "left": {
+                            "type": "column",
+                            "name": "email"
+                          },
+                          "right": {
+                            "type": "static",
+                            "anchor": "authData",
+                            "field": "sub"
+                          },
+                          "op": "="
+                        },
+                        "orderBy": [
+                          [
+                            "workspace_id",
+                            "asc"
+                          ],
+                          [
+                            "id",
+                            "asc"
+                          ]
+                        ]
+                      }
+                    },
+                    "op": "EXISTS"
+                  },
+                  "orderBy": [
                     [
                       "id",
                       "asc"
@@ -332,18 +511,6 @@
             "destSchema": "workspace",
             "cardinality": "one"
           }
-        ],
-        "users": [
-          {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "workspace_id"
-            ],
-            "destSchema": "user",
-            "cardinality": "many"
-          }
         ]
       },
       "user": {
@@ -357,18 +524,6 @@
             ],
             "destSchema": "workspace",
             "cardinality": "one"
-          }
-        ],
-        "users": [
-          {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "workspace_id"
-            ],
-            "destSchema": "user",
-            "cardinality": "many"
           }
         ]
       },
@@ -407,6 +562,20 @@
             ],
             "destSchema": "state_update",
             "cardinality": "one"
+          }
+        ]
+      },
+      "workspace": {
+        "users": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user",
+            "cardinality": "many"
           }
         ]
       }

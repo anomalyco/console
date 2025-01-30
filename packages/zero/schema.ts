@@ -75,22 +75,12 @@ export const schema = createSchema(1, {
         destSchema: workspace,
         destField: ["id"],
       }),
-      users: r.many({
-        sourceField: ["workspace_id"],
-        destSchema: user,
-        destField: ["workspace_id"],
-      }),
     })),
     relationships(user, (r) => ({
       workspace: r.one({
         sourceField: ["workspace_id"],
         destSchema: workspace,
         destField: ["id"],
-      }),
-      users: r.many({
-        sourceField: ["workspace_id"],
-        destSchema: user,
-        destField: ["workspace_id"],
       }),
     })),
     relationships(state_event, (r) => ({
@@ -108,6 +98,13 @@ export const schema = createSchema(1, {
         sourceField: ["update_id"],
         destSchema: state_update,
         destField: ["id"],
+      }),
+    })),
+    relationships(workspace, (r) => ({
+      users: r.many({
+        sourceField: ["id"],
+        destSchema: user,
+        destField: ["workspace_id"],
       }),
     })),
   ],
@@ -128,15 +125,22 @@ export const permissions = definePermissions<Auth, Schema>(schema, () => {
     row: {
       select: [
         (auth: Auth, q: any) =>
-          q.exists("users", (wu: any) => wu.where("email", auth.sub)),
+          q.exists("workspace", (w: any) =>
+            w.whereExists("users", (u: any) => u.where("email", auth.sub)),
+          ),
       ],
     },
   };
   return {
-    state_update: readonly,
-    user: readonly,
-    workspace: readonly,
+    workspace: {
+      row: {
+        select: [
+          (auth, q) => q.exists("users", (u) => u.where("email", auth.sub)),
+        ],
+      },
+    },
     state_event: readonly,
-    stage: readonly,
+    user: readonly,
+    state_update: readonly,
   };
 });
