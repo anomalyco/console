@@ -50,7 +50,10 @@ export const IngestRoute = new Hono().post(
       case "aws.issue":
         const xml = await fetch(body.properties.identity).then((r) => r.text());
         const accountID = (xml.match(/<Account>(\d+)<\/Account>/) || [])[1];
-        if (!accountID) return c.json(false);
+        if (!accountID) {
+          console.error(new Error("Failed to parse account ID " + xml));
+          return c.json(false);
+        }
         const workspaces = await db
           .select({
             accountID: awsAccount.accountID,
