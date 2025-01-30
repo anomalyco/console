@@ -102,10 +102,13 @@ debezium.source.schema.history.internal.file.filename=data/schema_history.dat
 debezium.source.connector.class=io.debezium.connector.planetscale.PlanetScaleConnector
 debezium.source.vitess.keyspace=sst
 debezium.source.vitess.tablet.type=MASTER
+debezium.source.table.include.list=sst.user,sst.state_update,sst.app,sst.workspace,sst.state_resource,sst.state_count
 debezium.source.database.hostname=us-east.connect.psdb.cloud
 debezium.source.database.port=443
 debezium.source.database.user=${database.properties.username}
 debezium.source.database.password=${database.properties.password}
+debezium.source.snapshot.mode=never
+debezium.source.snapshot.locking.mode=none
 debezium.source.topic.prefix=connector-test
 `.apply(async (val) => {
   writeFileSync("./packages/cdc/debezium/application.properties", val);
