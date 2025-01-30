@@ -30,6 +30,9 @@ const api = new sst.aws.Function("Api", {
   nodejs: {
     install: ["source-map"],
   },
+  environment: {
+    FOO: "ok",
+  },
   url: true,
 });
 

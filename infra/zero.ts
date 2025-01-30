@@ -17,7 +17,6 @@ const image = `registry.hub.docker.com/rocicorp/zero:${tag}`;
 
 const zeroEnv = {
   NO_COLOR: "1",
-  ZERO_SCHEMA_JSON: readFileSync("./packages/zero/zero-schema.json").toString(),
   ZERO_UPSTREAM_DB: conn,
   ZERO_CVR_DB: $interpolate`${conn}_cvr`,
   ZERO_CHANGE_DB: $interpolate`${conn}_change`,
@@ -48,6 +47,9 @@ const replication = !$dev
       },
       environment: {
         ...zeroEnv,
+        ZERO_SCHEMA_JSON: readFileSync(
+          "./packages/zero/zero-schema.json",
+        ).toString(),
         ZERO_CHANGE_MAX_CONNS: "3",
         ZERO_NUM_SYNC_WORKERS: "0",
       },

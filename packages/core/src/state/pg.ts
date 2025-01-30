@@ -10,6 +10,7 @@ import { postgres } from "../drizzle";
 import { stateEventTable } from "./state.pg";
 import { createId } from "../util/sql.pg";
 import { useWorkspace } from "../actor";
+import { EngineEvent } from "../util/pulumi";
 
 export const stateReceiveEventLog = zod(
   z.object({
@@ -46,21 +47,31 @@ export const stateReceiveEventLog = zod(
     const workspaceID = useWorkspace();
     for await (const line of lines) {
       const parsed = JSON.parse(line);
-      const { sequence, timestamp, ...rest } = parsed;
-      const type = Object.keys(rest)[0];
-      if (!type) continue;
-      const data = rest[type];
-      if (type === "diagnosticEvent") {
-        if (data.severity === "debug") continue;
-      }
-      if (
-        type === "resourcePreEvent" ||
-        type === "resourceFailedEvent" ||
-        type === "resOutputsEvent"
-      ) {
-        if (data.metadata.op === "same" || data.metadata.op === "read")
+      const {
+        sequence,
+        timestamp,
+        ...rest
+      }: {
+        sequence: number;
+        timestamp: number;
+      } & EngineEvent = parsed;
+      const type = Object.keys(rest)[0] as keyof typeof rest;
+      if (rest.diagnosticEvent && rest.diagnosticEvent.severity === "debug")
+        continue;
+      const resourceEvent =
+        rest.resourcePreEvent || rest.resOutputsEvent || rest.resOpFailedEvent;
+      if (resourceEvent) {
+        if (
+          resourceEvent.metadata.op === "same" ||
+          resourceEvent.metadata.op === "read"
+        )
           continue;
+        delete resourceEvent.metadata.new?.inputs["__provider"];
+        delete resourceEvent.metadata.new?.outputs["__provider"];
+        delete resourceEvent.metadata.old?.inputs["__provider"];
+        delete resourceEvent.metadata.old?.outputs["__provider"];
       }
+      const data = rest[type];
       inserts.push({
         stageID: input.config.stageID,
         updateID: input.updateID,
@@ -72,6 +83,7 @@ export const stateReceiveEventLog = zod(
         data,
       });
     }
+    console.log("events found", inserts.length);
     await postgres
       .insert(stateEventTable)
       .values(inserts)
