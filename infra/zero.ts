@@ -127,7 +127,7 @@ const cdc = cluster.addService("CDC", {
       },
       environment: {
         NO_COLOR: "1",
-        POSTGRES_POOL_MAX: "10",
+        POSTGRES_POOL_MAX: "30",
       },
       dev: {
         directory: "./packages/cdc",
