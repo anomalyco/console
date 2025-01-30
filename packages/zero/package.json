@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "@rocicorp/zero": "0.12.2025012501"
+    "@rocicorp/zero": "*"
   },
   "scripts": {
     "dev": "zero-build-schema && zero-cache"

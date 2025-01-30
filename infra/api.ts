@@ -30,9 +30,6 @@ const api = new sst.aws.Function("Api", {
   nodejs: {
     install: ["source-map"],
   },
-  environment: {
-    FOO: "ok",
-  },
   url: true,
 });
 
@@ -47,10 +44,5 @@ export const apiRouter = new sst.aws.Router("ApiRouter", {
   routes: {
     "/*": api.url,
   },
-  domain: {
-    name: "api." + domain,
-    dns: sst.aws.dns({
-      override: true,
-    }),
-  },
+  domain: "api." + domain,
 });
