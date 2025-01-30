@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS "console_cvr";
+CREATE DATABASE IF NOT EXISTS "console_change";
+
 CREATE TABLE IF NOT EXISTS "app" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
