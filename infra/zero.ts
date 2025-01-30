@@ -116,6 +116,8 @@ const cwd = process.cwd();
 
 const cdc = cluster.addService("CDC", {
   link: [postgres, database],
+  cpu: "4 vCPU",
+  memory: "8 GB",
   containers: [
     {
       name: "cdc",

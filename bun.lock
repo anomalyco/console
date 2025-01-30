@@ -10,7 +10,7 @@
         "@tsconfig/node16": "^16.1.0",
         "@types/bun": "^1.1.18",
         "constructs": "10.3.0",
-        "sst": "3.6.27",
+        "sst": "3.6.29",
         "turbo": "2.3.4",
         "typescript": "5.5.4",
       },
@@ -32,7 +32,7 @@
         "@console/core": "workspace:*",
         "drizzle-orm": "0.39.1",
         "planetscale-stream-ts": "^1.1.0",
-        "sst": "3.6.27",
+        "sst": "3.6.29",
       },
     },
     "packages/core": {
@@ -84,7 +84,7 @@
         "@types/react": "18.0.25",
         "@types/relaxed-json": "^1.0.1",
         "drizzle-kit": "0.30.4",
-        "sst": "3.6.27",
+        "sst": "3.6.29",
         "typescript": "5.5.4",
         "vitest": "^0.25.3",
       },
@@ -130,7 +130,7 @@
         "@types/aws-lambda": "^8.10.114",
         "@types/luxon": "3.4.2",
         "@types/node": "^22.10.1",
-        "sst": "3.6.27",
+        "sst": "3.6.29",
         "typescript": "5.5.4",
       },
     },
@@ -154,7 +154,7 @@
         "@jsx-email/render": "^1.1.0",
         "@tsconfig/node16": "^16.1.0",
         "luxon": "3.5.0",
-        "sst": "3.6.27",
+        "sst": "3.6.29",
         "tsx": "^3.12.7",
       },
       "devDependencies": {
@@ -2143,17 +2143,17 @@
 
     "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
 
-    "sst": ["sst@3.6.27", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.6.27", "sst-darwin-x64": "3.6.27", "sst-linux-arm64": "3.6.27", "sst-linux-x64": "3.6.27", "sst-linux-x86": "3.6.27" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-xvroNFNSB26mCBAq2G3+yY9cCm6ZJNEcLI1iWJQykkCB3pUvIDZwV9EU6jcQNGwiTQkGZLsAkvdkEgqpATnUvQ=="],
+    "sst": ["sst@3.6.29", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.6.29", "sst-darwin-x64": "3.6.29", "sst-linux-arm64": "3.6.29", "sst-linux-x64": "3.6.29", "sst-linux-x86": "3.6.29" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-Inx0hAW8i4smn8TSfgk8qqVIKU1khZSSBhSZV5C500KNV1zcKCb59qFnXah8xJzlv1HuVYIS+HoX1PZu+x8wEw=="],
 
-    "sst-darwin-arm64": ["sst-darwin-arm64@3.6.27", "", { "os": "darwin", "cpu": "arm64" }, "sha512-hxHu9U/4y/gHhQYRwi03JI8rlezM1tQkt65ccSMn6dEoy9VMvKLidO72Ie3QJElu3+eP2iQWpNa4RptKzkJ5hQ=="],
+    "sst-darwin-arm64": ["sst-darwin-arm64@3.6.29", "", { "os": "darwin", "cpu": "arm64" }, "sha512-WPLJ+y1kx37NAqTiK2lNG9us5vFXo0DitOkAd5lZcLBdRZDQMMG1CfwZee/OiowQ/WN+wT+xH9e8mqhpqL/JaQ=="],
 
-    "sst-darwin-x64": ["sst-darwin-x64@3.6.27", "", { "os": "darwin", "cpu": "x64" }, "sha512-xXiesVZX1XY5p9AmNCitqa23Iv775DtRBKTYvjfJXG1QJ8JRnYWDO55V672ICkQXge0kyEw3uaIlH2MT+1G/mg=="],
+    "sst-darwin-x64": ["sst-darwin-x64@3.6.29", "", { "os": "darwin", "cpu": "x64" }, "sha512-ZOkdR0kq96clC1gX9cGug39tfJlO2eSG9ktsOENNafAIfRGlkX2iGa7UYLJidlwHh+LUgxAZRq3JAmMCDkvVqw=="],
 
-    "sst-linux-arm64": ["sst-linux-arm64@3.6.27", "", { "os": "linux", "cpu": "arm64" }, "sha512-5ub3+hNoWOt/xwDtgAWJjwK7Sek8GSNL2uUzypQmByz4QGJE4GUnKhocYvjNxHwpYTNxSuYT6Jbu6jzTuMYjCQ=="],
+    "sst-linux-arm64": ["sst-linux-arm64@3.6.29", "", { "os": "linux", "cpu": "arm64" }, "sha512-xp3lCaL6WEkfsFtM19MTj6sKckUYuTnBAyBiUyM8H8ocijaUDMdfjL4bL1IGVfSfDeWPcRYh1aqijmmLpq+56w=="],
 
-    "sst-linux-x64": ["sst-linux-x64@3.6.27", "", { "os": "linux", "cpu": "x64" }, "sha512-D5IgRVfzn21/N3TEuyxq9hO4IjEk8iUycZNyP3MmJd7dGagGQa0Sey7AHuUaehAHL6D0RVME1SRF9JfaxTPVFQ=="],
+    "sst-linux-x64": ["sst-linux-x64@3.6.29", "", { "os": "linux", "cpu": "x64" }, "sha512-YZ4IQ/BBOp+JIUGgm0SyBnd41mafDy5p0wayZAAxc113xdR7gsDm7dUnc1WYh37g5YhDUjnCaCe0W9e8V0Qp2g=="],
 
-    "sst-linux-x86": ["sst-linux-x86@3.6.27", "", { "os": "linux", "cpu": "none" }, "sha512-YuRKmT+5gKTLLcFJ2BeqTT/Co+bhL/Nj501dslbBtswdSI+ss9Qhs2WFvSRalC7MeqOL24u7HTD5An5+AbPifw=="],
+    "sst-linux-x86": ["sst-linux-x86@3.6.29", "", { "os": "linux", "cpu": "none" }, "sha512-dhGr8QmrTpsTGYmZABlo97qU2p2KCB9YwVHbsFYW0iwIrBmAk0V8BPIaU2m0+N7U0TSdubu+UZW0/d6Ar8P2Lw=="],
 
     "stream-shift": ["stream-shift@1.0.3", "", {}, "sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ=="],
 
@@ -2419,6 +2419,8 @@
 
     "@babel/helper-create-class-features-plugin/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
+    "@console/workspace/sst": ["sst@3.6.27", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.6.27", "sst-darwin-x64": "3.6.27", "sst-linux-arm64": "3.6.27", "sst-linux-x64": "3.6.27", "sst-linux-x86": "3.6.27" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-xvroNFNSB26mCBAq2G3+yY9cCm6ZJNEcLI1iWJQykkCB3pUvIDZwV9EU6jcQNGwiTQkGZLsAkvdkEgqpATnUvQ=="],
+
     "@dot/log/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
@@ -2674,6 +2676,16 @@
     "@aws-sdk/signature-v4-multi-region/@smithy/signature-v4/@smithy/util-uri-escape": ["@smithy/util-uri-escape@3.0.0", "", { "dependencies": { "tslib": "^2.6.2" } }, "sha512-LqR7qYLgZTD7nWLBecUi4aqolw8Mhza9ArpNEQ881MJJIU2sE5iHCK6TdyqqzcDLy0OPe10IY4T8ctVdtynubg=="],
 
     "@babel/helper-compilation-targets/lru-cache/yallist": ["yallist@3.1.1", "", {}, "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g=="],
+
+    "@console/workspace/sst/sst-darwin-arm64": ["sst-darwin-arm64@3.6.27", "", { "os": "darwin", "cpu": "arm64" }, "sha512-hxHu9U/4y/gHhQYRwi03JI8rlezM1tQkt65ccSMn6dEoy9VMvKLidO72Ie3QJElu3+eP2iQWpNa4RptKzkJ5hQ=="],
+
+    "@console/workspace/sst/sst-darwin-x64": ["sst-darwin-x64@3.6.27", "", { "os": "darwin", "cpu": "x64" }, "sha512-xXiesVZX1XY5p9AmNCitqa23Iv775DtRBKTYvjfJXG1QJ8JRnYWDO55V672ICkQXge0kyEw3uaIlH2MT+1G/mg=="],
+
+    "@console/workspace/sst/sst-linux-arm64": ["sst-linux-arm64@3.6.27", "", { "os": "linux", "cpu": "arm64" }, "sha512-5ub3+hNoWOt/xwDtgAWJjwK7Sek8GSNL2uUzypQmByz4QGJE4GUnKhocYvjNxHwpYTNxSuYT6Jbu6jzTuMYjCQ=="],
+
+    "@console/workspace/sst/sst-linux-x64": ["sst-linux-x64@3.6.27", "", { "os": "linux", "cpu": "x64" }, "sha512-D5IgRVfzn21/N3TEuyxq9hO4IjEk8iUycZNyP3MmJd7dGagGQa0Sey7AHuUaehAHL6D0RVME1SRF9JfaxTPVFQ=="],
+
+    "@console/workspace/sst/sst-linux-x86": ["sst-linux-x86@3.6.27", "", { "os": "linux", "cpu": "none" }, "sha512-YuRKmT+5gKTLLcFJ2BeqTT/Co+bhL/Nj501dslbBtswdSI+ss9Qhs2WFvSRalC7MeqOL24u7HTD5An5+AbPifw=="],
 
     "@dot/log/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 

@@ -21,7 +21,7 @@ export const postgres = new sst.aws.Aurora("Postgres", {
         },
         {
           name: "max_slot_wal_keep_size",
-          value: "1024",
+          value: "10240",
           applyMethod: "pending-reboot",
         },
       ],
