@@ -1649,7 +1649,7 @@ export module Run {
     if (status === "skipped") return;
 
     let subject, message;
-    if (run.trigger.action === "pushed") {
+    if (run.trigger.action === "pushed" || run.trigger.action === "deploy") {
       if (status === "succeeded") {
         subject = "Deployed";
         message = `Deployed successfully to ${stageName}`;
@@ -1657,7 +1657,10 @@ export module Run {
         subject = "Deploy failed";
         message = ERROR_MESSAGE_MAP(run.error!);
       }
-    } else {
+    } else if (
+      run.trigger.action === "removed" ||
+      run.trigger.action === "remove"
+    ) {
       if (status === "succeeded") {
         subject = "Removed";
         message = `Removed ${stageName} successfully`;
@@ -1665,6 +1668,8 @@ export module Run {
         subject = "Remove failed";
         message = ERROR_MESSAGE_MAP(run.error!);
       }
+    } else {
+      return;
     }
     const commit =
       run.trigger.type === "user"
