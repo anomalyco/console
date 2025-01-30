@@ -62,12 +62,12 @@ export async function handler({
     sstConfig.console?.autodeploy?.workflow
       ? runWorkflow()
       : (() => {
-          installNodeDeps();
-          const sstPath = findLocalSstBinary() ?? "sst";
-          trigger.action === "removed" || trigger.action === "remove"
-            ? shell(`${sstPath} remove`)
-            : shell(`${sstPath} deploy`);
-        })();
+        installNodeDeps();
+        const sstPath = findLocalSstBinary() ?? "sst";
+        trigger.action === "removed" || trigger.action === "remove"
+          ? shell(`${sstPath} remove`)
+          : shell(`${sstPath} deploy`);
+      })();
 
     for (const item of [".git", ...(cache?.paths ?? [])])
       await storeCache(item);
@@ -101,7 +101,7 @@ export async function handler({
 
     try {
       return JSON.parse(fs.readFileSync("package.json", "utf8"));
-    } catch (e) {}
+    } catch (e) { }
     return {};
   }
 
@@ -168,7 +168,7 @@ export async function handler({
   function installSstGlobally() {
     // Check if SST will be installed locally
     if (packageJson.dependencies?.sst || packageJson.devDependencies?.sst) {
-      console.log("SST binary will be isntalled locally");
+      console.log("SST binary will be installed locally");
       return;
     }
 
@@ -380,7 +380,7 @@ export async function handler({
         shellError = new Error(
           JSON.parse(fs.readFileSync(WORKFLOW_RESULT, "utf8")).error,
         );
-      } catch (_) {}
+      } catch (_) { }
       throw shellError;
     }
   }
