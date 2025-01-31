@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from "@solidjs/router";
 import { createClient } from "@openauthjs/openauth/client";
 import { createInitializedContext } from "../common/context";
 import { type Workspace } from "@console/core/workspace/index";
+import { useCommandBar } from "../pages/workspace/command-bar";
+import { IconLogout, IconUser, IconUserAdd } from "../ui/icons/custom";
 
 interface AccountInfo {
   id: string;
@@ -138,6 +140,47 @@ export const { use: useAuth, provider: AuthProvider } =
 
 
     const navigate = useNavigate();
+
+    const bar = useCommandBar()
+
+    bar.register("auth", async () => {
+      console.log("bar", bar)
+      return [
+        {
+          category: "Account",
+          title: "Logout",
+          icon: IconLogout,
+          run: async (bar) => {
+            result.logout();
+            setStore("current", undefined);
+            navigate("/");
+            bar.hide()
+          },
+        },
+        {
+          category: "Add Account",
+          title: "Add Account",
+          icon: IconUserAdd,
+          run: async () => {
+            const redir = await client.authorize(window.location.origin, "token");
+            window.location.href = redir.url
+            bar.hide()
+          },
+        },
+        ...result.all()
+          .filter((item) => item.id !== result.current.id)
+          .map((item) => ({
+            category: "Account",
+            title: "Switch to " + item.email,
+            icon: IconUser,
+            run: async () => {
+              result.switch(item.id);
+              navigate("/");
+              bar.hide()
+            },
+          })),
+      ]
+    })
 
     const result = {
       get current() {
