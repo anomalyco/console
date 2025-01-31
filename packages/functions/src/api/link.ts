@@ -32,6 +32,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
           and(eq(app.id, stage.appID), eq(app.workspaceID, stage.workspaceID)),
         )
         .where(eq(stateUpdateTable.id, identity))
+        .limit(1)
         .then((r) => r.at(0));
       if (!result)
         throw new HTTPException(404, {
