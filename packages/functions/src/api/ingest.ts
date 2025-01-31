@@ -51,6 +51,7 @@ export const IngestRoute = new Hono().post(
         const xml = await fetch(body.properties.identity).then((r) => r.text());
         const accountID = (xml.match(/<Account>(\d+)<\/Account>/) || [])[1];
         if (!accountID) {
+          console.log(body.properties.identity);
           console.error(new Error("Failed to parse account ID " + xml));
           return c.json(false);
         }

@@ -313,7 +313,7 @@ export const LogRoute = new Hono()
 
       return c.json({
         completed: result,
-        start: start!.toISO()!,
+        start: entries.at(-1)?.timestamp || start!.toISO()!,
         invocations: entries,
       });
     },
