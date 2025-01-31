@@ -267,14 +267,16 @@ export const LogRoute = new Hono()
                 }
 
                 for (const result of results) {
+                  const timestamp = new Date(result[0]?.value! + " Z");
                   await processor.process({
                     id: index.toString(),
-                    timestamp: new Date(result[0]?.value! + " Z").getTime(),
+                    timestamp: timestamp.getTime(),
                     streamName: result[2]?.value!,
                     line: result[1]?.value!,
                   });
                   index++;
-                  next = result[0]?.value!;
+                  if (!next || timestamp.toISOString() < next)
+                    next = timestamp.toISOString();
                   if (processor.ready > 50 - entries.length) {
                     break;
                   }
@@ -284,12 +286,14 @@ export const LogRoute = new Hono()
 
               if (query.hint === "normal") {
                 for (const result of results) {
+                  const timestamp = new Date(result[0]?.value! + " Z");
                   const length = entries.push({
                     id: result[3]!.value!,
                     message: result[1]?.value!,
-                    timestamp: new Date(result[0]?.value! + " Z").getTime(),
+                    timestamp: timestamp.getTime(),
                   });
-                  next = result[0]?.value!;
+                  if (!next || timestamp.toISOString() < next)
+                    next = timestamp.toISOString();
                   if (length >= 50) {
                     break;
                   }
@@ -316,7 +320,7 @@ export const LogRoute = new Hono()
 
       return c.json({
         completed: result,
-        start: next || undefined,
+        start: next,
         invocations: entries,
       });
     },
