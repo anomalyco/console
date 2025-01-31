@@ -281,12 +281,12 @@ export function Code() {
                       previous.focus();
                     }
                   }
+                }}
+                onInput={(e) => {
                   const code = [...document.querySelectorAll("[data-element=code]")]
                     .map((el) => (el as HTMLInputElement).value)
                     .join("");
                   setValue(code);
-                }}
-                onInput={(e) => {
                   const all = inputs();
                   const index = all.indexOf(e.currentTarget);
                   if (!e.currentTarget.value) {
