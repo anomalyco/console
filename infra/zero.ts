@@ -47,9 +47,6 @@ const replication = !$dev
       },
       environment: {
         ...zeroEnv,
-        ZERO_SCHEMA_JSON: readFileSync(
-          "./packages/zero/zero-schema.json",
-        ).toString(),
         ZERO_CHANGE_MAX_CONNS: "3",
         ZERO_NUM_SYNC_WORKERS: "0",
       },
@@ -79,6 +76,9 @@ export const zero = cluster.addService("Zero", {
           ZERO_CHANGE_STREAMER_URI: replication!.url.apply((val) =>
             val.replace("http://", "ws://"),
           ),
+          ZERO_SCHEMA_JSON: readFileSync(
+            "./packages/zero/zero-schema.json",
+          ).toString(),
           ZERO_UPSTREAM_MAX_CONNS: "15",
           ZERO_CVR_MAX_CONNS: "160",
         }),
@@ -173,11 +173,3 @@ const cdc = cluster.addService("CDC", {
     },
   ],
 });
-
-new aws.iam.Role(
-  "",
-  {},
-  {
-    pluginDownloadURL,
-  },
-);

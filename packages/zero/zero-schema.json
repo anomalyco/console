@@ -10,12 +10,8 @@
               "related": {
                 "system": "permissions",
                 "correlation": {
-                  "parentField": [
-                    "workspace_id"
-                  ],
-                  "childField": [
-                    "workspace_id"
-                  ]
+                  "parentField": ["workspace_id"],
+                  "childField": ["workspace_id"]
                 },
                 "subquery": {
                   "table": "user",
@@ -34,14 +30,8 @@
                     "op": "="
                   },
                   "orderBy": [
-                    [
-                      "workspace_id",
-                      "asc"
-                    ],
-                    [
-                      "id",
-                      "asc"
-                    ]
+                    ["workspace_id", "asc"],
+                    ["id", "asc"]
                   ]
                 }
               },
@@ -83,9 +73,7 @@
             "customType": null
           }
         },
-        "primaryKey": [
-          "id"
-        ]
+        "primaryKey": ["id"]
       },
       "state_update": {
         "name": "state_update",
@@ -166,10 +154,7 @@
             "customType": null
           }
         },
-        "primaryKey": [
-          "workspace_id",
-          "id"
-        ]
+        "primaryKey": ["workspace_id", "id"]
       },
       "user": {
         "name": "user",
@@ -205,10 +190,7 @@
             "customType": null
           }
         },
-        "primaryKey": [
-          "workspace_id",
-          "id"
-        ]
+        "primaryKey": ["workspace_id", "id"]
       },
       "state_event": {
         "name": "state_event",
@@ -264,22 +246,15 @@
             "customType": null
           }
         },
-        "primaryKey": [
-          "workspace_id",
-          "id"
-        ]
+        "primaryKey": ["workspace_id", "id"]
       }
     },
     "relationships": {
       "state_update": {
         "workspace": [
           {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "id"
-            ],
+            "sourceField": ["workspace_id"],
+            "destField": ["id"],
             "destSchema": "workspace",
             "cardinality": "one"
           }
@@ -288,12 +263,8 @@
       "user": {
         "workspace": [
           {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "id"
-            ],
+            "sourceField": ["workspace_id"],
+            "destField": ["id"],
             "destSchema": "workspace",
             "cardinality": "one"
           }
@@ -302,48 +273,32 @@
       "state_event": {
         "workspace": [
           {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "id"
-            ],
+            "sourceField": ["workspace_id"],
+            "destField": ["id"],
             "destSchema": "workspace",
             "cardinality": "one"
           }
         ],
         "users": [
           {
-            "sourceField": [
-              "workspace_id"
-            ],
-            "destField": [
-              "workspace_id"
-            ],
+            "sourceField": ["workspace_id"],
+            "destField": ["workspace_id"],
             "destSchema": "user",
             "cardinality": "many"
           }
         ],
         "stage": [
           {
-            "sourceField": [
-              "stage_id"
-            ],
-            "destField": [
-              "id"
-            ],
+            "sourceField": ["stage_id"],
+            "destField": ["id"],
             "destSchema": "workspace",
             "cardinality": "one"
           }
         ],
         "update": [
           {
-            "sourceField": [
-              "update_id"
-            ],
-            "destField": [
-              "id"
-            ],
+            "sourceField": ["update_id"],
+            "destField": ["id"],
             "destSchema": "state_update",
             "cardinality": "one"
           }
@@ -352,12 +307,8 @@
       "workspace": {
         "users": [
           {
-            "sourceField": [
-              "id"
-            ],
-            "destField": [
-              "workspace_id"
-            ],
+            "sourceField": ["id"],
+            "destField": ["workspace_id"],
             "destSchema": "user",
             "cardinality": "many"
           }
@@ -366,3 +317,4 @@
     }
   }
 }
+
