@@ -15,7 +15,7 @@
     "env": "env",
     "prepare": "git config --local core.hooksPath .githooks",
     "dev": "sst dev",
-    "sso": "aws sso login --sso-session=sst --no-browser",
+    "sso": "aws sso login --sso-session=sst --no-browser --use-device-code",
     "build": "sst build",
     "deploy": "sst deploy",
     "remove": "sst remove",

@@ -125,6 +125,7 @@ export const GitTrigger = z.discriminatedUnion("type", [
       owner: z.string().min(1),
       repo: z.string().min(1),
     }),
+    title: z.string().max(100), // added on 2025-01-31
     number: z.number(),
     base: z.string().min(1),
     head: z.string().min(1),
