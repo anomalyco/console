@@ -509,7 +509,7 @@ export function Detail() {
   }
 
   const zero = useZero()
-  const [stateEvents] = usePersistentQuery(() => zero.query.state_event)
+  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID))
   const stateEventSummary = createMemo(() => {
 
     const resources = {} as Record<string, {
