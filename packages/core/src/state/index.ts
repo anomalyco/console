@@ -684,6 +684,18 @@ export module State {
       };
       console.log("update", update);
       await createTransaction(async (tx) => {
+        const runID = update.runID
+          ? await tx
+              .select({ id: runTable.id })
+              .from(runTable)
+              .where(
+                and(
+                  eq(runTable.workspaceID, useWorkspace()),
+                  eq(runTable.id, update.runID),
+                ),
+              )
+              .then((r) => r.at(0)?.id || null)
+          : null;
         const max = await tx
           .select({
             count: count(),
@@ -701,7 +713,7 @@ export module State {
           .values({
             id: input.updateID,
             index: max + 1,
-            runID: update.runID || null,
+            runID,
             errors: update.errors,
             stageID: input.config.stageID,
             workspaceID: useWorkspace(),
