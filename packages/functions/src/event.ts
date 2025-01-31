@@ -175,6 +175,7 @@ export const handler = bus.subscriber(
 
         case Run.Event.Created.type: {
           await Run.orchestrate({
+            appID: evt.properties.appID,
             stageName: evt.properties.stageName,
             region: evt.properties.region,
             awsAccountExternalID: evt.properties.awsAccountExternalID,

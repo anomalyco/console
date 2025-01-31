@@ -212,7 +212,7 @@ export const runnerTable = mysqlTable(
       columns: [table.workspaceID, table.appRepoID],
       foreignColumns: [appRepoTable.workspaceID, appRepoTable.id],
     }).onDelete("cascade"),
-  })
+  }),
 );
 
 export const runTable = mysqlTable(
@@ -245,12 +245,13 @@ export const runTable = mysqlTable(
     }).onDelete("cascade"),
     activeStage: unique("unique_stage_active").on(
       table.workspaceID,
+      table.appID,
       table.stageName,
       table.region,
       table.awsAccountExternalID,
-      table.active
+      table.active,
     ),
-  })
+  }),
 );
 
 export const runConfigTable = mysqlTable(
@@ -270,11 +271,11 @@ export const runConfigTable = mysqlTable(
     stagePattern: unique("unique_stage_pattern").on(
       table.workspaceID,
       table.appID,
-      table.stagePattern
+      table.stagePattern,
     ),
     appID: foreignKey({
       columns: [table.workspaceID, table.appID],
       foreignColumns: [app.workspaceID, app.id],
     }).onDelete("cascade"),
-  })
+  }),
 );

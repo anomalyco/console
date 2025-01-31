@@ -200,6 +200,7 @@ export module Run {
     Created: createEvent(
       "run.created",
       z.object({
+        appID: z.string().cuid2(),
         stageName: z.string().min(1),
         region: z.string().min(1),
         awsAccountExternalID: z.string().min(1),
@@ -610,7 +611,7 @@ export module Run {
         parseError = { type: "unknown", properties: { message: e.message } };
       }
 
-      // Create ailed error
+      // Create Failed error
       if (!sstConfig) {
         await useTransaction(async (tx) => {
           const runID = input.id ?? createId();
@@ -713,6 +714,7 @@ export module Run {
 
               await createTransactionEffect(() =>
                 bus.publish(SSTResource.Bus, Event.Created, {
+                  appID: input.appID,
                   stageName,
                   region,
                   awsAccountExternalID: env.awsAccountExternalID,
@@ -759,11 +761,12 @@ export module Run {
 
   export const orchestrate = zod(
     z.object({
+      appID: z.string().cuid2(),
       stageName: z.string().min(1),
       region: z.string().min(1),
       awsAccountExternalID: z.string().min(1),
     }),
-    async ({ stageName, region, awsAccountExternalID }) => {
+    async ({ appID, stageName, region, awsAccountExternalID }) => {
       // Get queued runs
       const runs = await useTransaction((tx) =>
         tx
@@ -772,6 +775,7 @@ export module Run {
           .where(
             and(
               eq(runTable.workspaceID, useWorkspace()),
+              eq(runTable.appID, appID),
               eq(runTable.stageName, stageName),
               eq(runTable.region, region),
               eq(runTable.awsAccountExternalID, awsAccountExternalID),
@@ -842,7 +846,7 @@ export module Run {
         if (!run.awsAccountExternalID)
           throw new Error("Run does not have an AWS account");
 
-        const appRepo = await AppRepo.getByAppID(run.appID);
+        const appRepo = await AppRepo.getByAppID(appID);
         if (!appRepo) throw new Error("AppRepo not found");
 
         context = "assume AWS role";
@@ -890,7 +894,7 @@ export module Run {
         }
 
         // Get run env
-        const env = (await RunConfig.list(run.appID)).find((row) =>
+        const env = (await RunConfig.list(appID)).find((row) =>
           minimatch(stageName, row.stagePattern),
         );
         if (!env) throw new Error("AWS Account ID is not set in Run Env");
@@ -944,7 +948,7 @@ export module Run {
             .then((x) => x[0]),
         );
         if (runCheck?.timeCompleted) {
-          await orchestrate({ stageName, region, awsAccountExternalID });
+          await orchestrate({ appID, stageName, region, awsAccountExternalID });
           return;
         }
 
@@ -952,7 +956,7 @@ export module Run {
         if (run.force) {
           const bootstrap = await bootstrapIon({ credentials, region });
           if (bootstrap) {
-            const app = await App.fromID(run.appID);
+            const app = await App.fromID(appID);
             const s3 = new S3Client({
               credentials,
               region,
@@ -1182,6 +1186,7 @@ export module Run {
       });
 
       await orchestrate({
+        appID: run.appID,
         stageName: run.stageName!,
         region: run.region!,
         awsAccountExternalID: run.awsAccountExternalID!,
