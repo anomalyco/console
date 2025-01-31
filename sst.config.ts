@@ -10,7 +10,7 @@ export default $config({
           region: "us-east-1",
           profile: input.stage === "production" ? "sst-production" : "sst-dev",
         },
-        planetscale: "0.0.7",
+        planetscale: "0.2.2",
       },
     };
   },
