@@ -113,7 +113,7 @@ export async function handler(input: CloudWatchLogsEvent) {
       host: `sts.${process.env.AWS_REGION}.amazonaws.com`,
     },
     protocol: "https",
-    hostname: "sts.amazonaws.com",
+    hostname: `sts.${process.env.AWS_REGION}.amazonaws.com`,
     path: "/",
     query: {
       Action: "GetCallerIdentity",
