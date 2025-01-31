@@ -176,14 +176,18 @@ export module Run {
   };
 
   export const SstConfig = z.object({
-    app: z.object({
-      version: z.string().min(1).optional(),
-      name: z.string().min(1),
-      providers: z.record(z.any()).optional(),
-    }),
-    stage: z.string(),
-    runner: AutodeployConfigRunner.optional(),
-    isDefaultStage: z.boolean(),
+    stages: z.array(
+      z.object({
+        app: z.object({
+          version: z.string().min(1).optional(),
+          name: z.string().min(1),
+          providers: z.record(z.any()).optional(),
+        }),
+        stage: z.string(),
+        isDefaultStage: z.boolean(),
+        runner: AutodeployConfigRunner.optional(),
+      }),
+    ),
   });
   export type SstConfig = z.infer<typeof SstConfig>;
   export const SstConfigParseError = z.object({
@@ -565,11 +569,11 @@ export module Run {
         input.trigger.type === "user"
           ? input.trigger.ref
           : input.trigger.commit.id;
-      const runID = input.id ?? createId();
 
-      let error: RunError | undefined;
+      let parseError: RunError | undefined;
+      let sstConfig: SstConfig | undefined;
       try {
-        error = await (async () => {
+        parseError = await (async () => {
           // Handle no commit data
           if (!input.trigger.commit)
             return { type: "manual_deploy_ref_not_found" as const };
@@ -594,65 +598,135 @@ export module Run {
             };
 
           // Parse `sst.config.ts`
-          const sstConfig = await parseSstConfig({
+          const config = await parseSstConfig({
             content,
             trigger: input.trigger,
           });
-          if ("error" in sstConfig)
-            return {
-              type: sstConfig.error,
-            };
+          if ("error" in config) return { type: config.error };
+          sstConfig = config;
+        })();
+      } catch (e: any) {
+        console.error(e);
+        parseError = { type: "unknown", properties: { message: e.message } };
+      }
 
-          const stageName = sstConfig.stage;
-          const region = sstConfig.app.providers?.aws?.region ?? "us-east-1";
-
-          // Validate app name
-          const app = await App.fromID(input.appID);
-          if (app?.name !== sstConfig.app.name)
-            return {
-              type: "config_app_name_mismatch" as const,
-              properties: {
-                name: sstConfig.app.name,
-              },
-            };
-
-          // Do not remove branches with default `autodeploy` config
-          if (sstConfig.isDefaultStage) {
-            if (
-              input.trigger.type === "branch" &&
-              input.trigger.action === "removed"
-            )
-              return { type: "config_branch_remove_skipped" as const };
-            if (input.trigger.type === "tag")
-              return { type: "config_tag_skipped" as const };
-          }
-
-          // Get AWS Account ID from Run Env
-          const allEnv = await RunConfig.list(input.appID);
-          if (!allEnv.length) return { type: "target_not_found" as const };
-          const env = allEnv.find((row) =>
-            minimatch(stageName, row.stagePattern),
+      // Create ailed error
+      if (!sstConfig) {
+        await useTransaction(async (tx) => {
+          const runID = input.id ?? createId();
+          await tx
+            .insert(runTable)
+            .values({
+              id: runID,
+              workspaceID: useWorkspace(),
+              appID: input.appID,
+              trigger: input.trigger,
+              retrier: input.retrier,
+              force: input.force,
+              error: parseError!,
+            })
+            .execute();
+          await createTransactionEffect(() =>
+            bus.publish(SSTResource.Bus, Event.CreateFailed, { runID }),
           );
-          if (!env)
-            return {
-              type: "target_not_matched" as const,
-              properties: { stage: stageName },
-            };
-          if (!env.awsAccountExternalID)
-            return {
-              type: "target_missing_aws_account" as const,
-              properties: { target: env.stagePattern },
-            };
-          const awsAccount = await AWS.Account.fromExternalID(
-            env.awsAccountExternalID,
-          );
-          if (!awsAccount)
-            return {
-              type: "target_missing_workspace" as const,
-              properties: { target: env.stagePattern },
-            };
+        });
+        return;
+      }
 
-          // Create Run
+      // Create run for each stage
+      for (const config of sstConfig.stages) {
+        const stageName = config.stage;
+        const region = config.app.providers?.aws?.region ?? "us-east-1";
+        const runID = input.id ?? createId();
+
+        let error: RunError | undefined;
+        try {
+          error = await (async () => {
+            // Validate app name
+            const app = await App.fromID(input.appID);
+            if (app?.name !== config.app.name)
+              return {
+                type: "config_app_name_mismatch" as const,
+                properties: {
+                  name: config.app.name,
+                },
+              };
+
+            // Do not remove branches with default `autodeploy` config
+            if (config.isDefaultStage) {
+              if (
+                input.trigger.type === "branch" &&
+                input.trigger.action === "removed"
+              )
+                return { type: "config_branch_remove_skipped" as const };
+              if (input.trigger.type === "tag")
+                return { type: "config_tag_skipped" as const };
+            }
+
+            // Get AWS Account ID from Run Env
+            const allEnv = await RunConfig.list(input.appID);
+            if (!allEnv.length) return { type: "target_not_found" as const };
+            const env = allEnv.find((row) =>
+              minimatch(stageName, row.stagePattern),
+            );
+            if (!env)
+              return {
+                type: "target_not_matched" as const,
+                properties: { stage: stageName },
+              };
+            if (!env.awsAccountExternalID)
+              return {
+                type: "target_missing_aws_account" as const,
+                properties: { target: env.stagePattern },
+              };
+            const awsAccount = await AWS.Account.fromExternalID(
+              env.awsAccountExternalID,
+            );
+            if (!awsAccount)
+              return {
+                type: "target_missing_workspace" as const,
+                properties: { target: env.stagePattern },
+              };
+
+            // Create Run
+            await useTransaction(async (tx) => {
+              await tx
+                .insert(runTable)
+                .values({
+                  id: runID,
+                  workspaceID: useWorkspace(),
+                  appID: input.appID,
+                  stageName,
+                  region,
+                  awsAccountExternalID: env.awsAccountExternalID,
+                  trigger: input.trigger,
+                  retrier: input.retrier,
+                  force: input.force,
+                  config: {
+                    target: {
+                      stage: config.stage,
+                      runner: config.runner,
+                    },
+                  },
+                })
+                .execute();
+
+              await createTransactionEffect(() =>
+                bus.publish(SSTResource.Bus, Event.Created, {
+                  stageName,
+                  region,
+                  awsAccountExternalID: env.awsAccountExternalID,
+                }),
+              );
+            });
+          })();
+        } catch (e: any) {
+          console.error(e);
+          error = { type: "unknown", properties: { message: e.message } };
+        }
+
+        // Create failed error
+        if (error) {
           await useTransaction(async (tx) => {
             await tx
               .insert(runTable)
@@ -661,53 +735,25 @@ export module Run {
                 workspaceID: useWorkspace(),
                 appID: input.appID,
                 stageName,
-                region: sstConfig.app.providers?.aws?.region ?? "us-east-1",
-                awsAccountExternalID: env.awsAccountExternalID,
+                region,
                 trigger: input.trigger,
                 retrier: input.retrier,
                 force: input.force,
                 config: {
                   target: {
-                    stage: sstConfig.stage,
-                    runner: sstConfig.runner,
+                    stage: config.stage,
+                    runner: config.runner,
                   },
                 },
+                error,
               })
               .execute();
-
             await createTransactionEffect(() =>
-              bus.publish(SSTResource.Bus, Event.Created, {
-                stageName,
-                region,
-                awsAccountExternalID: env.awsAccountExternalID,
-              }),
+              bus.publish(SSTResource.Bus, Event.CreateFailed, { runID }),
             );
           });
-        })();
-      } catch (e: any) {
-        console.error(e);
-        error = { type: "unknown", properties: { message: e.message } };
+        }
       }
-      if (!error) return;
-
-      // Create failed error
-      await useTransaction(async (tx) => {
-        await tx
-          .insert(runTable)
-          .values({
-            id: runID,
-            workspaceID: useWorkspace(),
-            appID: input.appID,
-            trigger: input.trigger,
-            retrier: input.retrier,
-            force: input.force,
-            error,
-          })
-          .execute();
-        await createTransactionEffect(() =>
-          bus.publish(SSTResource.Bus, Event.CreateFailed, { runID }),
-        );
-      });
     },
   );
 

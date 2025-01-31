@@ -51,15 +51,15 @@ export async function handler(evt: Run.ConfigParserEvent) {
       // - latest format: `autodeploy.target` + `autodeploy.runner`
       // - legacy format: `autodeploy.target`
       `const trigger = ${JSON.stringify(evt.trigger)};`,
-      // Resolve target stage
-      `let target, stage, isDefaultStage;`,
+      // Resolve target stage(s)
+      `let target, stages, isDefaultStage;`,
       `if (trigger.type === "user") {`,
-      `  stage = "${evt.defaultStage}";`,
+      `  stages = ["${evt.defaultStage}"];`,
       `  isDefaultStage = true;`,
       `} else {`,
       `  if (!mod.console?.autodeploy?.target) {`,
-      `    stage = "${evt.defaultStage}";`,
-      `    isDefaultStage = false;`,
+      `    stages = ["${evt.defaultStage}"];`,
+      `    isDefaultStage = true;`,
       `  }`,
       `  else {`,
       `    target = mod.console.autodeploy.target(trigger);`,
@@ -71,17 +71,23 @@ export async function handler(evt: Run.ConfigParserEvent) {
       `      fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({error:"config_target_no_stage"}));`,
       `      process.exit(0);`,
       `    }`,
-      `    stage = target.stage;`,
+      `    stages = Array.isArray(target.stage) ? target.stage : [target.stage];`,
       `    isDefaultStage = false;`,
       `  }`,
       `}`,
-      // Resolve runner
-      `const runner = typeof mod.console?.autodeploy?.runner === "function"`,
-      `  ? mod.console?.autodeploy?.runner?.({stage})`,
-      `  : (mod.console?.autodeploy?.runner ?? target?.runner);`,
-      // Resolve app config
-      `const app = mod.app({stage});`,
-      `fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({app, stage, runner, isDefaultStage}));`,
+      // Write output
+      `fs.writeFileSync("/tmp/eval-output.mjs", JSON.stringify({`,
+      `  stages: stages.map((stage) => ({`,
+      `    stage,`,
+      `    isDefaultStage,`,
+      //   Resolve runner
+      `    runner: typeof mod.console?.autodeploy?.runner === "function"`,
+      `      ? mod.console?.autodeploy?.runner?.({stage})`,
+      `      : (mod.console?.autodeploy?.runner ?? target?.runner),`,
+      //   Resolve app config
+      `    app: mod.app({stage}),`,
+      `  })),`,
+      `}));`,
     ].join("\n"),
   );
   const evalRet = spawnSync("node /tmp/eval.mjs", {
