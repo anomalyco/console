@@ -45,6 +45,12 @@ export const { use: useAuth, provider: AuthProvider } =
 
 
     createEffect(async () => {
+      if (!result.current && Object.keys(store.accounts).length)
+        result.switch(Object.keys(store.accounts)[0])
+      navigate("/")
+    })
+
+    createEffect(async () => {
       if (accessToken()) return;
       if (Object.keys(store.accounts).length) return;
       const redir = await client.authorize(window.location.origin, "token");
@@ -66,6 +72,7 @@ export const { use: useAuth, provider: AuthProvider } =
       const redir = await client.authorize(window.location.origin, "token");
       window.location.href = redir.url
     });
+
     async function refresh() {
       for (const account of [...Object.values(store.accounts)]) {
         if (!account.refresh) continue;
