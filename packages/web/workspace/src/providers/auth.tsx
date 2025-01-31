@@ -45,9 +45,10 @@ export const { use: useAuth, provider: AuthProvider } =
 
 
     createEffect(async () => {
-      if (!result.current && Object.keys(store.accounts).length)
-        result.switch(Object.keys(store.accounts)[0])
-      navigate("/")
+      // if (!result.current && Object.keys(store.accounts).length) {
+      //   result.switch(Object.keys(store.accounts)[0])
+      //   navigate("/")
+      // }
     })
 
     createEffect(async () => {

@@ -218,6 +218,7 @@ export const LogRoute = new Hono()
               response.logStreams?.[0]?.lastEventTimestamp! - 30 * 60 * 1000,
             ).startOf("hour");
           })();
+      let next = start?.toISO();
       const result = await (async () => {
         let iteration = 0;
 
@@ -273,6 +274,7 @@ export const LogRoute = new Hono()
                     line: result[1]?.value!,
                   });
                   index++;
+                  next = result[0]?.value!;
                   if (processor.ready > 50 - entries.length) {
                     break;
                   }
@@ -287,6 +289,7 @@ export const LogRoute = new Hono()
                     message: result[1]?.value!,
                     timestamp: new Date(result[0]?.value! + " Z").getTime(),
                   });
+                  next = result[0]?.value!;
                   if (length >= 50) {
                     break;
                   }
@@ -313,7 +316,7 @@ export const LogRoute = new Hono()
 
       return c.json({
         completed: result,
-        start: entries.at(-1)?.timestamp || start!.toISO()!,
+        start: next || undefined,
         invocations: entries,
       });
     },
