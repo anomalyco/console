@@ -159,3 +159,11 @@ const cdc = cluster.addService("CDC", {
     },
   ],
 });
+
+new aws.iam.Role(
+  "",
+  {},
+  {
+    pluginDownloadURL,
+  },
+);

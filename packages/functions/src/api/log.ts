@@ -113,7 +113,7 @@ export const LogRoute = new Hono()
             }),
           );
 
-          for (const event of (response.events || []).toReversed()) {
+          for (const event of response.events || []) {
             yield event;
           }
 
@@ -141,9 +141,10 @@ export const LogRoute = new Hono()
             timestamp: event.timestamp!,
             message: stripAnsi(event.message!),
           });
-          if (events.length >= 50) break;
         }
-        return c.json(events);
+        console.log("got", events.length, "events");
+        // take last 50 events
+        return c.json(events.slice(-50));
       }
 
       if (query.hint === "lambda") {
@@ -161,11 +162,9 @@ export const LogRoute = new Hono()
             streamName: event.logStreamName!,
             id: event.eventId!,
           });
-          if (processor.ready >= 50) {
-            break;
-          }
         }
-        const data = processor.flush();
+        console.log("got", processor.ready, "invocations");
+        const data = processor.flush().slice(-50);
         for (const invocation of data) {
           for (const log of invocation.logs) {
             if (!log.message) continue;
