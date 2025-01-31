@@ -1,4 +1,5 @@
 export { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
 import { varchar, timestamp } from "drizzle-orm/pg-core";
 
 export const cuid = (name: string) => varchar(name, { length: 24 });
@@ -26,4 +27,5 @@ export const utc = (name: string) =>
 export const timestamps = {
   timeCreated: utc("time_created").notNull().defaultNow(),
   timeDeleted: utc("time_deleted"),
+  timeUpdated: utc("time_updated").notNull().defaultNow(),
 };

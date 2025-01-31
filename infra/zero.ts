@@ -18,15 +18,15 @@ const image = `registry.hub.docker.com/rocicorp/zero:${tag}`;
 const zeroEnv = {
   NO_COLOR: "1",
   ZERO_UPSTREAM_DB: conn,
-  ZERO_CVR_DB: $interpolate`${conn}_cvr`,
-  ZERO_CHANGE_DB: $interpolate`${conn}_change`,
+  ZERO_CVR_DB: conn,
+  ZERO_CHANGE_DB: conn,
   ZERO_REPLICA_FILE: "/tmp/console.db",
   ZERO_SHARD_ID: $app.stage,
   ZERO_AUTH_JWKS_URL: $interpolate`${auth.url}/.well-known/jwks.json`,
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/backup`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/1`,
       }),
 };
 

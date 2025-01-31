@@ -7,7 +7,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { getTableName } from "drizzle-orm";
 
 export const workspaceTable = pgTable(
   "workspace",
@@ -28,9 +27,5 @@ export function workspaceIndexes(table: any) {
     primary: primaryKey({
       columns: [table.workspaceID, table.id],
     }),
-    // workspace: foreignKey({
-    //   foreignColumns: [workspaceTable.id],
-    //   columns: [table.workspaceID],
-    // }),
   };
 }

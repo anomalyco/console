@@ -1,20 +1,19 @@
-CREATE DATABASE IF NOT EXISTS "console_cvr";
-CREATE DATABASE IF NOT EXISTS "console_change";
-
-CREATE TABLE IF NOT EXISTS "app" (
+CREATE TABLE "app" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	CONSTRAINT "app_workspace_id_id_pk" PRIMARY KEY("workspace_id","id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "run" (
+CREATE TABLE "run" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_started" timestamp with time zone,
 	"time_completed" timestamp with time zone,
 	"app_id" varchar(24) NOT NULL,
@@ -32,22 +31,40 @@ CREATE TABLE IF NOT EXISTS "run" (
 	CONSTRAINT "unique_stage_active" UNIQUE("workspace_id","stage_name","region","aws_account_external_id","active")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "state_count" (
+CREATE TABLE "state_count" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"month" date NOT NULL,
 	"stage_id" varchar(24) NOT NULL,
 	"count" integer NOT NULL,
 	CONSTRAINT "state_count_workspace_id_id_pk" PRIMARY KEY("workspace_id","id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "state_resource" (
+CREATE TABLE "state_event" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
+	"stage_id" varchar(24) NOT NULL,
+	"update_id" varchar(24) NOT NULL,
+	"type" varchar(255) NOT NULL,
+	"sequence" integer NOT NULL,
+	"timestamp" timestamp with time zone NOT NULL,
+	"data" jsonb NOT NULL,
+	CONSTRAINT "state_event_workspace_id_id_pk" PRIMARY KEY("workspace_id","id"),
+	CONSTRAINT "state_event_workspace_id_stage_id_update_id_sequence_unique" UNIQUE("workspace_id","stage_id","update_id","sequence")
+);
+--> statement-breakpoint
+CREATE TABLE "state_resource" (
+	"id" varchar(24) NOT NULL,
+	"workspace_id" varchar(24) NOT NULL,
+	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
+	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"stage_id" varchar(24) NOT NULL,
 	"update_id" varchar(24) NOT NULL,
 	"update_created_id" varchar(24),
@@ -64,11 +81,12 @@ CREATE TABLE IF NOT EXISTS "state_resource" (
 	CONSTRAINT "urn" UNIQUE("workspace_id","stage_id","urn")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "state_update" (
+CREATE TABLE "state_update" (
 	"id" varchar(24) NOT NULL,
 	"workspace_id" varchar(24) NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"stage_id" varchar(24) NOT NULL,
 	"run_id" varchar(24),
 	"command" jsonb NOT NULL,
@@ -83,15 +101,29 @@ CREATE TABLE IF NOT EXISTS "state_update" (
 	CONSTRAINT "state_update_workspace_id_id_pk" PRIMARY KEY("workspace_id","id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "workspace" (
+CREATE TABLE "user" (
+	"id" varchar(24) NOT NULL,
+	"workspace_id" varchar(24) NOT NULL,
+	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
+	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"time_seen" timestamp with time zone,
+	CONSTRAINT "user_workspace_id_id_pk" PRIMARY KEY("workspace_id","id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace" (
 	"id" varchar(24) PRIMARY KEY NOT NULL,
 	"time_created" timestamp with time zone DEFAULT now() NOT NULL,
 	"time_deleted" timestamp with time zone,
+	"time_updated" timestamp with time zone DEFAULT now() NOT NULL,
 	"slug" varchar(255) NOT NULL,
 	"setting_issue" boolean NOT NULL,
 	"time_gated" timestamp with time zone
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "name" ON "app" USING btree ("workspace_id","name");--> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "month" ON "state_count" USING btree ("workspace_id","stage_id","month");--> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "slug" ON "workspace" USING btree ("slug");
+CREATE UNIQUE INDEX "name" ON "app" USING btree ("workspace_id","name");--> statement-breakpoint
+CREATE UNIQUE INDEX "month" ON "state_count" USING btree ("workspace_id","stage_id","month");--> statement-breakpoint
+CREATE UNIQUE INDEX "email" ON "user" USING btree ("workspace_id","email");--> statement-breakpoint
+CREATE INDEX "email_global" ON "user" USING btree ("email");--> statement-breakpoint
+CREATE UNIQUE INDEX "slug" ON "workspace" USING btree ("slug");
