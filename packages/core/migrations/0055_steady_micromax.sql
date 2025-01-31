@@ -1,0 +1,1 @@
+CREATE INDEX `id` ON `state_update` (`id`);

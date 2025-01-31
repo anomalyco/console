@@ -11,6 +11,7 @@ import {
   bigint,
   date,
   uniqueIndex,
+  index,
 } from "drizzle-orm/mysql-core";
 import { cuid, timestampsNext, workspaceID } from "../util/sql";
 import { stage } from "../app/app.sql";
@@ -49,6 +50,7 @@ export const stateUpdateTable = mysqlTable(
 
   (table) => ({
     ...workspaceIndexes(table),
+    updateID: index("id").on(table.id),
     stageID: foreignKey({
       name: "state_update_stage_id",
       columns: [table.workspaceID, table.stageID],

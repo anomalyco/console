@@ -18,6 +18,7 @@ import { HTTPException } from "hono/http-exception";
 import { LocalRoute } from "./local";
 import { IngestRoute } from "./ingest";
 import { WorkspaceRoute } from "./workspace";
+import { LinkRoute } from "./link";
 
 export const app = new Hono()
   .use(logger())
@@ -77,7 +78,7 @@ export const app = new Hono()
   .route("/log", LogRoute)
   .route("/ingest", IngestRoute)
   .route("/workspace", WorkspaceRoute)
+  .route("/link", LinkRoute)
   .route("/local", LocalRoute);
 
-console.log(process.env.SST_DEV);
 export const handler = process.env.SST_DEV ? handle(app) : streamHandle(app);
