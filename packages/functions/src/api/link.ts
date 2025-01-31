@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { HTTPException } from "hono/http-exception";
-import { db, eq } from "@console/core/drizzle/index";
+import { db, eq, and } from "@console/core/drizzle/index";
 import { stateUpdateTable } from "@console/core/state/state.sql";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { app, stage } from "@console/core/app/app.sql";
@@ -20,8 +20,17 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
         })
         .from(stateUpdateTable)
         .innerJoin(workspace, eq(workspace.id, stateUpdateTable.workspaceID))
-        .innerJoin(stage, eq(stage.id, stateUpdateTable.stageID))
-        .innerJoin(app, eq(app.id, stage.appID))
+        .innerJoin(
+          stage,
+          and(
+            eq(stage.id, stateUpdateTable.stageID),
+            eq(stage.workspaceID, stateUpdateTable.workspaceID),
+          ),
+        )
+        .innerJoin(
+          app,
+          and(eq(app.id, stage.appID), eq(app.workspaceID, stage.workspaceID)),
+        )
         .where(eq(stateUpdateTable.id, identity))
         .then((r) => r.at(0));
       if (!result)
