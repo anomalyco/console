@@ -110,7 +110,7 @@ export async function handler(input: CloudWatchLogsEvent) {
   const url = await signer.presign({
     method: "GET",
     headers: {
-      host: "sts.amazonaws.com",
+      host: `sts.${process.env.AWS_REGION}.amazonaws.com`,
     },
     protocol: "https",
     hostname: "sts.amazonaws.com",
