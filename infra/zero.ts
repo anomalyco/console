@@ -56,6 +56,13 @@ const replication = !$dev
       logging: {
         retention: "1 month",
       },
+      transform: {
+        taskDefinition: {
+          ephemeralStorage: {
+            sizeInGib: 200,
+          },
+        },
+      },
     })
   : undefined;
 
@@ -82,6 +89,13 @@ export const zero = cluster.addService("Zero", {
       { listen: "443/https", forward: "4848/http" },
       { listen: "80/http", forward: "4848/http" },
     ],
+  },
+  transform: {
+    taskDefinition: {
+      ephemeralStorage: {
+        sizeInGib: 200,
+      },
+    },
   },
   dev: {
     command: "bun dev",
