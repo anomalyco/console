@@ -445,7 +445,7 @@ export function AWS() {
       .then((r) => r.json());
     past.ingest(result.invocations);
     setPastResult({
-      start: result.start,
+      start: result.start || undefined,
       completed: result.completed,
       loading: false,
     });
