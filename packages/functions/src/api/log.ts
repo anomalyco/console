@@ -252,10 +252,12 @@ export const LogRoute = new Hono()
               }),
             );
             const results = response.results || [];
-            results.sort((a, b) => a[0]!.value!.localeCompare(b[0]!.value!));
 
             if (response.status === "Complete") {
               if (query.hint === "lambda") {
+                results.sort((a, b) =>
+                  a[0]!.value!.localeCompare(b[0]!.value!),
+                );
                 let index = 0;
 
                 async function flush() {
@@ -265,6 +267,7 @@ export const LogRoute = new Hono()
                   }
                 }
 
+                // process in ascending order, need to process all to get the last 50
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
                   await processor.process({
@@ -276,17 +279,18 @@ export const LogRoute = new Hono()
                   index++;
                   if (!next || timestamp.toISOString() < next)
                     next = timestamp.toISOString();
-                  if (processor.ready > 50 - entries.length) {
-                    break;
-                  }
                 }
                 await flush();
               }
 
               if (query.hint === "normal") {
+                results.sort((b, a) =>
+                  a[0]!.value!.localeCompare(b[0]!.value!),
+                );
+                // process in descending order, can stop after 50
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
-                  const length = entries.push({
+                  const length = entries.unshift({
                     id: result[3]!.value!,
                     message: result[1]?.value!,
                     timestamp: timestamp.getTime(),
@@ -320,7 +324,7 @@ export const LogRoute = new Hono()
       return c.json({
         completed: result,
         start: next,
-        invocations: entries,
+        invocations: entries.slice(-50),
       });
     },
   )
