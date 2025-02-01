@@ -45,6 +45,9 @@ export const stateReceiveEventLog = zod(
     });
     const inserts = [] as (typeof stateEventTable.$inferInsert)[];
     const workspaceID = useWorkspace();
+
+    const progress = new Set<string>();
+
     for await (const line of lines) {
       const parsed = JSON.parse(line);
       const {
@@ -56,6 +59,11 @@ export const stateReceiveEventLog = zod(
         timestamp: number;
       } & EngineEvent = parsed;
       const type = Object.keys(rest)[0] as keyof typeof rest;
+      if (rest.progressEvent) {
+        if (!rest.progressEvent.done && progress.has(rest.progressEvent.id))
+          continue;
+        progress.add(rest.progressEvent.id);
+      }
       if (rest.diagnosticEvent && rest.diagnosticEvent.severity === "debug")
         continue;
       const resourceEvent =

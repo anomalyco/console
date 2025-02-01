@@ -346,6 +346,15 @@ export interface StartDebuggingEvent {
   config: Record<string, any>;
 }
 
+export interface ProgressEvent {
+  id: string;
+  done: boolean;
+  message: string;
+  type: "plugin-download";
+  total: number;
+  received: number;
+}
+
 /**
  * A Pulumi engine event, such as a change to a resource or diagnostic message.
  * This is intended to capture a discriminated union -- exactly one event field
@@ -422,4 +431,6 @@ export interface EngineEvent {
    * A debugging event, if the engine event represents a debugging message.
    */
   startDebuggingEvent?: StartDebuggingEvent;
+
+  progressEvent?: ProgressEvent;
 }
