@@ -1,6 +1,6 @@
-import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { stripeTable } from "./billing.sql";
+import { Resource } from "sst";
+import { Standing, stripeTable } from "./billing.sql";
 import { zod } from "../util/zod";
 import { useTransaction } from "../util/transaction";
 import { eq, and } from "drizzle-orm";
@@ -10,12 +10,43 @@ import { stripe } from "../stripe";
 
 export * as Stripe from "./stripe";
 
-export const Info = createSelectSchema(stripeTable, {
-  customerID: (schema) => schema.customerID.trim().nonempty(),
-  subscriptionID: (schema) => schema.subscriptionID.trim().nonempty(),
-  subscriptionItemID: (schema) => schema.subscriptionItemID.trim().nonempty(),
+export const Info = z.object({
+  id: z.string().cuid2(),
+  customerID: z.string().optional(),
+  subscriptionID: z.string().optional(),
+  subscriptionItemID: z.string().optional(),
+  price: z.enum(["invocations", "resources"]).optional(),
+  standing: z.enum(Standing),
+  time: z.object({
+    created: z.string(),
+    deleted: z.string().optional(),
+    updated: z.string(),
+    trialEnded: z.string().optional(),
+  }),
 });
 export type Info = z.infer<typeof Info>;
+
+export function serialize(input: typeof stripeTable.$inferSelect): Info {
+  return {
+    id: input.id,
+    customerID: input.customerID ?? undefined,
+    subscriptionID: input.subscriptionID ?? undefined,
+    subscriptionItemID: input.subscriptionItemID ?? undefined,
+    price:
+      input.priceID === Resource.StripeInvocationsPriceID.value
+        ? ("invocations" as const)
+        : input.priceID === Resource.StripeResourcesPriceID.value
+        ? ("resources" as const)
+        : undefined,
+    standing: input.standing ?? "good",
+    time: {
+      created: input.timeCreated,
+      updated: input.timeUpdated,
+      deleted: input.timeDeleted ?? undefined,
+      trialEnded: input.timeTrialEnded ?? undefined,
+    },
+  };
+}
 
 export function get() {
   return useTransaction((tx) =>
@@ -24,7 +55,7 @@ export function get() {
       .from(stripeTable)
       .where(eq(stripeTable.workspaceID, useWorkspace()))
       .execute()
-      .then((rows) => rows.at(0))
+      .then((rows) => rows.at(0)),
   );
 }
 
@@ -58,7 +89,7 @@ export async function createCustomer() {
           standing: "good",
         },
       })
-      .execute()
+      .execute(),
   );
 }
 
@@ -69,15 +100,15 @@ export const fromCustomerID = zod(z.string(), (input) =>
       .from(stripeTable)
       .where(and(eq(stripeTable.customerID, input)))
       .execute()
-      .then((rows) => rows.at(0))
-  )
+      .then((rows) => rows.at(0)),
+  ),
 );
 
 export const setSubscription = zod(
-  Info.pick({
-    subscriptionID: true,
-    subscriptionItemID: true,
-    priceID: true,
+  z.object({
+    subscriptionID: z.string().min(1),
+    subscriptionItemID: z.string().min(1),
+    priceID: z.string().min(1),
   }),
   (input) =>
     useTransaction((tx) =>
@@ -89,8 +120,8 @@ export const setSubscription = zod(
           priceID: input.priceID,
         })
         .where(eq(stripeTable.workspaceID, useWorkspace()))
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export const removeSubscription = zod(
@@ -102,16 +133,17 @@ export const removeSubscription = zod(
         .set({
           subscriptionItemID: null,
           subscriptionID: null,
+          priceID: null,
         })
         .where(and(eq(stripeTable.subscriptionID, stripeSubscriptionID)))
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export const setStanding = zod(
-  Info.pick({
-    subscriptionID: true,
-    standing: true,
+  z.object({
+    subscriptionID: z.string().min(1),
+    standing: z.enum(Standing),
   }),
   (input) =>
     useTransaction((tx) =>
@@ -121,8 +153,8 @@ export const setStanding = zod(
           standing: input.standing,
         })
         .where(and(eq(stripeTable.subscriptionID, input.subscriptionID!)))
-        .execute()
-    )
+        .execute(),
+    ),
 );
 
 export const grantTrial = zod(z.string().nonempty(), (timeTrialEnded) =>
@@ -133,6 +165,6 @@ export const grantTrial = zod(z.string().nonempty(), (timeTrialEnded) =>
         timeTrialEnded: timeTrialEnded,
       })
       .where(eq(stripeTable.workspaceID, useWorkspace()))
-      .execute()
-  )
+      .execute(),
+  ),
 );

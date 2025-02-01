@@ -21,7 +21,6 @@ WebhookRoute.post("/stripe", async (c) => {
     if (!item) throw new Error("Workspace not found for customer");
     if (item.subscriptionID)
       throw new Error("Workspace already has a subscription");
-
     if (!items.data[0])
       throw new Error("Stripe webhook did not return a subscription item");
     const subscriptionItemID = items.data[0].id;

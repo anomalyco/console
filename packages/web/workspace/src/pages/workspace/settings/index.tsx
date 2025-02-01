@@ -256,162 +256,169 @@ export function SettingsRoute() {
               Usage for the current billing period
             </Text>
           </Stack>
-          <Stack space="3">
-            <UsagePlanCopy>
-              Calculated for the period of {cycle().start} — {cycle().end}.{" "}
-              <a
-                href="https://sst.dev/docs/console#old-pricing"
-                target="_blank"
-              >
-                Learn more
-              </a>
-              .
-            </UsagePlanCopy>
-            <UsagePanel>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Invocations
-                </Text>
-                <Text code size="xl">
-                  {invocations()}
-                </Text>
-              </UsageStat>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Current Cost
-                </Text>
-                <Row space="0.5" vertical="center">
-                  <Text size="sm" color="secondary">
-                    $
+          <Stack space="7">
+            <Show when={stripe()?.price === "invocations"}>
+              <Stack space="2">
+                <UsagePanel>
+                  <UsageStat stretch>
+                    <Text code uppercase size="mono_xs" color="dimmed">
+                      Invocations
+                    </Text>
+                    <Text code size="xl">
+                      {invocations()}
+                    </Text>
+                  </UsageStat>
+                  <UsageStat stretch>
+                    <Text code uppercase size="mono_xs" color="dimmed">
+                      Current Cost
+                    </Text>
+                    <Row space="0.5" vertical="center">
+                      <Text size="sm" color="secondary">
+                        $
+                      </Text>
+                      <Text code weight="medium" size="xl">
+                        {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                      </Text>
+                    </Row>
+                  </UsageStat>
+                  <UsageTiers>
+                    <Stack space="1">
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text size="mono_xs" on="surface" color="secondary">
+                          Free
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
+                          ${INVOCATIONS_PRICING_PLAN[1].rate} per
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
+                          ${INVOCATIONS_PRICING_PLAN[2].rate} per
+                        </Text>
+                      </Row>
+                    </Stack>
+                  </UsageTiers>
+                </UsagePanel>
+                <UsagePlanCopy>
+                  Below is the new pricing plan. If you'd like to switch, you
+                  can unsubscribe from the current plan and resubscribe.{" "}
+                  <a
+                    href="http://sst.dev/blog/console-pricing-update"
+                    target="_blank"
+                  >
+                    Learn more
+                  </a>
+                  .
+                </UsagePlanCopy>
+              </Stack>
+            </Show>
+            <Stack space="2">
+              <UsagePanel>
+                <UsageStat stretch>
+                  <Text code uppercase size="mono_xs" color="dimmed">
+                    Active Resources
                   </Text>
-                  <Text code weight="medium" size="xl">
-                    {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                  <Text code size="xl">
+                    {resources()}
                   </Text>
-                </Row>
-              </UsageStat>
-              <UsageTiers>
-                <Stack space="1">
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].from)} -{" "}
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[0].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text size="mono_xs" on="surface" color="secondary">
-                      Free
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].from)} -{" "}
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[1].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${INVOCATIONS_PRICING_PLAN[1].rate} per
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(INVOCATIONS_PRICING_PLAN[2].from)} +
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${INVOCATIONS_PRICING_PLAN[2].rate} per
-                    </Text>
-                  </Row>
-                </Stack>
-              </UsageTiers>
-            </UsagePanel>
-          </Stack>
-          <Stack space="3">
-            <UsagePlanCopy>
-              Starting Feb 1, we'll be using the following pricing plan.{" "}
-              <a
-                href="https://sst.dev/blog/console-pricing-update"
-                target="_blank"
-              >
-                Read the announcement
-              </a>
-              .
-            </UsagePlanCopy>
-            <UsagePanel>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  Active Resources
-                </Text>
-                <Text code size="xl">
-                  {resources()}
-                </Text>
-              </UsageStat>
-              <UsageStat stretch>
-                <Text code uppercase size="mono_xs" color="dimmed">
-                  New Cost
-                </Text>
-                <Row space="0.5" vertical="center">
-                  <Text size="sm" color="secondary">
-                    $
+                </UsageStat>
+                <UsageStat stretch>
+                  <Text code uppercase size="mono_xs" color="dimmed">
+                    {stripe()?.price === "invocations"
+                      ? "New Cost"
+                      : "Current Cost"}
                   </Text>
-                  <Text code weight="medium" size="xl">
-                    {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
-                  </Text>
-                </Row>
-              </UsageStat>
-              <UsageTiers>
-                <Stack space="1">
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {"<= "}
-                      {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
+                  <Row space="0.5" vertical="center">
+                    <Text size="sm" color="secondary">
+                      $
                     </Text>
-                    <Text size="mono_xs" on="surface" color="secondary">
-                      Free
+                    <Text code weight="medium" size="xl">
+                      {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
                     </Text>
                   </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
-                      {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${RESOURCES_PRICING_PLAN[1].rate} per
-                    </Text>
-                  </Row>
-                  <Row space={TIER_LABEL_SPACE}>
-                    <UsageStatTier>
-                      {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
-                    </UsageStatTier>
-                    <Text color="dimmed" on="surface" size="xs">
-                      →
-                    </Text>
-                    <Text code size="mono_xs" on="surface" color="secondary">
-                      ${RESOURCES_PRICING_PLAN[2].rate} per
-                    </Text>
-                  </Row>
-                </Stack>
-              </UsageTiers>
-            </UsagePanel>
-            <UsagePlanCopy>
-              Active resources from{" "}
-              {resourceStages() === 1
-                ? "1 updated stage"
-                : `${resourceStages()} updated stages`}{" "}
-              during {cycle().start} — {cycle().end}. Feel free to{" "}
-              <a href="mailto:hello@sst.dev">contact us</a> if you have any
-              questions.
-            </UsagePlanCopy>
+                </UsageStat>
+                <UsageTiers>
+                  <Stack space="1">
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {"<= "}
+                        {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text size="mono_xs" on="surface" color="secondary">
+                        Free
+                      </Text>
+                    </Row>
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
+                        {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text code size="mono_xs" on="surface" color="secondary">
+                        ${RESOURCES_PRICING_PLAN[1].rate} per
+                      </Text>
+                    </Row>
+                    <Row space={TIER_LABEL_SPACE}>
+                      <UsageStatTier>
+                        {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
+                      </UsageStatTier>
+                      <Text color="dimmed" on="surface" size="xs">
+                        →
+                      </Text>
+                      <Text code size="mono_xs" on="surface" color="secondary">
+                        ${RESOURCES_PRICING_PLAN[2].rate} per
+                      </Text>
+                    </Row>
+                  </Stack>
+                </UsageTiers>
+              </UsagePanel>
+              <UsagePlanCopy>
+                Active resources from{" "}
+                {resourceStages() === 1
+                  ? "1 updated stage"
+                  : `${resourceStages()} updated stages`}{" "}
+                during {cycle().start} — {cycle().end}. Feel free to{" "}
+                <a href="mailto:hello@sst.dev">contact us</a> if you have any
+                questions.
+              </UsagePlanCopy>
+            </Stack>
           </Stack>
         </Stack>
         <Divider />
@@ -448,7 +455,7 @@ export function SettingsRoute() {
               >
                 Add Billing Details
               </Button>
-              <Show when={invocations() > INVOCATIONS_PRICING_PLAN[0].to}>
+              <Show when={resources() > RESOURCES_PRICING_PLAN[0].to}>
                 <Text color="danger" size="sm">
                   Your current usage is above the free tier. Please add your
                   billing details.

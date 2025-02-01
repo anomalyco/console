@@ -2,8 +2,14 @@ import { createInitializedContext } from "@console/web/common/context";
 import { useAuth } from "@console/web/providers/auth";
 import { Workspace } from "@console/core/workspace/index";
 import { type app } from "@console/functions/api/api";
+import { useReplicache } from "@console/web/providers/replicache";
+import {
+  RESOURCES_PRICING_PLAN,
+  ResourcesUsageStore,
+} from "@console/web/data/usage";
 import { hc } from "hono/client";
 import { Accessor, createContext, useContext } from "solid-js";
+import { sumBy } from "remeda";
 
 export const WorkspaceContext = createContext<Accessor<Workspace.Info>>();
 
@@ -16,8 +22,14 @@ export function useWorkspace() {
 export const { use: useApi, provider: ApiProvider } = createInitializedContext(
   "Api",
   () => {
+    const rep = useReplicache();
     const auth = useAuth();
     const workspace = useWorkspace();
+    const usage = ResourcesUsageStore.list.watch(
+      rep,
+      () => [],
+      (items) => sumBy(items, (item) => item.count),
+    );
     const client = hc<typeof app>(import.meta.env.VITE_API_URL, {
       headers: {
         Authorization: `Bearer ${auth.current.access}`,
@@ -27,6 +39,9 @@ export const { use: useApi, provider: ApiProvider } = createInitializedContext(
     return {
       client,
       ready: true,
+      get isFree() {
+        return usage() <= RESOURCES_PRICING_PLAN[0].to;
+      },
     };
   },
 );

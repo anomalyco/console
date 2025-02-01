@@ -1,8 +1,8 @@
 import { createSelectSchema } from "drizzle-zod";
+import { Resource } from "sst";
 import { usage } from "./billing.sql";
 import { z } from "zod";
 import { zod } from "../util/zod";
-import { createId } from "@paralleldrive/cuid2";
 import { eq, and, between, sql } from "drizzle-orm";
 import { useTransaction } from "../util/transaction";
 import { useWorkspace } from "../actor";
@@ -10,6 +10,7 @@ import { workspace } from "../workspace/workspace.sql";
 import { Stripe } from "./stripe";
 import { DateTime } from "luxon";
 import { Warning } from "../warning";
+import { stateCountTable } from "../state/state.sql";
 export * as Billing from "./index";
 export { Stripe } from "./stripe";
 
@@ -20,31 +21,9 @@ export const Usage = createSelectSchema(usage, {
 });
 export type Usage = z.infer<typeof Usage>;
 
-const FREE_INVOCATIONS = 1000000;
+const FREE_RESOURCES = 350;
 
-export const createUsage = zod(
-  Usage.pick({ stageID: true, day: true, invocations: true }),
-  (input) =>
-    useTransaction((tx) =>
-      tx
-        .insert(usage)
-        .values({
-          id: createId(),
-          workspaceID: useWorkspace(),
-          stageID: input.stageID,
-          day: input.day,
-          invocations: input.invocations,
-        })
-        .onDuplicateKeyUpdate({
-          set: {
-            invocations: input.invocations,
-          },
-        })
-        .execute(),
-    ),
-);
-
-export const countByStartAndEndDay = zod(
+export const countInvocationsByStartAndEndDay = zod(
   z.object({
     startDay: Usage.shape.day,
     endDay: Usage.shape.day,
@@ -63,6 +42,29 @@ export const countByStartAndEndDay = zod(
         .execute(),
     );
     return rows.reduce((acc, usage) => acc + usage.invocations, 0);
+  },
+);
+
+export const countResourcesByMonth = zod(
+  z.object({
+    month: z.string().min(1),
+  }),
+  async (input) => {
+    return await useTransaction((tx) =>
+      tx
+        .select({
+          total: sql<number>`SUM(${stateCountTable.count})`,
+        })
+        .from(stateCountTable)
+        .where(
+          and(
+            eq(stateCountTable.workspaceID, useWorkspace()),
+            eq(stateCountTable.month, input.month),
+          ),
+        )
+        .execute()
+        .then((x) => x[0]?.total ?? 0),
+    );
   },
 );
 
@@ -85,22 +87,21 @@ export const updateGatingStatus = zod(z.void(), async () => {
       return false;
     }
 
-    const warnings = await Warning.forType({
-      type: "permission_usage",
-      stageID: null,
-    });
-    if (warnings.length) return true;
-
-    // check usage
-    if (!customer?.subscriptionID) {
-      const startDate = DateTime.now().toUTC().startOf("day");
-      const invocations = await countByStartAndEndDay({
-        startDay: startDate.startOf("month").toSQLDate()!,
-        endDay: startDate.endOf("month").toSQLDate()!,
+    // note: only check for permission_usage warnings if the price is for invocations
+    if (customer?.priceID === Resource.StripeInvocationsPriceID.value) {
+      const warnings = await Warning.forType({
+        type: "permission_usage",
+        stageID: null,
       });
-      if (invocations > FREE_INVOCATIONS) return true;
+      if (warnings.length) return true;
     }
-    return false;
+    if (customer?.priceID === Resource.StripeResourcesPriceID.value)
+      return false;
+
+    const resources = await countResourcesByMonth({
+      month: DateTime.utc().startOf("month").toSQLDate()!,
+    });
+    return resources > FREE_RESOURCES;
   }
 
   const timeGated = (await isGated()) ? sql`NOW()` : null;

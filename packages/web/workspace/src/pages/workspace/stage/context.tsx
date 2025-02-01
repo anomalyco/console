@@ -7,17 +7,7 @@ import { NavigationAction, useCommandBar } from "../command-bar";
 import { useLocalContext } from "@console/web/providers/local";
 import { createInitializedContext } from "@console/web/common/context";
 import { IssueStore } from "@console/web/data/issue";
-import { InvocationsUsageStore } from "@console/web/data/usage";
-import {
-  flatMap,
-  groupBy,
-  map,
-  mapValues,
-  pipe,
-  sortBy,
-  sumBy,
-  values,
-} from "remeda";
+import { flatMap, groupBy, map, mapValues, pipe, sortBy, values } from "remeda";
 import { useWorkspace } from "../context";
 
 export const StageContext =
@@ -43,11 +33,6 @@ export function createStageContext() {
       ),
   );
   const local = useLocalContext();
-  const usage = InvocationsUsageStore.forStage.watch(
-    rep,
-    () => [stage()?.id || "unknown"],
-    (items) => sumBy(items, (item) => item.invocations),
-  );
 
   return {
     get ready() {
@@ -65,9 +50,6 @@ export function createStageContext() {
         local.stage === stage()?.name &&
         (!local.region || stage()?.region === local.region)
       );
-    },
-    get isFree() {
-      return usage() < 1_000_000;
     },
   };
 }

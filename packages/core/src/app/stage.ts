@@ -10,21 +10,11 @@ import {
 import { createId } from "@paralleldrive/cuid2";
 import { useWorkspace } from "../actor";
 import { awsAccount } from "../aws/aws.sql";
-import { and, asc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { AWS } from "../aws";
-import {
-  GetObjectCommand,
-  ListObjectsV2Command,
-  S3Client,
-} from "@aws-sdk/client-s3";
-import { Enrichers, Resource } from "./resource";
-import { db } from "../drizzle";
 import { createEvent } from "../event";
 import { Replicache } from "../replicache";
 import { issueSubscriber } from "../issue/issue.sql";
-import { bus } from "sst/aws/bus";
-import { Resource as SSTResource } from "sst";
-import { State } from "../state";
 export * as Stage from "./stage";
 
 export const Events = {
@@ -151,28 +141,6 @@ export const put = zod(
         .execute()
         .then((x) => x.at(0)!.id);
       return { appID, stageID };
-    }),
-);
-
-export const list = zod(
-  z.object({
-    cursor: z.string().min(1).optional(),
-  }),
-  ({ cursor }) =>
-    useTransaction(async (tx) => {
-      const SIZE = 100000;
-      const items = await tx
-        .select()
-        .from(stage)
-        .where(cursor ? gt(stage.id, cursor) : undefined)
-        .limit(SIZE)
-        .orderBy(asc(stage.id))
-        .execute()
-        .then((rows) => rows);
-      return {
-        items,
-        cursor: items.length < SIZE ? undefined : items.at(-1)?.id,
-      };
     }),
 );
 

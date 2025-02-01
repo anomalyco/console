@@ -60,6 +60,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { Hono } from "hono";
 import { notPublic } from "./auth";
 import { VisibleError } from "@console/core/util/error";
+import { Billing } from "@console/core/billing/index";
 import { server } from "../replicache/server";
 
 export const ReplicacheRoute = new Hono().use(notPublic);
@@ -127,6 +128,7 @@ const TABLE_SELECT = {
 
 const TABLE_PROJECTION = {
   alert: (input) => Alert.serialize(input),
+  stripe: (input) => Billing.Stripe.serialize(input),
   appRepo: (input) => AppRepo.serializeAppRepo(input),
   githubOrg: (input) => Github.serializeOrg(input),
   githubRepo: (input) => Github.serializeRepo(input),

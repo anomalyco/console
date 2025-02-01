@@ -68,6 +68,7 @@ import { AutodeployEmail } from "@console/mail/emails/templates/AutodeployEmail"
 import path from "path";
 import { bus } from "sst/aws/bus";
 import { githubOrgTable, githubRepoTable } from "../git/git.sql";
+import { Workspace } from "../workspace";
 import { bootstrapIon } from "../aws/bootstrap";
 
 export { RunConfig } from "./config";
@@ -566,6 +567,9 @@ export module Run {
       force: z.boolean().optional(),
     }),
     async (input) => {
+      const workspace = await Workspace.fromID(useWorkspace());
+      if (workspace?.timeGated) return;
+
       const ref =
         input.trigger.type === "user"
           ? input.trigger.ref

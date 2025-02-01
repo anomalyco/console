@@ -1,7 +1,10 @@
 import { A, Navigate, Route, useNavigate } from "@solidjs/router";
-import { JSX, Match, Show, Switch, createMemo } from "solid-js";
+import { Match, Show, Switch, createMemo } from "solid-js";
 import { StateUpdateStore } from "@console/web/data/app";
-import { NavigationAction, useCommandBar } from "@console/web/pages/workspace/command-bar";
+import {
+  NavigationAction,
+  useCommandBar,
+} from "@console/web/pages/workspace/command-bar";
 import { useReplicache } from "@console/web/providers/replicache";
 import {
   StageContext,
@@ -23,19 +26,20 @@ import {
   HeaderProvider,
   useHeaderContext,
 } from "../header";
-import { IconExclamationTriangle } from "@console/web/ui/icons";
-import { styled } from "@macaron-css/solid";
 import { NotFound } from "../../not-found";
 import { TabTitle } from "@console/web/ui/button";
-import { Stack, Row } from "@console/web/ui/layout";
-import { theme } from "@console/web/ui/theme";
-import { utility } from "@console/web/ui/utility";
+import { Row, Fullscreen } from "@console/web/ui/layout";
+import { useWorkspace } from "../context";
+import { useApi } from "../context";
+import { GatedWarning } from "../app/warning";
 
 export const StageRoute = (
   <Route
     component={(props) => {
+      const api = useApi();
       const ctx = createStageContext();
       const rep = useReplicache();
+      const workspace = useWorkspace();
       return (
         <Show when={ctx.ready}>
           <Switch>
@@ -72,6 +76,17 @@ export const StageRoute = (
                                     inset="header"
                                     message="Stage has been removed"
                                   />
+                                </Match>
+                                <Match
+                                  when={
+                                    workspace().timeGated != null &&
+                                    !ctx.connected &&
+                                    !api.isFree
+                                  }
+                                >
+                                  <Fullscreen inset="header-tabs">
+                                    <GatedWarning />
+                                  </Fullscreen>
                                 </Match>
                                 <Match when={true}>
                                   <PageHeader>
@@ -139,61 +154,6 @@ export const StageRoute = (
     <Route path="*" component={() => <NotFound inset="header-tabs" />} />
   </Route>
 );
-
-const WarningRoot = styled("div", {
-  base: {
-    ...utility.stack(8),
-    marginTop: "-7vh",
-    alignItems: "center",
-    width: 400,
-  },
-});
-
-const WarningIcon = styled("div", {
-  base: {
-    width: 42,
-    height: 42,
-    color: theme.color.icon.dimmed,
-  },
-});
-
-const WarningTitle = styled("span", {
-  base: {
-    ...utility.text.line,
-    lineHeight: "normal",
-    fontSize: theme.font.size.lg,
-    fontWeight: theme.font.weight.medium,
-  },
-});
-
-const WarningDescription = styled("span", {
-  base: {
-    textAlign: "center",
-    fontSize: theme.font.size.sm,
-    lineHeight: theme.font.lineHeight,
-    color: theme.color.text.secondary.base,
-  },
-});
-
-interface WarningProps {
-  title: JSX.Element;
-  description: JSX.Element;
-}
-export function Warning(props: WarningProps) {
-  return (
-    <WarningRoot>
-      <Stack horizontal="center" space="5">
-        <WarningIcon>
-          <IconExclamationTriangle />
-        </WarningIcon>
-        <Stack horizontal="center" space="2">
-          <WarningTitle>{props.title}</WarningTitle>
-          <WarningDescription>{props.description}</WarningDescription>
-        </Stack>
-      </Stack>
-    </WarningRoot>
-  );
-}
 
 export function Commands() {
   const bar = useCommandBar();
