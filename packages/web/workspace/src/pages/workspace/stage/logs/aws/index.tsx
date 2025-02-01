@@ -691,8 +691,6 @@ export function AWS() {
                 logs: [],
                 cold: false,
                 input: payload,
-                errors: [],
-                source: lambdaARN()!,
               },
             ]);
           }}
@@ -729,7 +727,10 @@ export function AWS() {
                     return (
                       <InvocationRow
                         expanded={list.selected().includes(entry.id)}
-                        invocation={invocation()}
+                        invocation={{
+                          ...invocation(),
+                          errors: [],
+                        }}
                         onSavePayload={async () => {
                           invokeControl.savePayload(invocation()?.input!);
                         }}

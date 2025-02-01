@@ -5,6 +5,7 @@ import { Stage } from "@console/core/app/stage";
 import { Log, LogEntry } from "@console/core/log/index";
 import stripAnsi from "strip-ansi";
 import { Issue } from "@console/core/issue/index";
+import { LambdaGrouper } from "@console/core/log/lambda";
 import { Replicache } from "@console/core/replicache/index";
 import { z } from "zod";
 import {
@@ -148,30 +149,27 @@ export const LogRoute = new Hono()
       }
 
       if (query.hint === "lambda") {
-        const processor = Log.createProcessor({
-          sourcemapKey,
-          logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
-          group: query.logGroup + "-tail",
-          config,
-        });
-
+        const grouper = LambdaGrouper();
+        const data = [];
         for await (const event of fetchEvents(query.logGroup, start, streams)) {
-          await processor.process({
-            timestamp: event.timestamp!,
-            line: event.message!,
-            streamName: event.logStreamName!,
-            id: event.eventId!,
-          });
+          data.push(
+            ...grouper.process({
+              timestamp: event.timestamp!,
+              line: event.message!,
+              stream: event.logStreamName!,
+              id: event.eventId!,
+            }),
+          );
         }
-        console.log("got", processor.ready, "invocations");
-        const data = processor.flush().slice(-50);
-        for (const invocation of data) {
+        data.sort((a, b) => b.start - a.start);
+        const trimmed = data.slice(0, 50);
+        for (const invocation of trimmed) {
           for (const log of invocation.logs) {
             if (!log.message) continue;
             log.message = stripAnsi(log.message);
           }
         }
-        return c.json(data);
+        return c.json(trimmed);
       }
     },
   )
@@ -217,22 +215,23 @@ export const LogRoute = new Hono()
               response.logStreams?.[0]?.lastEventTimestamp! - 30 * 60 * 1000,
             ).startOf("hour");
           })();
-      let next = start?.toISO();
       const result = await (async () => {
         let iteration = 0;
 
         if (!start) return;
 
-        const processor = Log.createProcessor({
-          sourcemapKey:
-            `arn:aws:lambda:${config.region}:${config.awsAccountID}:function:` +
-            query.logGroup.split("/").slice(3, 5).join("/"),
-          logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
-          group: query.logGroup,
-          config,
-        });
+        const grouper = LambdaGrouper();
+        // const processor = Log.createProcessor({
+        //   sourcemapKey:
+        //     `arn:aws:lambda:${config.region}:${config.awsAccountID}:function:` +
+        //     query.logGroup.split("/").slice(3, 5).join("/"),
+        //   logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
+        //   group: query.logGroup,
+        //   config,
+        // });
 
         while (true) {
+          console.log("scanning from", start?.toISO(), "to", end.toISO());
           const result = await client
             .send(
               new StartQueryCommand({
@@ -259,28 +258,19 @@ export const LogRoute = new Hono()
                   a[0]!.value!.localeCompare(b[0]!.value!),
                 );
                 let index = 0;
-
-                async function flush() {
-                  const data = processor.flush(-1);
-                  if (data.length) {
-                    entries.push(...data);
-                  }
-                }
-
                 // process in ascending order, need to process all to get the last 50
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
-                  await processor.process({
-                    id: index.toString(),
-                    timestamp: timestamp.getTime(),
-                    streamName: result[2]?.value!,
-                    line: result[1]?.value!,
-                  });
+                  entries.push(
+                    ...grouper.process({
+                      id: index.toString(),
+                      timestamp: timestamp.getTime(),
+                      stream: result[2]?.value!,
+                      line: result[1]?.value!,
+                    }),
+                  );
                   index++;
-                  if (!next || timestamp.toISOString() < next)
-                    next = timestamp.toISOString();
                 }
-                await flush();
               }
 
               if (query.hint === "normal") {
@@ -290,13 +280,11 @@ export const LogRoute = new Hono()
                 // process in descending order, can stop after 50
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
-                  const length = entries.unshift({
+                  const length = entries.push({
                     id: result[3]!.value!,
                     message: result[1]?.value!,
                     timestamp: timestamp.getTime(),
                   });
-                  if (!next || timestamp.toISOString() < next)
-                    next = timestamp.toISOString();
                   if (length >= 50) {
                     break;
                   }
@@ -321,10 +309,22 @@ export const LogRoute = new Hono()
         }
       })();
 
+      entries.sort((a, b) => {
+        const aTime = "timestamp" in a ? a.timestamp : a.start;
+        const bTime = "timestamp" in b ? b.timestamp : b.start;
+        return bTime - aTime;
+      });
+      console.log(entries.length, "entries before trimming");
+      const trimmed = entries.slice(0, 50);
+      const first = trimmed.at(-1);
       return c.json({
         completed: result,
-        start: next,
-        invocations: entries.slice(-50),
+        start: first
+          ? new Date(
+              "timestamp" in first ? first.timestamp : first.start,
+            ).toISOString()
+          : undefined,
+        invocations: trimmed,
       });
     },
   )

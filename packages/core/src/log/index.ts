@@ -55,7 +55,7 @@ export interface Log {
   message: string;
 }
 
-export type LogEntry = Invocation | Log;
+export type LogEntry = InvocationNext | Log;
 
 export type LogEvent = LogEventBase &
   (
@@ -295,6 +295,7 @@ export function createProcessor(input: {
 
       if (tabs[0]?.startsWith("REPORT")) {
         const requestID = tabs[0].split(" ")[2]!.trim();
+        console.log("REPORT", requestID);
         const invocation = pending.get(requestID);
         if (invocation) {
           invocation.report = {
@@ -393,6 +394,7 @@ import {
 import { RETRY_STRATEGY } from "../util/aws";
 import { StageCredentials } from "../app/stage";
 import { extractJSON } from "../util/json";
+import { InvocationNext } from "./lambda";
 
 export const expand = zod(
   z.object({
