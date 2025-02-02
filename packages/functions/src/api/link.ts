@@ -43,7 +43,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
           message: `Update ${identity} not found`,
         });
       const url = `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${identity}`;
-      return c.redirect(url);
+      return Response.redirect(url, 302);
 
     default:
       throw new HTTPException(404, {
