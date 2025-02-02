@@ -12,6 +12,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
   console.log("redirecting", type, identity);
   switch (type) {
     case "u":
+      const now = Date.now();
       const result = await db
         .select({
           slug: workspace.slug,
@@ -34,13 +35,15 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
         .where(eq(stateUpdateTable.id, identity))
         .limit(1)
         .then((r) => r.at(0));
+
+      console.log("update lookup took", Date.now() - now);
+
       if (!result)
         throw new HTTPException(404, {
           message: `Update ${identity} not found`,
         });
-      return c.redirect(
-        `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${identity}`,
-      );
+      const url = `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${identity}`;
+      return c.redirect(url);
 
     default:
       throw new HTTPException(404, {
