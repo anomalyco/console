@@ -19,7 +19,7 @@ export const BillingRoute = new Hono()
       mode: "subscription",
       line_items: [
         {
-          price: Resource.StripeResourcesPriceID.value,
+          price: Resource.StripeInvocationsPriceID.value,
         },
       ],
       customer: item.customerID,
