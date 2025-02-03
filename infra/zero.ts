@@ -36,6 +36,12 @@ const replication = !$dev
       memory: "8 GB",
       image,
       link: [postgres, storage],
+      health: {
+        command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
+        interval: "5 seconds",
+        retries: 3,
+        startPeriod: "300 seconds",
+      },
       loadBalancer: {
         rules: [
           {
