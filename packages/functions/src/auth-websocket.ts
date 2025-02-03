@@ -1,21 +1,28 @@
 import { withActor } from "@console/core/actor";
-import { sessions } from "./sessions";
 import { User } from "@console/core/user/index";
 import { db, eq, sql } from "@console/core/drizzle/index";
 import { user } from "@console/core/user/user.sql";
+import { createClient } from "@openauthjs/openauth";
+import { Resource } from "sst";
+import { subjects } from "./subjects";
+
+const client = createClient({
+  issuer: Resource.OpenAuth.url,
+  clientID: "socket",
+});
 
 export async function handler(event: any) {
   const token = event.authorizationToken;
-  const session = await sessions.verify(token).catch(() => undefined);
-  if (!session) return { isAuthorized: false };
-  if (session.type !== "account") return { isAuthorized: false };
+  const verified = await client.verify(subjects, token);
+  if (verified.err) return { isAuthorized: false };
+  if (verified.subject.type !== "account") return { isAuthorized: false };
   if (event.requestContext.operation === "EVENT_CONNECT") {
     await db
       .update(user)
       .set({
         timeSeen: sql`now()`,
       })
-      .where(eq(user.email, session.properties.email))
+      .where(eq(user.email, verified.subject.properties.email))
       .execute();
     return { isAuthorized: true };
   }
@@ -28,7 +35,7 @@ export async function handler(event: any) {
       },
     },
     async () => {
-      const user = await User.fromEmail(session.properties.email);
+      const user = await User.fromEmail(verified.subject.properties.email);
       if (!user || user.timeDeleted) {
         return { isAuthorized: false };
       }
