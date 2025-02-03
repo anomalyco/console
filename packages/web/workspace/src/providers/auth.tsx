@@ -33,7 +33,7 @@ export const { use: useAuth, provider: AuthProvider } =
         accounts: {},
       }),
       {
-        name: "radiant.auth",
+        name: "sst.auth",
       },
     );
     const location = useLocation();
