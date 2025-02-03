@@ -4,11 +4,9 @@ import { Workspace } from "@console/core/workspace/index";
 import { type app } from "@console/functions/api/api";
 import { useReplicache } from "@console/web/providers/replicache";
 import {
-  INVOCATIONS_PRICING_PLAN,
   RESOURCES_PRICING_PLAN,
   ResourcesUsageStore,
 } from "@console/web/data/usage";
-import { StripeStore } from "@console/web/data/app";
 import { hc } from "hono/client";
 import { Accessor, createContext, useContext } from "solid-js";
 import { sumBy } from "remeda";
@@ -32,7 +30,6 @@ export const { use: useApi, provider: ApiProvider } = createInitializedContext(
       () => [],
       (items) => sumBy(items, (item) => item.count),
     );
-    const stripe = StripeStore.get.watch(rep, () => []);
     const client = hc<typeof app>(import.meta.env.VITE_API_URL, {
       headers: {
         Authorization: `Bearer ${auth.current.access}`,
@@ -43,9 +40,7 @@ export const { use: useApi, provider: ApiProvider } = createInitializedContext(
       client,
       ready: true,
       get isFree() {
-        return stripe()?.price === "invocations"
-          ? usage() <= INVOCATIONS_PRICING_PLAN[0].to
-          : usage() <= RESOURCES_PRICING_PLAN[0].to;
+        return usage() <= RESOURCES_PRICING_PLAN[0].to;
       },
     };
   },

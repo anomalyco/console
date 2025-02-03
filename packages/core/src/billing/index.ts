@@ -94,7 +94,9 @@ export const updateGatingStatus = zod(z.void(), async () => {
         stageID: null,
       });
       if (warnings.length) return true;
+      return false;
     }
+
     if (customer?.priceID === Resource.StripeResourcesPriceID.value)
       return false;
 
