@@ -38,7 +38,7 @@ const replication = !$dev
       image,
       link: [postgres, storage],
       health: {
-        command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
+        command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
         interval: "5 seconds",
         retries: 3,
         startPeriod: "300 seconds",
@@ -90,9 +90,15 @@ export const zero = cluster.addService("Zero", {
           ZERO_CVR_MAX_CONNS: "160",
         }),
   },
+  health: {
+    command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
+    interval: "5 seconds",
+    retries: 3,
+    startPeriod: "300 seconds",
+  },
   loadBalancer: {
     domain: "zero." + domain,
-    ports: [
+    rules: [
       { listen: "443/https", forward: "4848/http" },
       { listen: "80/http", forward: "4848/http" },
     ],
