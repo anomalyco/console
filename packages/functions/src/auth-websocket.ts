@@ -2,7 +2,7 @@ import { withActor } from "@console/core/actor";
 import { User } from "@console/core/user/index";
 import { db, eq, sql } from "@console/core/drizzle/index";
 import { user } from "@console/core/user/user.sql";
-import { createClient } from "@openauthjs/openauth";
+import { createClient } from "@openauthjs/openauth/client";
 import { Resource } from "sst";
 import { subjects } from "./subjects";
 
