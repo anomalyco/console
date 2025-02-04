@@ -243,6 +243,7 @@ export const LogRoute = new Hono()
             )
             .catch((ex) => {});
           if (!result) return true;
+          console.log(result);
 
           while (true) {
             const response = await client.send(
@@ -277,7 +278,7 @@ export const LogRoute = new Hono()
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
                   const length = entries.push({
-                    id: result[3]!.value!,
+                    id: entries.length.toString(),
                     message: result[1]?.value!,
                     timestamp: timestamp.getTime(),
                   });

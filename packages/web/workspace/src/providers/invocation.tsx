@@ -154,8 +154,12 @@ function mergeEntry(state: LogEntry[], entry: LogEntry, direction: 1 | -1) {
     direction === 1
       ? state.findLast((i) => i.id === entry.id)
       : state.find((i) => i.id === entry.id);
+
   if (!exists) {
-    insert(state, entry, direction);
+    if (isLog(entry))
+      state.push(entry);
+    if (isInvocation(entry))
+      insert(state, entry, direction);
     return;
   }
 
