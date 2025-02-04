@@ -255,19 +255,17 @@ export const LogRoute = new Hono()
 
             if (response.status === "Complete") {
               if (query.hint === "lambda") {
-                let index = 0;
                 // process in ascending order, need to process all to get the last 50
                 for (const result of results.toReversed()) {
                   const timestamp = new Date(result[0]?.value! + " Z");
                   entries.push(
                     ...grouper.process({
-                      id: index.toString(),
+                      id: result[3]!.value!,
                       timestamp: timestamp.getTime(),
                       stream: result[2]?.value!,
                       line: result[1]?.value!,
                     }),
                   );
-                  index++;
                 }
               }
 
@@ -275,13 +273,11 @@ export const LogRoute = new Hono()
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
                   const length = entries.push({
-                    id: entries.length.toString(),
+                    id: result[3]!.value!,
                     message: result[1]?.value!,
                     timestamp: timestamp.getTime(),
                   });
-                  if (length >= 50) {
-                    break;
-                  }
+                  if (length >= 50) break;
                 }
               }
 
