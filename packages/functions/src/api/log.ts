@@ -272,6 +272,9 @@ export const LogRoute = new Hono()
               if (query.hint === "normal") {
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
+                  if (timestamp.getTime() >= end.toMillis()) {
+                    continue;
+                  }
                   const length = entries.push({
                     id: result[3]!.value!,
                     message: result[1]?.value!,
