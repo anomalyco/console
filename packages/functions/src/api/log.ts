@@ -274,10 +274,6 @@ export const LogRoute = new Hono()
               }
 
               if (query.hint === "normal") {
-                results.sort((b, a) =>
-                  a[0]!.value!.localeCompare(b[0]!.value!),
-                );
-                // process in descending order, can stop after 50
                 for (const result of results) {
                   const timestamp = new Date(result[0]?.value! + " Z");
                   const length = entries.push({
