@@ -92,9 +92,10 @@ export const stateReceiveEventLog = zod(
       });
     }
     console.log("events found", inserts.length);
-    await postgres
-      .insert(stateEventTable)
-      .values(inserts)
-      .onConflictDoNothing();
+    if (inserts.length)
+      await postgres
+        .insert(stateEventTable)
+        .values(inserts)
+        .onConflictDoNothing();
   },
 );
