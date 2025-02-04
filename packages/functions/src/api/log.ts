@@ -108,7 +108,7 @@ export const LogRoute = new Hono()
           const response = await client.send(
             new FilterLogEventsCommand({
               logGroupIdentifier: logGroup,
-              logStreamNames: streams,
+              // logStreamNames: streams,
               nextToken,
               startTime,
             }),
