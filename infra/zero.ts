@@ -73,6 +73,8 @@ const replication = !$dev
 export const zero = cluster.addService("Zero", {
   image,
   link: [postgres, storage],
+  cpu: "1 vCPU",
+  memory: "2 GB",
   environment: {
     ...zeroEnv,
     ...($dev
