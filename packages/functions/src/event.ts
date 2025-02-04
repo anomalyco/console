@@ -25,6 +25,7 @@ export const handler = bus.subscriber(
     State.Event.EventLogCreated,
     State.Event.SnapshotCreated,
     State.Event.StateUpdated,
+    State.Event.StateUpdatedV2,
     State.Event.UpdateCreated,
     Workspace.Events.Created,
     Stage.Events.ResourcesUpdated,
@@ -132,6 +133,7 @@ export const handler = bus.subscriber(
 
         case App.Stage.Events.Updated.type:
         case App.Stage.Events.Connected.type:
+        case State.Event.StateUpdatedV2.type:
         case State.Event.StateUpdated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;

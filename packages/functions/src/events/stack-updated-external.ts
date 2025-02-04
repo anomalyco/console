@@ -292,7 +292,7 @@ export const handler = async (evt: Payload) => {
             region,
             awsAccountID: row.id,
           });
-          await bus.publish(Resource.Bus, State.Event.StateUpdated, {
+          await bus.publish(Resource.Bus, State.Event.StateUpdatedV2, {
             stageID,
           });
         },

@@ -236,7 +236,7 @@ export const LogRoute = new Hono()
             .send(
               new StartQueryCommand({
                 logGroupIdentifiers: [query.logGroup],
-                queryString: `fields @timestamp, @message, @logStream | sort @timestamp desc | limit 10000`,
+                queryString: `fields @timestamp, @message, @logStream | sort @timestamp desc, @logStream asc | limit 10000`,
                 startTime: start.toMillis() / 1000,
                 endTime: end.toMillis() / 1000,
               }),
@@ -275,7 +275,7 @@ export const LogRoute = new Hono()
 
               if (query.hint === "normal") {
                 results.sort((b, a) =>
-                  a[3]!.value!.localeCompare(b[3]!.value!),
+                  a[0]!.value!.localeCompare(b[0]!.value!),
                 );
                 // process in descending order, can stop after 50
                 for (const result of results) {
