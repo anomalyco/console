@@ -10,7 +10,7 @@
         "@tsconfig/node16": "^16.1.0",
         "@types/bun": "^1.1.18",
         "constructs": "10.3.0",
-        "sst": "3.7.8",
+        "sst": "3.7.9",
         "turbo": "2.3.4",
         "typescript": "5.5.4",
       },
@@ -32,7 +32,7 @@
         "@console/core": "workspace:*",
         "drizzle-orm": "0.39.1",
         "planetscale-stream-ts": "^1.1.0",
-        "sst": "3.7.8",
+        "sst": "3.7.9",
       },
     },
     "packages/core": {
@@ -84,7 +84,7 @@
         "@types/react": "18.0.25",
         "@types/relaxed-json": "^1.0.1",
         "drizzle-kit": "0.30.4",
-        "sst": "3.7.8",
+        "sst": "3.7.9",
         "typescript": "5.5.4",
         "vitest": "^0.25.3",
       },
@@ -120,7 +120,7 @@
         "oauth4webapi": "^3.1.2",
         "octokit": "^4.0.2",
         "remeda": "^2.17.3",
-        "replicache": "^14.2.2",
+        "replicache": "14.2.2",
         "source-map": "^0.7.4",
         "strip-ansi": "^7.1.0",
         "undici": "^5.22.0",
@@ -130,7 +130,7 @@
         "@types/aws-lambda": "^8.10.114",
         "@types/luxon": "3.4.2",
         "@types/node": "^22.10.1",
-        "sst": "3.7.8",
+        "sst": "3.7.9",
         "typescript": "5.5.4",
       },
     },
@@ -154,7 +154,7 @@
         "@jsx-email/render": "^1.1.0",
         "@tsconfig/node16": "^16.1.0",
         "luxon": "3.5.0",
-        "sst": "3.7.8",
+        "sst": "3.7.9",
         "tsx": "^3.12.7",
       },
       "devDependencies": {
@@ -162,6 +162,10 @@
         "@types/luxon": "3.4.2",
         "inquirer": "^9.2.7",
       },
+    },
+    "packages/web": {
+      "name": "web",
+      "version": "0.0.0",
     },
     "packages/web/workspace": {
       "name": "@console/workspace",
@@ -202,7 +206,7 @@
       },
       "devDependencies": {
         "@macaron-css/vite": "1.5.1",
-        "sst": "3.6.27",
+        "sst": "3.7.9",
         "typescript": "5.5.4",
         "vite": "5.4.10",
         "vite-plugin-inspect": "0.7.42",
@@ -2148,17 +2152,17 @@
 
     "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
 
-    "sst": ["sst@3.7.8", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.7.8", "sst-darwin-x64": "3.7.8", "sst-linux-arm64": "3.7.8", "sst-linux-x64": "3.7.8", "sst-linux-x86": "3.7.8" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-wmXAU/Uc9vHTzoXzZej9TTJMqZYlQtnfzk52w/4ZlA2QRuu9KKk34w/A50GQJ1lThWCrWNHNadcTLUW7uLdjRw=="],
+    "sst": ["sst@3.7.9", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.7.9", "sst-darwin-x64": "3.7.9", "sst-linux-arm64": "3.7.9", "sst-linux-x64": "3.7.9", "sst-linux-x86": "3.7.9" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-d+54xJdJ0Cuzz3AkXcjTjgLgtB794Uc6sPiBqY+eP2AzGN9lFryiighUefP9oo5eqNJbIdtQtWe6lwKwUjhXQQ=="],
 
-    "sst-darwin-arm64": ["sst-darwin-arm64@3.7.8", "", { "os": "darwin", "cpu": "arm64" }, "sha512-qQt+7c0Fm9r8667vMBoyindiymf8qBHavcJBusFWMfWY2y/FrN2BOfpYioqpsvqkrXqMx51TDR2KfSB8yEgt2w=="],
+    "sst-darwin-arm64": ["sst-darwin-arm64@3.7.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-7GurprJW+VLbLQMmiQh9htToj3eQOucgqZac/gqB+ioB8uzQqvmuAFgCd7D7BBdPb5uRWOCHcs51TlJ76mJwCQ=="],
 
-    "sst-darwin-x64": ["sst-darwin-x64@3.7.8", "", { "os": "darwin", "cpu": "x64" }, "sha512-thNSYoaJFaMdCMRSuEPxCgn3mfH6pm6BeWExmV0tZNSMF2C5RQoRUpYP7txxkeWrOrByu+zmwBXWbQFztCufsQ=="],
+    "sst-darwin-x64": ["sst-darwin-x64@3.7.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-oow5KpjavFvbohrVn0WqMmuL+CYYua/SUcPtZIouM+EdrUgHzo1f6dZ7jh1nDmBbabUZ5q/PLPQZBVWJNyGYmQ=="],
 
-    "sst-linux-arm64": ["sst-linux-arm64@3.7.8", "", { "os": "linux", "cpu": "arm64" }, "sha512-vhFMOGYi25RE+vO+IO6uSOw3jqTbObxGeUNvrWz8hQbOZbRQeIvXZNDws52hMUXMoMxTyvmF75pcNE0bx8QbnQ=="],
+    "sst-linux-arm64": ["sst-linux-arm64@3.7.9", "", { "os": "linux", "cpu": "arm64" }, "sha512-IhfyG9NXAQQtXDbvLAsIao9wvLPS7khhx2tyGc5qN4dsdM6dorSSjOt5i/aPxuQraTjbnC9oSlTI9GJnSISnFA=="],
 
-    "sst-linux-x64": ["sst-linux-x64@3.7.8", "", { "os": "linux", "cpu": "x64" }, "sha512-qXVh4zmWwCM94so10ZODKImMJe51bRbopo+QppojhsRzw+PLSc8/O7fhaC+9RQIk0TfdGDywDrO+RMfSjhCuqA=="],
+    "sst-linux-x64": ["sst-linux-x64@3.7.9", "", { "os": "linux", "cpu": "x64" }, "sha512-XY5l9Nn29JrpyxGYGUvXAkbHjslFNDOz6qx+iXHqz07h1W6l0cNmG7/nJMWUzebIzCUAlery0krJ/QrPC5Xarw=="],
 
-    "sst-linux-x86": ["sst-linux-x86@3.7.8", "", { "os": "linux", "cpu": "none" }, "sha512-zOeN5jfC12H1k2aOewNgtZMf/XRP0XCdyHoBcf0nJDYAxTWui2kSfZ7rKAwvl/3qKmIilhw1zFvQ+lkxHkM3mQ=="],
+    "sst-linux-x86": ["sst-linux-x86@3.7.9", "", { "os": "linux", "cpu": "none" }, "sha512-O9A1Pzlmd1rLhvM1V68xj6iaiuPv1U680iZ8EiuxVADRpZC/0x/GWEB3Ms5a63/lzYuBQD1feOlgv/QzYaeNQw=="],
 
     "stream-shift": ["stream-shift@1.0.3", "", {}, "sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ=="],
 
@@ -2326,6 +2330,8 @@
 
     "wcwidth": ["wcwidth@1.0.1", "", { "dependencies": { "defaults": "^1.0.3" } }, "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg=="],
 
+    "web": ["web@workspace:packages/web"],
+
     "web-vitals": ["web-vitals@4.2.4", "", {}, "sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw=="],
 
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
@@ -2423,8 +2429,6 @@
     "@babel/helper-compilation-targets/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
     "@babel/helper-create-class-features-plugin/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
-
-    "@console/workspace/sst": ["sst@3.6.27", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.6.27", "sst-darwin-x64": "3.6.27", "sst-linux-arm64": "3.6.27", "sst-linux-x64": "3.6.27", "sst-linux-x86": "3.6.27" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-xvroNFNSB26mCBAq2G3+yY9cCm6ZJNEcLI1iWJQykkCB3pUvIDZwV9EU6jcQNGwiTQkGZLsAkvdkEgqpATnUvQ=="],
 
     "@dot/log/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
@@ -2681,16 +2685,6 @@
     "@aws-sdk/signature-v4-multi-region/@smithy/signature-v4/@smithy/util-uri-escape": ["@smithy/util-uri-escape@3.0.0", "", { "dependencies": { "tslib": "^2.6.2" } }, "sha512-LqR7qYLgZTD7nWLBecUi4aqolw8Mhza9ArpNEQ881MJJIU2sE5iHCK6TdyqqzcDLy0OPe10IY4T8ctVdtynubg=="],
 
     "@babel/helper-compilation-targets/lru-cache/yallist": ["yallist@3.1.1", "", {}, "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g=="],
-
-    "@console/workspace/sst/sst-darwin-arm64": ["sst-darwin-arm64@3.6.27", "", { "os": "darwin", "cpu": "arm64" }, "sha512-hxHu9U/4y/gHhQYRwi03JI8rlezM1tQkt65ccSMn6dEoy9VMvKLidO72Ie3QJElu3+eP2iQWpNa4RptKzkJ5hQ=="],
-
-    "@console/workspace/sst/sst-darwin-x64": ["sst-darwin-x64@3.6.27", "", { "os": "darwin", "cpu": "x64" }, "sha512-xXiesVZX1XY5p9AmNCitqa23Iv775DtRBKTYvjfJXG1QJ8JRnYWDO55V672ICkQXge0kyEw3uaIlH2MT+1G/mg=="],
-
-    "@console/workspace/sst/sst-linux-arm64": ["sst-linux-arm64@3.6.27", "", { "os": "linux", "cpu": "arm64" }, "sha512-5ub3+hNoWOt/xwDtgAWJjwK7Sek8GSNL2uUzypQmByz4QGJE4GUnKhocYvjNxHwpYTNxSuYT6Jbu6jzTuMYjCQ=="],
-
-    "@console/workspace/sst/sst-linux-x64": ["sst-linux-x64@3.6.27", "", { "os": "linux", "cpu": "x64" }, "sha512-D5IgRVfzn21/N3TEuyxq9hO4IjEk8iUycZNyP3MmJd7dGagGQa0Sey7AHuUaehAHL6D0RVME1SRF9JfaxTPVFQ=="],
-
-    "@console/workspace/sst/sst-linux-x86": ["sst-linux-x86@3.6.27", "", { "os": "linux", "cpu": "none" }, "sha512-YuRKmT+5gKTLLcFJ2BeqTT/Co+bhL/Nj501dslbBtswdSI+ss9Qhs2WFvSRalC7MeqOL24u7HTD5An5+AbPifw=="],
 
     "@dot/log/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
