@@ -339,8 +339,8 @@ export const LogRoute = new Hono()
       if (!config) throw new HTTPException(500);
       const client = new CloudWatchLogsClient(config);
 
-      const start = query.next
-        ? undefined
+      const start = query.start
+        ? query.start
         : await (async () => {
             const response = await client
               .send(
