@@ -414,6 +414,7 @@ export function AWSNext() {
     if (search.view === "local") return;
     if (filterResult.loading) return;
 
+    let total = 0;
     (async function loop() {
       setFilterResult("loading", true);
       const result = await api.client.log.aws.filter
@@ -427,7 +428,8 @@ export function AWSNext() {
         })
         .then((r) => r.json());
       cloudwatch.ingest(result.entries);
-      const getmore = scrollEnd() || cloudwatch.all.length < 50;
+      total += result.entries.length;
+      const getmore = scrollEnd() || total < 50;
       setFilterResult({
         next: result.next,
         completed: false,
