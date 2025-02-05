@@ -356,7 +356,9 @@ export const LogRoute = new Hono()
                 throw ex;
               });
             if (!response) return;
-            return response.logStreams?.[0]?.lastEventTimestamp!;
+            return (
+              response.logStreams?.[0]?.lastEventTimestamp! - 5 * 60 * 1000
+            );
           })();
 
       console.log("start", start);
