@@ -699,98 +699,102 @@ export function AWSNext() {
             if (end) fetchCloudwatch();
           }}
         >
-          {(entry) => (
-            <Row
-              data-focus={list.cursor() === entry.id ? true : undefined}
-              data-row-id={entry.id}
-              data-expanded={list.selected().includes(entry.id) ? true : undefined}
-              onClick={() => {
-                list.toggleSelected(entry.id);
-                list.setCursor(entry.id);
-              }}
-            >
-              <Switch>
-                <Match when={isInvocation(entry) && entry}>
-                  {(invocation) => {
-                    return (
-                      <InvocationRow
+          {(entry, index) => (
+            <>
+              <Row
+                data-focus={list.cursor() === entry.id ? true : undefined}
+                data-row-id={entry.id}
+                data-expanded={list.selected().includes(entry.id) ? true : undefined}
+                onClick={() => {
+                  list.toggleSelected(entry.id);
+                  list.setCursor(entry.id);
+                }}
+              >
+                <Switch>
+                  <Match when={isInvocation(entry) && entry}>
+                    {(invocation) => {
+                      return (
+                        <InvocationRow
+                          expanded={list.selected().includes(entry.id)}
+                          invocation={{
+                            ...invocation(),
+                            errors: [],
+                          }}
+                          onSavePayload={async () => {
+                            invokeControl.savePayload(invocation()?.input!);
+                          }}
+                          onReplay={async () => {
+                            if (!lambdaARN()) return;
+                            await api.client.lambda.invoke.$post({
+                              json: {
+                                stageID: stage.stage.id,
+                                functionARN: lambdaARN()!,
+                                payload: invocation()?.input,
+                              },
+                            });
+                            console.log(lambdaARN);
+                          }}
+                          local={search.view === "local"}
+                        />
+                      );
+                    }}
+                  </Match>
+                  <Match when={isLog(entry) && entry}>
+                    {(log) => (
+                      <LogRow
+                        message={log().message}
+                        timestamp={log().timestamp}
                         expanded={list.selected().includes(entry.id)}
-                        invocation={{
-                          ...invocation(),
-                          errors: [],
-                        }}
-                        onSavePayload={async () => {
-                          invokeControl.savePayload(invocation()?.input!);
-                        }}
-                        onReplay={async () => {
-                          if (!lambdaARN()) return;
-                          await api.client.lambda.invoke.$post({
-                            json: {
-                              stageID: stage.stage.id,
-                              functionARN: lambdaARN()!,
-                              payload: invocation()?.input,
-                            },
-                          });
-                          console.log(lambdaARN);
-                        }}
-                        local={search.view === "local"}
                       />
-                    );
-                  }}
-                </Match>
-                <Match when={isLog(entry) && entry}>
-                  {(log) => (
-                    <LogRow
-                      message={log().message}
-                      timestamp={log().timestamp}
-                      expanded={list.selected().includes(entry.id)}
-                    />
-                  )}
-                </Match>
-              </Switch>
-            </Row>
+                    )}
+                  </Match>
+                </Switch>
+              </Row>
+              <Show when={index === rows().length - 1}>
+                <Show when={search.view === "cloudwatch"}>
+                  <Switch>
+                    <Match when={filterResult.loading}>
+                      <LogMoreIndicator border={showBorder()}>
+                        <LogMoreIndicatorIcon>
+                          <IconArrowPathSpin />
+                        </LogMoreIndicatorIcon>
+                        <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
+                      </LogMoreIndicator>
+                    </Match>
+                    <Match when={cloudwatch.all.length === 0 && filterResult.completed}>
+                      <LogMoreIndicator border={showBorder()}>
+                        <LogMoreIndicatorIcon>
+                          <IconEllipsisHorizontal />
+                        </LogMoreIndicatorIcon>
+                        <LogMoreIndicatorCopy>No logs found</LogMoreIndicatorCopy>
+                      </LogMoreIndicator>
+                    </Match>
+                    <Match when={cloudwatch.all.length}>
+                      <LogMoreIndicator border={showBorder()}>
+                        <Switch>
+                          <Match when={filterResult.completed}>
+                            <LogMoreIndicatorIcon>
+                              <IconEllipsisHorizontal />
+                            </LogMoreIndicatorIcon>
+                            <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
+                          </Match>
+                          <Match when={true}>
+                            <LogMoreIndicatorIcon>
+                              <IconEllipsisVertical />
+                            </LogMoreIndicatorIcon>
+                            <TextButton onClick={() => fetchCloudwatch()}>
+                              Load more logs
+                            </TextButton>
+                          </Match>
+                        </Switch>
+                      </LogMoreIndicator>
+                    </Match>
+                  </Switch>
+                </Show>
+              </Show>
+            </>
           )}
         </VList>
-      </Show>
-      <Show when={search.view === "cloudwatch"}>
-        <Switch>
-          <Match when={filterResult.loading}>
-            <LogMoreIndicator border={showBorder()}>
-              <LogMoreIndicatorIcon>
-                <IconArrowPathSpin />
-              </LogMoreIndicatorIcon>
-              <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
-            </LogMoreIndicator>
-          </Match>
-          <Match when={cloudwatch.all.length === 0 && filterResult.completed}>
-            <LogMoreIndicator border={showBorder()}>
-              <LogMoreIndicatorIcon>
-                <IconEllipsisHorizontal />
-              </LogMoreIndicatorIcon>
-              <LogMoreIndicatorCopy>No logs found</LogMoreIndicatorCopy>
-            </LogMoreIndicator>
-          </Match>
-          <Match when={cloudwatch.all.length}>
-            <LogMoreIndicator border={showBorder()}>
-              <Switch>
-                <Match when={filterResult.completed}>
-                  <LogMoreIndicatorIcon>
-                    <IconEllipsisHorizontal />
-                  </LogMoreIndicatorIcon>
-                  <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
-                </Match>
-                <Match when={true}>
-                  <LogMoreIndicatorIcon>
-                    <IconEllipsisVertical />
-                  </LogMoreIndicatorIcon>
-                  <TextButton onClick={() => fetchCloudwatch()}>
-                    Load more logs
-                  </TextButton>
-                </Match>
-              </Switch>
-            </LogMoreIndicator>
-          </Match>
-        </Switch>
       </Show>
     </Root>
   );
