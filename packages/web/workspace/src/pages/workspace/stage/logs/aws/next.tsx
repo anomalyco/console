@@ -501,6 +501,7 @@ export function AWSNext() {
   const showBorder = createMemo(() => rows().length > 0 && !scrollEnd());
   let invokeControl!: InvokeControl;
 
+<<<<<<< HEAD
   createEffect((old?: { size: number, rows: number }) => {
     if (old?.rows !== rows().length && vlist?.scrollOffset !== 0) {
       const oldSize = old?.rows || 0;
@@ -514,6 +515,19 @@ export function AWSNext() {
       rows: rows().length
     }
   })
+  // createEffect((old?: { size: number, rows: number }) => {
+  //   if (old?.rows !== rows().length && vlist?.scrollOffset !== 0) {
+  //     const oldSize = old?.rows || 0;
+  //     const newSize = rows().length || 0;
+  //     const diff = (newSize - oldSize) * 50;
+  //     if (diff !== 0)
+  //       vlist?.scrollTo(vlist?.scrollOffset! + diff);
+  //   }
+  //   return {
+  //     size: vlist?.scrollSize || 0,
+  //     rows: rows().length
+  //   }
+  // })
 
   return (
     <Root>
