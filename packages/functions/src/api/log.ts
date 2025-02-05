@@ -388,7 +388,7 @@ export const LogRoute = new Hono()
           entries.push(
             ...grouper.process({
               timestamp: event.timestamp!,
-              line: event.message!,
+              line: stripAnsi(event.message!),
               stream: event.logStreamName!,
               id: event.eventId!,
             }),
