@@ -163,10 +163,6 @@
         "inquirer": "^9.2.7",
       },
     },
-    "packages/web": {
-      "name": "web",
-      "version": "0.0.0",
-    },
     "packages/web/workspace": {
       "name": "@console/workspace",
       "version": "0.0.0",
@@ -2329,8 +2325,6 @@
     "vitest": ["vitest@0.25.8", "", { "dependencies": { "@types/chai": "^4.3.4", "@types/chai-subset": "^1.3.3", "@types/node": "*", "acorn": "^8.8.1", "acorn-walk": "^8.2.0", "chai": "^4.3.7", "debug": "^4.3.4", "local-pkg": "^0.4.2", "source-map": "^0.6.1", "strip-literal": "^1.0.0", "tinybench": "^2.3.1", "tinypool": "^0.3.0", "tinyspy": "^1.0.2", "vite": "^3.0.0 || ^4.0.0" }, "peerDependencies": { "@edge-runtime/vm": "*", "@vitest/browser": "*", "@vitest/ui": "*", "happy-dom": "*", "jsdom": "*" }, "optionalPeers": ["@edge-runtime/vm", "@vitest/browser", "@vitest/ui", "happy-dom", "jsdom"], "bin": { "vitest": "vitest.mjs" } }, "sha512-X75TApG2wZTJn299E/TIYevr4E9/nBo1sUtZzn0Ci5oK8qnpZAZyhwg0qCeMSakGIWtc6oRwcQFyFfW14aOFWg=="],
 
     "wcwidth": ["wcwidth@1.0.1", "", { "dependencies": { "defaults": "^1.0.3" } }, "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg=="],
-
-    "web": ["web@workspace:packages/web"],
 
     "web-vitals": ["web-vitals@4.2.4", "", {}, "sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw=="],
 
