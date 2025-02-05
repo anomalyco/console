@@ -40,6 +40,7 @@ import {
   useLocalLogs,
 } from "@console/web/providers/invocation";
 import { DivSpacer } from "@console/web/ui/layout";
+import { DateTime } from "luxon";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -403,8 +404,7 @@ export function AWSNext() {
   });
 
   const [filterResult, setFilterResult] = createStore<{
-    next?: string;
-    completed?: boolean;
+    start?: number;
     loading: boolean;
   }>({
     loading: false,
@@ -416,6 +416,7 @@ export function AWSNext() {
 
     let total = 0;
     let start: number | undefined;
+    let next: string | undefined;
     (async function loop() {
       setFilterResult("loading", true);
       const result = await api.client.log.aws.filter
@@ -424,17 +425,17 @@ export function AWSNext() {
             group: search.logGroup,
             stageID: stage.stage.id,
             hint: search.hint,
-            next: filterResult.next,
+            next: next,
             start: start as any,
           },
         })
         .then((r) => r.json());
+      next = result.next;
       cloudwatch.ingest(result.entries);
       total += result.entries.length;
       const getmore = total < 50;
       setFilterResult({
-        next: result.next,
-        completed: false,
+        start: filterResult.start ?? result.start,
         loading: getmore,
       });
       if (getmore) {
@@ -466,7 +467,6 @@ export function AWSNext() {
     handleTab: true,
     onCursorChange: (cursor) => {
       if (cursor == null) return;
-      console.log("cursor", cursor);
       const index = rows().findIndex((tx) => tx.id === cursor);
       if (index === rows().length - 1) {
         vlist?.scrollToIndex(index + 1, {
@@ -562,10 +562,8 @@ export function AWSNext() {
               </Match>
               <Match when={search.view === "cloudwatch" && search}>
                 {(search) => (
-                  <Show when={true} fallback="TODO">
-                    <span>
-                      TODO
-                    </span>
+                  <Show when={filterResult.start} fallback="Finding recent...">
+                    Logs from {DateTime.fromMillis(filterResult.start!).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
                   </Show>
                 )}
               </Match>
@@ -573,85 +571,6 @@ export function AWSNext() {
           </HeaderDescription>
         </HeaderLeft>
         <HeaderRight>
-          <Show when={search.view === "local"}>
-            <TextButton
-              onClick={() => {
-                if (search.view === "cloudwatch") return
-                const functionID =
-                  fn()?.type === "sstv2:aws:Function"
-                    ? fn()?.outputs.localId
-                    : search.functionID;
-                localLogs.clear(functionID);
-              }}
-            >
-              Clear
-            </TextButton>
-          </Show>
-          <Show when={search.view === "cloudwatch"}>
-            <IconButton
-              title="Reload logs"
-              onClick={() => {
-                batch(() => {
-                  setFilterResult({
-                    next: undefined,
-                    loading: false,
-                    completed: false,
-                  });
-                  cloudwatch.clear();
-                  list.setSelected([]);
-                  fetchCloudwatch();
-                });
-              }}
-            >
-              <IconArrowPathRoundedSquare
-                display="block"
-                width={20}
-                height={20}
-              />
-            </IconButton>
-          </Show>
-          <Show when={search.view !== "local"}>
-            <Dropdown size="sm" label="View">
-              <Dropdown.RadioGroup
-                value={search.view}
-                onChange={(val) => {
-                  if (val === "custom") {
-                    return;
-                  }
-                  setSearch(
-                    {
-                      view: val,
-                    },
-                    {
-                      replace: true,
-                    },
-                  );
-                }}
-              >
-                <Dropdown.RadioItem closeOnSelect value="live">
-                  <Dropdown.RadioItemLabel>Live</Dropdown.RadioItemLabel>
-                  <Dropdown.ItemIndicator>
-                    <IconCheck width={14} height={14} />
-                  </Dropdown.ItemIndicator>
-                </Dropdown.RadioItem>
-                <Dropdown.RadioItem closeOnSelect value="past">
-                  <Dropdown.RadioItemLabel>Past</Dropdown.RadioItemLabel>
-                  <Dropdown.ItemIndicator>
-                    <IconCheck width={14} height={14} />
-                  </Dropdown.ItemIndicator>
-                </Dropdown.RadioItem>
-                {/*
-                <Dropdown.RadioItem
-                  onSelect={() => {}}
-                  closeOnSelect
-                  value="custom"
-                >
-                  Jump to&hellip;
-                </Dropdown.RadioItem>
-                */}
-              </Dropdown.RadioGroup>
-            </Dropdown>
-          </Show>
         </HeaderRight>
       </Header>
       <Show when={lambdaARN()}>
@@ -743,44 +662,12 @@ export function AWSNext() {
               </Switch>
             </Row>
           ) : (
-            <Switch>
-              <Match when={filterResult.loading}>
-                <LogMoreIndicator >
-                  <LogMoreIndicatorIcon>
-                    <IconArrowPathSpin />
-                  </LogMoreIndicatorIcon>
-                  <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
-                </LogMoreIndicator>
-              </Match>
-              <Match when={cloudwatch.all.length === 0 && filterResult.completed}>
-                <LogMoreIndicator >
-                  <LogMoreIndicatorIcon>
-                    <IconEllipsisHorizontal />
-                  </LogMoreIndicatorIcon>
-                  <LogMoreIndicatorCopy>No logs found</LogMoreIndicatorCopy>
-                </LogMoreIndicator>
-              </Match>
-              <Match when={cloudwatch.all.length}>
-                <LogMoreIndicator>
-                  <Switch>
-                    <Match when={filterResult.completed}>
-                      <LogMoreIndicatorIcon>
-                        <IconEllipsisHorizontal />
-                      </LogMoreIndicatorIcon>
-                      <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
-                    </Match>
-                    <Match when={true}>
-                      <LogMoreIndicatorIcon>
-                        <IconEllipsisVertical />
-                      </LogMoreIndicatorIcon>
-                      <TextButton onClick={() => fetchCloudwatch()}>
-                        Load more logs
-                      </TextButton>
-                    </Match>
-                  </Switch>
-                </LogMoreIndicator>
-              </Match>
-            </Switch>
+            <LogMoreIndicator >
+              <LogMoreIndicatorIcon>
+                <IconArrowPathSpin />
+              </LogMoreIndicatorIcon>
+              <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
+            </LogMoreIndicator>
           )}
         </VList>
       </Show>
