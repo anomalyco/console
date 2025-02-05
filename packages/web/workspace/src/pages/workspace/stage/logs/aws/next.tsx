@@ -427,13 +427,14 @@ export function AWSNext() {
         })
         .then((r) => r.json());
       cloudwatch.ingest(result.entries);
+      const getmore = scrollEnd() || cloudwatch.all.length < 50;
       setFilterResult({
         next: result.next,
         completed: false,
-        loading: scrollEnd(),
+        loading: getmore,
       });
       console.log("completed", scrollEnd());
-      if (scrollEnd()) {
+      if (getmore) {
         setTimeout(() => {
           loop();
         }, 1000)
@@ -795,6 +796,46 @@ export function AWSNext() {
             </>
           )}
         </VList>
+      </Show>
+      <Show when={search.view === "cloudwatch" && rows().length === 0}>
+        <Switch>
+          <Match when={filterResult.loading}>
+            <LogMoreIndicator border={showBorder()}>
+              <LogMoreIndicatorIcon>
+                <IconArrowPathSpin />
+              </LogMoreIndicatorIcon>
+              <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
+            </LogMoreIndicator>
+          </Match>
+          <Match when={cloudwatch.all.length === 0 && filterResult.completed}>
+            <LogMoreIndicator border={showBorder()}>
+              <LogMoreIndicatorIcon>
+                <IconEllipsisHorizontal />
+              </LogMoreIndicatorIcon>
+              <LogMoreIndicatorCopy>No logs found</LogMoreIndicatorCopy>
+            </LogMoreIndicator>
+          </Match>
+          <Match when={cloudwatch.all.length}>
+            <LogMoreIndicator border={showBorder()}>
+              <Switch>
+                <Match when={filterResult.completed}>
+                  <LogMoreIndicatorIcon>
+                    <IconEllipsisHorizontal />
+                  </LogMoreIndicatorIcon>
+                  <LogMoreIndicatorCopy>No more logs</LogMoreIndicatorCopy>
+                </Match>
+                <Match when={true}>
+                  <LogMoreIndicatorIcon>
+                    <IconEllipsisVertical />
+                  </LogMoreIndicatorIcon>
+                  <TextButton onClick={() => fetchCloudwatch()}>
+                    Load more logs
+                  </TextButton>
+                </Match>
+              </Switch>
+            </LogMoreIndicator>
+          </Match>
+        </Switch>
       </Show>
     </Root>
   );
