@@ -322,6 +322,88 @@ export const LogRoute = new Hono()
     },
   )
   .get(
+    "/aws/filter",
+    zValidator(
+      "query",
+      z.object({
+        stageID: z.string(),
+        group: z.string(),
+        start: z.coerce.number().optional(),
+        next: z.string().optional(),
+        hint: z.enum(["normal", "lambda"]),
+      }),
+    ),
+    async (c) => {
+      const query = c.req.valid("query");
+      const config = await Stage.assumeRole(query.stageID);
+      if (!config) throw new HTTPException(500);
+      const client = new CloudWatchLogsClient(config);
+
+      const start = query.next
+        ? undefined
+        : await (async () => {
+            const response = await client
+              .send(
+                new DescribeLogStreamsCommand({
+                  logGroupIdentifier: query.group,
+                  orderBy: "LastEventTime",
+                  descending: true,
+                  limit: 1,
+                }),
+              )
+              .catch((ex) => {
+                if (ex.name === "ResourceNotFoundException") return;
+                throw ex;
+              });
+            if (!response) return;
+            return (
+              response.logStreams?.[0]?.lastEventTimestamp! - 5 * 60 * 1000
+            );
+          })();
+
+      console.log("start", start);
+      const response = await client.send(
+        new FilterLogEventsCommand({
+          logGroupName: query.group,
+          limit: 200,
+          startTime: start,
+          nextToken: query.next,
+        }),
+      );
+      const entries = [] as LogEntry[];
+
+      if (query.hint === "normal") {
+        for await (const item of response.events || []) {
+          entries.push({
+            id: item.eventId!,
+            timestamp: item.timestamp!,
+            message: stripAnsi(item.message!),
+          });
+        }
+      }
+
+      if (query.hint === "lambda") {
+        const grouper = LambdaGrouper();
+        for await (const event of response.events || []) {
+          entries.push(
+            ...grouper.process({
+              timestamp: event.timestamp!,
+              line: event.message!,
+              stream: event.logStreamName!,
+              id: event.eventId!,
+            }),
+          );
+        }
+      }
+
+      return c.json({
+        next: response.nextToken,
+        start,
+        entries,
+      });
+    },
+  )
+  .get(
     "/aws/scan",
     zValidator(
       "query",
