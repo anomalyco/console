@@ -405,48 +405,58 @@ export function AWSNext() {
 
   const [filterResult, setFilterResult] = createStore<{
     start?: number;
+    last?: number;
+    next?: string
     loading: boolean;
   }>({
     loading: false,
   });
 
   async function fetchCloudwatch() {
+    console.log("fetching cloudwatch")
     if (search.view === "local") return;
-    if (filterResult.loading) return;
+    if (filterResult.loading) {
+      console.log("already fetching")
+      return
+    }
+    setFilterResult("loading", true);
 
     let total = 0;
-    let start: number | undefined;
-    let next: string | undefined;
     (async function loop() {
-      setFilterResult("loading", true);
       const result = await api.client.log.aws.filter
         .$get({
           query: {
             group: search.logGroup,
             stageID: stage.stage.id,
             hint: search.hint,
-            next: next,
-            start: start as any,
+            next: filterResult.next,
+            start: filterResult.last as any,
           },
         })
         .then((r) => r.json());
-      next = result.next;
       cloudwatch.ingest(result.entries);
       total += result.entries.length;
       const getmore = total < 50;
       setFilterResult({
         start: filterResult.start ?? result.start,
         loading: getmore,
+        next: result.next,
+        last: result.start,
       });
       if (getmore) {
         if (!result.next) {
           total = 0
-          start = Date.now()
+          const last = cloudwatch.all.at(-1)!
+          console.log("last", last)
+          setFilterResult("last", isLog(last) ? last.timestamp : last.start)
           setTimeout(loop, 3000)
           return
         }
         loop();
+        return
       }
+      console.log("done looping")
+      setFilterResult("loading", false);
     })()
   }
   onMount(() => {
@@ -662,12 +672,14 @@ export function AWSNext() {
               </Switch>
             </Row>
           ) : (
-            <LogMoreIndicator >
-              <LogMoreIndicatorIcon>
-                <IconArrowPathSpin />
-              </LogMoreIndicatorIcon>
-              <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
-            </LogMoreIndicator>
+            <Show when={search.view === "cloudwatch"}>
+              <LogMoreIndicator >
+                <LogMoreIndicatorIcon>
+                  <IconArrowPathSpin />
+                </LogMoreIndicatorIcon>
+                <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
+              </LogMoreIndicator>
+            </Show>
           )}
         </VList>
       </Show>

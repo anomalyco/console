@@ -108,7 +108,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
               {
                 name,
                 title: r.outputs?.id,
-                link: `logGroup=${r.outputs?.id}&view=past&hint=normal`,
+                link: `logGroup=${r.outputs?.id}&view=cloudwatch&hint=normal`,
                 type: r.type,
                 logGroup: r.outputs?.id,
                 priority: 1,
@@ -122,7 +122,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
               {
                 name,
                 title: name,
-                link: `functionID=${r.urn}&view=past&hint=lambda`,
+                link: `functionID=${r.urn}&view=cloudwatch&hint=lambda`,
                 type: r.type,
                 logGroup,
                 priority: 2,
@@ -144,7 +144,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
                 title: r.outputs?._metadata?.handler,
                 link: dev
                   ? `functionID=${r.urn}&view=local&hint=lambda`
-                  : `logGroup=${logGroup}&view=past&hint=lambda`,
+                  : `logGroup=${logGroup}&view=cloudwatch&hint=lambda`,
                 type: r.type,
                 logGroup,
                 priority: 3,
@@ -162,7 +162,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
                 title: r.outputs?.handler,
                 link: live
                   ? `functionID=${r.urn}&view=local&hint=lambda`
-                  : `logGroup=${logGroup}&view=past&hint=lambda`,
+                  : `logGroup=${logGroup}&view=cloudwatch&hint=lambda`,
                 type: r.type,
                 logGroup,
                 priority: 3,
@@ -181,7 +181,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
               {
                 name,
                 title: name,
-                link: `logGroup=${logGroup}&view=past&hint=normal`,
+                link: `logGroup=${logGroup}&view=cloudwatch&hint=normal`,
                 type: r.type,
                 logGroup: logGroup,
                 priority: 3,
@@ -198,9 +198,8 @@ export const { use: useLogsContext, provider: LogsProvider } =
         map((item) => ({
           ...item,
           link:
-            `/${workspace().slug}/${stage.app.name}/${
-              stage.stage.name
-            }/logs/aws?` + item.link,
+            `/${workspace().slug}/${stage.app.name}/${stage.stage.name
+            }/logs/aws-next?` + item.link,
         })),
       ),
     );
