@@ -616,6 +616,7 @@ export function AWSNext() {
           ref={(r) => (vlist = r)}
           data={[...rows(), END_SYMBOL]}
           onScroll={offset => {
+            console.log(vlist!.scrollSize - vlist!.scrollOffset, vlist!.viewportSize)
             if ((vlist!.scrollSize - vlist!.scrollOffset) === vlist!.viewportSize) {
               fetchCloudwatch();
             }
