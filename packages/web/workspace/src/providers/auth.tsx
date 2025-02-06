@@ -152,7 +152,6 @@ export const { use: useAuth, provider: AuthProvider } =
     const bar = useCommandBar()
 
     bar.register("auth", async () => {
-      console.log("bar", bar)
       return [
         {
           category: "Account",
