@@ -35,8 +35,8 @@ const zeroEnv = {
 
 const replication = !$dev
   ? cluster.addService(`ZeroReplication`, {
-      cpu: "2 vCPU",
-      memory: "8 GB",
+      cpu: "1 vCPU",
+      memory: "2 GB",
       image,
       link: [postgres, storage],
       health: {
@@ -154,8 +154,8 @@ const cwd = process.cwd();
 
 const cdc = cluster.addService("CDC", {
   link: [postgres, database],
-  cpu: "4 vCPU",
-  memory: "8 GB",
+  cpu: "1 vCPU",
+  memory: "2 GB",
   containers: [
     {
       name: "cdc",
