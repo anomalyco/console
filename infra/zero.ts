@@ -107,6 +107,10 @@ export const zero = cluster.addService("Zero", {
       { listen: "80/http", forward: "4848/http" },
     ],
   },
+  scaling: {
+    min: 1,
+    max: 4,
+  },
   transform: {
     taskDefinition: {
       ephemeralStorage: {
