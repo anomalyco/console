@@ -634,11 +634,9 @@ export function AWSNext() {
         class={Scroller}
         ref={(r) => (vlist = r)}
         data={[...rows(), END_SYMBOL]}
-        onScroll={offset => {
-          console.log(vlist!.scrollSize - vlist!.scrollOffset, vlist!.viewportSize)
-          if ((vlist!.scrollSize - vlist!.scrollOffset) === vlist!.viewportSize) {
+        onScroll={() => {
+          if ((vlist!.scrollSize - vlist!.scrollOffset) === vlist!.viewportSize)
             fetchCloudwatch();
-          }
         }}
       >
         {(entry, index) => typeof entry !== "symbol" ? (
