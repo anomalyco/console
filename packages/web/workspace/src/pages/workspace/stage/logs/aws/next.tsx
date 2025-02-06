@@ -41,7 +41,7 @@ import {
 } from "@console/web/providers/invocation";
 import { DivSpacer } from "@console/web/ui/layout";
 import { DateTime } from "luxon";
-import { DialogRange, DialogRangeControl } from "../dialog-range";
+import { DialogRange, DialogRangeControl } from "./dialog-range";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
