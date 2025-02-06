@@ -18,7 +18,7 @@ const image = `registry.hub.docker.com/rocicorp/zero:${tag}`;
 const zeroEnv = {
   NO_COLOR: "1",
   FORCE: "1",
-  ZER_LOG_LEVEL: "info",
+  ZERO_LOG_LEVEL: "info",
   ZERO_UPSTREAM_DB: conn,
   ZERO_CVR_DB: conn,
   ZERO_CHANGE_DB: conn,
