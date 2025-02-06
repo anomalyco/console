@@ -361,6 +361,7 @@ export function AWSNext() {
       logGroup: string;
       hint: "normal" | "lambda";
       end?: string;
+      pattern?: string;
     }
     | {
       view: "local";
@@ -430,6 +431,7 @@ export function AWSNext() {
             hint: search.hint,
             next: filter.next,
             start: filter.last as any,
+            pattern: search.pattern,
           },
         })
         .then((r) => r.json());

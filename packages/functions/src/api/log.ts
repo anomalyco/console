@@ -331,6 +331,7 @@ export const LogRoute = new Hono()
         start: z.coerce.number().optional(),
         next: z.string().optional(),
         hint: z.enum(["normal", "lambda"]),
+        pattern: z.string().optional(),
       }),
     ),
     async (c) => {
@@ -367,6 +368,7 @@ export const LogRoute = new Hono()
           logGroupName: query.group,
           limit: 200,
           startTime: start,
+          filterPattern: query.pattern,
           nextToken: query.next,
         }),
       );
