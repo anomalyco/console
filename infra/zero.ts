@@ -68,6 +68,9 @@ const replication = !$dev
             sizeInGib: 200,
           },
         },
+        loadBalancer: {
+          idleTimeout: 60 * 60,
+        },
       },
     })
   : undefined;
