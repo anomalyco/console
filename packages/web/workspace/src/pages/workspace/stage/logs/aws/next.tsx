@@ -32,7 +32,7 @@ import { IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { createStore } from "solid-js/store";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { style } from "@macaron-css/core";
-import { inputFocusStyles } from "@console/web/ui/form";
+import { Input, inputFocusStyles, SplitOptions, SplitOptionsOption } from "@console/web/ui/form";
 import {
   createLogStore,
   isInvocation,
@@ -41,6 +41,7 @@ import {
 } from "@console/web/providers/invocation";
 import { DivSpacer } from "@console/web/ui/layout";
 import { DateTime } from "luxon";
+import { DialogRange, DialogRangeControl } from "../dialog-range";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -367,7 +368,6 @@ export function AWSNext() {
     }
   >();
   const search = s as Required<typeof s>;
-
   const stage = useStageContext();
   const api = useApi();
   const localLogs = useLocalLogs();
@@ -400,7 +400,9 @@ export function AWSNext() {
     return localLogs.get(functionID);
   });
 
-  const [filterResult, setFilterResult] = createStore<{
+  let rangeControl: DialogRangeControl;
+
+  const [filter, setFilter] = createStore<{
     start?: number;
     last?: number;
     next?: string
@@ -412,11 +414,11 @@ export function AWSNext() {
   async function fetchCloudwatch() {
     console.log("fetching cloudwatch")
     if (search.view === "local") return;
-    if (filterResult.loading) {
+    if (filter.loading) {
       console.log("already fetching")
       return
     }
-    setFilterResult("loading", true);
+    setFilter("loading", true);
 
     let total = 0;
     (async function loop() {
@@ -426,16 +428,16 @@ export function AWSNext() {
             group: search.logGroup,
             stageID: stage.stage.id,
             hint: search.hint,
-            next: filterResult.next,
-            start: filterResult.last as any,
+            next: filter.next,
+            start: filter.last as any,
           },
         })
         .then((r) => r.json());
       cloudwatch.ingest(result.entries);
       total += result.entries.length;
       const getmore = total < 50;
-      setFilterResult({
-        start: filterResult.start ?? result.start,
+      setFilter({
+        start: filter.start ?? result.start,
         loading: getmore,
         next: result.next,
         last: result.start,
@@ -445,7 +447,7 @@ export function AWSNext() {
           total = 0
           const last = cloudwatch.all.at(-1)!
           console.log("last", last)
-          setFilterResult("last", isLog(last) ? last.timestamp : last.start)
+          setFilter("last", isLog(last) ? last.timestamp : last.start)
           setTimeout(loop, 3000)
           return
         }
@@ -453,7 +455,7 @@ export function AWSNext() {
         return
       }
       console.log("done looping")
-      setFilterResult("loading", false);
+      setFilter("loading", false);
     })()
   }
   onMount(() => {
@@ -569,8 +571,8 @@ export function AWSNext() {
               </Match>
               <Match when={search.view === "cloudwatch" && search}>
                 {(search) => (
-                  <Show when={filterResult.start} fallback="Finding recent...">
-                    Logs from {DateTime.fromMillis(filterResult.start!).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
+                  <Show when={filter.start} fallback="Finding recent...">
+                    Logs from {DateTime.fromMillis(filter.start!).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
                   </Show>
                 )}
               </Match>
@@ -578,10 +580,13 @@ export function AWSNext() {
           </HeaderDescription>
         </HeaderLeft>
         <HeaderRight>
+          <TextButton
+            onClick={() => rangeControl.show()}
+          >Jump to</TextButton>
           <TextButton onClick={() => {
             if (search.view === "cloudwatch") {
               cloudwatch.clear()
-              setFilterResult({
+              setFilter({
                 start: Date.now(),
                 last: Date.now(),
                 next: undefined,
@@ -697,6 +702,15 @@ export function AWSNext() {
           </Show>
         )}
       </VList>
+      <DialogRange control={r => rangeControl = r} onSelect={start => {
+        cloudwatch.clear()
+        setFilter({
+          start: start.getTime(),
+          last: start.getTime(),
+          next: undefined,
+        })
+        fetchCloudwatch()
+      }} />
     </Root>
   );
 }
