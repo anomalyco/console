@@ -2,6 +2,8 @@ import {
   IconArrowsUpDown,
   IconArrowDown,
   IconBoltSolid,
+  IconCalendar,
+  IconTrash,
 } from "@console/web/ui/icons";
 import { VList, VirtualizerHandle } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
@@ -37,6 +39,7 @@ import {
 import { DivSpacer } from "@console/web/ui/layout";
 import { DateTime } from "luxon";
 import { DialogRange, DialogRangeControl } from "./dialog-range";
+import { useCommandBar } from "../../../command-bar";
 
 const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
@@ -521,6 +524,56 @@ export function AWSNext() {
   });
 
   let invokeControl!: InvokeControl;
+
+  function clear() {
+    if (search.view === "cloudwatch") {
+      batch(() => {
+        cloudwatch.clear()
+        setFilter({
+          last: undefined,
+          next: undefined,
+        })
+        setSearch({
+          start: Date.now(),
+        }, {
+          replace: true,
+        })
+      })
+      fetchCloudwatch()
+      return
+    }
+    if (search.view === "local") {
+      const functionID =
+        fn()?.type === "sstv2:aws:Function"
+          ? fn()?.outputs.localId
+          : search.functionID;
+      localLogs.clear(functionID);
+    }
+  }
+
+  const bar = useCommandBar();
+  bar.register("log", async () => {
+    return [
+      {
+        icon: IconCalendar,
+        title: "Jump to",
+        category: "Logs",
+        run: (control) => {
+          rangeControl.show()
+          control.hide()
+        },
+      },
+      {
+        icon: IconTrash,
+        title: "Clear",
+        category: "Logs",
+        run: (control) => {
+          clear()
+          control.hide()
+        },
+      }
+    ]
+  })
 
   // createEffect((old?: { size: number, rows: number }) => {
   //   if (old?.rows !== rows().length && vlist?.scrollOffset !== 0) {
