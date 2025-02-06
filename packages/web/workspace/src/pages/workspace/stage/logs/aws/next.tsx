@@ -440,14 +440,13 @@ export function AWSNext() {
         start: filter.start ?? result.start,
         loading: getmore,
         next: result.next,
-        last: result.start,
+        last: filter.last,
       });
       if (getmore) {
         if (!result.next) {
           total = 0
           const last = cloudwatch.all.at(-1)!
-          if (last)
-            setFilter("last", isLog(last) ? last.timestamp : last.start)
+          if (last) setFilter("last", isLog(last) ? last.timestamp : last.start)
           setTimeout(loop, 3000)
           return
         }
@@ -455,7 +454,6 @@ export function AWSNext() {
         return
       }
       console.log("done looping")
-      setFilter("loading", false);
     })()
   }
   onMount(() => {
