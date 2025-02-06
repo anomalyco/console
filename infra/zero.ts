@@ -117,6 +117,9 @@ export const zero = cluster.addService("Zero", {
         sizeInGib: 200,
       },
     },
+    loadBalancer: {
+      idleTimeout: 60 * 60,
+    },
   },
   dev: {
     command: "bun dev",
