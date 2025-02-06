@@ -374,7 +374,7 @@ export const LogRoute = new Hono()
       );
       const entries = [] as LogEntry[];
 
-      if (query.hint === "normal") {
+      if (query.hint === "normal" || query.pattern) {
         for await (const item of response.events || []) {
           entries.push({
             id: item.eventId!,
@@ -384,7 +384,7 @@ export const LogRoute = new Hono()
         }
       }
 
-      if (query.hint === "lambda") {
+      if (query.hint === "lambda" && !query.pattern) {
         const grouper = LambdaGrouper();
         for await (const event of response.events || []) {
           entries.push(
