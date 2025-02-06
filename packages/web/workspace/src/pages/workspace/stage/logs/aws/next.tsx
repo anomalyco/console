@@ -445,9 +445,8 @@ export function AWSNext() {
       if (getmore) {
         if (!result.next) {
           total = 0
-          const last = cloudwatch.all.at(-1)!
-          console.log("last", last)
-          setFilter("last", isLog(last) ? last.timestamp : last.start)
+          const last = cloudwatch.all.at(-1)
+          setFilter("last", last ? isLog(last) ? last.timestamp : last.start : filter.start)
           setTimeout(loop, 3000)
           return
         }
