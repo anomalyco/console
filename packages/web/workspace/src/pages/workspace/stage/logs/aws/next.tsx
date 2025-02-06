@@ -218,10 +218,6 @@ const LogMoreIndicator = styled("div", {
     ...utility.row(2),
     alignItems: "center",
     padding: `${theme.space[3]} ${theme.space[3]}`,
-    borderStyle: "solid",
-    borderWidth: "1px",
-    borderColor: theme.color.divider.base,
-    borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
     position: "relative",
   },
   variants: {
@@ -255,7 +251,8 @@ const LogMoreIndicatorCopy = styled("span", {
 });
 
 const Scroller = style({
-  borderWidth: "0 1px",
+  borderWidth: 1,
+  borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
   borderStyle: "solid",
   borderColor: theme.color.divider.base,
   selectors: {
