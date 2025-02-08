@@ -53,7 +53,7 @@ export const stateUpdateTable = mysqlTable(
   (table) => ({
     ...workspaceIndexes(table),
     updateID: index("id").on(table.id),
-    slug: unique("slug").on(table.slug),
+    slug: index("slug").on(table.slug),
     stageID: foreignKey({
       name: "state_update_stage_id",
       columns: [table.workspaceID, table.stageID],
