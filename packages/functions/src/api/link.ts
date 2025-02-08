@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { HTTPException } from "hono/http-exception";
-import { db, eq, and } from "@console/core/drizzle/index";
+import { db, eq, and, or } from "@console/core/drizzle/index";
 import { stateUpdateTable } from "@console/core/state/state.sql";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { app, stage } from "@console/core/app/app.sql";
@@ -15,6 +15,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
       const now = Date.now();
       const result = await db
         .select({
+          updateID: stateUpdateTable.id,
           slug: workspace.slug,
           app: app.name,
           stage: stage.name,
@@ -32,7 +33,12 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
           app,
           and(eq(app.id, stage.appID), eq(app.workspaceID, stage.workspaceID)),
         )
-        .where(eq(stateUpdateTable.id, identity))
+        .where(
+          or(
+            eq(stateUpdateTable.id, identity),
+            eq(stateUpdateTable.slug, identity),
+          ),
+        )
         .limit(1)
         .then((r) => r.at(0));
 
@@ -42,7 +48,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
         throw new HTTPException(404, {
           message: `Update ${identity} not found`,
         });
-      const url = `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${identity}`;
+      const url = `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${result.updateID}`;
       return c.text("redirecting...", 302, { location: url });
 
     default:
