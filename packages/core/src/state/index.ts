@@ -714,6 +714,7 @@ export module State {
           .insert(stateUpdateTable)
           .values({
             id: input.updateID,
+            slug: input.updateID.slice(-6),
             index: max + 1,
             runID,
             errors: update.errors,
