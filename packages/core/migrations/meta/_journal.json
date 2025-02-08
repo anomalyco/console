@@ -393,6 +393,13 @@
       "when": 1738356103008,
       "tag": "0055_steady_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "5",
+      "when": 1739053734809,
+      "tag": "0056_nostalgic_omega_red",
+      "breakpoints": true
     }
   ]
 }

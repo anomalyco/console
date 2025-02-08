@@ -554,6 +554,7 @@ export module State {
             command: command.data,
             runID,
             id: lock.updateID,
+            slug: lock.updateID.slice(-6),
             index: result + 1,
             stageID: input.config.stageID,
             timeStarted: new Date(lock.created),
