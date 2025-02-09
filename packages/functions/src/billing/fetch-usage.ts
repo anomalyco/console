@@ -106,6 +106,8 @@ async function processInvocations(stageID: string) {
           ? [fn.outputs.arn]
           : [],
       )
+      // `arn` can be `null` for some reason, ie. {"id":"foo","arn":null,"code":null,...}
+      .filter((item) => item)
       .map((item) => item.split(":").pop()!),
   );
   console.log(`> functions ${functions.length}/${allResources.length}`);
