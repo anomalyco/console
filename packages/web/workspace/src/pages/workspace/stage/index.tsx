@@ -28,18 +28,13 @@ import {
 } from "../header";
 import { NotFound } from "../../not-found";
 import { TabTitle } from "@console/web/ui/button";
-import { Row, Fullscreen } from "@console/web/ui/layout";
-import { useWorkspace } from "../context";
-import { useApi } from "../context";
-import { GatedWarning } from "../app/warning";
+import { Row } from "@console/web/ui/layout";
 
 export const StageRoute = (
   <Route
     component={(props) => {
-      const api = useApi();
       const ctx = createStageContext();
       const rep = useReplicache();
-      const workspace = useWorkspace();
       return (
         <Show when={ctx.ready}>
           <Switch>
@@ -76,17 +71,6 @@ export const StageRoute = (
                                     inset="header"
                                     message="Stage has been removed"
                                   />
-                                </Match>
-                                <Match
-                                  when={
-                                    workspace().timeGated != null &&
-                                    !ctx.connected &&
-                                    !api.isFree
-                                  }
-                                >
-                                  <Fullscreen inset="header-tabs">
-                                    <GatedWarning />
-                                  </Fullscreen>
                                 </Match>
                                 <Match when={true}>
                                   <PageHeader>
