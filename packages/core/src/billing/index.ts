@@ -3,7 +3,7 @@ import { Resource } from "sst";
 import { usage } from "./billing.sql";
 import { z } from "zod";
 import { zod } from "../util/zod";
-import { eq, and, between, sql } from "drizzle-orm";
+import { eq, and, between, sql, lt } from "drizzle-orm";
 import { useTransaction } from "../util/transaction";
 import { useWorkspace } from "../actor";
 import { workspace } from "../workspace/workspace.sql";
@@ -11,6 +11,7 @@ import { Stripe } from "./stripe";
 import { DateTime } from "luxon";
 import { Warning } from "../warning";
 import { stateCountTable } from "../state/state.sql";
+import { stage } from "../app/app.sql";
 export * as Billing from "./index";
 export { Stripe } from "./stripe";
 
@@ -48,6 +49,7 @@ export const countInvocationsByStartAndEndDay = zod(
 export const countResourcesByMonth = zod(
   z.object({
     month: z.string().min(1),
+    timeCreatedBefore: z.string().min(1),
   }),
   async (input) => {
     return await useTransaction((tx) =>
@@ -56,10 +58,18 @@ export const countResourcesByMonth = zod(
           total: sql<number>`SUM(${stateCountTable.count})`,
         })
         .from(stateCountTable)
+        .innerJoin(
+          stage,
+          and(
+            eq(stage.id, stateCountTable.stageID),
+            eq(stage.workspaceID, stateCountTable.workspaceID),
+          ),
+        )
         .where(
           and(
             eq(stateCountTable.workspaceID, useWorkspace()),
             eq(stateCountTable.month, input.month),
+            lt(stage.timeCreated, input.timeCreatedBefore),
           ),
         )
         .execute()
@@ -102,6 +112,7 @@ export const updateGatingStatus = zod(z.void(), async () => {
 
     const resources = await countResourcesByMonth({
       month: DateTime.utc().startOf("month").toSQLDate()!,
+      timeCreatedBefore: DateTime.utc().minus({ days: 14 }).toSQL()!,
     });
     return resources > FREE_RESOURCES;
   }

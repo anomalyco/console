@@ -14,6 +14,7 @@ import {
   SQL,
   MySqlColumn,
   desc,
+  lt,
 } from "@console/core/drizzle/index";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { stripeTable, usage } from "@console/core/billing/billing.sql";
@@ -238,6 +239,20 @@ ReplicacheRoute.post("/pull1", async (c) => {
           )
           .then((rows) => rows.map((row) => row.id));
 
+        const stateCountStages = await tx
+          .select({ id: stage.id })
+          .from(stage)
+          .where(
+            and(
+              lt(
+                stage.timeCreated,
+                DateTime.utc().minus({ days: 14 }).toSQL()!,
+              ),
+              eq(stage.workspaceID, useWorkspace()),
+            ),
+          )
+          .then((rows) => rows.map((row) => row.id));
+
         const updates = await tx
           .select({
             id: stateUpdateTable.id,
@@ -292,9 +307,12 @@ ReplicacheRoute.post("/pull1", async (c) => {
           stateResource: deletedStages.length
             ? notInArray(stateResourceTable.stageID, deletedStages)
             : undefined,
-          stateCount: gte(
-            stateCountTable.month,
-            DateTime.now().toUTC().startOf("month").toSQLDate()!,
+          stateCount: and(
+            gte(
+              stateCountTable.month,
+              DateTime.now().toUTC().startOf("month").toSQLDate()!,
+            ),
+            inArray(stateCountTable.stageID, stateCountStages),
           ),
           run: runs.length ? inArray(runTable.id, runs) : undefined,
         } satisfies {

@@ -1,10 +1,4 @@
-import {
-  Show,
-  createMemo,
-  createSignal,
-  Suspense,
-  createEffect,
-} from "solid-js";
+import { Show, createMemo, createSignal, Suspense } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
 import { useWorkspace } from "../context";
