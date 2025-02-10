@@ -127,6 +127,19 @@ const UsageTiers = styled("div", {
     backgroundColor: theme.color.background.surface,
     padding: `${theme.space[6]} ${theme.space[6]} ${theme.space[6]}`,
   },
+  variants: {
+    padding: {
+      true: {
+        padding: `${theme.space[6]} ${theme.space[6]} ${theme.space[6]}`,
+      },
+      false: {
+        padding: `0 ${theme.space[6]}`,
+      },
+    },
+  },
+  defaultVariants: {
+    padding: true,
+  },
 });
 
 const UsageStatTier = styled("span", {
@@ -377,43 +390,50 @@ export function SettingsRoute() {
                     </Text>
                   </Row>
                 </UsageStat>
-                <UsageTiers>
-                  <Stack space="1">
-                    <Row space={TIER_LABEL_SPACE}>
-                      <UsageStatTier>
-                        {"<= "}
-                        {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
-                      </UsageStatTier>
-                      <Text color="dimmed" on="surface" size="xs">
-                        →
-                      </Text>
-                      <Text size="mono_xs" on="surface" color="secondary">
-                        Free
-                      </Text>
-                    </Row>
-                    <Row space={TIER_LABEL_SPACE}>
-                      <UsageStatTier>
-                        {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
-                        {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
-                      </UsageStatTier>
-                      <Text color="dimmed" on="surface" size="xs">
-                        →
-                      </Text>
+                <UsageTiers padding={false}>
+                  <Stack space="3">
+                    <Stack space="0.5">
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {"<= "}
+                          {formatNumber(RESOURCES_PRICING_PLAN[0].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text size="mono_xs" on="surface" color="secondary">
+                          Free
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(RESOURCES_PRICING_PLAN[1].from)} -{" "}
+                          {formatNumber(RESOURCES_PRICING_PLAN[1].to)}
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text code size="mono_xs" on="surface" color="secondary">
+                          ${RESOURCES_PRICING_PLAN[1].rate} per
+                        </Text>
+                      </Row>
+                      <Row space={TIER_LABEL_SPACE}>
+                        <UsageStatTier>
+                          {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
+                        </UsageStatTier>
+                        <Text color="dimmed" on="surface" size="xs">
+                          →
+                        </Text>
+                        <Text code size="mono_xs" on="surface" color="secondary">
+                          ${RESOURCES_PRICING_PLAN[2].rate} per
+                        </Text>
+                      </Row>
+                    </Stack>
+                    <Show when={stripe()?.discount}>
                       <Text code size="mono_xs" on="surface" color="secondary">
-                        ${RESOURCES_PRICING_PLAN[1].rate} per
+                        {stripe()?.discount}% off for 12 months
                       </Text>
-                    </Row>
-                    <Row space={TIER_LABEL_SPACE}>
-                      <UsageStatTier>
-                        {formatNumber(RESOURCES_PRICING_PLAN[2].from)} +
-                      </UsageStatTier>
-                      <Text color="dimmed" on="surface" size="xs">
-                        →
-                      </Text>
-                      <Text code size="mono_xs" on="surface" color="secondary">
-                        ${RESOURCES_PRICING_PLAN[2].rate} per
-                      </Text>
-                    </Row>
+                    </Show>
                   </Stack>
                 </UsageTiers>
               </UsagePanel>

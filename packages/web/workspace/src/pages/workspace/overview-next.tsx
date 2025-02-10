@@ -521,7 +521,7 @@ export function OverviewRoute() {
         </Match>
         <Match when={r.value!}>
           <>
-            <Show when={DateTime.now() < DateTime.fromISO("2025-02-07")}>
+            <Show when={DateTime.now() < DateTime.fromISO("2025-02-21")}>
               <Announcement>
                 <AnnouncementTag>New</AnnouncementTag>
                 <Text size="sm" on="surface" color="dimmed">
