@@ -9,7 +9,7 @@ Runs the app in dev mode with `pnpm dev` and go to `http://localhost:3000`
 To only run the frontend and connect it to the dev backend.
 
 ```bash
-pnpm sst shell --stage=dev --target=Workspace pnpm dev
+bun sst shell --stage=dev --target=Workspace bun dev
 ```
 
 ### Dummy
