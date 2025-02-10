@@ -88,6 +88,11 @@ export const Input = styled("input", {
         },
       },
     },
+    size: {
+      sm: {
+        height: theme.input.size.sm,
+      },
+    },
   },
   defaultVariants: {
     color: "primary",

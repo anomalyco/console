@@ -29,7 +29,7 @@ import { IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { createStore } from "solid-js/store";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { style } from "@macaron-css/core";
-import { inputFocusStyles, } from "@console/web/ui/form";
+import { Input, inputFocusStyles, } from "@console/web/ui/form";
 import {
   createLogStore,
   isInvocation,
@@ -55,6 +55,17 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   timeZone: "UTC",
   year: "numeric",
 };
+
+const SearchInput = styled(Input, {
+  base: {
+    width: "250px",
+    flexShrink: 0,
+    boxShadow: "none",
+    backgroundColor: "#0000001f",
+    borderBottom: `1px solid #ffffff17`,
+    borderTop: `1px solid #00000029`,
+  },
+});
 
 const LogLoadingIndicator = styled("div", {
   base: {
@@ -661,6 +672,38 @@ export function AWSNext() {
               localLogs.clear(functionID);
             }
           }}>Clear</TextButton>
+          {
+            search.view === "cloudwatch" &&
+            <SearchInput
+              value={search.pattern || ""}
+              onBlur={(e) => {
+                if (e.currentTarget.value === (search.pattern || "")) return
+                setSearch({
+                  pattern: e.currentTarget.value,
+                })
+                cloudwatch.clear()
+                setFilter({
+                  last: undefined,
+                  next: undefined,
+                })
+                fetchCloudwatch()
+              }}
+              onKeyDown={(e) => {
+                if (e.currentTarget.value === (search.pattern || "")) return
+                if (e.key === "Enter") {
+                  setSearch({
+                    pattern: e.currentTarget.value,
+                  })
+                  cloudwatch.clear()
+                  setFilter({
+                    last: undefined,
+                    next: undefined,
+                  })
+                  fetchCloudwatch()
+                }
+              }}
+              size="sm" placeholder="Search..." />
+          }
         </HeaderRight>
       </Header>
       <Show when={lambdaARN()}>
@@ -756,7 +799,11 @@ export function AWSNext() {
               <LogMoreIndicatorIcon>
                 <IconArrowPathSpin />
               </LogMoreIndicatorIcon>
-              <LogMoreIndicatorCopy>Waiting for more logs&hellip;</LogMoreIndicatorCopy>
+              <LogMoreIndicatorCopy>
+                <Show when={search.view === "cloudwatch" && search.pattern} fallback="Waiting for more logs">
+                  Waiting for logs matching {search.view === "cloudwatch" && search.pattern}
+                </Show>&hellip;
+              </LogMoreIndicatorCopy>
             </LogMoreIndicator>
           </Show>
         )}
