@@ -38,6 +38,7 @@ export const stripeTable = mysqlTable(
       length: 255,
     }),
     priceID: varchar("price_id", { length: 255 }),
+    couponID: varchar("coupon_id", { length: 255 }),
     standing: mysqlEnum("standing", Standing),
     timeTrialEnded: timestamp("time_trial_ended", { mode: "string" }),
   },

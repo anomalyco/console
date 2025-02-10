@@ -1,6 +1,9 @@
-import { withActor } from "@console/core/actor";
+import { useWorkspace, withActor } from "@console/core/actor";
+import { stripeTable } from "@console/core/billing/billing.sql";
+import { and, eq } from "@console/core/drizzle/index";
 import { Billing } from "@console/core/billing/index";
 import { stripe } from "@console/core/stripe/index";
+import { useTransaction } from "@console/core/util/transaction";
 import { Hono } from "hono";
 import { Resource } from "sst";
 
@@ -95,6 +98,51 @@ WebhookRoute.post("/stripe", async (c) => {
       async () => {
         await Billing.updateGatingStatus();
       },
+    );
+  } else if (
+    body.type === "customer.discount.created" ||
+    body.type === "customer.discount.updated"
+  ) {
+    const { customer } = body.data.object;
+
+    const item = await Billing.Stripe.fromCustomerID(customer as string);
+    if (!item) throw new Error("Workspace not found for customer");
+    if (item.couponID) throw new Error("Workspace already has a coupon");
+
+    await useTransaction((tx) =>
+      tx
+        .update(stripeTable)
+        .set({
+          couponID: body.data.object.coupon.id,
+        })
+        .where(
+          and(
+            eq(stripeTable.workspaceID, item.workspaceID),
+            eq(stripeTable.customerID, customer as string),
+          ),
+        )
+        .execute(),
+    );
+  } else if (body.type === "customer.discount.deleted") {
+    const { customer } = body.data.object;
+
+    const item = await Billing.Stripe.fromCustomerID(customer as string);
+    if (!item) throw new Error("Workspace not found for customer");
+    if (!item.couponID) throw new Error("Workspace does not have a coupon");
+
+    await useTransaction((tx) =>
+      tx
+        .update(stripeTable)
+        .set({
+          couponID: null,
+        })
+        .where(
+          and(
+            eq(stripeTable.workspaceID, item.workspaceID),
+            eq(stripeTable.customerID, customer as string),
+          ),
+        )
+        .execute(),
     );
   }
 

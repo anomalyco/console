@@ -16,6 +16,7 @@ export const Info = z.object({
   subscriptionID: z.string().optional(),
   subscriptionItemID: z.string().optional(),
   price: z.enum(["invocations", "resources"]).optional(),
+  discount: z.number().optional(),
   standing: z.enum(Standing),
   time: z.object({
     created: z.string(),
@@ -38,6 +39,7 @@ export function serialize(input: typeof stripeTable.$inferSelect): Info {
         : input.priceID === Resource.StripeResourcesPriceID.value
         ? ("resources" as const)
         : undefined,
+    discount: input.couponID === Resource.StripeCouponID.value ? 50 : undefined,
     standing: input.standing ?? "good",
     time: {
       created: input.timeCreated,

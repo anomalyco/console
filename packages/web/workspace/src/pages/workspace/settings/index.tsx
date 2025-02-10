@@ -38,7 +38,11 @@ export const PANEL_CONTENT_SPACE = "10";
 export const PANEL_HEADER_SPACE = "3";
 const TIER_LABEL_SPACE = "2";
 
-function calculateCost(units: number, pricingPlan: PricingPlan) {
+function calculateCost(
+  units: number,
+  pricingPlan: PricingPlan,
+  discount?: number,
+) {
   let cost = 0;
 
   for (let tier of pricingPlan) {
@@ -51,6 +55,8 @@ function calculateCost(units: number, pricingPlan: PricingPlan) {
       }
     }
   }
+
+  cost = discount ? cost * (discount / 100) : cost;
 
   return cost === 0 ? "0" : cost.toFixed(2);
 }
@@ -271,7 +277,11 @@ export function SettingsRoute() {
                         $
                       </Text>
                       <Text code weight="medium" size="xl">
-                        {calculateCost(invocations(), INVOCATIONS_PRICING_PLAN)}
+                        {calculateCost(
+                          invocations(),
+                          INVOCATIONS_PRICING_PLAN,
+                          stripe().discount,
+                        )}
                       </Text>
                     </Row>
                   </UsageStat>
@@ -359,7 +369,11 @@ export function SettingsRoute() {
                       $
                     </Text>
                     <Text code weight="medium" size="xl">
-                      {calculateCost(resources(), RESOURCES_PRICING_PLAN)}
+                      {calculateCost(
+                        resources(),
+                        RESOURCES_PRICING_PLAN,
+                        stripe()?.discount,
+                      )}
                     </Text>
                   </Row>
                 </UsageStat>

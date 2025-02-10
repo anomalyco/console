@@ -1,0 +1,1 @@
+ALTER TABLE `stripe` ADD `promo_code` varchar(255);

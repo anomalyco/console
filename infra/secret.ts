@@ -5,13 +5,17 @@ export const secret = {
     "StripeInvocationsPriceID",
     $app.stage === "production"
       ? "price_1NlZmAEAHP8a0ogpglxmSac1"
-      : "price_1NgB4oEAHP8a0ogpxqUXHKee"
+      : "price_1NgB4oEAHP8a0ogpxqUXHKee",
   ),
   StripeResourcesPriceID: new sst.Secret(
     "StripeResourcesPriceID",
     $app.stage === "production"
       ? "price_1QhwLAEAHP8a0ogpjRV91Yl8"
-      : "price_1Qi4QzEAHP8a0ogpDvPDu8Bm"
+      : "price_1Qi4QzEAHP8a0ogpDvPDu8Bm",
+  ),
+  StripeCouponID: new sst.Secret(
+    "StripeCouponID",
+    $app.stage === "production" ? "SQfanxGc" : "O6e5LLnW",
   ),
   SlackClientID: new sst.Secret("SlackClientID"),
   SlackClientSecret: new sst.Secret("SlackClientSecret"),
