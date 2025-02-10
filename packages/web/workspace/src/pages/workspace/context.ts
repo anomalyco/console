@@ -39,8 +39,11 @@ export const { use: useApi, provider: ApiProvider } = createInitializedContext(
     return {
       client,
       ready: true,
-      get isFree() {
-        return usage() <= RESOURCES_PRICING_PLAN[0].to;
+      get isGated() {
+        return (
+          workspace().timeGated !== null &&
+          usage() > RESOURCES_PRICING_PLAN[0].to
+        );
       },
     };
   },

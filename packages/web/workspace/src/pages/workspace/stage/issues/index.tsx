@@ -2,7 +2,7 @@ import { Route } from "@solidjs/router";
 import { List } from "./list";
 import { Detail } from "./detail";
 import { NotFound } from "../../../not-found";
-import { useApi, useWorkspace } from "../../context";
+import { useApi } from "../../context";
 import { createStageContext } from "../context";
 import { Show } from "solid-js";
 import { Fullscreen } from "@console/web/ui/layout";
@@ -13,10 +13,9 @@ export const Issues = (
     component={(props) => {
       const api = useApi();
       const ctx = createStageContext();
-      const workspace = useWorkspace();
       return (
         <Show
-          when={workspace().timeGated == null || ctx.connected || api.isFree}
+          when={!api.isGated || ctx.connected}
           fallback={
             <>
               <Fullscreen inset="header-tabs">

@@ -2,7 +2,7 @@ import { Route } from "@solidjs/router";
 import { AutodeployNotFound } from "./not-found";
 import { Detail } from "./detail";
 import { List } from "./list";
-import { useApi, useWorkspace } from "../../context";
+import { useApi } from "../../context";
 import { GatedWarning } from "../warning";
 import { Fullscreen } from "@console/web/ui/layout";
 import { Show } from "solid-js";
@@ -12,10 +12,9 @@ export const Autodeploy = (
   <Route
     component={(props) => {
       const api = useApi();
-      const workspace = useWorkspace();
       return (
         <Show
-          when={workspace().timeGated == null || api.isFree}
+          when={!api.isGated}
           fallback={
             <>
               <PageHeader />
