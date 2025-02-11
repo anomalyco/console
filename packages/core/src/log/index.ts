@@ -52,6 +52,7 @@ export interface Invocation {
 export interface Log {
   id: string;
   timestamp: number;
+  stream?: string;
   message: string;
 }
 

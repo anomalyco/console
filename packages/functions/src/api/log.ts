@@ -328,6 +328,7 @@ export const LogRoute = new Hono()
       z.object({
         stageID: z.string(),
         group: z.string(),
+        stream: z.string().optional(),
         start: z.coerce.number().optional(),
         next: z.string().optional(),
         hint: z.enum(["normal", "lambda"]),
@@ -347,6 +348,7 @@ export const LogRoute = new Hono()
               .send(
                 new DescribeLogStreamsCommand({
                   logGroupIdentifier: query.group,
+                  logStreamNamePrefix: query.stream,
                   orderBy: "LastEventTime",
                   descending: true,
                   limit: 1,
@@ -362,10 +364,11 @@ export const LogRoute = new Hono()
             );
           })();
 
-      console.log("start", start);
+      console.log("start", start, "stream", query.stream);
       const response = await client.send(
         new FilterLogEventsCommand({
           logGroupName: query.group,
+          logStreamNames: query.stream ? [query.stream] : undefined,
           limit: 200,
           startTime: start,
           filterPattern: query.pattern,
@@ -374,17 +377,18 @@ export const LogRoute = new Hono()
       );
       const entries = [] as LogEntry[];
 
-      if (query.hint === "normal" || query.pattern) {
+      if (query.hint === "normal" || query.pattern || query.stream) {
         for await (const item of response.events || []) {
           entries.push({
             id: item.eventId!,
             timestamp: item.timestamp!,
+            stream: item.logStreamName!,
             message: stripAnsi(item.message!),
           });
         }
       }
 
-      if (query.hint === "lambda" && !query.pattern) {
+      if (query.hint === "lambda" && !query.pattern && !query.stream) {
         const grouper = LambdaGrouper();
         for await (const event of response.events || []) {
           entries.push(

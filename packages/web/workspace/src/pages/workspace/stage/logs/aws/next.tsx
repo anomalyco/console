@@ -368,6 +368,7 @@ export function AWSNext() {
     | {
       view: "cloudwatch";
       logGroup: string;
+      stream: string;
       hint: "normal" | "lambda";
       start: string;
       pattern: string;
@@ -435,8 +436,9 @@ export function AWSNext() {
         .$get({
           query: {
             group: search.logGroup,
-            stageID: stage.stage.id,
+            stream: search.stream,
             hint: search.hint,
+            stageID: stage.stage.id,
             next: filter.next,
             start: (filter.last || search.start) as any,
             pattern: search.pattern,
