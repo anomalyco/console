@@ -136,13 +136,22 @@ export function GatedOverlayWarning(props: GatedOverlayWarningProps) {
 
   onMount(() => {
     document.body.style.overflow = "hidden";
+    const loop = setInterval(() => {
+      const el = document.querySelector<HTMLElement>("[data-component='paywall']");
+      if (!el) {
+        window.location.href = "https://youtu.be/jjl2Xy49gF4?t=76"
+      }
+    }, 1000)
+
+    onCleanup(() => {
+      document.body.style.overflow = "auto";
+      clearInterval(loop)
+    });
   });
-  onCleanup(() => {
-    document.body.style.overflow = "auto";
-  });
+
   return (
     <Portal mount={document.getElementById("styled")!}>
-      <OverlayRoot style={{ "padding-top": top(), "inset-block-start": insetTop() }}>
+      <OverlayRoot data-component="paywall" style={{ "padding-top": top(), "inset-block-start": insetTop() }}>
         <OverlayFade />
         <OverlayText>
           <WarningIcon>
