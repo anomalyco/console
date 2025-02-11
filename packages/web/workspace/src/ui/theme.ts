@@ -275,6 +275,10 @@ const light = (() => {
     },
   };
 
+  const gradient = {
+    fadeBackground: `linear-gradient(hsla(${base.white}, 0) 0% , hsla(${base.white}, .5) 50%, hsla(${base.white}, 100%) 90%)`,
+  };
+
   const button = {
     primary: {
       text: text.primary.inverted,
@@ -379,6 +383,7 @@ const light = (() => {
     input,
     shadow,
     button,
+    gradient,
     switch: formSwitch,
   };
 })();
@@ -537,6 +542,10 @@ const dark = ((): typeof light => {
     },
   };
 
+  const gradient = {
+    fadeBackground: `linear-gradient(hsla(${base.black}, 0) 0%, hsla(${base.black}, .5) 50%, hsla(${base.black}, 100%) 90%)`,
+  };
+
   const button = {
     primary: {
       text: text.primary.surface,
@@ -640,6 +649,7 @@ const dark = ((): typeof light => {
     input,
     shadow,
     button,
+    gradient,
     switch: formSwitch,
   };
 })();

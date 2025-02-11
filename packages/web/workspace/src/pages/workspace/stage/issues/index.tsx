@@ -4,9 +4,7 @@ import { Detail } from "./detail";
 import { NotFound } from "../../../not-found";
 import { useApi } from "../../context";
 import { createStageContext } from "../context";
-import { Show } from "solid-js";
-import { Fullscreen } from "@console/web/ui/layout";
-import { GatedWarning } from "../../app/warning";
+import { GatedOverlayWarning } from "../../app/warning";
 
 export const Issues = (
   <Route
@@ -14,18 +12,10 @@ export const Issues = (
       const api = useApi();
       const ctx = createStageContext();
       return (
-        <Show
-          when={!api.isGated || ctx.connected}
-          fallback={
-            <>
-              <Fullscreen inset="header-tabs">
-                <GatedWarning />
-              </Fullscreen>
-            </>
-          }
-        >
+        <>
+          {api.isGated && !ctx.connected && <GatedOverlayWarning stage />}
           {props.children}
-        </Show>
+        </>
       );
     }}
   >
