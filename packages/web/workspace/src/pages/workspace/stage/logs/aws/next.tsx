@@ -440,8 +440,9 @@ export function AWSNext() {
     search.logGroup,
     search.start,
     search.hint,
-  ] : [], async () => {
+  ] : [], async ([start], old) => {
     if (search.view !== "cloudwatch") return
+    if (!old?.[0] && start) return
 
     cloudwatch.clear()
     if (filterLoopState.cancel) {
@@ -452,6 +453,10 @@ export function AWSNext() {
     filterLoopState.next = undefined
     runFilterLoop()
   }))
+
+  onMount(() => {
+    runFilterLoop()
+  })
 
 
   const filterLoopState: {
