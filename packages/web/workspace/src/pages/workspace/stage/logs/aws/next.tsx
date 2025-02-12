@@ -4,16 +4,18 @@ import {
   IconBoltSolid,
   IconCalendar,
   IconTrash,
+  IconArrowRight,
 } from "@console/web/ui/icons";
 import { VList, VirtualizerHandle } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
 import { NavigateOptions, useSearchParams } from "@solidjs/router";
 import { createMultiList } from "solid-list";
 import {
-  batch,
+  createEffect,
   createMemo,
   createSignal,
   Match,
+  on,
   onMount,
   Show,
   Switch,
@@ -26,9 +28,8 @@ import { utility } from "@console/web/ui/utility";
 import { InvocationRow } from "@console/web/common/invocation";
 import { useApi } from "@console/web/pages/workspace/context";
 import { IconArrowPathSpin } from "@console/web/ui/icons/custom";
-import { createStore } from "solid-js/store";
 import { createEventListener } from "@solid-primitives/event-listener";
-import { style } from "@macaron-css/core";
+import { globalStyle, style } from "@macaron-css/core";
 import { Input, inputFocusStyles, } from "@console/web/ui/form";
 import {
   createLogStore,
@@ -67,23 +68,6 @@ const SearchInput = styled(Input, {
   },
 });
 
-const LogLoadingIndicator = styled("div", {
-  base: {
-    ...utility.row(0),
-    height: 52,
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: `0 ${theme.space[3]} 0 ${theme.space[3]}`,
-    borderStyle: "solid",
-    borderWidth: `1px 1px 1px 1px`,
-    borderColor: theme.color.divider.base,
-    backgroundColor: theme.color.background.surface,
-    borderRadius: `${theme.borderRadius} ${theme.borderRadius} 0 0`,
-    ":last-child": {
-      borderRadius: theme.borderRadius,
-    },
-  },
-});
 const LogLoadingIndicatorIcon = styled("div", {
   base: {
     padding: 2,
@@ -206,6 +190,9 @@ export const HeaderDescription = styled("span", {
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
     color: theme.color.text.secondary.surface,
+    display: "flex",
+    alignItems: "center",
+    gap: theme.space[2],
   },
 });
 
@@ -302,6 +289,7 @@ const LogRowRoot = styled("div", {
   base: {
     ...utility.row(2),
     padding: `calc(${theme.space[1.5]} + 0.125rem) ${theme.space[3]} calc(${theme.space[1.5]} + 0.125rem) calc(${theme.space[3]} + 0.5rem)`,
+    width: "100%",
   },
 });
 
@@ -341,10 +329,36 @@ const LogMessage = styled("div", {
   },
 });
 
+const LogStreamTag = styled("div", {
+  base: {
+    fontSize: theme.font.size.xs,
+  }
+})
+
+const LogStreamLink = styled("div", {
+  base: {
+    flexGrow: 1,
+    display: "flex",
+    justifyContent: "end",
+    alignItems: "center",
+    fontSize: theme.font.size.mono_sm,
+  }
+})
+
+globalStyle(`${LogStreamLink} > svg`, {
+  cursor: "pointer",
+  color: theme.color.text.dimmed.base,
+})
+globalStyle(`${LogStreamLink} > svg:hover`, {
+  color: theme.color.text.secondary.base,
+})
+
 interface LogRowProps {
   expanded?: boolean;
   timestamp: number;
+  stream?: string;
   message: string;
+  onStream: () => void;
 }
 function LogRow(props: LogRowProps) {
   const shortDate = createMemo(() =>
@@ -359,6 +373,13 @@ function LogRow(props: LogRowProps) {
     <LogRowRoot>
       <LogTimestamp title={longDate()}>{shortDate()}</LogTimestamp>
       <LogMessage expanded={props.expanded}>{props.message}</LogMessage>
+      <Show when={props.stream}>
+        <LogStreamLink >
+          <IconArrowRight
+            onClick={props.onStream}
+            width={14} height={14} />
+        </LogStreamLink>
+      </Show>
     </LogRowRoot>
   );
 }
@@ -412,74 +433,90 @@ export function AWSNext() {
 
   let rangeControl: DialogRangeControl;
 
-  const [filter, setFilter] = createStore<{
-    last?: number;
-    next?: string
-    loading: boolean;
-  }>({
-    loading: false,
-  });
+  createEffect(on(() => search.view === "cloudwatch" ? [
+    search.start,
+    search.pattern,
+    search.stream,
+    search.logGroup,
+    search.start,
+    search.hint,
+  ] : [], async () => {
+    if (search.view !== "cloudwatch") return
 
-  async function fetchCloudwatch() {
-    console.log("fetching cloudwatch")
-    if (filter.loading) {
-      console.log("already fetching")
-      return
+    cloudwatch.clear()
+    if (filterLoopState.cancel) {
+      console.log("waiting for old loop to finish")
+      await filterLoopState.cancel()
     }
-    setFilter("loading", true);
+    filterLoopState.last = undefined
+    filterLoopState.next = undefined
+    runFilterLoop()
+  }))
 
+
+  const filterLoopState: {
+    next?: string;
+    last?: number;
+    cancel?: () => Promise<void>;
+  } = {}
+
+  async function runFilterLoop() {
+    if (search.view !== "cloudwatch") return
+    if (filterLoopState.cancel) return
     let total = 0;
-    async function loop() {
-      if (search.view === "local") return;
-      console.log("fetching", "last", filter.last, "start", search.start)
+    let cancelled = undefined as (() => void) | undefined
+    filterLoopState.cancel = async () => {
+      return new Promise<void>(resolve => {
+        cancelled = resolve
+      })
+    }
+    console.log("starting filter loop")
+    while (true) {
+      if (cancelled !== undefined) {
+        cancelled()
+        filterLoopState.cancel = undefined
+        console.log("cancelled filter loop")
+        return
+      }
+      console.log("fetching", "last", filterLoopState.last, "start", search.start, "next", filterLoopState.next)
       const result = await api.client.log.aws.filter
         .$get({
           query: {
             group: search.logGroup,
             stream: search.stream,
             hint: search.hint,
-            stageID: stage.stage.id,
-            next: filter.next,
-            start: (filter.last || search.start) as any,
             pattern: search.pattern,
+            stageID: stage.stage.id,
+            next: filterLoopState.next,
+            start: (filterLoopState.last || search.start) as any,
           },
         })
         .then((r) => r.json());
+      if (cancelled) continue
+      if (!search.start) {
+        setSearch({ start: result.start, }, { replace: true })
+      }
       cloudwatch.ingest(result.entries);
       total += result.entries.length;
-      const getmore = total < 50;
-      if (!search.start) {
-        console.log("setting start", result.start)
-        setSearch({
-          start: result.start,
-        }, {
-          replace: true,
-        })
+      console.log("so far", total)
+      filterLoopState.next = result.next
+      if (total >= 50) break
+      if (!filterLoopState.next) {
+        total = 0
+        const last = cloudwatch.all.at(-1)!
+        if (last)
+          filterLoopState.last = isLog(last) ? last.timestamp : last.start
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        continue
       }
-      setFilter({
-        loading: getmore,
-        next: result.next,
-      });
-      if (getmore) {
-        if (!result.next) {
-          total = 0
-          const last = cloudwatch.all.at(-1)!
-          if (last) {
-            setFilter("last", isLog(last) ? last.timestamp : last.start)
-          }
-          setTimeout(loop, 3000)
-          return
-        }
-        loop();
-        return
-      }
-      console.log("done looping")
     }
-    setTimeout(loop, 1)
+    if (cancelled !== undefined)
+      // @ts-expect-error
+      cancelled()
+    filterLoopState.cancel = undefined
+    console.log("done filter loop")
   }
-  onMount(() => {
-    fetchCloudwatch();
-  });
+
 
   const rows = createMemo(() => {
     if (search.view === "local") return local();
@@ -540,19 +577,11 @@ export function AWSNext() {
 
   function clear() {
     if (search.view === "cloudwatch") {
-      batch(() => {
-        cloudwatch.clear()
-        setFilter({
-          last: undefined,
-          next: undefined,
-        })
-        setSearch({
-          start: Date.now(),
-        }, {
-          replace: true,
-        })
+      setSearch({
+        start: Date.now(),
+      }, {
+        replace: true
       })
-      fetchCloudwatch()
       return
     }
     if (search.view === "local") {
@@ -641,6 +670,9 @@ export function AWSNext() {
                 {(search) => (
                   <Show when={search().start} fallback="Finding recent...">
                     Logs from {DateTime.fromMillis(parseInt(search().start)).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
+                    <Show when={search().stream}>
+                      {" "}in stream
+                    </Show>
                   </Show>
                 )}
               </Match>
@@ -648,32 +680,11 @@ export function AWSNext() {
           </HeaderDescription>
         </HeaderLeft>
         <HeaderRight>
+          <Show when={search.view === "cloudwatch" && search.stream}>
+            <TextButton onClick={() => window.history.back()}>Back to search</TextButton>
+          </Show>
           <TextButton onClick={() => rangeControl.show()}>Jump to</TextButton>
-          <TextButton onClick={() => {
-            if (search.view === "cloudwatch") {
-              batch(() => {
-                cloudwatch.clear()
-                setFilter({
-                  last: undefined,
-                  next: undefined,
-                })
-                setSearch({
-                  start: Date.now(),
-                }, {
-                  replace: true,
-                })
-              })
-              fetchCloudwatch()
-              return
-            }
-            if (search.view === "local") {
-              const functionID =
-                fn()?.type === "sstv2:aws:Function"
-                  ? fn()?.outputs.localId
-                  : search.functionID;
-              localLogs.clear(functionID);
-            }
-          }}>Clear</TextButton>
+          <TextButton onClick={() => clear()}>Clear</TextButton>
           {
             search.view === "cloudwatch" &&
             <SearchInput
@@ -682,26 +693,18 @@ export function AWSNext() {
                 if (e.currentTarget.value === (search.pattern || "")) return
                 setSearch({
                   pattern: e.currentTarget.value,
+                }, {
+                  replace: true
                 })
-                cloudwatch.clear()
-                setFilter({
-                  last: undefined,
-                  next: undefined,
-                })
-                fetchCloudwatch()
               }}
               onKeyDown={(e) => {
                 if (e.currentTarget.value === (search.pattern || "")) return
                 if (e.key === "Enter") {
                   setSearch({
                     pattern: e.currentTarget.value,
+                  }, {
+                    replace: true
                   })
-                  cloudwatch.clear()
-                  setFilter({
-                    last: undefined,
-                    next: undefined,
-                  })
-                  fetchCloudwatch()
                 }
               }}
               size="sm" placeholder="Search..." />
@@ -740,9 +743,11 @@ export function AWSNext() {
         ref={(r) => (vlist = r)}
         data={[...rows(), END_SYMBOL]}
         onScroll={() => {
-          console.log(Math.floor(vlist!.scrollSize - vlist!.scrollOffset), vlist!.viewportSize)
-          if (Math.floor(vlist!.scrollSize - vlist!.scrollOffset - vlist!.viewportSize) === 0)
-            fetchCloudwatch();
+          if (Math.floor(vlist!.scrollSize - vlist!.scrollOffset - vlist!.viewportSize) === 0) {
+            console.log("hit end")
+            if (search.view !== "cloudwatch") return
+            runFilterLoop()
+          }
         }}
       >
         {(entry) => typeof entry !== "symbol" ? (
@@ -787,9 +792,19 @@ export function AWSNext() {
               <Match when={isLog(entry) && entry}>
                 {(log) => (
                   <LogRow
+                    stream={log().stream}
                     message={log().message}
                     timestamp={log().timestamp}
                     expanded={list.selected().includes(entry.id)}
+                    onStream={() => {
+                      setSearch({
+                        stream: log().stream,
+                        start: log().timestamp - 1,
+                        pattern: undefined,
+                      }, {
+                        replace: false,
+                      })
+                    }}
                   />
                 )}
               </Match>
@@ -811,21 +826,13 @@ export function AWSNext() {
         )}
       </VList>
       <DialogRange control={r => rangeControl = r} onSelect={start => {
-        cloudwatch.clear()
-        batch(() => {
-          setSearch({
-            start: start.getTime(),
-          }, {
-            replace: true,
-          })
-          setFilter({
-            last: undefined,
-            next: undefined,
-          })
+        setSearch({
+          start: start.getTime(),
+        }, {
+          replace: true
         })
-        fetchCloudwatch()
       }} />
-    </Root>
+    </Root >
   );
 }
 

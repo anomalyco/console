@@ -369,7 +369,7 @@ export const LogRoute = new Hono()
         new FilterLogEventsCommand({
           logGroupName: query.group,
           logStreamNames: query.stream ? [query.stream] : undefined,
-          limit: 200,
+          limit: 1000,
           startTime: start,
           filterPattern: query.pattern,
           nextToken: query.next,
@@ -379,16 +379,23 @@ export const LogRoute = new Hono()
 
       if (query.hint === "normal" || query.pattern || query.stream) {
         for await (const item of response.events || []) {
+          let message = stripAnsi(item.message!);
+
+          // 2025-01-13T01:09:52.749Z	e3ee3739-3d0e-440c-bd2e-ffe9e74c6897	INFO	<-- POST /github/webhook
+          if (query.hint === "lambda")
+            message = message.replace(
+              /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\t/,
+              "",
+            );
+
           entries.push({
             id: item.eventId!,
             timestamp: item.timestamp!,
-            stream: item.logStreamName!,
-            message: stripAnsi(item.message!),
+            stream: query.stream ? undefined : item.logStreamName!,
+            message,
           });
         }
-      }
-
-      if (query.hint === "lambda" && !query.pattern && !query.stream) {
+      } else if (query.hint === "lambda") {
         const grouper = LambdaGrouper();
         for await (const event of response.events || []) {
           entries.push(
