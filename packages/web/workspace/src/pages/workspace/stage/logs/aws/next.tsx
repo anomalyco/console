@@ -446,7 +446,6 @@ export function AWSNext() {
 
     cloudwatch.clear()
     if (filterLoopState.cancel) {
-      console.log("waiting for old loop to finish")
       await filterLoopState.cancel()
     }
     filterLoopState.last = undefined
@@ -475,15 +474,12 @@ export function AWSNext() {
         cancelled = resolve
       })
     }
-    console.log("starting filter loop")
     while (true) {
       if (cancelled !== undefined) {
         cancelled()
         filterLoopState.cancel = undefined
-        console.log("cancelled filter loop")
         return
       }
-      console.log("fetching", "last", filterLoopState.last, "start", search.start, "next", filterLoopState.next)
       const result = await api.client.log.aws.filter
         .$get({
           query: {
@@ -503,7 +499,6 @@ export function AWSNext() {
       }
       cloudwatch.ingest(result.entries);
       total += result.entries.length;
-      console.log("so far", total)
       filterLoopState.next = result.next
       if (total >= 50) break
       if (!filterLoopState.next) {
@@ -519,7 +514,6 @@ export function AWSNext() {
       // @ts-expect-error
       cancelled()
     filterLoopState.cancel = undefined
-    console.log("done filter loop")
   }
 
 
@@ -787,7 +781,6 @@ export function AWSNext() {
                             payload: invocation()?.input,
                           },
                         });
-                        console.log(lambdaARN);
                       }}
                       local={search.view === "local"}
                     />
