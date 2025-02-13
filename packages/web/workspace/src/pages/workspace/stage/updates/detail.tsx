@@ -13,10 +13,10 @@ import { styled } from "@macaron-css/solid";
 import { IconPr, IconGit, IconCaretRight } from "@console/web/ui/icons/custom";
 import { formatDuration, formatSinceTime } from "@console/web/common/format";
 import { useReplicacheStatus } from "@console/web/providers/replicache-status";
+import { LogsBackground } from "../issues/detail";
+import { Log, LogTime, LogMessage } from "@console/web/common/invocation";
 import {
   IconTag,
-  IconPlus,
-  IconMinus,
   IconCheck,
   IconXCircle,
   IconEllipsisVertical,
@@ -29,35 +29,7 @@ import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
 import { usePersistentQuery, useZero } from "../../zero";
-import { DiagnosticEvent, ResOpFailedEvent, ResourcePreEvent, ResOutputsEvent } from "@console/web/common/pulumi";
 import { useFlags } from "@console/web/providers/flags";
-import { StateEvent } from "@console/core/state/state.pg";
-
-type _EventResourceType = {
-  urn: string
-  name: string
-  error: {
-    timestamp: number
-    data: DiagnosticEvent
-  }[]
-  info: {
-    timestamp: number
-    data: DiagnosticEvent
-  }[]
-  pre: {
-    timestamp: number
-    sequence: number
-    data: ResourcePreEvent
-  },
-  output?: {
-    timestamp: number
-    data: ResOutputsEvent
-  }
-  failed?: {
-    timestamp: number
-    data: ResOpFailedEvent
-  }
-}
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -422,20 +394,28 @@ const ResourceValue = styled("span", {
 });
 
 const EventRoot = styled("div", {
+  base: {},
+});
+
+const EventResource = styled("div", {
   base: {
     borderStyle: "solid",
     borderWidth: `0 1px 0 ${RES_LEFT_BORDER}`,
     borderColor: theme.color.divider.base,
     selectors: {
-      "&:first-child": {
+      [`${EventRoot}:first-child &`]: {
         borderTopWidth: 1,
         borderTopLeftRadius: theme.borderRadius,
         borderTopRightRadius: theme.borderRadius,
       },
-      "&:last-child": {
+      [`${EventRoot}:last-child &`]: {
         borderBottomWidth: 1,
         borderBottomLeftRadius: theme.borderRadius,
         borderBottomRightRadius: theme.borderRadius,
+      },
+      [`${EventRoot}[data-expanded="true"]:last-child &`]: {
+        borderBottomWidth: 1,
+        borderRadius: 0,
       },
     },
   },
@@ -457,18 +437,29 @@ const EventRoot = styled("div", {
   },
 });
 
-const EventResource = styled("div", {
+const EventResourceContent = styled("div", {
   base: {
     ...utility.row(2),
     justifyContent: "space-between",
-    borderTop: `1px solid ${theme.color.divider.base}`,
-    padding: `${theme.space[4]} ${theme.space[3]} ${theme.space[4]} calc(${theme.space[3]} - ${RES_LEFT_BORDER})`,
+    borderWidth: "1px 0 0",
+    borderStyle: "solid",
+    borderColor: theme.color.divider.base,
+    padding: `${theme.space[4]} ${theme.space[3]} ${theme.space[4]} calc(${theme.space[3]} - 3px)`,
     alignItems: "center",
     selectors: {
       [`${EventRoot}:first-child &`]: {
         borderTopWidth: 0,
       },
     },
+  },
+});
+
+const EventResourceEmpty = styled("div", {
+  base: {
+    paddingLeft: 4,
+    color: theme.color.text.dimmed.base,
+    fontSize: theme.font.size.sm,
+    lineHeight: "normal",
   },
 });
 
@@ -535,40 +526,73 @@ const EventDuration = styled("div", {
 
 const EventDetail = styled("div", {
   base: {
-    borderTop: `1px solid ${theme.color.divider.base}`,
+    ...utility.stack(5),
+    borderWidth: "1px 1px 0",
+    borderStyle: "solid",
+    borderColor: theme.color.divider.base,
     padding: theme.space[4],
-    fontFamily: theme.font.family.code,
-    fontSize: theme.font.size.sm,
-    lineBreak: "anywhere",
+    selectors: {
+      [`${EventRoot}:last-child &`]: {
+        borderTopWidth: 0,
+        borderBottomWidth: 1,
+        borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
+      },
+    },
   },
 });
 
-const EventInputRow = styled("div", {
+const EventError = styled("div", {
   base: {
-    padding: `${theme.space[2.5]} ${theme.space[2]}`,
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: theme.space[4],
-    borderBottom: `1px solid ${theme.color.divider.base}`,
-    ":last-child": {
-      border: "none",
-    },
+    ...utility.row(2),
+    color: `hsla(${theme.color.red.l2}, 100%)`,
+    padding: theme.space[4],
+    borderRadius: theme.borderRadius,
+    backgroundColor: theme.color.background.red,
   },
 });
 
 const EventInputDiffRow = styled("div", {
   base: {
+    borderWidth: `0 1px 0 3px`,
+    borderStyle: "solid",
+    borderColor: theme.color.divider.base,
+    ":first-child": {
+      borderRadius: `${theme.borderRadius} ${theme.borderRadius} 0 0`,
+      borderTopWidth: 1,
+    },
+    ":last-child": {
+      borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
+      borderBottomWidth: 1,
+    },
+  },
+  variants: {
+    color: {
+      green: {
+        borderLeftColor: `hsla(${theme.color.blue.l2}, 100%)`,
+      },
+      red: {
+        borderLeftColor: `hsla(${theme.color.red.l1}, 100%)`,
+      },
+      grey: {
+        borderLeftColor: theme.color.divider.base,
+      },
+    },
+  },
+});
+
+const EventInputDiffContent = styled("div", {
+  base: {
     padding: `${theme.space[2.5]} ${theme.space[2]}`,
+    borderBottom: `1px solid ${theme.color.divider.base}`,
     position: "relative",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: theme.space[4],
-    borderBottom: `1px solid ${theme.color.divider.base}`,
-    ":last-child": {
-      border: "none",
+    selectors: {
+      [`${EventInputDiffRow}:last-child &`]: {
+        borderBottom: "none",
+      },
     },
   },
 });
@@ -579,6 +603,7 @@ const EventInputKey = styled("span", {
     fontSize: theme.font.size.mono_sm,
     lineHeight: "normal",
     minWidth: "33%",
+    fontFamily: theme.font.family.code,
   },
 });
 
@@ -586,28 +611,9 @@ const EventInputValue = styled("span", {
   base: {
     ...utility.text.line,
     fontSize: theme.font.size.mono_xs,
+    fontFamily: theme.font.family.code,
     color: theme.color.text.dimmed.base,
     lineHeight: "normal",
-  },
-});
-
-const EventIntputDiffIcon = styled("span", {
-  base: {
-    flex: "0 0 auto",
-    lineHeight: 0,
-    width: 10,
-    height: 10,
-    color: theme.color.icon.secondary,
-  },
-  variants: {
-    color: {
-      added: {
-        color: `hsla(${theme.color.base.blue}, 100%)`,
-      },
-      deleted: {
-        color: `hsla(${theme.color.base.red}, 100%)`,
-      },
-    },
   },
 });
 
@@ -976,88 +982,144 @@ export function Detail() {
                   }
 
                   function renderInput(key: string, to?: any, from?: any) {
-                    const valueString = createMemo(() => typeof to === "string"
+                    const toString = createMemo(() => typeof to === "string"
                       ? to
                       : JSON.stringify(to)
                     );
-                    const oldValueString = createMemo(() => typeof from === "string"
+                    const fromString = createMemo(() => typeof from === "string"
                       ? from
                       : JSON.stringify(from)
                     );
 
                     return (
                       <>
-                        <EventInputRow>
-                          <Row space="3" vertical="center">
-                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
-                            <EventInputKey>{key}</EventInputKey>
-                          </Row>
-                          <Show when={from === undefined}>
-                            <Row space="3" vertical="center">
-                              <EventInputValue>{valueString()}</EventInputValue>
-                              <Show when={to !== ""}>
-                                {renderCopyButton(valueString())}
-                              </Show>
-                            </Row>
-                          </Show>
-                        </EventInputRow>
-                        <Show when={from !== undefined && to !== "" && from !== ""}>
-                          <EventInputDiffRow>
-                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
-                            <Row space="3" vertical="center">
-                              <EventInputValue>{valueString()}</EventInputValue>
-                              <Show when={to !== ""}>
-                                {renderCopyButton(valueString())}
-                              </Show>
-                            </Row>
+                        <Show when={from}>
+                          <EventInputDiffRow color="red">
+                            <EventInputDiffContent>
+                              <EventInputKey>{key}</EventInputKey>
+                              <Row space="3" vertical="center">
+                                <EventInputValue>{fromString()}</EventInputValue>
+                                <Show when={fromString() !== ""}>
+                                  {renderCopyButton(fromString())}
+                                </Show>
+                              </Row>
+                            </EventInputDiffContent>
                           </EventInputDiffRow>
-                          <EventInputDiffRow>
-                            <EventIntputDiffIcon color="added"><IconPlus /></EventIntputDiffIcon>
-                            <Row space="3" vertical="center">
-                              <EventInputValue>{oldValueString()}</EventInputValue>
-                              <Show when={to !== ""}>
-                                {renderCopyButton(oldValueString())}
-                              </Show>
-                            </Row>
+                        </Show>
+                        <Show when={to}>
+                          <EventInputDiffRow
+                            color={from === undefined || from === null
+                              ? "grey"
+                              : "green"
+                            }
+                          >
+                            <EventInputDiffContent>
+                              <EventInputKey>{key}</EventInputKey>
+                              <Row space="3" vertical="center">
+                                <EventInputValue>{toString()}</EventInputValue>
+                                <Show when={toString() !== ""}>
+                                  {renderCopyButton(toString())}
+                                </Show>
+                              </Row>
+                            </EventInputDiffContent>
                           </EventInputDiffRow>
                         </Show>
                       </>
                     );
                   }
 
-                  return (
-                    <EventRoot action={item.event.type}>
-                      <EventResource onClick={onClick}>
-                        <Row space="2" vertical="center">
-                          <CaretIcon expanded={expanded()}>
-                            <IconCaretRight />
-                          </CaretIcon>
-                          <EventTime
-                            title={DateTime.fromMillis(item.timestamp)
-                              .toUTC()
-                              .toLocaleString(
-                                DateTime.DATETIME_FULL_WITH_SECONDS,
-                              )}
-                          >
-                            {DateTime.fromMillis(item.timestamp).toFormat(
-                              "HH:mm:ss",
+                  function renderEventError(message: string) {
+                    return (
+                      <EventError>
+                        <ErrorIcon>
+                          <IconXCircle width={16} height={16} />
+                        </ErrorIcon>
+                        <ErrorMessage>{message}</ErrorMessage>
+                      </EventError>
+                    );
+                  }
+
+                  function renderEventLogs() {
+                    const logs = [
+                      {
+                        timestamp: 1699145522391,
+                        message: "[sst.deploy.start] Deploying to dev",
+                      },
+                      {
+                        timestamp: 1699145522391,
+                        message: "[sst.deploy.end] Deployed to dev",
+                      },
+                      {
+                        timestamp: 1699145522391,
+                        message:
+                          "[sst.deploy.start] Deploying to dev (2/2): 200% complete",
+                      },
+                      {
+                        timestamp: 1699145622391,
+                        message: "[sst.deploy.end] Deployed to dev",
+                      },
+                    ];
+                    return (
+                      <Stack space="2">
+                        <PanelTitle>Logs</PanelTitle>
+                        <LogsBackground>
+                          <For each={logs || []}>
+                            {(log) => (
+                              <Log>
+                                <LogTime
+                                  title={DateTime.fromMillis(log.timestamp)
+                                    .toUTC()
+                                    .toLocaleString(
+                                      DateTime.DATETIME_FULL_WITH_SECONDS,
+                                    )}
+                                >
+                                  {DateTime.fromMillis(log.timestamp).toFormat(
+                                    "HH:mm:ss",
+                                  )}
+                                </LogTime>
+                                <LogMessage>{log.message}</LogMessage>
+                              </Log>
                             )}
-                          </EventTime>
-                          <EventResourceName>{item.event.properties.urn.split("::").at(-1)}</EventResourceName>
-                          <EventResourceType>{item.event.properties.type}</EventResourceType>
-                        </Row>
-                        <Show when={true}>
-                          <EventDuration>{formatDuration(duration())}</EventDuration>
-                        </Show>
+                          </For>
+                        </LogsBackground>
+                      </Stack>
+                    );
+                  }
+
+                  return (
+                    <EventRoot data-expanded={expanded()}>
+                      <EventResource action={item.event.type} onClick={onClick}>
+                        <EventResourceContent>
+                          <Row space="2" vertical="center">
+                            <CaretIcon expanded={expanded()}>
+                              <IconCaretRight />
+                            </CaretIcon>
+                            <EventTime
+                              title={DateTime.fromMillis(item.timestamp)
+                                .toUTC()
+                                .toLocaleString(
+                                  DateTime.DATETIME_FULL_WITH_SECONDS,
+                                )}
+                            >
+                              {DateTime.fromMillis(item.timestamp).toFormat(
+                                "HH:mm:ss",
+                              )}
+                            </EventTime>
+                            <EventResourceName>{item.event.properties.urn.split("::").at(-1)}</EventResourceName>
+                            <EventResourceType>{item.event.properties.type}</EventResourceType>
+                          </Row>
+                          <Show when={true}>
+                            <EventDuration>{formatDuration(duration())}</EventDuration>
+                          </Show>
+                        </EventResourceContent>
                       </EventResource>
                       <Show when={expanded()}>
                         <EventDetail>
-                          {/**JSON.stringify(props.item.pre.data.metadata.old?.inputs, null, 2)**/}
-                          {/**JSON.stringify(props.item, null, 2)**/}
+                          {renderEventError("something went wrong")}
                           <Show when={Object.keys(item.event.properties.inputs).length}>
                             <Stack space="2">
                               <PanelTitle>Inputs</PanelTitle>
-                              <Card outline>
+                              <div>
                                 <For each={
                                   Object.entries(item.event.properties.inputs || {})
                                 }>
@@ -1065,15 +1127,41 @@ export function Detail() {
                                     renderInput(key, value.to, value.from)
                                   )}
                                 </For>
-                              </Card>
+                              </div>
                             </Stack>
                           </Show>
+                          <Show when={Object.keys(item.event.properties.outputs).length}>
+                            <Stack space="2">
+                              <PanelTitle>Outputs</PanelTitle>
+                              <div>
+                                <For each={
+                                  Object.entries(item.event.properties.outputs || {})
+                                }>
+                                  {([key, value]) => (
+                                    renderInput(key, value.to, value.from)
+                                  )}
+                                </For>
+                              </div>
+                            </Stack>
+                          </Show>
+                          {renderEventLogs()}
                         </EventDetail>
                       </Show>
                     </EventRoot>
                   );
                 }}
               </For>
+              <Show when={update.value!.resource.same! > 0}>
+                <EventRoot>
+                  <EventResource action="same">
+                    <EventResourceContent>
+                      <EventResourceEmpty>
+                        {countCopy(update.value!.resource.same!)} were not changed
+                      </EventResourceEmpty>
+                    </EventResourceContent>
+                  </EventResource>
+                </EventRoot>
+              </Show>
             </div>
           </Stack>
         </Show>
