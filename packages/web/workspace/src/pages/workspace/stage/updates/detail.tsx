@@ -31,6 +31,7 @@ import { Text } from "@console/web/ui/text";
 import { usePersistentQuery, useZero } from "../../zero";
 import { DiagnosticEvent, ResOpFailedEvent, ResourcePreEvent, ResOutputsEvent } from "@console/web/common/pulumi";
 import { useFlags } from "@console/web/providers/flags";
+import { StateEvent } from "@console/core/state/state.pg";
 
 type _EventResourceType = {
   urn: string
@@ -935,52 +936,7 @@ export function Detail() {
   }
 
   const zero = useZero()
-<<<<<<< HEAD
   const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("timestamp", "asc"))
-=======
-  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID))
-  const stateEventSummary = createMemo(() => {
-
-    const resources = {} as Record<string, _EventResourceType>;
-
-    for (let item of stateEvents()) {
-      if (item.type === "pulumi.resourcePreEvent") {
-        if (["same", "read"].includes(item.data.metadata.op)) continue
-        resources[item.data.metadata.urn] = {
-          urn: item.data.metadata.urn,
-          name: item.data.metadata.urn.split("::").at(-1),
-          pre: item,
-          info: [],
-          error: []
-        }
-      }
-
-      if (item.type === "pulumi.resOutputsEvent") {
-        const resource = resources[item.data.metadata.urn]
-        if (!resource) continue
-        resource.output = item.data
-      }
-
-      if (item.type === "pulumi.resourceFailedEvent") {
-        const resource = resources[item.data.metadata.urn]
-        if (!resource) continue
-        resource.failed = item.data
-      }
-
-      if (item.type === "pulumi.diagnosticEvent") {
-        const resource = resources[item.data.urn]
-        if (!resource) continue
-        if (item.data.severity === "error") {
-          resource.error.push(item)
-        }
-        resource.info.push(item)
-      }
-    }
-    return Object.values(resources).toSorted((a, b) => a.pre.sequence - b.pre.sequence)
-  })
-
-  const stateEventTiming = createMemo(() => Object.fromEntries(stateEvents().filter((item) => item.type === "pulumi.resourcePreEvent").map((item) => [item.data.metadata.urn, item.timestamp])) as Record<string, number>)
->>>>>>> 04195111 (progress)
 
   createEffect(() => {
     console.log("stateEvent", stateEvents())
@@ -993,18 +949,132 @@ export function Detail() {
       <>
         <Show when={flags.zero}>
           <Stack space="2">
-<<<<<<< HEAD
-            <PanelTitle id="raw">Raw</PanelTitle>
-            <ResourceRoot>
-            </ResourceRoot>
-=======
             <PanelTitle id="raw">Feb 12, 2025</PanelTitle>
             <div>
-              <For each={stateEventSummary()}>
-                {(item) => <Event item={item} />}
+              <For each={stateEvents()}>
+                {(item) => {
+                  const [expanded, setExpanded] = createSignal(true);
+                  const duration = createMemo(() => 0);
+
+                  function onClick() {
+                    setExpanded(!expanded());
+                  }
+
+                  function renderCopyButton(value: any) {
+                    const [copying, setCopying] = createSignal(false);
+                    return (
+                      <ChildIconButton size="xs" copying={copying()} onClick={() => {
+                        setCopying(true);
+                        navigator.clipboard.writeText(value);
+                        setTimeout(() => setCopying(false), 2000);
+                      }}>
+                        <Show when={!copying()} fallback={<IconCheck />}>
+                          <IconDocumentDuplicate />
+                        </Show>
+                      </ChildIconButton>
+                    );
+                  }
+
+                  function renderInput(key: string, to?: any, from?: any) {
+                    const valueString = createMemo(() => typeof to === "string"
+                      ? to
+                      : JSON.stringify(to)
+                    );
+                    const oldValueString = createMemo(() => typeof from === "string"
+                      ? from
+                      : JSON.stringify(from)
+                    );
+
+                    return (
+                      <>
+                        <EventInputRow>
+                          <Row space="3" vertical="center">
+                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
+                            <EventInputKey>{key}</EventInputKey>
+                          </Row>
+                          <Show when={from === undefined}>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{valueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(valueString())}
+                              </Show>
+                            </Row>
+                          </Show>
+                        </EventInputRow>
+                        <Show when={from !== undefined && to !== "" && from !== ""}>
+                          <EventInputDiffRow>
+                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{valueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(valueString())}
+                              </Show>
+                            </Row>
+                          </EventInputDiffRow>
+                          <EventInputDiffRow>
+                            <EventIntputDiffIcon color="added"><IconPlus /></EventIntputDiffIcon>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{oldValueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(oldValueString())}
+                              </Show>
+                            </Row>
+                          </EventInputDiffRow>
+                        </Show>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <EventRoot action={item.event.type}>
+                      <EventResource onClick={onClick}>
+                        <Row space="2" vertical="center">
+                          <CaretIcon expanded={expanded()}>
+                            <IconCaretRight />
+                          </CaretIcon>
+                          <EventTime
+                            title={DateTime.fromMillis(item.timestamp)
+                              .toUTC()
+                              .toLocaleString(
+                                DateTime.DATETIME_FULL_WITH_SECONDS,
+                              )}
+                          >
+                            {DateTime.fromMillis(item.timestamp).toFormat(
+                              "HH:mm:ss",
+                            )}
+                          </EventTime>
+                          <EventResourceName>{item.event.properties.urn.split("::").at(-1)}</EventResourceName>
+                          <EventResourceType>{item.event.properties.type}</EventResourceType>
+                        </Row>
+                        <Show when={true}>
+                          <EventDuration>{formatDuration(duration())}</EventDuration>
+                        </Show>
+                      </EventResource>
+                      <Show when={expanded()}>
+                        <EventDetail>
+                          {/**JSON.stringify(props.item.pre.data.metadata.old?.inputs, null, 2)**/}
+                          {/**JSON.stringify(props.item, null, 2)**/}
+                          <Show when={Object.keys(item.event.properties.inputs).length}>
+                            <Stack space="2">
+                              <PanelTitle>Inputs</PanelTitle>
+                              <Card outline>
+                                <For each={
+                                  Object.entries(item.event.properties.inputs || {})
+                                }>
+                                  {([key, value]) => (
+                                    renderInput(key, value.to, value.from)
+                                  )}
+                                </For>
+                              </Card>
+                            </Stack>
+                          </Show>
+                        </EventDetail>
+                      </Show>
+                    </EventRoot>
+                  );
+                }}
               </For>
             </div>
->>>>>>> 04195111 (progress)
           </Stack>
         </Show>
         <Show when={deleted().length}>
@@ -1172,162 +1242,6 @@ export function Detail() {
         </Container>
       </Match>
     </Switch>
-  );
-}
-
-type EventProps = {
-  item: _EventResourceType;
-};
-// | "same"
-// | "create"
-// | "update"
-// | "delete"
-// | "replace"
-// | "create-replacement"
-// | "delete-replaced"
-// | "read"
-// | "read-replacement"
-// | "refresh"
-// | "discard"
-// | "discard-replaced"
-// | "remove-pending-replace"
-// | "import"
-// | "import-replacement";
-function Event(props: EventProps) {
-  const [expanded, setExpanded] = createSignal(true);
-  const action = createMemo(() => {
-    switch (props.item.pre.data.metadata.op) {
-      case "create":
-        return "created";
-      case "update":
-        return "updated";
-      case "delete-replaced":
-        return "updated";
-      case "delete":
-        return "deleted";
-      default:
-        return "same";
-    }
-  });
-  const duration = createMemo(() =>
-    (props.item.output?.timestamp || props.item.failed?.timestamp || 0) - props.item.pre.timestamp
-  );
-
-  function onClick() {
-    setExpanded(!expanded());
-  }
-
-  function renderCopyButton(value: any) {
-    const [copying, setCopying] = createSignal(false);
-    return (
-      <ChildIconButton size="xs" copying={copying()} onClick={() => {
-        setCopying(true);
-        navigator.clipboard.writeText(value);
-        setTimeout(() => setCopying(false), 2000);
-      }}>
-        <Show when={!copying()} fallback={<IconCheck />}>
-          <IconDocumentDuplicate />
-        </Show>
-      </ChildIconButton>
-    );
-  }
-
-  function renderInput(key: string, value: any, oldValue?: any) {
-    const valueString = createMemo(() => typeof value === "string"
-      ? value
-      : JSON.stringify(value)
-    );
-    const oldValueString = createMemo(() => typeof oldValue === "string"
-      ? oldValue
-      : JSON.stringify(oldValue)
-    );
-
-    return (
-      <>
-        <EventInputRow>
-          <Row space="3" vertical="center">
-            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
-            <EventInputKey>{key}</EventInputKey>
-          </Row>
-          <Show when={oldValue === undefined}>
-            <Row space="3" vertical="center">
-              <EventInputValue>{valueString()}</EventInputValue>
-              <Show when={value !== ""}>
-                {renderCopyButton(valueString())}
-              </Show>
-            </Row>
-          </Show>
-        </EventInputRow>
-        <Show when={oldValue !== undefined && value !== "" && oldValue !== ""}>
-          <EventInputDiffRow>
-            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
-            <Row space="3" vertical="center">
-              <EventInputValue>{valueString()}</EventInputValue>
-              <Show when={value !== ""}>
-                {renderCopyButton(valueString())}
-              </Show>
-            </Row>
-          </EventInputDiffRow>
-          <EventInputDiffRow>
-            <EventIntputDiffIcon color="added"><IconPlus /></EventIntputDiffIcon>
-            <Row space="3" vertical="center">
-              <EventInputValue>{oldValueString()}</EventInputValue>
-              <Show when={value !== ""}>
-                {renderCopyButton(oldValueString())}
-              </Show>
-            </Row>
-          </EventInputDiffRow>
-        </Show>
-      </>
-    );
-  }
-
-  return (
-    <EventRoot action={action()}>
-      <EventResource onClick={onClick}>
-        <Row space="2" vertical="center">
-          <CaretIcon expanded={expanded()}>
-            <IconCaretRight />
-          </CaretIcon>
-          <EventTime
-            title={DateTime.fromMillis(props.item.pre.timestamp)
-              .toUTC()
-              .toLocaleString(
-                DateTime.DATETIME_FULL_WITH_SECONDS,
-              )}
-          >
-            {DateTime.fromMillis(props.item.pre.timestamp).toFormat(
-              "HH:mm:ss",
-            )}
-          </EventTime>
-          <EventResourceName>{props.item.name}</EventResourceName>
-          <EventResourceType>{props.item.pre.data.metadata.type}</EventResourceType>
-        </Row>
-        <Show when={true}>
-          <EventDuration>{formatDuration(duration())}</EventDuration>
-        </Show>
-      </EventResource>
-      <Show when={expanded()}>
-        <EventDetail>
-          {/**JSON.stringify(props.item.pre.data.metadata.old?.inputs, null, 2)**/}
-          {/**JSON.stringify(props.item, null, 2)**/}
-          <Show when={props.item.pre.data.metadata.old?.inputs}>
-            <Stack space="2">
-              <PanelTitle>Inputs</PanelTitle>
-              <Card outline>
-                <For each={
-                  Object.entries(props.item.pre.data.metadata.old?.inputs || {})
-                }>
-                  {([key, value]) => (
-                    renderInput(key, value, value)
-                  )}
-                </For>
-              </Card>
-            </Stack>
-          </Show>
-        </EventDetail>
-      </Show>
-    </EventRoot>
   );
 }
 

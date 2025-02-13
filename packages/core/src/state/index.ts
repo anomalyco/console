@@ -1060,6 +1060,7 @@ export module State {
                 type: item.action,
                 properties: {
                   urn: item.urn,
+                  type: item.type,
                   action: item.action,
                   parent: item.parent || undefined,
                   custom: item.custom,
