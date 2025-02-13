@@ -119,10 +119,10 @@ const TABLE_KEY = {
 };
 
 const TABLE_SELECT = {
-  // stateEvent: (() => {
-  //   const { inputs, outputs, ...rest } = getTableColumns(stateEventTable);
-  //   return rest;
-  // })(),
+  stateEvent: (() => {
+    const { inputs, outputs, ...rest } = getTableColumns(stateEventTable);
+    return rest;
+  })(),
 } as {
   [key in TableName]?: any;
 };
