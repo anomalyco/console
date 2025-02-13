@@ -10,14 +10,17 @@ import { CMD_MAP, STATUS_MAP, errorCountCopy } from "./list";
 import { NotFound } from "@console/web/pages/not-found";
 import { inputFocusStyles } from "@console/web/ui/form";
 import { styled } from "@macaron-css/solid";
-import { IconPr, IconGit } from "@console/web/ui/icons/custom";
+import { IconPr, IconGit, IconCaretRight } from "@console/web/ui/icons/custom";
 import { formatDuration, formatSinceTime } from "@console/web/common/format";
 import { useReplicacheStatus } from "@console/web/providers/replicache-status";
 import {
   IconTag,
+  IconPlus,
+  IconMinus,
   IconCheck,
   IconXCircle,
   IconEllipsisVertical,
+  IconDocumentDuplicate,
 } from "@console/web/ui/icons";
 import { githubPr, githubRepo, githubRef } from "@console/web/common/url-builder";
 import { sortBy } from "remeda";
@@ -28,6 +31,33 @@ import { Text } from "@console/web/ui/text";
 import { usePersistentQuery, useZero } from "../../zero";
 import { DiagnosticEvent, ResOpFailedEvent, ResourcePreEvent, ResOutputsEvent } from "@console/web/common/pulumi";
 import { useFlags } from "@console/web/providers/flags";
+import { StateEvent } from "@console/core/state/state.pg";
+
+type _EventResourceType = {
+  urn: string
+  name: string
+  error: {
+    timestamp: number
+    data: DiagnosticEvent
+  }[]
+  info: {
+    timestamp: number
+    data: DiagnosticEvent
+  }[]
+  pre: {
+    timestamp: number
+    sequence: number
+    data: ResourcePreEvent
+  },
+  output?: {
+    timestamp: number
+    data: ResOutputsEvent
+  }
+  failed?: {
+    timestamp: number
+    data: ResOpFailedEvent
+  }
+}
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -152,6 +182,160 @@ const ErrorMessage = styled("div", {
   },
 });
 
+const Card = styled("div", {
+  base: {
+    borderRadius: 4,
+    backgroundColor: theme.color.background.surface,
+  },
+  variants: {
+    outline: {
+      true: {
+        backgroundColor: "transparent",
+        border: `1px solid ${theme.color.divider.base}`,
+      },
+    },
+  },
+});
+
+const HeaderRoot = styled("div", {
+  base: {
+    display: "flex",
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: `0 ${theme.space[3]}`,
+    height: 50,
+    gap: theme.space[6],
+  },
+});
+
+const HeaderTitle = styled("span", {
+  base: {
+    ...utility.text.line,
+    minWidth: 0,
+    color: theme.color.text.primary.surface,
+    fontWeight: theme.font.weight.medium,
+    lineHeight: "normal",
+  },
+  variants: {
+    outline: {
+      true: {
+        color: theme.color.text.primary.base,
+      },
+    },
+  },
+});
+
+const Children = styled("div", {
+  base: {
+    ...utility.stack(0),
+    padding: `0 ${theme.space[3]}`,
+    borderTop: `1px solid ${theme.color.divider.surface}`,
+    ":empty": {
+      display: "none",
+    },
+  },
+  variants: {
+    outline: {
+      true: {
+        borderColor: theme.color.divider.base,
+      },
+    },
+  },
+});
+
+const Child = styled("div", {
+  base: {
+    padding: `${theme.space[4]} 0`,
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space[4],
+    borderBottom: `1px solid ${theme.color.divider.surface}`,
+    selectors: {
+      "&:last-child": {
+        border: "none",
+      },
+    },
+  },
+  variants: {
+    outline: {
+      true: {
+        borderColor: theme.color.divider.base,
+      },
+    },
+  },
+});
+
+const ChildKey = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_base,
+    color: theme.color.text.primary.surface,
+    lineHeight: "normal",
+    minWidth: "33%",
+  },
+  variants: {
+    outline: {
+      true: {
+        color: theme.color.text.primary.base,
+      },
+    },
+  },
+});
+
+const ChildValueMono = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontSize: theme.font.size.mono_sm,
+    fontFamily: theme.font.family.code,
+    color: theme.color.text.dimmed.surface,
+    lineHeight: "normal",
+  },
+  variants: {
+    outline: {
+      true: {
+        color: theme.color.text.dimmed.base,
+      },
+    },
+  },
+});
+
+const ChildIconButton = styled("button", {
+  base: {
+    flexShrink: 0,
+    height: 16,
+    width: 16,
+    color: theme.color.icon.dimmed,
+    ":hover": {
+      color: theme.color.icon.secondary,
+    },
+  },
+  variants: {
+    size: {
+      sm: {
+        height: 16,
+        width: 16,
+      },
+      xs: {
+        height: 14,
+        width: 14,
+      },
+    },
+    copying: {
+      true: {
+        cursor: "default",
+        color: theme.color.icon.dimmed,
+        ":hover": {
+          color: theme.color.icon.dimmed,
+        },
+      },
+    },
+  },
+});
+
 const ResourceEmpty = styled("div", {
   base: {
     height: 200,
@@ -234,6 +418,196 @@ const ResourceValue = styled("span", {
     fontSize: theme.font.size.sm,
     color: theme.color.text.dimmed.base,
     lineHeight: "normal",
+  },
+});
+
+const EventRoot = styled("div", {
+  base: {
+    borderStyle: "solid",
+    borderWidth: `0 1px 0 ${RES_LEFT_BORDER}`,
+    borderColor: theme.color.divider.base,
+    selectors: {
+      "&:first-child": {
+        borderTopWidth: 1,
+        borderTopLeftRadius: theme.borderRadius,
+        borderTopRightRadius: theme.borderRadius,
+      },
+      "&:last-child": {
+        borderBottomWidth: 1,
+        borderBottomLeftRadius: theme.borderRadius,
+        borderBottomRightRadius: theme.borderRadius,
+      },
+    },
+  },
+  variants: {
+    action: {
+      created: {
+        borderLeftColor: `hsla(${theme.color.blue.l2}, 100%)`,
+      },
+      updated: {
+        borderLeftColor: `hsla(${theme.color.brand.l2}, 100%)`,
+      },
+      deleted: {
+        borderLeftColor: `hsla(${theme.color.red.l1}, 100%)`,
+      },
+      same: {
+        borderLeftColor: theme.color.divider.base,
+      },
+    },
+  },
+});
+
+const EventResource = styled("div", {
+  base: {
+    ...utility.row(2),
+    justifyContent: "space-between",
+    borderTop: `1px solid ${theme.color.divider.base}`,
+    padding: `${theme.space[4]} ${theme.space[3]} ${theme.space[4]} calc(${theme.space[3]} - ${RES_LEFT_BORDER})`,
+    alignItems: "center",
+    selectors: {
+      [`${EventRoot}:first-child &`]: {
+        borderTopWidth: 0,
+      },
+    },
+  },
+});
+
+const CaretIcon = styled("button", {
+  base: {
+    width: 20,
+    height: 20,
+    flexShrink: 0,
+    lineHeight: 0,
+    color: theme.color.icon.dimmed,
+  },
+  variants: {
+    expanded: {
+      true: {
+        transform: "rotate(90deg)",
+      },
+    },
+  },
+});
+
+const EventTime = styled("div", {
+  base: {
+    ...utility.text.line,
+    lineHeight: "normal",
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_sm,
+    color: theme.color.text.dimmed.base,
+    flexShrink: 0,
+    minWidth: 72,
+  },
+});
+
+const EventResourceName = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.mono_base,
+    lineHeight: "normal",
+    width: 300,
+  },
+});
+
+const EventResourceType = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontSize: theme.font.size.sm,
+    color: theme.color.text.dimmed.base,
+    lineHeight: "normal",
+  },
+});
+
+const EventDuration = styled("div", {
+  base: {
+    ...utility.text.line,
+    lineHeight: "normal",
+    fontFamily: theme.font.family.code,
+    flexShrink: 0,
+    minWidth: 70,
+    textAlign: "right",
+    fontSize: theme.font.size.mono_sm,
+    color: theme.color.text.dimmed.base,
+  },
+});
+
+const EventDetail = styled("div", {
+  base: {
+    borderTop: `1px solid ${theme.color.divider.base}`,
+    padding: theme.space[4],
+    fontFamily: theme.font.family.code,
+    fontSize: theme.font.size.sm,
+    lineBreak: "anywhere",
+  },
+});
+
+const EventInputRow = styled("div", {
+  base: {
+    padding: `${theme.space[2.5]} ${theme.space[2]}`,
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space[4],
+    borderBottom: `1px solid ${theme.color.divider.base}`,
+    ":last-child": {
+      border: "none",
+    },
+  },
+});
+
+const EventInputDiffRow = styled("div", {
+  base: {
+    padding: `${theme.space[2.5]} ${theme.space[2]}`,
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space[4],
+    borderBottom: `1px solid ${theme.color.divider.base}`,
+    ":last-child": {
+      border: "none",
+    },
+  },
+});
+
+const EventInputKey = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontSize: theme.font.size.mono_sm,
+    lineHeight: "normal",
+    minWidth: "33%",
+  },
+});
+
+const EventInputValue = styled("span", {
+  base: {
+    ...utility.text.line,
+    fontSize: theme.font.size.mono_xs,
+    color: theme.color.text.dimmed.base,
+    lineHeight: "normal",
+  },
+});
+
+const EventIntputDiffIcon = styled("span", {
+  base: {
+    flex: "0 0 auto",
+    lineHeight: 0,
+    width: 10,
+    height: 10,
+    color: theme.color.icon.secondary,
+  },
+  variants: {
+    color: {
+      added: {
+        color: `hsla(${theme.color.base.blue}, 100%)`,
+      },
+      deleted: {
+        color: `hsla(${theme.color.base.red}, 100%)`,
+      },
+    },
   },
 });
 
@@ -323,6 +697,36 @@ const PanelValueMono = styled("span", {
     fontFamily: theme.font.family.code,
     fontSize: theme.font.size.mono_base,
     fontWeight: theme.font.weight.medium,
+  },
+});
+
+const PanelValueRow = styled("div", {
+  base: {
+    ...utility.row(2),
+    alignItems: "center",
+  },
+});
+
+const PanelValueCopy = styled("button", {
+  base: {
+    flexShrink: 0,
+    height: 16,
+    width: 16,
+    color: theme.color.icon.dimmed,
+    ":hover": {
+      color: theme.color.icon.secondary,
+    },
+  },
+  variants: {
+    copying: {
+      true: {
+        cursor: "default",
+        color: theme.color.icon.dimmed,
+        ":hover": {
+          color: theme.color.icon.dimmed,
+        },
+      },
+    },
   },
 });
 
@@ -417,6 +821,7 @@ export function Detail() {
 
       return { trigger, branch, uri, gitUser };
     });
+    const [copying, setCopying] = createSignal(false);
     return (
       <Sidebar>
         <Stack space={runInfo() ? "7" : "0"}>
@@ -502,6 +907,28 @@ export function Detail() {
               <PanelTitle>Command</PanelTitle>
               <PanelValueMono>{CMD_MAP[update.value!.command]}</PanelValueMono>
             </Stack>
+            <Show when={flags.zero}>
+              <Stack space="2">
+                <PanelTitle>Permalink</PanelTitle>
+                <PanelValueRow>
+                  <PanelValueMono>
+                    sst.dev/u/9a6c7a
+                  </PanelValueMono>
+                  <PanelValueCopy
+                    copying={copying()}
+                    onClick={() => {
+                      setCopying(true);
+                      navigator.clipboard.writeText("https://sst.dev/u/9a6c7a");
+                      setTimeout(() => setCopying(false), 2000);
+                    }}
+                  >
+                    <Show when={!copying()} fallback={<IconCheck />}>
+                      <IconDocumentDuplicate />
+                    </Show>
+                  </PanelValueCopy>
+                </PanelValueRow>
+              </Stack>
+            </Show>
           </Stack>
         </Stack>
       </Sidebar>
@@ -522,9 +949,132 @@ export function Detail() {
       <>
         <Show when={flags.zero}>
           <Stack space="2">
-            <PanelTitle id="raw">Raw</PanelTitle>
-            <ResourceRoot>
-            </ResourceRoot>
+            <PanelTitle id="raw">Feb 12, 2025</PanelTitle>
+            <div>
+              <For each={stateEvents()}>
+                {(item) => {
+                  const [expanded, setExpanded] = createSignal(true);
+                  const duration = createMemo(() => 0);
+
+                  function onClick() {
+                    setExpanded(!expanded());
+                  }
+
+                  function renderCopyButton(value: any) {
+                    const [copying, setCopying] = createSignal(false);
+                    return (
+                      <ChildIconButton size="xs" copying={copying()} onClick={() => {
+                        setCopying(true);
+                        navigator.clipboard.writeText(value);
+                        setTimeout(() => setCopying(false), 2000);
+                      }}>
+                        <Show when={!copying()} fallback={<IconCheck />}>
+                          <IconDocumentDuplicate />
+                        </Show>
+                      </ChildIconButton>
+                    );
+                  }
+
+                  function renderInput(key: string, to?: any, from?: any) {
+                    const valueString = createMemo(() => typeof to === "string"
+                      ? to
+                      : JSON.stringify(to)
+                    );
+                    const oldValueString = createMemo(() => typeof from === "string"
+                      ? from
+                      : JSON.stringify(from)
+                    );
+
+                    return (
+                      <>
+                        <EventInputRow>
+                          <Row space="3" vertical="center">
+                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
+                            <EventInputKey>{key}</EventInputKey>
+                          </Row>
+                          <Show when={from === undefined}>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{valueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(valueString())}
+                              </Show>
+                            </Row>
+                          </Show>
+                        </EventInputRow>
+                        <Show when={from !== undefined && to !== "" && from !== ""}>
+                          <EventInputDiffRow>
+                            <EventIntputDiffIcon color="deleted"><IconMinus /></EventIntputDiffIcon>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{valueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(valueString())}
+                              </Show>
+                            </Row>
+                          </EventInputDiffRow>
+                          <EventInputDiffRow>
+                            <EventIntputDiffIcon color="added"><IconPlus /></EventIntputDiffIcon>
+                            <Row space="3" vertical="center">
+                              <EventInputValue>{oldValueString()}</EventInputValue>
+                              <Show when={to !== ""}>
+                                {renderCopyButton(oldValueString())}
+                              </Show>
+                            </Row>
+                          </EventInputDiffRow>
+                        </Show>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <EventRoot action={item.event.type}>
+                      <EventResource onClick={onClick}>
+                        <Row space="2" vertical="center">
+                          <CaretIcon expanded={expanded()}>
+                            <IconCaretRight />
+                          </CaretIcon>
+                          <EventTime
+                            title={DateTime.fromMillis(item.timestamp)
+                              .toUTC()
+                              .toLocaleString(
+                                DateTime.DATETIME_FULL_WITH_SECONDS,
+                              )}
+                          >
+                            {DateTime.fromMillis(item.timestamp).toFormat(
+                              "HH:mm:ss",
+                            )}
+                          </EventTime>
+                          <EventResourceName>{item.event.properties.urn.split("::").at(-1)}</EventResourceName>
+                          <EventResourceType>{item.event.properties.type}</EventResourceType>
+                        </Row>
+                        <Show when={true}>
+                          <EventDuration>{formatDuration(duration())}</EventDuration>
+                        </Show>
+                      </EventResource>
+                      <Show when={expanded()}>
+                        <EventDetail>
+                          {/**JSON.stringify(props.item.pre.data.metadata.old?.inputs, null, 2)**/}
+                          {/**JSON.stringify(props.item, null, 2)**/}
+                          <Show when={Object.keys(item.event.properties.inputs).length}>
+                            <Stack space="2">
+                              <PanelTitle>Inputs</PanelTitle>
+                              <Card outline>
+                                <For each={
+                                  Object.entries(item.event.properties.inputs || {})
+                                }>
+                                  {([key, value]) => (
+                                    renderInput(key, value.to, value.from)
+                                  )}
+                                </For>
+                              </Card>
+                            </Stack>
+                          </Show>
+                        </EventDetail>
+                      </Show>
+                    </EventRoot>
+                  );
+                }}
+              </For>
+            </div>
           </Stack>
         </Show>
         <Show when={deleted().length}>
@@ -606,6 +1156,55 @@ export function Detail() {
     );
   }
 
+  function renderStateOutputs() {
+    const outputs = [{ key: "Api", value: "https://g3kgrm5dqskfbbhw6hkruasqyq0lbwff.lambda-url.us-east-1.on.aws/" }, { key: "ApiRouter", value: "https://api.dev.console.sst.dev" }, { key: "Error", value: "https://i3pnw4kczeu2vjtgdkicujzxyy0bgzxc.lambda-url.us-east-1.on.aws/" }, { key: "OpenAuth", value: "https://openauth.dev.console.sst.dev" }, { key: "Workspace", value: "https://dev.console.sst.dev" }, { key: "Zero", value: "https://zero.dev.console.sst.dev/" }, { key: "ZeroReplication", value: "http://internal-dev-ZeroReplicationLoadB-716793618.us-east-1.elb.amazonaws.com" }];
+
+    return (
+      <Show when={outputs.length}>
+        <Card>
+          <HeaderRoot>
+            <HeaderTitle>Outputs</HeaderTitle>
+          </HeaderRoot>
+          <Children>
+            <For each={outputs}>
+              {(output) => {
+                const [copying, setCopying] = createSignal(false);
+                return (
+                  <Show
+                    when={
+                      output.value &&
+                      typeof output.value === "string" &&
+                      output.value.trim() !== ""
+                    }
+                  >
+                    <Child>
+                      <ChildKey>{output.key}</ChildKey>
+                      <Row space="3" vertical="center">
+                        <ChildValueMono>{output.value}</ChildValueMono>
+                        <ChildIconButton
+                          copying={copying()}
+                          onClick={() => {
+                            setCopying(true);
+                            navigator.clipboard.writeText(output.value!);
+                            setTimeout(() => setCopying(false), 2000);
+                          }}
+                        >
+                          <Show when={!copying()} fallback={<IconCheck />}>
+                            <IconDocumentDuplicate />
+                          </Show>
+                        </ChildIconButton>
+                      </Row>
+                    </Child>
+                  </Show>
+                );
+              }}
+            </For>
+          </Children>
+        </Card>
+      </Show>
+    );
+  }
+
   return (
     <Switch>
       <Match when={replicacheStatus.isSynced(rep().name) && !update.value}>
@@ -620,6 +1219,9 @@ export function Detail() {
                 <Show when={update.value!.errors.length}>{renderErrors()}</Show>
               </Stack>
               <Stack space="5">
+                <Show when={flags.zero}>
+                  {renderStateOutputs()}
+                </Show>
                 <Switch>
                   <Match when={!isEmpty()}>{renderResources()}</Match>
                   <Match

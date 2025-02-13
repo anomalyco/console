@@ -767,6 +767,7 @@ export function List() {
   });
 
   function renderStateOutputs() {
+    console.log(stateOutputs())
     return (
       <Show when={stateOutputs().length}>
         <Card>

@@ -68,6 +68,7 @@ export const CreateEvent = z.object({
   ]),
   properties: z.object({
     urn: z.string(),
+    type: z.string(),
     action: z.enum(Action),
     parent: z.string().optional(),
     custom: z.boolean(),
