@@ -1104,7 +1104,9 @@ export module State {
               JSON.parse(await result.Body!.transformToString()).checkpoint
                 .latest || {},
           )
-          .catch(() => {});
+          .catch((ex) => {
+            console.log(ex);
+          });
 
         const parsed = DateTime.fromISO(state?.manifest?.time);
         if (parsed.isValid && (!timestamp || parsed >= timestamp))
