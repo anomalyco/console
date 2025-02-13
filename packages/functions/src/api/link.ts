@@ -37,6 +37,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
           or(
             eq(stateUpdateTable.id, identity),
             eq(stateUpdateTable.slug, identity),
+            eq(stateUpdateTable.slug, identity.substring(2)),
           ),
         )
         .limit(1)
