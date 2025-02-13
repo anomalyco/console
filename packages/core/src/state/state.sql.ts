@@ -47,7 +47,7 @@ export const stateUpdateTable = mysqlTable(
     resourceUpdated: int("resource_updated"),
     resourceSame: int("resource_same"),
     errors: json("errors").$type<Error[]>(),
-    slug: char("slug", { length: 6 }),
+    slug: varchar("slug", { length: 8 }),
   },
 
   (table) => ({

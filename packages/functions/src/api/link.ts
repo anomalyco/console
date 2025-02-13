@@ -46,7 +46,7 @@ export const LinkRoute = new Hono().get("/:type/:identity", async (c) => {
 
       if (!result)
         throw new HTTPException(404, {
-          message: `Update ${identity} not found`,
+          message: `Update ${identity} not found, your sst cli might need to be updated.`,
         });
       const url = `https://console.sst.dev/${result.slug}/${result.app}/${result.stage}/updates/${result.updateID}`;
       return c.text("redirecting...", 302, { location: url });

@@ -421,6 +421,13 @@
       "when": 1739208441247,
       "tag": "0059_mute_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1739465342533,
+      "tag": "0060_chubby_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

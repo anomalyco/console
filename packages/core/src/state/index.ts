@@ -583,7 +583,7 @@ export module State {
             command: command.data,
             runID,
             id: lock.updateID,
-            slug: lock.updateID.slice(-6),
+            slug: lock.updateID.slice(-8),
             index: result + 1,
             stageID: input.config.stageID,
             timeStarted: new Date(lock.created),
@@ -743,7 +743,7 @@ export module State {
           .insert(stateUpdateTable)
           .values({
             id: input.updateID,
-            slug: input.updateID.slice(-6),
+            slug: input.updateID.slice(-8),
             index: max + 1,
             runID,
             errors: update.errors,
