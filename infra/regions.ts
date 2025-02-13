@@ -6,10 +6,11 @@ const providers = {} as Record<string, aws.Provider | undefined>;
 for (const region of regions) {
   if (region === "us-east-1") {
     providers[region] = undefined;
+  } else {
+    providers[region] = new aws.Provider("Aws_" + region, {
+      region: region as any,
+    });
   }
-  providers[region] = new aws.Provider("Aws_" + region, {
-    region: region as any,
-  });
 }
 
 export function multiregion<T>(
