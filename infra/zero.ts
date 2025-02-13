@@ -29,7 +29,7 @@ const zeroEnv = {
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/2`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/3`,
       }),
 };
 
@@ -127,6 +127,9 @@ export const zero = cluster.addService("Zero", {
       ephemeralStorage: {
         sizeInGib: 200,
       },
+    },
+    service: {
+      waitForSteadyState: true,
     },
     loadBalancer: {
       idleTimeout: 60 * 60,
