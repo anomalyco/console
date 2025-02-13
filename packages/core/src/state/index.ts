@@ -934,6 +934,7 @@ export module State {
               }
               next[key] = {
                 to: next[key],
+                from: null,
               };
             }
 
@@ -943,10 +944,9 @@ export module State {
               }
               const to = next[key]?.to;
               const from = prev[key];
-              if (to === from) continue;
               next[key] = {
                 ...next[key],
-                from,
+                from: to === from ? undefined : from,
               };
             }
           }
