@@ -10,6 +10,8 @@ import {
   stateResourceTable,
   stateCountTable,
 } from "./state.sql";
+
+import { stateEventTable as pg_stateEventTable } from "./state.pg";
 import {
   createTransaction,
   createTransactionEffect,
@@ -40,6 +42,8 @@ import {
   DescribeStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
 import { runTable } from "../run/run.sql";
+import { objectFlatten } from "../util/object";
+import { postgres } from "../drizzle";
 
 export module State {
   export const Event = {
@@ -373,10 +377,6 @@ export module State {
       for (const [urn, resource] of Object.entries(resources)) {
         const previous = previousResources[urn];
         delete previousResources[urn];
-        resource.inputs = resource.inputs || {};
-        resource.outputs = resource.outputs || {};
-        delete resource.inputs["__provider"];
-        delete resource.outputs["__provider"];
         const action = (() => {
           if (!previous) return "created";
           if (previous.created !== resource.created) return "created";
@@ -384,7 +384,35 @@ export module State {
           return "same";
         })();
         counts[action] = (counts[action] || 0) + 1;
+
         if (action !== "same") {
+          const inputs = objectFlatten(resource.inputs || {});
+          const outputs = objectFlatten(resource.outputs || {});
+
+          const previousInputs = objectFlatten(previous?.inputs || {});
+          const previousOutputs = objectFlatten(previous?.outputs || {});
+
+          for (const [prev, next] of [
+            [previousInputs, inputs] as const,
+            [previousOutputs, outputs] as const,
+          ]) {
+            for (const key of Object.keys(next)) {
+              next[key] = {
+                new: prev[key],
+              };
+            }
+
+            for (const key of Object.keys(prev)) {
+              next[key] = {
+                ...next[key],
+                old: prev[key],
+              };
+            }
+          }
+
+          delete inputs["__provider"];
+          delete outputs["__provider"];
+
           eventInserts.push({
             stageID: input.config.stageID,
             updateID: updateID,
@@ -399,8 +427,8 @@ export module State {
             type: resource.type,
             urn: resource.urn,
             custom: resource.custom,
-            inputs: resource.inputs,
-            outputs: resource.outputs,
+            inputs: inputs,
+            outputs: outputs,
             parent: resource.parent,
             action: action,
           });
@@ -762,6 +790,7 @@ export module State {
       config: z.custom<StageCredentials>(),
     }),
     async (input) => {
+      console.log("receive snapshot", input.updateID);
       const existing = await useTransaction((tx) =>
         tx
           .select()
@@ -864,13 +893,10 @@ export module State {
         stage: input.config.stageID,
         update: input.updateID,
       });
+
       for (const [urn, resource] of Object.entries(resources)) {
         const previous = previousResources[urn];
         delete previousResources[urn];
-        resource.inputs = resource.inputs || {};
-        resource.outputs = resource.outputs || {};
-        delete resource.inputs["__provider"];
-        delete resource.outputs["__provider"];
         const action = (() => {
           if (!previous) return "created";
           if (previous.created !== resource.created) return "created";
@@ -878,7 +904,55 @@ export module State {
           return "same";
         })();
         counts[action] = (counts[action] || 0) + 1;
+
         if (action !== "same") {
+          const inputs = objectFlatten(resource.inputs || {});
+          const outputs = objectFlatten(resource.outputs || {});
+
+          const previousInputs = objectFlatten(previous?.inputs || {});
+          const previousOutputs = objectFlatten(previous?.outputs || {});
+
+          for (const set of [
+            inputs,
+            outputs,
+            previousInputs,
+            previousOutputs,
+          ]) {
+            delete set["__provider"];
+            delete set["__defaults"];
+          }
+
+          for (const [prev, next] of [
+            [previousInputs, inputs] as const,
+            [previousOutputs, outputs] as const,
+          ]) {
+            for (const key of Object.keys(next)) {
+              if (key.includes("__defaults")) {
+                delete next[key];
+                continue;
+              }
+              next[key] = {
+                to: next[key],
+              };
+            }
+
+            for (const key of Object.keys(prev)) {
+              if (key.includes("__defaults")) {
+                continue;
+              }
+              const to = next[key]?.to;
+              const from = prev[key];
+              if (to === from) continue;
+              next[key] = {
+                ...next[key],
+                from,
+              };
+            }
+          }
+
+          delete inputs["__provider"];
+          delete outputs["__provider"];
+
           eventInserts.push({
             stageID: input.config.stageID,
             updateID: input.updateID,
@@ -893,8 +967,8 @@ export module State {
             type: resource.type,
             urn: resource.urn,
             custom: resource.custom,
-            inputs: resource.inputs,
-            outputs: resource.outputs,
+            inputs: inputs,
+            outputs: outputs,
             parent: resource.parent,
             action: action,
           });
@@ -919,6 +993,7 @@ export module State {
         });
         resourceDeletes.push(resource.urn);
       }
+
       await createTransaction(
         async (tx) => {
           await createTransactionEffect(() => Replicache.poke());
@@ -968,6 +1043,35 @@ export module State {
           isolationLevel: "read uncommitted",
         },
       );
+
+      if (eventInserts.length) {
+        console.log("inserting postgres events", eventInserts.length);
+        await postgres
+          .insert(pg_stateEventTable)
+          .values(
+            eventInserts.map((item) => ({
+              workspaceID: item.workspaceID,
+              stageID: item.stageID,
+              updateID: item.updateID,
+              timestamp: item.timeStateModified,
+              id: createId(),
+              event: {
+                type: item.action,
+                properties: {
+                  urn: item.urn,
+                  action: item.action,
+                  parent: item.parent || undefined,
+                  custom: item.custom,
+                  inputs: item.inputs as any,
+                  outputs: item.outputs as any,
+                  modified: item.timeStateModified?.toISOString(),
+                  created: item.timeStateCreated?.toISOString(),
+                },
+              },
+            })),
+          )
+          .onConflictDoNothing();
+      }
     },
   );
 

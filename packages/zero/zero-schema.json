@@ -233,23 +233,13 @@
             "optional": false,
             "customType": null
           },
-          "type": {
-            "type": "string",
-            "optional": false,
-            "customType": null
-          },
-          "sequence": {
-            "type": "number",
+          "event": {
+            "type": "json",
             "optional": false,
             "customType": null
           },
           "timestamp": {
             "type": "number",
-            "optional": false,
-            "customType": null
-          },
-          "data": {
-            "type": "json",
             "optional": false,
             "customType": null
           },
@@ -322,18 +312,6 @@
             ],
             "destSchema": "user",
             "cardinality": "many"
-          }
-        ],
-        "stage": [
-          {
-            "sourceField": [
-              "stage_id"
-            ],
-            "destField": [
-              "id"
-            ],
-            "destSchema": "workspace",
-            "cardinality": "one"
           }
         ],
         "update": [

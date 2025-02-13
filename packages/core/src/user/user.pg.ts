@@ -10,9 +10,9 @@ export const userTable = pgTable(
     email: varchar("email", { length: 255 }).notNull(),
     timeSeen: utc("time_seen"),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    email: uniqueIndex("email").on(table.workspaceID, table.email),
-    emailGlobal: index("email_global").on(table.email),
-  }),
+    uniqueIndex("email").on(table.workspaceID, table.email),
+    index("email_global").on(table.email),
+  ],
 );

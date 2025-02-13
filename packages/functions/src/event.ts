@@ -146,10 +146,10 @@ export const handler = bus.subscriber(
         case State.Event.EventLogCreated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
-          await stateReceiveEventLog({
-            config,
-            updateID: evt.properties.updateID,
-          });
+          //await stateReceiveEventLog({
+          //  config,
+          //  updateID: evt.properties.updateID,
+          //});
           break;
         }
 

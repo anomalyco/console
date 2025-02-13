@@ -17,15 +17,13 @@ export const workspaceTable = pgTable(
     settingIssue: boolean("setting_issue").notNull(),
     timeGated: utc("time_gated"),
   },
-  (table) => ({
-    slug: uniqueIndex("slug").on(table.slug),
-  }),
+  (table) => [uniqueIndex("slug").on(table.slug)],
 );
 
 export function workspaceIndexes(table: any) {
-  return {
-    primary: primaryKey({
+  return [
+    primaryKey({
       columns: [table.workspaceID, table.id],
     }),
-  };
+  ];
 }

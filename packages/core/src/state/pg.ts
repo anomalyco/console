@@ -80,16 +80,16 @@ export const stateReceiveEventLog = zod(
         delete resourceEvent.metadata.old?.outputs["__provider"];
       }
       const data = rest[type];
-      inserts.push({
-        stageID: input.config.stageID,
-        updateID: input.updateID,
-        id: createId(),
-        workspaceID,
-        type: `pulumi.` + type,
-        sequence: sequence,
-        timestamp: new Date(timestamp * 1000),
-        data,
-      });
+      //inserts.push({
+      //  stageID: input.config.stageID,
+      //  updateID: input.updateID,
+      //  id: createId(),
+      //  workspaceID,
+      //  type: `pulumi.` + type,
+      //  sequence: sequence,
+      //  timestamp: new Date(timestamp * 1000),
+      //  data,
+      //});
     }
     console.log("events found", inserts.length);
     if (inserts.length)

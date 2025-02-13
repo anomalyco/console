@@ -1,3 +1,4 @@
+import { StateEvent } from "@console/core/state/state.pg";
 import type { Error } from "@console/core/state/state.sql";
 import {
   createSchema,
@@ -58,10 +59,8 @@ const state_event = table("state_event")
     workspace_id: string(),
     stage_id: string(),
     update_id: string(),
-    type: string(),
-    sequence: number(),
+    event: json<StateEvent>(),
     timestamp: number(),
-    data: json<any>(),
     ...timestamps,
   })
   .primaryKey("workspace_id", "id");
@@ -93,11 +92,6 @@ export const schema = createSchema(1, {
         sourceField: ["workspace_id"],
         destSchema: user,
         destField: ["workspace_id"],
-      }),
-      stage: r.one({
-        sourceField: ["stage_id"],
-        destSchema: workspace,
-        destField: ["id"],
       }),
       update: r.one({
         sourceField: ["update_id"],

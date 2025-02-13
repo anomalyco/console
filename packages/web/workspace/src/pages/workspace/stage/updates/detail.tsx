@@ -509,76 +509,10 @@ export function Detail() {
   }
 
   const zero = useZero()
-  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID))
-  const stateEventSummary = createMemo(() => {
-
-    const resources = {} as Record<string, {
-      urn: string
-      name: string
-      error: {
-        timestamp: number
-        data: DiagnosticEvent
-      }[]
-      info: {
-        timestamp: number
-        data: DiagnosticEvent
-      }[]
-      pre: {
-        timestamp: number
-        sequence: number
-        data: ResourcePreEvent
-      },
-      output?: {
-        timestamp: number
-        data: ResOutputsEvent
-      }
-      failed?: {
-        timestamp: number
-        data: ResOpFailedEvent
-      }
-    }>
-
-    for (let item of stateEvents()) {
-      if (item.type === "pulumi.resourcePreEvent") {
-        if (["same", "read"].includes(item.data.metadata.op)) continue
-        resources[item.data.metadata.urn] = {
-          urn: item.data.metadata.urn,
-          name: item.data.metadata.urn.split("::").at(-1),
-          pre: item,
-          info: [],
-          error: []
-        }
-      }
-
-      if (item.type === "pulumi.resOutputsEvent") {
-        const resource = resources[item.data.metadata.urn]
-        if (!resource) continue
-        resource.output = item.data
-      }
-
-      if (item.type === "pulumi.resourceFailedEvent") {
-        const resource = resources[item.data.metadata.urn]
-        if (!resource) continue
-        resource.failed = item.data
-      }
-
-      if (item.type === "pulumi.diagnosticEvent") {
-        const resource = resources[item.data.urn]
-        if (!resource) continue
-        if (item.data.severity === "error") {
-          resource.error.push(item)
-        }
-        resource.info.push(item)
-      }
-    }
-    return Object.values(resources).toSorted((a, b) => a.pre.sequence - b.pre.sequence)
-  })
-
-  const stateEventTiming = createMemo(() => Object.fromEntries(stateEvents().filter((item) => item.type === "pulumi.resourcePreEvent").map((item) => [item.data.metadata.urn, item.timestamp])) as Record<string, number>)
+  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("timestamp", "asc"))
 
   createEffect(() => {
-    console.log("stateEvent", stateEventSummary())
-    console.log("stateEventTiming", stateEventTiming())
+    console.log("stateEvent", stateEvents())
   })
 
   const flags = useFlags()
@@ -590,21 +524,6 @@ export function Detail() {
           <Stack space="2">
             <PanelTitle id="raw">Raw</PanelTitle>
             <ResourceRoot>
-              <For each={stateEventSummary()}>
-                {(item) => {
-                  return (
-                    <>
-                      <ResourceChild>
-                        <ResourceKey>{item.name} - {item.pre.data.metadata.op} - {formatDuration((item.output?.timestamp || item.failed?.timestamp || 0) - item.pre.timestamp)}</ResourceKey>
-                        <ResourceValue>{item.pre.data.metadata.type}</ResourceValue>
-                      </ResourceChild>
-                      <pre>
-                        {JSON.stringify(item, null, 2)}
-                      </pre>
-                    </>
-                  )
-                }}
-              </For>
             </ResourceRoot>
           </Stack>
         </Show>

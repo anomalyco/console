@@ -25,14 +25,14 @@ export const runTable = pgTable(
     retrier: json("retrier").$type<Actor>(),
     force: boolean("force"),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    activeStage: unique("unique_stage_active").on(
+    unique("unique_stage_active").on(
       table.workspaceID,
       table.stageName,
       table.region,
       table.awsAccountExternalID,
       table.active,
     ),
-  }),
+  ],
 );

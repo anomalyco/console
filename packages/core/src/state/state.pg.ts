@@ -47,11 +47,40 @@ export const stateUpdateTable = pgTable(
     resourceSame: integer("resource_same"),
     errors: json("errors").$type<Error[]>(),
   },
+  (table) => [...workspaceIndexes(table)],
+);
 
-  (table) => ({
-    ...workspaceIndexes(table),
+export const Action = ["created", "updated", "deleted"] as const;
+
+export const Diff = z.record(
+  z.string(),
+  z.object({
+    from: z.any(),
+    to: z.any(),
   }),
 );
+
+export const CreateEvent = z.object({
+  type: z.union([
+    z.literal("created"),
+    z.literal("updated"),
+    z.literal("deleted"),
+  ]),
+  properties: z.object({
+    urn: z.string(),
+    action: z.enum(Action),
+    parent: z.string().optional(),
+    custom: z.boolean(),
+    inputs: Diff,
+    outputs: Diff,
+    modified: z.string().datetime().optional(),
+    created: z.string().datetime().optional(),
+  }),
+});
+export type CreateEvent = z.infer<typeof CreateEvent>;
+
+export const StateEvent = CreateEvent;
+export type StateEvent = z.infer<typeof StateEvent>;
 
 export const stateEventTable = pgTable(
   "state_event",
@@ -60,20 +89,18 @@ export const stateEventTable = pgTable(
     ...timestamps,
     stageID: cuid("stage_id").notNull(),
     updateID: cuid("update_id").notNull(),
-    type: varchar("type", { length: 255 }).notNull(),
-    sequence: integer("sequence").notNull(),
-    timestamp: utc("timestamp").notNull(),
-    data: jsonb("data").notNull(),
+    timestamp: utc("timestamp"),
+    event: json("event").$type<StateEvent>(),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    unique: unique().on(
+    unique("urn_uniq").on(
       table.workspaceID,
       table.stageID,
       table.updateID,
-      table.sequence,
+      table.timestamp,
     ),
-  }),
+  ],
 );
 
 export const stateResourceTable = pgTable(
@@ -94,10 +121,10 @@ export const stateResourceTable = pgTable(
     timeStateCreated: utc("time_state_created"),
     timeStateModified: utc("time_state_modified"),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    urn: unique("urn").on(table.workspaceID, table.stageID, table.urn),
-  }),
+    unique("urn").on(table.workspaceID, table.stageID, table.urn),
+  ],
 );
 
 export const stateCountTable = pgTable(
@@ -109,12 +136,8 @@ export const stateCountTable = pgTable(
     stageID: cuid("stage_id").notNull(),
     count: integer("count").notNull(),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    month: uniqueIndex("month").on(
-      table.workspaceID,
-      table.stageID,
-      table.month,
-    ),
-  }),
+    uniqueIndex("month").on(table.workspaceID, table.stageID, table.month),
+  ],
 );

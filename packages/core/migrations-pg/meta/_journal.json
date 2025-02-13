@@ -15,6 +15,20 @@
       "when": 1738346656520,
       "tag": "0001_wealthy_infant_terrible",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1739413062832,
+      "tag": "0002_late_tiger_shark",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1739413949009,
+      "tag": "0003_aberrant_komodo",
+      "breakpoints": true
     }
   ]
 }

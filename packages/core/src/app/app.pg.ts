@@ -9,10 +9,10 @@ export const appTable = pgTable(
     ...timestamps,
     name: varchar("name", { length: 255 }).notNull(),
   },
-  (table) => ({
+  (table) => [
     ...workspaceIndexes(table),
-    name: uniqueIndex("name").on(table.workspaceID, table.name),
-  }),
+    uniqueIndex("name").on(table.workspaceID, table.name),
+  ],
 );
 
 /*
