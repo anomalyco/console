@@ -1,4 +1,5 @@
 import * as relaxed from "relaxed-json";
+
 export function extractJSON(input: string) {
   const stack = [] as any[];
   const results = [];

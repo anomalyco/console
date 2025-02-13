@@ -79,6 +79,7 @@ export const stateEventTable = mysqlTable(
   "state_event",
   {
     ...workspaceID,
+    ...timestampsNext,
     stageID: cuid("stage_id").notNull(),
     updateID: cuid("update_id").notNull(),
     type: varchar("type", { length: 255 }).notNull(),
@@ -88,7 +89,6 @@ export const stateEventTable = mysqlTable(
     inputs: json("inputs").notNull(),
     parent: varchar("parent", { length: 512 }),
     custom: boolean("custom").notNull(),
-    ...timestampsNext,
     timeStateCreated: timestamp("time_state_created"),
     timeStateModified: timestamp("time_state_modified"),
   },

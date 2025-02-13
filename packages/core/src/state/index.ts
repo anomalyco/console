@@ -44,6 +44,7 @@ import {
 import { runTable } from "../run/run.sql";
 import { objectFlatten } from "../util/object";
 import { postgres } from "../drizzle";
+import { logger } from "../util/log";
 
 export module State {
   export const Event = {
@@ -1080,18 +1081,24 @@ export module State {
       config: z.custom<StageCredentials>(),
     }),
     async (input) => {
+      const log = logger({
+        action: "refreshState",
+        stage: input.config.stage,
+        app: input.config.app,
+      });
       const s3 = new S3Client({
         ...input.config,
         retryStrategy: RETRY_STRATEGY,
       });
       const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
       const workspaceID = useWorkspace();
+      log.tag("workspaceID", workspaceID);
 
       const v3bootstrap = await AWS.Account.bootstrapIon(input.config);
       let timestamp: DateTime | undefined;
       if (v3bootstrap) {
         const key = `app/${input.config.app}/${input.config.stage}.json`;
-        console.log("looking for v3", key);
+        log.info("looking for v3", key);
         const state = await s3
           .send(
             new GetObjectCommand({
@@ -1105,7 +1112,7 @@ export module State {
                 .latest || {},
           )
           .catch((ex) => {
-            console.log(ex);
+            log.info(ex);
           });
 
         const parsed = DateTime.fromISO(state?.manifest?.time);
@@ -1139,7 +1146,7 @@ export module State {
 
       const v2bootstrap = await AWS.Account.bootstrap(input.config);
       if (v2bootstrap) {
-        console.log("looking for v2");
+        log.info("looking for v2");
         const list = await s3
           .send(
             new ListObjectsV2Command({
@@ -1153,11 +1160,11 @@ export module State {
           retryStrategy: RETRY_STRATEGY,
         });
         if (list && list.Contents?.length) {
-          console.log("found", list.Contents?.length, "stacks");
+          log.info("found", list.Contents?.length, "stacks");
           for (const obj of list.Contents || []) {
             const parsed = DateTime.fromJSDate(obj.LastModified!);
             if (parsed.isValid && (!timestamp || parsed >= timestamp))
-              console.log("processing", obj.Key);
+              log.info("processing", obj.Key);
             const stackID = obj.Key?.split("/").pop()!.split(".")[1];
             const result = await s3
               .send(
@@ -1204,7 +1211,7 @@ export module State {
                 body.map(async (res: any) => {
                   let enrichment = {};
                   if (res.type in Enrichers) {
-                    console.log("enriching", res.type);
+                    log.info("enriching", res.type);
                     enrichment =
                       res.type in Enrichers
                         ? await Enrichers[res.type as keyof typeof Enrichers](
