@@ -913,17 +913,16 @@ export module State {
 
       for (const [urn, resource] of Object.entries(resources)) {
         const previous = previousResources[urn];
-        const action = (() => {
-          if (!previous) return "created";
-          if (previous.created !== resource.created) return "replaced";
-          if (previous.modified !== resource.modified) return "updated";
-          return "same";
+        let action = (() => {
+          if (!previous) return "created" as const;
+          if (previous.created !== resource.created) return "replaced" as const;
+          if (previous.modified !== resource.modified)
+            return "updated" as const;
+          return "same" as const;
         })();
-        counts[action === "replaced" ? "created" : action] =
-          (counts[action === "replaced" ? "created" : action] || 0) + 1;
-        if (action !== "replaced") {
-          delete previousResources[urn];
-        }
+        if (action !== "replaced") delete previousResources[urn];
+        if (action === "replaced") action = "created";
+        counts[action] = (counts[action] || 0) + 1;
         if (action === "same") continue;
 
         const inputs = resource.inputs;
@@ -970,7 +969,7 @@ export module State {
           inputs: inputs,
           outputs: outputs,
           parent: resource.parent,
-          action: action === "replaced" ? "created" : action,
+          action: action,
         });
       }
 
