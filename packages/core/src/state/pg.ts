@@ -121,7 +121,7 @@ export const stateReceiveEventLog = zod(
           continue;
         }
         match!.logs.push({
-          timestamp: evt.timestamp,
+          timestamp: evt.timestamp * 1000,
           message: evt.diagnosticEvent.message,
         });
       }
