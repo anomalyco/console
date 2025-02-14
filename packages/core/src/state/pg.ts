@@ -6,7 +6,7 @@ import { StageCredentials } from "../app/stage";
 import { AWS } from "../aws";
 import { RETRY_STRATEGY } from "../util/aws";
 import { zod } from "../util/zod";
-import { postgres } from "../drizzle";
+import { postgres, sql } from "../drizzle";
 import { stateEventTable } from "./state.pg";
 import { createId } from "../util/sql.pg";
 import { useWorkspace } from "../actor";
@@ -48,54 +48,135 @@ export const stateReceiveEventLog = zod(
 
     const progress = new Set<string>();
 
+    const events: Record<
+      string,
+      {
+        time: {
+          started: number;
+          completed: number;
+        };
+        pre: EngineEvent["resourcePreEvent"];
+        output?: EngineEvent["resOutputsEvent"];
+        failed?: EngineEvent["resOpFailedEvent"];
+        logs: {
+          timestamp: number;
+          message: string;
+        }[];
+        error?: EngineEvent["diagnosticEvent"];
+      }
+    > = {};
     for await (const line of lines) {
       const parsed = JSON.parse(line);
-      const {
-        sequence,
-        timestamp,
-        ...rest
-      }: {
+      const evt: {
         sequence: number;
         timestamp: number;
       } & EngineEvent = parsed;
-      const type = Object.keys(rest)[0] as keyof typeof rest;
-      if (rest.progressEvent) {
-        if (!rest.progressEvent.done && progress.has(rest.progressEvent.id))
-          continue;
-        progress.add(rest.progressEvent.id);
+
+      if (evt.resourcePreEvent) {
+        const existing = events[evt.resourcePreEvent.metadata.urn];
+        if (existing) {
+          events[evt.resourcePreEvent.metadata.urn + "0"] = existing;
+        }
+        events[evt.resourcePreEvent.metadata.urn] = {
+          pre: evt.resourcePreEvent,
+          logs: [],
+          time: {
+            started: evt.timestamp * 1000,
+            completed: 0,
+          },
+        };
       }
-      if (rest.diagnosticEvent && rest.diagnosticEvent.severity === "debug")
-        continue;
-      const resourceEvent =
-        rest.resourcePreEvent || rest.resOutputsEvent || rest.resOpFailedEvent;
-      if (resourceEvent) {
-        if (
-          resourceEvent.metadata.op === "same" ||
-          resourceEvent.metadata.op === "read"
-        )
-          continue;
-        delete resourceEvent.metadata.new?.inputs["__provider"];
-        delete resourceEvent.metadata.new?.outputs["__provider"];
-        delete resourceEvent.metadata.old?.inputs["__provider"];
-        delete resourceEvent.metadata.old?.outputs["__provider"];
+
+      if (evt.resOutputsEvent) {
+        events[evt.resOutputsEvent.metadata.urn]!.output = evt.resOutputsEvent;
+        events[evt.resOutputsEvent.metadata.urn]!.time.completed =
+          evt.timestamp * 1000;
       }
-      const data = rest[type];
-      //inserts.push({
-      //  stageID: input.config.stageID,
-      //  updateID: input.updateID,
-      //  id: createId(),
-      //  workspaceID,
-      //  type: `pulumi.` + type,
-      //  sequence: sequence,
-      //  timestamp: new Date(timestamp * 1000),
-      //  data,
-      //});
+
+      if (evt.resOpFailedEvent) {
+        events[evt.resOpFailedEvent.metadata.urn]!.failed =
+          evt.resOpFailedEvent;
+        events[evt.resOpFailedEvent.metadata.urn]!.time.completed =
+          evt.timestamp * 1000;
+      }
+
+      if (evt.diagnosticEvent) {
+        if (evt.diagnosticEvent.severity === "debug") continue;
+        if (!evt.diagnosticEvent.urn) continue;
+        const match = events[evt.diagnosticEvent.urn]!;
+        if (evt.diagnosticEvent.severity === "error") {
+          match.error = evt.diagnosticEvent;
+          continue;
+        }
+        match!.logs.push({
+          timestamp: evt.timestamp,
+          message: evt.diagnosticEvent.message,
+        });
+      }
     }
-    console.log("events found", inserts.length);
-    if (inserts.length)
+
+    for (const event of Object.values(events)) {
+      if (event.pre!.metadata.op === "same") continue;
+      const action = (() => {
+        switch (event.pre!.metadata.op) {
+          case "create":
+            return "created";
+          case "replace":
+            return "created";
+          case "create-replacement":
+            return "created";
+          case "update":
+            return "updated";
+          case "delete":
+            return "deleted";
+          case "delete-replaced":
+            return "deleted";
+          case "refresh":
+            return "updated";
+        }
+      })();
+      if (!action) continue;
+      console.log(event.pre!.metadata.urn, event.time);
+      inserts.push({
+        id: createId(),
+        inputs: {},
+        outputs: {},
+        logs: event.logs.map((log) => ({
+          timestamp: log.timestamp,
+          message: log.message,
+        })),
+        error: event.error?.message,
+        timeStarted: new Date(event.time.started),
+        timeCompleted: new Date(event.time.completed),
+        workspaceID,
+        stageID: input.config.stageID,
+        updateID: input.updateID,
+        urn: event.pre!.metadata.urn,
+        action,
+        type: event.pre!.metadata.type,
+      });
+    }
+
+    if (inserts.length) {
+      console.log("events found", inserts.length);
       await postgres
         .insert(stateEventTable)
         .values(inserts)
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: [
+            stateEventTable.workspaceID,
+            stateEventTable.stageID,
+            stateEventTable.updateID,
+            stateEventTable.urn,
+            stateEventTable.action,
+          ],
+          set: {
+            timeStarted: sql`excluded.time_started`,
+            timeCompleted: sql`excluded.time_completed`,
+            logs: sql`excluded.logs`,
+            error: sql`excluded.error`,
+          },
+        });
+    }
   },
 );

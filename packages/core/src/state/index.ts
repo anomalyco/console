@@ -1046,25 +1046,33 @@ export module State {
               workspaceID: item.workspaceID,
               stageID: item.stageID,
               updateID: item.updateID,
-              timestamp: item.timeStateModified,
+              urn: item.urn,
+              action: item.action,
               id: createId(),
-              event: {
-                type: item.action,
-                properties: {
-                  urn: item.urn,
-                  type: item.type,
-                  action: item.action,
-                  parent: item.parent || undefined,
-                  custom: item.custom,
-                  inputs: item.inputs as any,
-                  outputs: item.outputs as any,
-                  modified: item.timeStateModified?.toISOString(),
-                  created: item.timeStateCreated?.toISOString(),
-                },
-              },
+              type: item.type,
+              parent: item.parent,
+              logs: [],
+              inputs: item.inputs as any,
+              outputs: item.outputs as any,
+              timeStarted: item.timeStateModified || new Date(),
+              timeCompleted: item.timeStateModified || new Date(),
             })),
           )
-          .onConflictDoNothing();
+          .onConflictDoUpdate({
+            target: [
+              pg_stateEventTable.workspaceID,
+              pg_stateEventTable.stageID,
+              pg_stateEventTable.updateID,
+              pg_stateEventTable.urn,
+              pg_stateEventTable.action,
+            ],
+            set: {
+              type: sql`excluded.type`,
+              parent: sql`excluded.parent`,
+              inputs: sql`excluded.inputs`,
+              outputs: sql`excluded.outputs`,
+            },
+          });
       }
     },
   );

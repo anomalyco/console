@@ -38,6 +38,9 @@ const error = new sst.aws.Function("Error", {
   url: true,
   dev: false,
   live: false,
+  environment: {
+    FOO: "lol",
+  },
 });
 
 export const apiRouter = new sst.aws.Router("ApiRouter", {

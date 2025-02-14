@@ -1,0 +1,1 @@
+ALTER TABLE "state_event" DROP COLUMN "timestamp";

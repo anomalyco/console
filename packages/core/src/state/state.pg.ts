@@ -8,6 +8,7 @@ import {
   boolean,
   date,
   uniqueIndex,
+  text,
 } from "drizzle-orm/pg-core";
 import { cuid, timestamps, utc, workspaceID } from "../util/sql.pg";
 import { workspaceIndexes } from "../workspace/workspace.pg";
@@ -59,6 +60,7 @@ export const Diff = z.record(
     to: z.any(),
   }),
 );
+export type Diff = z.infer<typeof Diff>;
 
 export const CreateEvent = z.object({
   type: z.union([
@@ -90,8 +92,25 @@ export const stateEventTable = pgTable(
     ...timestamps,
     stageID: cuid("stage_id").notNull(),
     updateID: cuid("update_id").notNull(),
-    timestamp: utc("timestamp"),
-    event: json("event").$type<StateEvent>(),
+    action: varchar("action", { length: 255 }).$type<
+      "created" | "updated" | "deleted"
+    >(),
+    urn: varchar("urn", { length: 255 }).notNull(),
+    type: varchar("type", { length: 255 }).notNull(),
+    parent: varchar("parent", { length: 255 }),
+    inputs: json("inputs").$type<Diff>(),
+    outputs: json("outputs").$type<Diff>(),
+    logs: json("logs")
+      .$type<
+        {
+          timestamp: number;
+          message: string;
+        }[]
+      >()
+      .notNull(),
+    error: text("error"),
+    timeStarted: utc("time_started").notNull(),
+    timeCompleted: utc("time_completed").notNull(),
   },
   (table) => [
     ...workspaceIndexes(table),
@@ -99,7 +118,8 @@ export const stateEventTable = pgTable(
       table.workspaceID,
       table.stageID,
       table.updateID,
-      table.timestamp,
+      table.urn,
+      table.action,
     ),
   ],
 );

@@ -1,4 +1,4 @@
-import { StateEvent } from "@console/core/state/state.pg";
+import { Diff, StateEvent } from "@console/core/state/state.pg";
 import type { Error } from "@console/core/state/state.sql";
 import {
   createSchema,
@@ -57,15 +57,27 @@ const state_event = table("state_event")
   .columns({
     id: string(),
     workspace_id: string(),
+    ...timestamps,
     stage_id: string(),
     update_id: string(),
-    event: json<StateEvent>(),
-    timestamp: number(),
-    ...timestamps,
+    type: string(),
+    action: string<"created" | "updated" | "deleted">(),
+    urn: string(),
+    inputs: json<Diff>(),
+    outputs: json<Diff>(),
+    logs: json<
+      {
+        timestamp: number;
+        message: string;
+      }[]
+    >(),
+    error: string().optional(),
+    time_started: number(),
+    time_completed: number(),
   })
   .primaryKey("workspace_id", "id");
 
-export const schema = createSchema(1, {
+export const schema = createSchema(2, {
   tables: [workspace, state_update, user, state_event],
   relationships: [
     relationships(state_update, (r) => ({

@@ -942,7 +942,7 @@ export function Detail() {
   }
 
   const zero = useZero()
-  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("timestamp", "asc"))
+  const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("time_completed", "asc"))
 
   createEffect(() => {
     console.log("stateEvent", stateEvents())
@@ -960,7 +960,7 @@ export function Detail() {
               <For each={stateEvents()}>
                 {(item) => {
                   const [expanded, setExpanded] = createSignal(false);
-                  const duration = createMemo(() => 0);
+                  const duration = createMemo(() => item.time_completed - item.time_started);
 
                   function onClick() {
                     setExpanded(!expanded());
@@ -1088,25 +1088,25 @@ export function Detail() {
 
                   return (
                     <EventRoot data-expanded={expanded()}>
-                      <EventResource action={item.event.type} onClick={onClick}>
+                      <EventResource action={item.action} onClick={onClick}>
                         <EventResourceContent>
                           <Row space="2" vertical="center">
                             <CaretIcon expanded={expanded()}>
                               <IconCaretRight />
                             </CaretIcon>
                             <EventTime
-                              title={DateTime.fromMillis(item.timestamp || 0)
+                              title={DateTime.fromMillis(item.time_started || 0)
                                 .toUTC()
                                 .toLocaleString(
                                   DateTime.DATETIME_FULL_WITH_SECONDS,
                                 )}
                             >
-                              {DateTime.fromMillis(item.timestamp || 0).toFormat(
+                              {DateTime.fromMillis(item.time_started || 0).toFormat(
                                 "HH:mm:ss",
                               )}
                             </EventTime>
-                            <EventResourceName>{item.event.properties.urn.split("::").at(-1)}</EventResourceName>
-                            <EventResourceType>{item.event.properties.type}</EventResourceType>
+                            <EventResourceName>{item.urn.split("::").at(-1)}</EventResourceName>
+                            <EventResourceType>{item.type}</EventResourceType>
                           </Row>
                           <Show when={true}>
                             <EventDuration>{formatDuration(duration())}</EventDuration>
@@ -1116,12 +1116,12 @@ export function Detail() {
                       <Show when={expanded()}>
                         <EventDetail>
                           {renderEventError("something went wrong")}
-                          <Show when={Object.keys(item.event.properties.inputs).length}>
+                          <Show when={Object.keys(item.inputs).length}>
                             <Stack space="2">
                               <PanelTitle>Inputs</PanelTitle>
                               <div>
                                 <For each={
-                                  Object.entries(item.event.properties.inputs || {})
+                                  Object.entries(item.inputs || {})
                                 }>
                                   {([key, value]) => (
                                     renderInput(key, value.to, value.from)
@@ -1130,12 +1130,12 @@ export function Detail() {
                               </div>
                             </Stack>
                           </Show>
-                          <Show when={Object.keys(item.event.properties.outputs).length}>
+                          <Show when={Object.keys(item.outputs).length}>
                             <Stack space="2">
                               <PanelTitle>Outputs</PanelTitle>
                               <div>
                                 <For each={
-                                  Object.entries(item.event.properties.outputs || {})
+                                  Object.entries(item.outputs || {})
                                 }>
                                   {([key, value]) => (
                                     renderInput(key, value.to, value.from)

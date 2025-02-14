@@ -57,7 +57,7 @@
     "workspace": {}
   },
   "schema": {
-    "version": 1,
+    "version": 2,
     "tables": {
       "workspace": {
         "name": "workspace",
@@ -223,6 +223,16 @@
             "optional": false,
             "customType": null
           },
+          "time_created": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_deleted": {
+            "type": "number",
+            "optional": true,
+            "customType": null
+          },
           "stage_id": {
             "type": "string",
             "optional": false,
@@ -233,24 +243,49 @@
             "optional": false,
             "customType": null
           },
-          "event": {
+          "type": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "action": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "urn": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "inputs": {
             "type": "json",
             "optional": false,
             "customType": null
           },
-          "timestamp": {
-            "type": "number",
+          "outputs": {
+            "type": "json",
             "optional": false,
             "customType": null
           },
-          "time_created": {
-            "type": "number",
+          "logs": {
+            "type": "json",
             "optional": false,
             "customType": null
           },
-          "time_deleted": {
-            "type": "number",
+          "error": {
+            "type": "string",
             "optional": true,
+            "customType": null
+          },
+          "time_started": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "time_completed": {
+            "type": "number",
+            "optional": false,
             "customType": null
           }
         },
