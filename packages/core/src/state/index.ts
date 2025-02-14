@@ -930,6 +930,9 @@ export module State {
         const previousInputs = previous?.inputs || {};
         const previousOutputs = previous?.outputs || {};
 
+        const type =
+          resource.urn.split(".").slice(1).join(":") || resource.type;
+
         for (const [prev, next] of [
           [previousInputs, inputs] as const,
           [previousOutputs, outputs] as const,
@@ -962,7 +965,7 @@ export module State {
             ? new Date(resource.created)
             : null,
           workspaceID: useWorkspace(),
-          type: resource.type,
+          type,
           urn: resource.urn,
           custom: resource.custom,
           inputs: inputs,
@@ -976,6 +979,8 @@ export module State {
         const resource = previousResources[urn];
         const inputs = mapValues(resource.inputs, (val) => ({ from: val }));
         const outputs = mapValues(resource.outputs, (val) => ({ from: val }));
+        const type =
+          resource.urn.split(".").slice(1).join(":") || resource.type;
         counts["deleted"] = (counts["deleted"] || 0) + 1;
         eventInserts.push({
           stageID: input.config.stageID,
@@ -983,7 +988,7 @@ export module State {
           action: "deleted",
           id: createId(),
           workspaceID: useWorkspace(),
-          type: resource.type,
+          type: type,
           urn: resource.urn,
           custom: resource.custom,
           inputs,
