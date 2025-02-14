@@ -104,6 +104,7 @@ export const stateReceiveEventLog = zod(
         if (evt.diagnosticEvent.severity === "debug") continue;
         if (!evt.diagnosticEvent.urn) continue;
         const match = events[evt.diagnosticEvent.urn]!;
+        if (!match) continue;
         if (evt.diagnosticEvent.severity === "error") {
           match.error = evt.diagnosticEvent;
           continue;
