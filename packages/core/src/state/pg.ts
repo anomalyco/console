@@ -133,8 +133,6 @@ export const stateReceiveEventLog = zod(
         switch (event.pre!.metadata.op) {
           case "create":
             return "created";
-          case "replace":
-            return "created";
           case "create-replacement":
             return "created";
           case "update":
