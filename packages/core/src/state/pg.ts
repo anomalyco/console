@@ -51,6 +51,7 @@ export const stateReceiveEventLog = zod(
     const events: Record<
       string,
       {
+        urn: string;
         time: {
           started: number;
           completed: number;
@@ -73,11 +74,10 @@ export const stateReceiveEventLog = zod(
       } & EngineEvent = parsed;
 
       if (evt.resourcePreEvent) {
-        const existing = events[evt.resourcePreEvent.metadata.urn];
-        if (existing) {
-          events[evt.resourcePreEvent.metadata.urn + "0"] = existing;
-        }
-        events[evt.resourcePreEvent.metadata.urn] = {
+        events[
+          evt.resourcePreEvent.metadata.urn + evt.resourcePreEvent.metadata.op
+        ] = {
+          urn: evt.resourcePreEvent.metadata.urn,
           pre: evt.resourcePreEvent,
           logs: [],
           time: {
@@ -88,22 +88,33 @@ export const stateReceiveEventLog = zod(
       }
 
       if (evt.resOutputsEvent) {
-        events[evt.resOutputsEvent.metadata.urn]!.output = evt.resOutputsEvent;
-        events[evt.resOutputsEvent.metadata.urn]!.time.completed =
-          evt.timestamp * 1000;
+        const match =
+          events[
+            evt.resOutputsEvent.metadata.urn + evt.resOutputsEvent.metadata.op
+          ];
+        if (match) {
+          match.output = evt.resOutputsEvent;
+          match.time.completed = evt.timestamp * 1000;
+        }
       }
 
       if (evt.resOpFailedEvent) {
-        events[evt.resOpFailedEvent.metadata.urn]!.failed =
-          evt.resOpFailedEvent;
-        events[evt.resOpFailedEvent.metadata.urn]!.time.completed =
-          evt.timestamp * 1000;
+        const match =
+          events[
+            evt.resOpFailedEvent.metadata.urn + evt.resOpFailedEvent.metadata.op
+          ];
+        if (match) {
+          match.failed = evt.resOpFailedEvent;
+          match.time.completed = evt.timestamp * 1000;
+        }
       }
 
       if (evt.diagnosticEvent) {
         if (evt.diagnosticEvent.severity === "debug") continue;
         if (!evt.diagnosticEvent.urn) continue;
-        const match = events[evt.diagnosticEvent.urn]!;
+        const match = Object.values(events).find(
+          (item) => item.urn === evt.diagnosticEvent!.urn,
+        );
         if (!match) continue;
         if (evt.diagnosticEvent.severity === "error") {
           match.error = evt.diagnosticEvent;
@@ -137,7 +148,7 @@ export const stateReceiveEventLog = zod(
         }
       })();
       if (!action) continue;
-      console.log(event.pre!.metadata.urn, event.time);
+      console.log(event.urn, action, event.pre!.metadata.op);
       inserts.push({
         id: createId(),
         inputs: {},
