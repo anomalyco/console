@@ -391,7 +391,7 @@ export const LogRoute = new Hono()
           entries.push({
             id: item.eventId!,
             timestamp: item.timestamp!,
-            stream: query.stream ? undefined : item.logStreamName!,
+            stream: query.pattern ? item.logStreamName! : undefined,
             message,
           });
         }
