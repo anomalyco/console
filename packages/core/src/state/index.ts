@@ -888,7 +888,6 @@ export module State {
       );
 
       const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
-      const resourceDeletes = [] as string[];
       const counts = {} as Record<string, number>;
       console.log({
         stage: input.config.stageID,
@@ -991,7 +990,6 @@ export module State {
           outputs,
           parent: resource.parent,
         });
-        resourceDeletes.push(resource.urn);
       }
 
       await createTransaction(
@@ -1013,16 +1011,6 @@ export module State {
             );
           if (eventInserts.length)
             await tx.insert(stateEventTable).ignore().values(eventInserts);
-          if (resourceDeletes.length)
-            await tx
-              .delete(stateResourceTable)
-              .where(
-                and(
-                  eq(stateResourceTable.workspaceID, useWorkspace()),
-                  eq(stateResourceTable.stageID, input.config.stageID),
-                  inArray(stateResourceTable.urn, resourceDeletes),
-                ),
-              );
           await tx
             .update(stage)
             .set({

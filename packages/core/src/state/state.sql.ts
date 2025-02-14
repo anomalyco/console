@@ -94,15 +94,11 @@ export const stateEventTable = mysqlTable(
   },
   (table) => ({
     ...workspaceIndexes(table),
-    stageID: foreignKey({
-      name: "state_event_stage_id",
-      columns: [table.workspaceID, table.stageID],
-      foreignColumns: [stage.workspaceID, stage.id],
-    }).onDelete("cascade"),
     urn: unique("urn").on(
       table.workspaceID,
       table.stageID,
       table.updateID,
+      table.action,
       table.urn,
     ),
     updateID: foreignKey({
