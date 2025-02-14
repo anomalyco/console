@@ -919,6 +919,8 @@ export module State {
           if (previous.modified !== resource.modified) return "updated";
           return "same";
         })();
+        counts[action] =
+          (counts[action === "replaced" ? "created" : action] || 0) + 1;
         if (action !== "replaced") {
           delete previousResources[urn];
         }
