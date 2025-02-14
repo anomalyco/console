@@ -959,7 +959,7 @@ export function Detail() {
             <div>
               <For each={stateEvents()}>
                 {(item) => {
-                  const [expanded, setExpanded] = createSignal(true);
+                  const [expanded, setExpanded] = createSignal(false);
                   const duration = createMemo(() => 0);
 
                   function onClick() {
