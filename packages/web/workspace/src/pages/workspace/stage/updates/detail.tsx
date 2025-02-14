@@ -1040,30 +1040,11 @@ export function Detail() {
                   }
 
                   function renderEventLogs() {
-                    const logs = [
-                      {
-                        timestamp: 1699145522391,
-                        message: "[sst.deploy.start] Deploying to dev",
-                      },
-                      {
-                        timestamp: 1699145522391,
-                        message: "[sst.deploy.end] Deployed to dev",
-                      },
-                      {
-                        timestamp: 1699145522391,
-                        message:
-                          "[sst.deploy.start] Deploying to dev (2/2): 200% complete",
-                      },
-                      {
-                        timestamp: 1699145622391,
-                        message: "[sst.deploy.end] Deployed to dev",
-                      },
-                    ];
                     return (
                       <Stack space="2">
                         <PanelTitle>Logs</PanelTitle>
                         <LogsBackground>
-                          <For each={logs || []}>
+                          <For each={item.logs || []}>
                             {(log) => (
                               <Log>
                                 <LogTime
@@ -1095,13 +1076,13 @@ export function Detail() {
                               <IconCaretRight />
                             </CaretIcon>
                             <EventTime
-                              title={DateTime.fromMillis(item.time_started || 0)
+                              title={DateTime.fromMillis(item.time_completed || 0)
                                 .toUTC()
                                 .toLocaleString(
                                   DateTime.DATETIME_FULL_WITH_SECONDS,
                                 )}
                             >
-                              {DateTime.fromMillis(item.time_started || 0).toFormat(
+                              {DateTime.fromMillis(item.time_completed || 0).toFormat(
                                 "HH:mm:ss",
                               )}
                             </EventTime>
@@ -1144,7 +1125,7 @@ export function Detail() {
                               </div>
                             </Stack>
                           </Show>
-                          {renderEventLogs()}
+                          {item.logs.length && renderEventLogs()}
                         </EventDetail>
                       </Show>
                     </EventRoot>

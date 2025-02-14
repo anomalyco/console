@@ -11,6 +11,7 @@ export default $config({
           profile: input.stage === "production" ? "sst-production" : "sst-dev",
         },
         planetscale: "0.2.2",
+        command: "1.0.2",
       },
     };
   },
