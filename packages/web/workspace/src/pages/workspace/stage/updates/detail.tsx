@@ -1115,7 +1115,7 @@ export function Detail() {
                       </EventResource>
                       <Show when={expanded()}>
                         <EventDetail>
-                          {renderEventError("something went wrong")}
+                          {item.error && renderEventError(item.error)}
                           <Show when={Object.keys(item.inputs).length}>
                             <Stack space="2">
                               <PanelTitle>Inputs</PanelTitle>
