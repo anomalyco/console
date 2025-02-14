@@ -1067,13 +1067,13 @@ export function Detail() {
                             {(log) => (
                               <Log>
                                 <LogTime
-                                  title={DateTime.fromMillis(log.timestamp)
+                                  title={DateTime.fromMillis(log.timestamp || 0)
                                     .toUTC()
                                     .toLocaleString(
                                       DateTime.DATETIME_FULL_WITH_SECONDS,
                                     )}
                                 >
-                                  {DateTime.fromMillis(log.timestamp).toFormat(
+                                  {DateTime.fromMillis(log.timestamp || 0).toFormat(
                                     "HH:mm:ss",
                                   )}
                                 </LogTime>
@@ -1095,13 +1095,13 @@ export function Detail() {
                               <IconCaretRight />
                             </CaretIcon>
                             <EventTime
-                              title={DateTime.fromMillis(item.timestamp)
+                              title={DateTime.fromMillis(item.timestamp || 0)
                                 .toUTC()
                                 .toLocaleString(
                                   DateTime.DATETIME_FULL_WITH_SECONDS,
                                 )}
                             >
-                              {DateTime.fromMillis(item.timestamp).toFormat(
+                              {DateTime.fromMillis(item.timestamp || 0).toFormat(
                                 "HH:mm:ss",
                               )}
                             </EventTime>

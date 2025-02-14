@@ -33,7 +33,7 @@ import { Replicache } from "../replicache";
 import { app, stage } from "../app/app.sql";
 import { bus } from "sst/aws/bus";
 import { Resource as SSTResource } from "sst";
-import { map, pipe, unique } from "remeda";
+import { map, mapValues, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
 import { DateTime } from "luxon";
@@ -895,89 +895,87 @@ export module State {
         update: input.updateID,
       });
 
+      for (const resource of [
+        ...Object.values(previousResources),
+        ...Object.values(resources),
+      ]) {
+        resource.inputs = objectFlatten(resource.inputs || {});
+        resource.outputs = objectFlatten(resource.outputs || {});
+        for (const set of [resource.inputs, resource.outputs]) {
+          delete set["__provider"];
+          for (const key of Object.keys(set)) {
+            if (key.includes("__defaults")) {
+              delete set[key];
+            }
+          }
+        }
+      }
+
       for (const [urn, resource] of Object.entries(resources)) {
         const previous = previousResources[urn];
-        delete previousResources[urn];
         const action = (() => {
           if (!previous) return "created";
-          if (previous.created !== resource.created) return "created";
+          if (previous.created !== resource.created) return "replaced";
           if (previous.modified !== resource.modified) return "updated";
           return "same";
         })();
-        counts[action] = (counts[action] || 0) + 1;
-
-        if (action !== "same") {
-          const inputs = objectFlatten(resource.inputs || {});
-          const outputs = objectFlatten(resource.outputs || {});
-
-          const previousInputs = objectFlatten(previous?.inputs || {});
-          const previousOutputs = objectFlatten(previous?.outputs || {});
-
-          for (const set of [
-            inputs,
-            outputs,
-            previousInputs,
-            previousOutputs,
-          ]) {
-            delete set["__provider"];
-            delete set["__defaults"];
-          }
-
-          for (const [prev, next] of [
-            [previousInputs, inputs] as const,
-            [previousOutputs, outputs] as const,
-          ]) {
-            for (const key of Object.keys(next)) {
-              if (key.includes("__defaults")) {
-                delete next[key];
-                continue;
-              }
-              next[key] = {
-                to: next[key],
-                from: null,
-              };
-            }
-
-            for (const key of Object.keys(prev)) {
-              if (key.includes("__defaults")) {
-                continue;
-              }
-              const to = next[key]?.to;
-              const from = prev[key];
-              next[key] = {
-                ...next[key],
-                from: to === from ? undefined : from,
-              };
-            }
-          }
-
-          delete inputs["__provider"];
-          delete outputs["__provider"];
-
-          eventInserts.push({
-            stageID: input.config.stageID,
-            updateID: input.updateID,
-            id: createId(),
-            timeStateModified: resource.modified
-              ? new Date(resource.modified)
-              : null,
-            timeStateCreated: resource.created
-              ? new Date(resource.created)
-              : null,
-            workspaceID: useWorkspace(),
-            type: resource.type,
-            urn: resource.urn,
-            custom: resource.custom,
-            inputs: inputs,
-            outputs: outputs,
-            parent: resource.parent,
-            action: action,
-          });
+        if (action !== "replaced") {
+          delete previousResources[urn];
         }
+        if (action === "same") continue;
+
+        const inputs = resource.inputs;
+        const outputs = resource.outputs;
+
+        const previousInputs = previous?.inputs || {};
+        const previousOutputs = previous?.outputs || {};
+
+        for (const [prev, next] of [
+          [previousInputs, inputs] as const,
+          [previousOutputs, outputs] as const,
+        ]) {
+          for (const key of Object.keys(next)) {
+            next[key] = {
+              to: next[key],
+              from: null,
+            };
+          }
+
+          for (const key of Object.keys(prev)) {
+            const to = next[key]?.to;
+            const from = prev[key];
+            next[key] = {
+              ...next[key],
+              from: to === from ? undefined : from,
+            };
+          }
+        }
+
+        eventInserts.push({
+          stageID: input.config.stageID,
+          updateID: input.updateID,
+          id: createId(),
+          timeStateModified: resource.modified
+            ? new Date(resource.modified)
+            : null,
+          timeStateCreated: resource.created
+            ? new Date(resource.created)
+            : null,
+          workspaceID: useWorkspace(),
+          type: resource.type,
+          urn: resource.urn,
+          custom: resource.custom,
+          inputs: inputs,
+          outputs: outputs,
+          parent: resource.parent,
+          action: action === "replaced" ? "created" : action,
+        });
       }
 
       for (const urn of Object.keys(previousResources)) {
         const resource = previousResources[urn];
+        const inputs = mapValues(resource.inputs, (val) => ({ from: val }));
+        const outputs = mapValues(resource.outputs, (val) => ({ from: val }));
         counts["deleted"] = (counts["deleted"] || 0) + 1;
         eventInserts.push({
           stageID: input.config.stageID,
@@ -988,8 +986,8 @@ export module State {
           type: resource.type,
           urn: resource.urn,
           custom: resource.custom,
-          inputs: {},
-          outputs: {},
+          inputs,
+          outputs,
           parent: resource.parent,
         });
         resourceDeletes.push(resource.urn);
