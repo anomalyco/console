@@ -85,6 +85,8 @@ export const IngestRoute = new Hono().post(
             ),
           )
           .execute();
+
+        if (!workspaces.length) break;
         for (const item of body.properties.issues) {
           const timestamp = DateTime.fromMillis(item.timestamp);
           const hour = timestamp
