@@ -1146,39 +1146,41 @@ export function Detail() {
             </div>
           </Stack>
         </Show>
-        <Show when={deleted().length}>
-          <Stack space="2">
-            <PanelTitle id="removed">Removed</PanelTitle>
-            <ResourceRoot action="deleted">
-              <For each={deleted()}>{(r) => <Resource {...r} />}</For>
-            </ResourceRoot>
-          </Stack>
-        </Show>
-        <Show when={created().length}>
-          <Stack space="2">
-            <PanelTitle id="added">Added</PanelTitle>
-            <ResourceRoot action="created">
-              <For each={created()}>{(r) => <Resource {...r} />}</For>
-            </ResourceRoot>
-          </Stack>
-        </Show>
-        <Show when={updated().length}>
-          <Stack space="2">
-            <PanelTitle id="updated">Updated</PanelTitle>
-            <ResourceRoot action="updated">
-              <For each={updated()}>{(r) => <Resource {...r} />}</For>
-            </ResourceRoot>
-          </Stack>
-        </Show>
-        <Show when={update.value!.resource.same! > 0}>
-          <Stack space="2">
-            <PanelTitle id="unchanged">Unchanged</PanelTitle>
-            <ResourceRoot action="same">
-              <ResourceChildEmpty>
-                {countCopy(update.value!.resource.same!)} were not changed
-              </ResourceChildEmpty>
-            </ResourceRoot>
-          </Stack>
+        <Show when={!flags.zero}>
+          <Show when={deleted().length}>
+            <Stack space="2">
+              <PanelTitle id="removed">Removed</PanelTitle>
+              <ResourceRoot action="deleted">
+                <For each={deleted()}>{(r) => <Resource {...r} />}</For>
+              </ResourceRoot>
+            </Stack>
+          </Show>
+          <Show when={created().length}>
+            <Stack space="2">
+              <PanelTitle id="added">Added</PanelTitle>
+              <ResourceRoot action="created">
+                <For each={created()}>{(r) => <Resource {...r} />}</For>
+              </ResourceRoot>
+            </Stack>
+          </Show>
+          <Show when={updated().length}>
+            <Stack space="2">
+              <PanelTitle id="updated">Updated</PanelTitle>
+              <ResourceRoot action="updated">
+                <For each={updated()}>{(r) => <Resource {...r} />}</For>
+              </ResourceRoot>
+            </Stack>
+          </Show>
+          <Show when={update.value!.resource.same! > 0}>
+            <Stack space="2">
+              <PanelTitle id="unchanged">Unchanged</PanelTitle>
+              <ResourceRoot action="same">
+                <ResourceChildEmpty>
+                  {countCopy(update.value!.resource.same!)} were not changed
+                </ResourceChildEmpty>
+              </ResourceRoot>
+            </Stack>
+          </Show>
         </Show>
       </>
     );
