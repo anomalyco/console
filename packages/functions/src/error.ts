@@ -1,5 +1,5 @@
 export const handler = async () => {
-  console.log("starting", new Date());
+  console.log("started", new Date());
   console.error(new Error("logged a different error"));
   return {
     statusCode: 200,

@@ -34,7 +34,8 @@ const zeroEnv = {
 };
 
 const replication = !$dev
-  ? cluster.addService(`ZeroReplication`, {
+  ? new sst.aws.Service(`ZeroReplication`, {
+      cluster,
       ...($app.stage === "production"
         ? {
             cpu: "1 vCPU",
