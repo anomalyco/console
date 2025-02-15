@@ -97,7 +97,7 @@ export function AccountRoute() {
               <li>
                 <a
                   target="_blank"
-                  href="https://docs.sst.dev/console#how-it-works"
+                  href="https://sst.dev/docs/console"
                 >
                   Learn more
                 </a>{" "}

@@ -4,4 +4,4 @@ The SST Console is a web based dashboard for managing your SST apps with your te
 
 ![SST Console homescreen](packages/web/workspace/public/screenshot.png)
 
-[Learn more](https://docs.sst.dev/console) about it over on our docs.
+[Learn more](https://sst.dev/docs/console) about it over on our docs.

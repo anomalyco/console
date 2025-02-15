@@ -117,7 +117,7 @@ export const InviteEmail = ({
                 </Link>
               </Column>
               <Column align="right">
-                <Link style={footerLink} href="https://docs.sst.dev/console">
+                <Link style={footerLink} href="https://sst.dev/docs/console">
                   About
                 </Link>
               </Column>

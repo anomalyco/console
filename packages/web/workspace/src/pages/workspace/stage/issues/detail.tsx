@@ -298,14 +298,7 @@ export function Detail() {
                 <PanelTitle>Stack Trace</PanelTitle>
                 <Show when={false}>
                   <Alert level="info">
-                    Enable source maps to view the original stack trace.{" "}
-                    <a
-                      target="_blank"
-                      href="https://docs.sst.dev/advanced/source-maps"
-                    >
-                      Learn more
-                    </a>
-                    .
+                    Enable source maps to view the original stack trace.
                   </Alert>
                 </Show>
                 <StackTraceBackground>
