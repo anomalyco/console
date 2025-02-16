@@ -6,6 +6,6 @@
     "@rocicorp/zero": "*"
   },
   "scripts": {
-    "dev": "zero-build-schema && zero-cache"
+    "dev": "zero-deploy-permissions && zero-cache"
   }
 }

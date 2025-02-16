@@ -80,6 +80,21 @@ const replication = !$dev
     })
   : undefined;
 
+if (replication)
+  new command.local.Command(
+    "ZeroPermission",
+    {
+      dir: process.cwd() + "/packages/zero",
+      environment: {
+        ZERO_UPSTREAM_DB: conn,
+      },
+      create: "bun run zero-deploy-permissions",
+    },
+    {
+      dependsOn: [replication],
+    },
+  );
+
 export const zero = cluster.addService("Zero", {
   image,
   link: [postgres, storage],

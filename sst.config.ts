@@ -28,6 +28,23 @@ export default $config({
           };
         }
       },
+      runner(input) {
+        return {
+          engine: "codebuild",
+          vpc:
+            input.stage === "production"
+              ? {
+                  id: "vpc-0f06c4b635a760100",
+                  subnets: ["subnet-0f5233bae874be0f3"],
+                  securityGroups: ["sg-0f360ed3d2f363121"],
+                }
+              : {
+                  id: "vpc-069d2d529d3288945",
+                  subnets: ["subnet-028d2992e408fe0f4"],
+                  securityGroups: ["sg-038ad39edab8e193b"],
+                },
+        };
+      },
     },
   },
   async run() {

@@ -93,6 +93,11 @@ export const schema = createSchema(2, {
         destSchema: workspace,
         destField: ["id"],
       }),
+      users: r.many({
+        sourceField: ["workspace_id"],
+        destSchema: user,
+        destField: ["workspace_id"],
+      }),
     })),
     relationships(state_event, (r) => ({
       workspace: r.one({
@@ -132,16 +137,6 @@ type Auth = {
 };
 
 export const permissions = definePermissions<Auth, Schema>(schema, () => {
-  const readonly = {
-    row: {
-      select: [
-        (auth: Auth, q: any) =>
-          q.exists("workspace", (w: any) =>
-            w.whereExists("users", (u: any) => u.where("email", auth.sub)),
-          ),
-      ],
-    },
-  };
   return {
     state_event: {
       row: {
@@ -151,7 +146,19 @@ export const permissions = definePermissions<Auth, Schema>(schema, () => {
       },
     },
     state_update: {},
-    user: {},
-    workspace: {},
+    user: {
+      row: {
+        select: [
+          (auth, q) => q.exists("users", (u) => u.where("email", auth.sub)),
+        ],
+      },
+    },
+    workspace: {
+      row: {
+        select: [
+          (auth, q) => q.exists("users", (u) => u.where("email", auth.sub)),
+        ],
+      },
+    },
   };
 });
