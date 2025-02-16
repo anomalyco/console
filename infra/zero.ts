@@ -114,9 +114,6 @@ export const zero = cluster.addService("Zero", {
           ZERO_CHANGE_STREAMER_URI: replication!.url.apply((val) =>
             val.replace("http://", "ws://"),
           ),
-          ZERO_SCHEMA_JSON: readFileSync(
-            "./packages/zero/zero-schema.json",
-          ).toString(),
           ZERO_UPSTREAM_MAX_CONNS: "15",
           ZERO_CVR_MAX_CONNS: "160",
         }),
