@@ -17,20 +17,10 @@ export default $config({
   },
   console: {
     autodeploy: {
-      target(input) {
-        if (input.type === "branch") {
-          return {
-            stage: input.branch,
-            runner: {
-              engine: "codebuild",
-              compute: "large",
-            },
-          };
-        }
-      },
       runner(input) {
         return {
           engine: "codebuild",
+          compute: "large",
           vpc:
             input.stage === "production"
               ? {
