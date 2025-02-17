@@ -90,6 +90,7 @@ if (replication)
         ZERO_UPSTREAM_DB: conn,
       },
       create: "bun run zero-deploy-permissions",
+      triggers: [Date.now()],
     },
     {
       dependsOn: [replication],
