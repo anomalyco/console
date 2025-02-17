@@ -65,15 +65,11 @@ export const ButtonIcon = styled("span", {
   base: {
     width: 18,
     height: 18,
-    marginRight: 6,
-    verticalAlign: -4,
     display: "inline-block",
   },
   variants: {
     size: {
       sm: {
-        marginRight: 5,
-        verticalAlign: -3,
         width: 14,
         height: 14,
       },
@@ -94,6 +90,10 @@ export const Button = styled("button", {
     transitionDuration: "0.2s, 0.2s",
     transitionProperty: "background-color, border",
     transitionTimingFunction: "ease-out, ease-out",
+    display: "inline-flex",
+    gap: theme.space[1.5],
+    alignItems: "center",
+    justifyContent: "center",
     ":disabled": {
       pointerEvents: "none",
     },
@@ -112,6 +112,7 @@ export const Button = styled("button", {
         fontSize: theme.font.size.mono_sm,
       },
       sm: {
+        gap: theme.space[1],
         padding: `0 ${theme.space[2.5]}`,
         height: theme.input.size.sm,
         fontSize: theme.font.size.mono_xs,
@@ -469,6 +470,7 @@ export function TextButton(props: TextButtonProps) {
 const IconButtonRoot = styled("button", {
   base: {
     display: "inline-block",
+    lineHeight: 0,
     color: theme.color.icon.secondary,
     transition: `color ${theme.colorFadeDuration} ease-out`,
     ":disabled": {

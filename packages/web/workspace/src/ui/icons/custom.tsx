@@ -1123,9 +1123,29 @@ export function IconTag(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
 }
 
 
-//https://api.iconify.design/ion:git-commit-outline.svg
+// https://api.iconify.design/ion:git-commit-outline.svg
 export function IconCommit(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" {...props} viewBox="0 0 512 512"><circle cx="256" cy="256" r="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" /><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M160 256H48m416 0H352" /></svg>
+  );
+}
+
+// https://api.iconify.design/codicon:clear-all.svg
+export function IconClearLogs(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+      <path fill="currentColor" d="m10 12.6l.7.7l1.6-1.6l1.6 1.6l.8-.7L13 11l1.7-1.6l-.8-.8l-1.6 1.7l-1.6-1.7l-.7.8l1.6 1.6zM1 4h14V3H1zm0 3h14V6H1zm8 2.5V9H1v1h8zM9 13v-1H1v1z" />
+    </svg>
+  );
+}
+
+// https://api.iconify.design/streamline:interface-time-reset-time-clock-reset-stopwatch-circle-measure-loading.svg
+export function IconResetTime(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7 .5A6.5 6.5 0 1 1 .5 7a7.23 7.23 0 0 1 2-5" />
+        <path d="m.5 2.5l2-.5l.5 2m4-.5v4l2.6 1.3" />
+      </g>
+    </svg>
   );
 }

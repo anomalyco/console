@@ -1,10 +1,12 @@
 import {
-  IconArrowsUpDown,
-  IconArrowDown,
-  IconBoltSolid,
-  IconCalendar,
   IconTrash,
-  IconArrowRight,
+  IconCalendar,
+  IconBoltSolid,
+  IconArrowDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconArrowsUpDown,
+  IconMagnifyingGlass,
 } from "@console/web/ui/icons";
 import { VList, VirtualizerHandle } from "virtua/solid";
 import { styled } from "@macaron-css/solid";
@@ -22,12 +24,12 @@ import {
 } from "solid-js";
 import { useStageContext, useStateResources } from "../../context";
 import { Invoke, InvokeControl } from "../invoke";
-import { TextButton } from "@console/web/ui/button";
+import { Button, TextButton, IconButton, ButtonIcon } from "@console/web/ui/button";
 import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { InvocationRow } from "@console/web/common/invocation";
 import { useApi } from "@console/web/pages/workspace/context";
-import { IconArrowPathSpin } from "@console/web/ui/icons/custom";
+import { IconClearLogs, IconResetTime, IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { globalStyle, style } from "@macaron-css/core";
 import { Input, inputFocusStyles, } from "@console/web/ui/form";
@@ -37,7 +39,7 @@ import {
   isLog,
   useLocalLogs,
 } from "@console/web/providers/invocation";
-import { DivSpacer } from "@console/web/ui/layout";
+import { Row, DivSpacer } from "@console/web/ui/layout";
 import { DateTime } from "luxon";
 import { DialogRange, DialogRangeControl } from "./dialog-range";
 import { useCommandBar } from "../../../command-bar";
@@ -56,17 +58,6 @@ const longDateOptions: Intl.DateTimeFormatOptions = {
   timeZone: "UTC",
   year: "numeric",
 };
-
-const SearchInput = styled(Input, {
-  base: {
-    width: "250px",
-    flexShrink: 0,
-    boxShadow: "none",
-    backgroundColor: "#0000001f",
-    borderBottom: `1px solid #ffffff17`,
-    borderTop: `1px solid #00000029`,
-  },
-});
 
 const LogLoadingIndicatorIcon = styled("div", {
   base: {
@@ -140,7 +131,7 @@ const Header = styled("div", {
   base: {
     ...utility.row(0),
     flexShrink: 0,
-    height: 52,
+    height: 56,
     alignItems: "center",
     justifyContent: "space-between",
     padding: `0 ${theme.space[3]} 0 ${theme.space[3]}`,
@@ -185,7 +176,7 @@ export const HeaderIcon = styled("div", {
   },
 });
 
-export const HeaderDescription = styled("span", {
+export const HeaderDescription = styled("div", {
   base: {
     lineHeight: "normal",
     fontSize: theme.font.size.sm,
@@ -203,11 +194,70 @@ export const HeaderLeft = styled("div", {
   },
 });
 
+const resetTimeStyle = style({
+  position: "relative",
+  top: "1px",
+});
+
 export const HeaderRight = styled("div", {
   base: {
-    ...utility.row(3.5),
+    ...utility.row(4),
     alignItems: "center",
   },
+});
+
+const SearchRoot = styled("div", {
+  base: {
+    position: "relative",
+  },
+});
+
+const SearchInput = styled(Input, {
+  base: {
+    width: 220,
+    paddingLeft: 30,
+    flexShrink: 0,
+    selectors: {
+      "&[data-dirty='true']": {
+        paddingRight: 44,
+      },
+    },
+  },
+});
+
+const searchIconStyles = style({
+  position: "absolute",
+  top: 8,
+  left: 10,
+  opacity: theme.iconOpacity,
+  color: theme.color.text.secondary.surface,
+  pointerEvents: "none",
+});
+
+const SearchButton = styled("button", {
+  base: {
+    display: "none",
+    position: "absolute",
+    top: 5,
+    right: 6,
+    letterSpacing: 0.5,
+    fontSize: theme.font.size.mono_xs,
+    padding: `0 ${theme.space[1.5]}`,
+    alignItems: "center",
+    textTransform: "uppercase",
+    borderRadius: theme.borderRadius,
+    backgroundColor: theme.color.divider.surface,
+    lineHeight: "normal",
+    color: theme.color.text.secondary.surface,
+    height: 22,
+    ":hover": {
+      color: theme.color.text.primary.surface,
+    },
+  },
+});
+
+globalStyle(`${SearchRoot} > ${SearchInput}[data-dirty="true"] + ${SearchButton}`, {
+  display: "block",
 });
 
 const LogMoreIndicator = styled("div", {
@@ -248,7 +298,7 @@ const LogMoreIndicatorCopy = styled("span", {
 });
 
 const Scroller = style({
-  borderWidth: 1,
+  borderWidth: "0px 1px 1px 1px",
   borderRadius: `0 0 ${theme.borderRadius} ${theme.borderRadius}`,
   borderStyle: "solid",
   borderColor: theme.color.divider.base,
@@ -262,15 +312,14 @@ const Scroller = style({
   },
 });
 
-const Row = styled("div", {
+const ListRow = styled("div", {
   base: {
     width: "100%",
-    display: "flex",
-    alignItems: "center",
     borderStyle: "solid",
     borderWidth: "1px 0 1px 0",
     borderColor: theme.color.divider.base,
     borderTopColor: "transparent",
+    boxSizing: "border-box",
     height: 50,
     minHeight: 50,
     selectors: {
@@ -288,7 +337,7 @@ const Row = styled("div", {
 const LogRowRoot = styled("div", {
   base: {
     ...utility.row(2),
-    padding: `calc(${theme.space[1.5]} + 0.125rem) ${theme.space[3]} calc(${theme.space[1.5]} + 0.125rem) calc(${theme.space[3]} + 0.5rem)`,
+    padding: `calc(${theme.space[1.5]} + 0.125rem) ${theme.space[3]} calc(${theme.space[1.5]} + 0.125rem) ${theme.space[4]}`,
     width: "100%",
   },
 });
@@ -322,36 +371,35 @@ const LogMessage = styled("div", {
         overflow: "visible",
       },
       false: {
-        height: 31,
+        display: "-webkit-box",
+        WebkitLineClamp: 1,
         overflow: "hidden",
+        WebkitBoxOrient: "vertical",
+        height: 31,
       },
     },
   },
 });
 
-const LogStreamTag = styled("div", {
-  base: {
-    fontSize: theme.font.size.xs,
-  }
-})
-
 const LogStreamLink = styled("div", {
   base: {
-    flexGrow: 1,
+    flex: "0 0 auto",
     display: "flex",
     justifyContent: "end",
     alignItems: "center",
-    fontSize: theme.font.size.mono_sm,
+    selectors: {
+      [`${ListRow}[data-expanded="true"] &`]: {
+        paddingTop: 4,
+        alignItems: "flex-start",
+      },
+    },
   }
 })
 
-globalStyle(`${LogStreamLink} > svg`, {
-  cursor: "pointer",
-  color: theme.color.text.dimmed.base,
-})
-globalStyle(`${LogStreamLink} > svg:hover`, {
-  color: theme.color.text.secondary.base,
-})
+const logStreamButtonStyle = style({
+  paddingRight: 5,
+  marginLeft: 5,
+});
 
 interface LogRowProps {
   expanded?: boolean;
@@ -374,10 +422,33 @@ function LogRow(props: LogRowProps) {
       <LogTimestamp title={longDate()}>{shortDate()}</LogTimestamp>
       <LogMessage expanded={props.expanded}>{props.message}</LogMessage>
       <Show when={props.stream}>
-        <LogStreamLink >
-          <IconArrowRight
-            onClick={props.onStream}
-            width={14} height={14} />
+        <LogStreamLink>
+          {props.expanded
+            ? <Button
+              size="sm"
+              color="secondary"
+              class={logStreamButtonStyle}
+              onClick={e => {
+                e.stopPropagation();
+                props.onStream();
+              }}
+            >
+              View in log stream
+              <ButtonIcon size="sm">
+                <IconChevronRight width={14} height={14} />
+              </ButtonIcon>
+            </Button>
+            : <TextButton
+              title="View in log stream"
+              style={{ "line-height": 0 }}
+              onClick={e => {
+                e.stopPropagation();
+                props.onStream();
+              }
+              }>
+              <IconChevronRight width={14} height={14} />
+            </TextButton>
+          }
         </LogStreamLink>
       </Show>
     </LogRowRoot>
@@ -572,6 +643,13 @@ export function AWSNext() {
     return child?.outputs.arn;
   });
 
+  const [searchInput, setSearchInput] = createSignal(
+    search.view === "cloudwatch" && (search.pattern || "")
+  );
+  const isSearchDirty = createMemo(() =>
+    search.view === "cloudwatch" && searchInput() !== (search.pattern || "")
+  );
+
   let invokeControl!: InvokeControl;
 
   function clear() {
@@ -657,56 +735,94 @@ export function AWSNext() {
               </Match>
             </Switch>
           </HeaderIcon>
-          <HeaderDescription>
-            <Switch>
-              <Match when={(console.log("stage", stage.connected), search.view === "local" && !stage.connected)}>
-                Trying to connect to local `sst dev`
-              </Match>
-              <Match when={search.view === "local"}>
-                Tailing logs from local `sst dev`
-              </Match>
-              <Match when={search.view === "cloudwatch" && search}>
-                {(search) => (
-                  <Show when={search().start} fallback="Finding recent...">
-                    Logs from {DateTime.fromMillis(parseInt(search().start)).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
-                    <Show when={search().stream}>
-                      {" "}in stream
+          <Row space="3" vertical="center">
+            <HeaderDescription>
+              <Switch>
+                <Match when={(console.log("stage", stage.connected), search.view === "local" && !stage.connected)}>
+                  Trying to connect to local `sst dev`
+                </Match>
+                <Match when={search.view === "local"}>
+                  Tailing logs from local `sst dev`
+                </Match>
+                <Match when={search.view === "cloudwatch" && search}>
+                  {(search) => (
+                    <Show when={search().start} fallback="Finding recent...">
+                      {search().stream
+                        ? "Logs from selected log stream"
+                        : <>
+                          Logs from{" "}
+                          <Button
+                            size="sm"
+                            color="secondary"
+                            onClick={() => rangeControl.show()}
+                          >
+                            {DateTime.fromMillis(parseInt(search().start)).toLocal().toLocaleString(DateTime.DATETIME_FULL)}
+                          </Button>
+                        </>
+                      }
                     </Show>
-                  </Show>
-                )}
-              </Match>
-            </Switch>
-          </HeaderDescription>
+                  )}
+                </Match>
+              </Switch>
+            </HeaderDescription>
+            {(search.view !== "cloudwatch" || !search.stream) &&
+              <IconButton
+                class={resetTimeStyle}
+                title="Get latest logs"
+                onClick={() => clear()}
+              >
+                <IconResetTime width={18} height={18} />
+              </IconButton>
+            }
+          </Row>
         </HeaderLeft>
         <HeaderRight>
           <Show when={search.view === "cloudwatch" && search.stream}>
-            <TextButton onClick={() => window.history.back()}>Back to search</TextButton>
+            <Button
+              size="sm"
+              color="success"
+              onClick={() => window.history.back()}
+            >
+              <ButtonIcon size="sm">
+                <IconChevronLeft />
+              </ButtonIcon>
+              Back to search
+            </Button>
           </Show>
-          <TextButton onClick={() => rangeControl.show()}>Jump to</TextButton>
-          <TextButton onClick={() => clear()}>Clear</TextButton>
           {
-            search.view === "cloudwatch" &&
-            <SearchInput
-              value={search.pattern || ""}
-              onBlur={(e) => {
-                if (e.currentTarget.value === (search.pattern || "")) return
-                setSearch({
-                  pattern: e.currentTarget.value,
-                }, {
-                  replace: true
-                })
-              }}
-              onKeyDown={(e) => {
-                if (e.currentTarget.value === (search.pattern || "")) return
-                if (e.key === "Enter") {
+            search.view === "cloudwatch" && !search.stream &&
+            <SearchRoot>
+              <SearchInput
+                data-dirty={isSearchDirty()}
+                value={search.pattern || ""}
+                onBlur={(e) => {
+                  if (e.currentTarget.value === (search.pattern || "")) return
                   setSearch({
                     pattern: e.currentTarget.value,
                   }, {
                     replace: true
                   })
-                }
-              }}
-              size="sm" placeholder="Search..." />
+                }}
+                onInput={(e) => { setSearchInput(e.currentTarget.value) }}
+                onKeyDown={(e) => {
+                  if (e.currentTarget.value === (search.pattern || "")) return
+                  if (e.key === "Enter") {
+                    setSearch({
+                      pattern: e.currentTarget.value,
+                    }, {
+                      replace: true
+                    })
+                  }
+                }}
+                size="sm" placeholder="Search..." />
+              <SearchButton>Go</SearchButton>
+              <IconMagnifyingGlass width="15" height="15" class={searchIconStyles} />
+            </SearchRoot>
+          }
+          {search.view !== "cloudwatch" &&
+            <IconButton title="Clear" onClick={() => clear()}>
+              <IconClearLogs width={20} height={20} />
+            </IconButton>
           }
         </HeaderRight>
       </Header>
@@ -750,7 +866,7 @@ export function AWSNext() {
         }}
       >
         {(entry) => typeof entry !== "symbol" ? (
-          <Row
+          <ListRow
             data-focus={list.cursor() === entry.id ? true : undefined}
             data-row-id={entry.id}
             data-expanded={list.selected().includes(entry.id) ? true : undefined}
@@ -807,7 +923,7 @@ export function AWSNext() {
                 )}
               </Match>
             </Switch>
-          </Row>
+          </ListRow>
         ) : (
           <Show when={search.view === "cloudwatch"}>
             <LogMoreIndicator >
@@ -815,9 +931,13 @@ export function AWSNext() {
                 <IconArrowPathSpin />
               </LogMoreIndicatorIcon>
               <LogMoreIndicatorCopy>
-                <Show when={search.view === "cloudwatch" && search.pattern} fallback="Waiting for more logs">
-                  Waiting for logs matching {search.view === "cloudwatch" && search.pattern}
-                </Show>&hellip;
+                {search.view === "cloudwatch" && search.pattern
+                  ? `Waiting for logs matching "${search.view === "cloudwatch" && search.pattern}"`
+                  : rows().length === 0
+                    ? "Waiting for logs"
+                    : "Waiting for more logs"
+                }
+                &hellip;
               </LogMoreIndicatorCopy>
             </LogMoreIndicator>
           </Show>
