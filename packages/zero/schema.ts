@@ -86,6 +86,11 @@ export const schema = createSchema(2, {
         destSchema: workspace,
         destField: ["id"],
       }),
+      users: r.many({
+        sourceField: ["workspace_id"],
+        destSchema: user,
+        destField: ["workspace_id"],
+      }),
     })),
     relationships(user, (r) => ({
       workspace: r.one({
@@ -145,7 +150,13 @@ export const permissions = definePermissions<Auth, Schema>(schema, () => {
         ],
       },
     },
-    state_update: {},
+    state_update: {
+      row: {
+        select: [
+          (auth, q) => q.exists("users", (u) => u.where("email", auth.sub)),
+        ],
+      },
+    },
     user: {
       row: {
         select: [
