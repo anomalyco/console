@@ -31,7 +31,7 @@ import { InvocationRow } from "@console/web/common/invocation";
 import { useApi } from "@console/web/pages/workspace/context";
 import { IconClearLogs, IconResetTime, IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { createEventListener } from "@solid-primitives/event-listener";
-import { globalStyle, style } from "@macaron-css/core";
+import { globalStyle, style, globalKeyframes } from "@macaron-css/core";
 import { Input, inputFocusStyles, } from "@console/web/ui/form";
 import {
   createLogStore,
@@ -173,6 +173,21 @@ export const HeaderIcon = styled("div", {
   defaultVariants: {
     pulse: true,
     glow: false,
+  },
+});
+
+globalKeyframes("glow-pulse", {
+  "0%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
+  },
+  "50%": {
+    opacity: 1,
+    filter: `drop-shadow(0 0 1px ${theme.color.accent})`,
+  },
+  "100%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
   },
 });
 
@@ -765,7 +780,7 @@ export function AWSNext() {
                 </Match>
               </Switch>
             </HeaderDescription>
-            {(search.view !== "cloudwatch" || !search.stream) &&
+            {(search.view === "cloudwatch" && search && !search.stream && search.start) &&
               <IconButton
                 class={resetTimeStyle}
                 title="Get latest logs"

@@ -2,6 +2,7 @@ import { App } from "@console/core/app/index";
 import { Stage } from "@console/core/app/stage";
 import { User } from "@console/core/user/index";
 import { styled } from "@macaron-css/solid";
+import { globalKeyframes } from "@macaron-css/core";
 import { A, useSearchParams, useNavigate } from "@solidjs/router";
 import { DateTime } from "luxon";
 import { sortBy, filter, groupBy, entries, flatMap } from "remeda";
@@ -704,6 +705,21 @@ const StatusIcon = styled("div", {
         animation: "glow-pulse-status 1.7s linear infinite alternate",
       },
     },
+  },
+});
+
+globalKeyframes("glow-pulse-status", {
+  "0%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
+  },
+  "50%": {
+    opacity: 1,
+    filter: `drop-shadow(0 0 1px ${theme.color.accent})`,
+  },
+  "100%": {
+    opacity: 0.3,
+    filter: `drop-shadow(0 0 0px ${theme.color.accent})`,
   },
 });
 
