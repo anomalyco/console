@@ -24,7 +24,7 @@ export const app = mysqlTable(
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     name: uniqueIndex("name").on(table.workspaceID, table.name),
     updated: index("updated").on(table.timeUpdated),
-  })
+  }),
 );
 
 export const stage = mysqlTable(
@@ -44,10 +44,10 @@ export const stage = mysqlTable(
       table.appID,
       table.awsAccountID,
       table.region,
-      table.name
+      table.name,
     ),
     updated: index("updated").on(table.timeUpdated),
-  })
+  }),
 );
 
 export const resource = mysqlTable(
@@ -67,7 +67,7 @@ export const resource = mysqlTable(
   (table) => ({
     primary: primaryKey({ columns: [table.workspaceID, table.id] }),
     addr: uniqueIndex("addr").on(table.workspaceID, table.stageID, table.addr),
-  })
+  }),
 );
 
 export const appRepoTable = mysqlTable(
@@ -87,5 +87,5 @@ export const appRepoTable = mysqlTable(
       columns: [table.workspaceID, table.appID],
       foreignColumns: [app.workspaceID, app.id],
     }).onDelete("cascade"),
-  })
+  }),
 );
