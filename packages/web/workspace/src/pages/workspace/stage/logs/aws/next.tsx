@@ -373,6 +373,7 @@ const LogTimestamp = styled("div", {
 
 const LogMessage = styled("div", {
   base: {
+    flex: "1 1 auto",
     lineHeight: 2.4,
     whiteSpace: "pre-wrap",
     overflowWrap: "anywhere",
@@ -412,8 +413,11 @@ const LogStreamLink = styled("div", {
 })
 
 const logStreamButtonStyle = style({
-  paddingRight: 5,
+  marginTop: 3,
   marginLeft: 5,
+  display: "flex",
+  alignItems: "center",
+  gap: theme.space[0.5],
 });
 
 interface LogRowProps {
@@ -439,20 +443,18 @@ function LogRow(props: LogRowProps) {
       <Show when={props.stream}>
         <LogStreamLink>
           {props.expanded
-            ? <Button
-              size="sm"
-              color="secondary"
+            ? <TextButton
+              title="View in log stream"
               class={logStreamButtonStyle}
               onClick={e => {
                 e.stopPropagation();
                 props.onStream();
-              }}
+              }
+              }
             >
-              View in log stream
-              <ButtonIcon size="sm">
-                <IconChevronRight width={14} height={14} />
-              </ButtonIcon>
-            </Button>
+              <span>View in log stream</span>
+              <IconChevronRight width={14} height={14} />
+            </TextButton>
             : <TextButton
               title="View in log stream"
               style={{ "line-height": 0 }}

@@ -94,6 +94,9 @@ export function DialogRange(props: {
     error?: boolean;
   }>({});
 
+  const now = DateTime.now();
+  const placeholder = `${now.toFormat("h:mm a")}, ${now.toFormat("MMM dd ha")}, or ${now.toFormat("MM/dd/yyyy h:mm a")}`;
+
   return (
     <Modal onClose={() => control.hide()} show={state.show}>
       <Form
@@ -109,11 +112,7 @@ export function DialogRange(props: {
         }}
       >
         <Stack space="5">
-          <Stack space="2">
-            <Text size="lg" weight="medium">
-              Jump to
-            </Text>
-          </Stack>
+          <Text size="lg" weight="medium">Jump to</Text>
           <Row space="1">
             <Grower>
               <FormField
@@ -125,7 +124,7 @@ export function DialogRange(props: {
                     "."
                     : store.error
                       ? "Use a valid date format like " +
-                      DateTime.now().toFormat("MM/dd/yyyy h:m a") +
+                      DateTime.now().toFormat("MM/dd/yyyy h:mm a") +
                       "."
                       : "Look for logs after the given date."
                 }
@@ -134,7 +133,7 @@ export function DialogRange(props: {
                   ref={end}
                   name="end"
                   onInput={() => setStore("error", false)}
-                  placeholder={DateTime.now().toFormat("MM/dd/yyyy h:m a")}
+                  placeholder={placeholder}
                   onBlur={(e) => {
                     for (const f of FORMATS) {
                       const result = DateTime.fromFormat(
