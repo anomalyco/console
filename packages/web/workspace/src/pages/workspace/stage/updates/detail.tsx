@@ -913,12 +913,12 @@ export function Detail() {
               <PanelTitle>Command</PanelTitle>
               <PanelValueMono>{CMD_MAP[update.value!.command]}</PanelValueMono>
             </Stack>
-            <Show when={flags.zero}>
+            <Show when={zeroUpdate()}>
               <Stack space="2">
                 <PanelTitle>Permalink</PanelTitle>
                 <PanelValueRow>
                   <PanelValueMono>
-                    sst.dev/u/9a6c7a
+                    sst.dev/u/{zeroUpdate()!.id.slice(-8)}
                   </PanelValueMono>
                   <PanelValueCopy
                     copying={copying()}
@@ -943,17 +943,16 @@ export function Detail() {
 
   const zero = useZero()
   const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("time_completed", "asc"))
+  const [zeroUpdate] = usePersistentQuery(() => zero.query.state_update.where("id", "=", params.updateID).one())
 
   createEffect(() => {
     console.log("stateEvent", stateEvents())
   })
 
-  const flags = useFlags()
-
   function renderResources() {
     return (
       <>
-        <Show when={flags.zero}>
+        <Show when={zeroUpdate()}>
           <Stack space="2">
             <PanelTitle id="raw">Feb 12, 2025</PanelTitle>
             <div>
@@ -1146,7 +1145,7 @@ export function Detail() {
             </div>
           </Stack>
         </Show>
-        <Show when={!flags.zero}>
+        <Show when={!zeroUpdate()}>
           <Show when={deleted().length}>
             <Stack space="2">
               <PanelTitle id="removed">Removed</PanelTitle>
@@ -1227,36 +1226,39 @@ export function Detail() {
     );
   }
 
-  function renderStateOutputs() {
-    const outputs = [{ key: "Api", value: "https://g3kgrm5dqskfbbhw6hkruasqyq0lbwff.lambda-url.us-east-1.on.aws/" }, { key: "ApiRouter", value: "https://api.dev.console.sst.dev" }, { key: "Error", value: "https://i3pnw4kczeu2vjtgdkicujzxyy0bgzxc.lambda-url.us-east-1.on.aws/" }, { key: "OpenAuth", value: "https://openauth.dev.console.sst.dev" }, { key: "Workspace", value: "https://dev.console.sst.dev" }, { key: "Zero", value: "https://zero.dev.console.sst.dev/" }, { key: "ZeroReplication", value: "http://internal-dev-ZeroReplicationLoadB-716793618.us-east-1.elb.amazonaws.com" }];
+  function StateOutputs() {
+    const values = createMemo(() => Object.entries({
+      ...zeroUpdate()?.hints,
+      ...zeroUpdate()?.outputs,
+    }))
 
     return (
-      <Show when={outputs.length}>
+      <Show when={values().length}>
         <Card>
           <HeaderRoot>
             <HeaderTitle>Outputs</HeaderTitle>
           </HeaderRoot>
           <Children>
-            <For each={outputs}>
-              {(output) => {
+            <For each={values()}>
+              {([key, value]) => {
                 const [copying, setCopying] = createSignal(false);
                 return (
                   <Show
                     when={
-                      output.value &&
-                      typeof output.value === "string" &&
-                      output.value.trim() !== ""
+                      value &&
+                      typeof value === "string" &&
+                      value.trim() !== ""
                     }
                   >
                     <Child>
-                      <ChildKey>{output.key}</ChildKey>
+                      <ChildKey>{key.split("::").at(-1)}</ChildKey>
                       <Row space="3" vertical="center">
-                        <ChildValueMono>{output.value}</ChildValueMono>
+                        <ChildValueMono>{value}</ChildValueMono>
                         <ChildIconButton
                           copying={copying()}
                           onClick={() => {
                             setCopying(true);
-                            navigator.clipboard.writeText(output.value!);
+                            navigator.clipboard.writeText(value!);
                             setTimeout(() => setCopying(false), 2000);
                           }}
                         >
@@ -1290,8 +1292,8 @@ export function Detail() {
                 <Show when={update.value!.errors.length}>{renderErrors()}</Show>
               </Stack>
               <Stack space="5">
-                <Show when={flags.zero}>
-                  {renderStateOutputs()}
+                <Show when={zeroUpdate()}>
+                  <StateOutputs />
                 </Show>
                 <Switch>
                   <Match when={!isEmpty()}>{renderResources()}</Match>

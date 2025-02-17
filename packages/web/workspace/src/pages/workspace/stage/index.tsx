@@ -29,6 +29,7 @@ import {
 import { NotFound } from "../../not-found";
 import { TabTitle } from "@console/web/ui/button";
 import { Row } from "@console/web/ui/layout";
+import { usePersistentQuery, useZero } from "../zero";
 
 export const StageRoute = (
   <Route
@@ -58,6 +59,8 @@ export const StageRoute = (
                                   !item.timeResolved && !item.timeIgnored,
                               ).length,
                           );
+                          const zero = useZero();
+                          usePersistentQuery(() => zero.query.state_update.where("stage_id", "=", ctx.stage.id).orderBy("index", "desc").limit(100))
                           return (
                             <>
                               <Commands />

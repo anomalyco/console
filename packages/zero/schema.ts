@@ -48,6 +48,8 @@ const state_update = table("state_update")
     resource_created: number(),
     resource_updated: number(),
     resource_same: number(),
+    outputs: json<Record<string, any>>(),
+    hints: json<Record<string, any>>(),
     errors: json<Error[]>(),
     ...timestamps,
   })

@@ -11,7 +11,10 @@ import {
   stateCountTable,
 } from "./state.sql";
 
-import { stateEventTable as pg_stateEventTable } from "./state.pg";
+import {
+  stateEventTable as pg_stateEventTable,
+  stateUpdateTable as pg_stateUpdateTable,
+} from "./state.pg";
 import {
   createTransaction,
   createTransactionEffect,
@@ -910,7 +913,17 @@ export module State {
         }
       }
 
+      const update = {
+        outputs: {},
+        hints: {},
+      } as Record<string, any>;
+
       for (const [urn, resource] of Object.entries(resources)) {
+        if (resource.type === "pulumi:pulumi:Stack") {
+          Object.assign(update.outputs, objectFlatten(resource.outputs || {}));
+        }
+        if (resource.outputs._hint)
+          update.hints[resource.urn] = resource.outputs._hint;
         const previous = previousResources[urn];
         let action = (() => {
           if (!previous) return "created" as const;
@@ -1037,8 +1050,43 @@ export module State {
         },
       );
 
+      await postgres
+        .insert(pg_stateUpdateTable)
+        .values({
+          outputs: update.outputs,
+          hints: update.hints,
+          id: input.updateID,
+          workspaceID: useWorkspace(),
+          index: existing.index,
+          runID: existing.runID,
+          stageID: existing.stageID,
+          timeStarted: existing.timeStarted,
+          timeCompleted: existing.timeCompleted,
+          command: existing.command,
+          errors: existing.errors,
+          timeCreated: existing.timeCreated,
+          timeDeleted: existing.timeDeleted,
+          timeUpdated: existing.timeUpdated,
+          resourceSame: counts.resourceSame,
+          resourceCreated: counts.resourceCreated,
+          resourceUpdated: counts.resourceUpdated,
+          resourceDeleted: counts.resourceDeleted,
+        })
+        .onConflictDoUpdate({
+          target: [pg_stateUpdateTable.workspaceID, pg_stateUpdateTable.id],
+          set: {
+            resourceSame: sql`excluded.resource_same`,
+            resourceCreated: sql`excluded.resource_created`,
+            resourceUpdated: sql`excluded.resource_updated`,
+            resourceDeleted: sql`excluded.resource_deleted`,
+            outputs: sql`excluded.outputs`,
+            hints: sql`excluded.hints`,
+          },
+        });
+
       if (eventInserts.length) {
         console.log("inserting postgres events", eventInserts.length);
+
         await postgres
           .insert(pg_stateEventTable)
           .values(
@@ -1138,8 +1186,8 @@ export module State {
             type: resource.type,
             urn: resource.urn,
             custom: resource.custom,
-            inputs: resource.inputs,
-            outputs: resource.outputs,
+            inputs: objectFlatten(resource.inputs),
+            outputs: objectFlatten(resource.outputs),
             parent: resource.parent,
           });
         }
@@ -1234,10 +1282,10 @@ export module State {
                       addr: res.addr,
                       stackID: stackID,
                     },
-                    outputs: {
+                    outputs: objectFlatten({
                       ...res.data,
                       enrichment,
-                    },
+                    }),
                     stageID: input.config.stageID,
                     updateID: "",
                   };

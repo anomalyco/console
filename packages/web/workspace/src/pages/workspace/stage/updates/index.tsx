@@ -4,7 +4,6 @@ import { Detail } from "./detail";
 import { List } from "./list";
 import { useApi } from "../../context";
 import { createStageContext } from "../context";
-import { Show } from "solid-js";
 import { GatedOverlayWarning } from "../../app/warning";
 
 export const Updates = (

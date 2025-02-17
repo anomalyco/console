@@ -46,6 +46,8 @@ export const stateUpdateTable = pgTable(
     resourceCreated: integer("resource_created"),
     resourceUpdated: integer("resource_updated"),
     resourceSame: integer("resource_same"),
+    outputs: json("outputs").$type<Record<string, any>>().default({}),
+    hints: json("hints").$type<Record<string, any>>().default({}),
     errors: json("errors").$type<Error[]>(),
   },
   (table) => [...workspaceIndexes(table)],
