@@ -117,7 +117,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
             ];
 
           if (r.type === "aws:lambda/function:Function") {
-            const logGroup = r.outputs?.loggingConfig?.logGroup;
+            const logGroup = r.outputs?.["loggingConfig.logGroup"]
             return [
               {
                 name,
@@ -136,7 +136,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
                 child.type === "aws:lambda/function:Function" &&
                 child.parent === r.urn,
             );
-            const logGroup = lambda?.outputs?.loggingConfig?.logGroup;
+            const logGroup = lambda?.outputs?.["loggingConfig.logGroup"];
             const dev = lambda?.outputs?.description?.includes("live");
             return [
               {
@@ -154,8 +154,8 @@ export const { use: useLogsContext, provider: LogsProvider } =
           }
           if (r.type === "sstv2:aws:Function") {
             console.log(r);
-            const logGroup = r.outputs?.enrichment?.logGroup;
-            const live = r.outputs?.enrichment?.live;
+            const logGroup = r.outputs?.["enrichment.logGroup"];
+            const live = r.outputs?.["enrichment.live"];
             return [
               {
                 name,
