@@ -43,6 +43,7 @@ const replication = !$dev
           }
         : {}),
       image,
+      wait: true,
       link: [postgres, storage],
       health: {
         command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
@@ -118,6 +119,7 @@ export const zero = cluster.addService("Zero", {
           ZERO_CVR_MAX_CONNS: "160",
         }),
   },
+  wait: true,
   health: {
     command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
     interval: "5 seconds",
@@ -140,9 +142,6 @@ export const zero = cluster.addService("Zero", {
       ephemeralStorage: {
         sizeInGib: 200,
       },
-    },
-    service: {
-      waitForSteadyState: true,
     },
     loadBalancer: {
       idleTimeout: 60 * 60,
