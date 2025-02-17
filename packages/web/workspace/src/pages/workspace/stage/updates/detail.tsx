@@ -1084,7 +1084,7 @@ export function Detail() {
                                 "HH:mm:ss",
                               )}
                             </EventTime>
-                            <EventResourceName>{item.urn.split("::").at(-1)}</EventResourceName>
+                            <EventResourceName>{getResourceName(item.urn)}</EventResourceName>
                             <EventResourceType>{item.type}</EventResourceType>
                           </Row>
                           <Show when={true}>
@@ -1251,7 +1251,7 @@ export function Detail() {
                     }
                   >
                     <Child>
-                      <ChildKey>{key.split("::").at(-1)}</ChildKey>
+                      <ChildKey>{getResourceName(key)}</ChildKey>
                       <Row space="3" vertical="center">
                         <ChildValueMono>{value}</ChildValueMono>
                         <ChildIconButton
@@ -1357,7 +1357,7 @@ function countCopy(count?: number) {
 }
 
 function getResourceName(urn: string) {
-  return urn.split("::").at(-1);
+  return urn.split("::").at(-1)?.split(".sst").at(0)
 }
 
 function shortenCommit(commit: string) {
