@@ -39,7 +39,7 @@ const error = new sst.aws.Function("Error", {
   dev: false,
   live: false,
   environment: {
-    FOO: "lol",
+    BAR: "lol",
   },
 });
 

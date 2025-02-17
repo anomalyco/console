@@ -29,7 +29,6 @@ import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
 import { usePersistentQuery, useZero } from "../../zero";
-import { useFlags } from "@console/web/providers/flags";
 
 const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
@@ -913,12 +912,12 @@ export function Detail() {
               <PanelTitle>Command</PanelTitle>
               <PanelValueMono>{CMD_MAP[update.value!.command]}</PanelValueMono>
             </Stack>
-            <Show when={zeroUpdate()}>
+            <Show when={useNew()}>
               <Stack space="2">
                 <PanelTitle>Permalink</PanelTitle>
                 <PanelValueRow>
                   <PanelValueMono>
-                    sst.dev/u/{zeroUpdate()!.id.slice(-8)}
+                    sst.dev/u/{update.value!.id.slice(-8)}
                   </PanelValueMono>
                   <PanelValueCopy
                     copying={copying()}
@@ -943,7 +942,7 @@ export function Detail() {
 
   const zero = useZero()
   const [stateEvents] = usePersistentQuery(() => zero.query.state_event.where("update_id", "=", params.updateID).orderBy("time_completed", "asc"))
-  const [zeroUpdate] = usePersistentQuery(() => zero.query.state_update.where("id", "=", params.updateID).one())
+  const useNew = createMemo(() => (update.value?.time.created || "") > "2025-02-14")
 
   createEffect(() => {
     console.log("stateEvent", stateEvents())
@@ -952,7 +951,7 @@ export function Detail() {
   function renderResources() {
     return (
       <>
-        <Show when={zeroUpdate()}>
+        <Show when={useNew()}>
           <Stack space="2">
             <PanelTitle id="raw">Feb 12, 2025</PanelTitle>
             <div>
@@ -1145,7 +1144,7 @@ export function Detail() {
             </div>
           </Stack>
         </Show>
-        <Show when={!zeroUpdate()}>
+        <Show when={!useNew()}>
           <Show when={deleted().length}>
             <Stack space="2">
               <PanelTitle id="removed">Removed</PanelTitle>
@@ -1227,9 +1226,10 @@ export function Detail() {
   }
 
   function StateOutputs() {
+    const [update] = usePersistentQuery(() => zero.query.state_update.where("id", "=", params.updateID).one())
     const values = createMemo(() => Object.entries({
-      ...zeroUpdate()?.hints,
-      ...zeroUpdate()?.outputs,
+      ...update()?.hints,
+      ...update()?.outputs,
     }))
 
     return (
@@ -1292,7 +1292,7 @@ export function Detail() {
                 <Show when={update.value!.errors.length}>{renderErrors()}</Show>
               </Stack>
               <Stack space="5">
-                <Show when={zeroUpdate()}>
+                <Show when={useNew()}>
                   <StateOutputs />
                 </Show>
                 <Switch>
