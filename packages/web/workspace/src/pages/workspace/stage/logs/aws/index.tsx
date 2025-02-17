@@ -387,8 +387,8 @@ export function AWS() {
       if (search.hint === "lambda") {
         const match = resources().find(
           (r) =>
-            r.outputs?.loggingConfig?.logGroup === search.logGroup ||
-            r.outputs?.enrichment?.logGroup === search.logGroup,
+            r.outputs?.["loggingConfig.logGroup"] === search.logGroup ||
+            r.outputs?.["enrichment.logGroup"] === search.logGroup,
         );
         if (match?.type === "sstv2:aws:Function") return match;
         const fn = resources().find((r) => r.urn === match?.parent);

@@ -141,7 +141,7 @@ export const { use: useLogsContext, provider: LogsProvider } =
             return [
               {
                 name,
-                title: r.outputs?._metadata?.handler,
+                title: r.outputs?.["_metadata.handler"],
                 link: dev
                   ? `functionID=${r.urn}&view=local&hint=lambda`
                   : `logGroup=${logGroup}&view=cloudwatch&hint=lambda`,
@@ -153,7 +153,6 @@ export const { use: useLogsContext, provider: LogsProvider } =
             ];
           }
           if (r.type === "sstv2:aws:Function") {
-            console.log(r);
             const logGroup = r.outputs?.["enrichment.logGroup"];
             const live = r.outputs?.["enrichment.live"];
             return [
