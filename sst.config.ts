@@ -35,12 +35,12 @@ export default $config({
             input.stage === "production"
               ? {
                   id: "vpc-0f06c4b635a760100",
-                  subnets: ["subnet-0f5233bae874be0f3"],
+                  subnets: ["subnet-0af5c5640dfe75a22"],
                   securityGroups: ["sg-0f360ed3d2f363121"],
                 }
               : {
                   id: "vpc-069d2d529d3288945",
-                  subnets: ["subnet-028d2992e408fe0f4"],
+                  subnets: ["subnet-0b50769394a27a57d"],
                   securityGroups: ["sg-038ad39edab8e193b"],
                 },
         };
