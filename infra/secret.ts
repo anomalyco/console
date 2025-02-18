@@ -1,6 +1,7 @@
 export const secret = {
   StripeSecretKey: new sst.Secret("StripeSecretKey"),
   StripeWebhookSigningSecret: new sst.Secret("StripeWebhookSigningSecret"),
+  EmailOctopusSecret: new sst.Secret("EmailOctopusSecret", "disabled"),
   StripeInvocationsPriceID: new sst.Secret(
     "StripeInvocationsPriceID",
     $app.stage === "production"

@@ -81,6 +81,10 @@ declare module "sst" {
       "sender": string
       "type": "sst.aws.Email"
     }
+    "EmailOctopusSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Error": {
       "name": string
       "type": "sst.aws.Function"
