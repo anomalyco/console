@@ -77,6 +77,7 @@ export function DialogRange(props: {
 
   createEffect(() => {
     if (state.show) {
+      setStore("error", false);
       setTimeout(() => {
         setStore({});
         end.value = "";
@@ -135,6 +136,7 @@ export function DialogRange(props: {
                   onInput={() => setStore("error", false)}
                   placeholder={placeholder}
                   onBlur={(e) => {
+                    if (!e.currentTarget.value) return;
                     for (const f of FORMATS) {
                       const result = DateTime.fromFormat(
                         e.currentTarget.value,

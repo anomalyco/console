@@ -533,6 +533,8 @@ export function AWSNext() {
     if (!old?.[0] && start) return
 
     cloudwatch.clear()
+    list.setSelected([])
+    list.setCursor(null)
     if (filterLoopState.cancel) {
       await filterLoopState.cancel()
     }
