@@ -930,7 +930,7 @@ export function Detail() {
                     copying={copying()}
                     onClick={() => {
                       setCopying(true);
-                      navigator.clipboard.writeText("https://sst.dev/u/9a6c7a");
+                      navigator.clipboard.writeText(`https://sst.dev/u/${update.value!.id.slice(-8)}`);
                       setTimeout(() => setCopying(false), 2000);
                     }}
                   >
