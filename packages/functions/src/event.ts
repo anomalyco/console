@@ -43,9 +43,9 @@ export const handler = bus.subscriber(
       switch (evt.type) {
         case User.Events.UserCreated.type:
           await User.sendEmailInvite(evt.properties.userID);
-        await EmailOctopus.subscribe({
-          email: 
-        })
+          await EmailOctopus.subscribe({
+            userID: evt.properties.userID,
+          });
           break;
         case AWS.Account.Events.Created.type:
           const account = await AWS.Account.fromID(evt.properties.awsAccountID);
