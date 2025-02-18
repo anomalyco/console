@@ -10,7 +10,7 @@ import {
 } from "@console/web/providers/replicache";
 import { NavigationAction, useCommandBar } from "./command-bar";
 import { AppRoute } from "./app";
-import { Match, Switch, createEffect, createMemo } from "solid-js";
+import { Match, Switch, createEffect, createMemo, onMount } from "solid-js";
 import { IconWrenchScrewdriver } from "@console/web/ui/icons";
 import { UserRoute } from "./user";
 import { AccountRoute } from "./account";
@@ -45,6 +45,16 @@ export const WorkspaceRoute = (
         if (!w) return;
         storage.set("workspace", w.id);
       });
+
+      onMount(() => {
+        for (const item of auth.all()) {
+          for (const workspace of item.workspaces) {
+            if (workspace.slug === params.workspaceSlug && item.id !== auth.current.id) {
+              auth.switch(item.id);
+            }
+          }
+        }
+      })
 
       bar.register("workspace", async () => {
         return [
@@ -88,7 +98,6 @@ export const WorkspaceRoute = (
             <ReplicacheProvider workspaceID={workspace()!.id}>
               <WorkspaceContext.Provider value={() => workspace()!}>
                 {(() => {
-                  console.log("here");
                   const bar = useCommandBar();
                   const nav = useNavigate();
                   const params = useParams();
