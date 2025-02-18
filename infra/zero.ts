@@ -70,7 +70,7 @@ const replication = !$dev
       },
       transform: {
         service: {
-          healthCheckGracePeriodSeconds: 300,
+          healthCheckGracePeriodSeconds: 900,
         },
         taskDefinition: {
           ephemeralStorage: {
@@ -143,7 +143,7 @@ export const zero = cluster.addService("Zero", {
   },
   transform: {
     service: {
-      healthCheckGracePeriodSeconds: 300,
+      healthCheckGracePeriodSeconds: 900,
     },
     taskDefinition: {
       ephemeralStorage: {
