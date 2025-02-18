@@ -9,7 +9,10 @@ import {
   createMemo,
   createResource,
 } from "solid-js";
-import { createSubscription, useReplicache } from "@console/web/providers/replicache";
+import {
+  createSubscription,
+  useReplicache,
+} from "@console/web/providers/replicache";
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { UserStore } from "@console/web/data/user";
 import { RunStore, StateUpdateStore } from "@console/web/data/app";
@@ -33,7 +36,11 @@ import {
 } from "@console/web/ui/icons/custom";
 import { AvatarInitialsIcon } from "@console/web/ui/avatar-icon";
 import { Log, LogTime, LogMessage } from "@console/web/common/invocation";
-import { formatCommit, formatDuration, formatSinceTime } from "@console/web/common/format";
+import {
+  formatCommit,
+  formatDuration,
+  formatSinceTime,
+} from "@console/web/common/format";
 import { useReplicacheStatus } from "@console/web/providers/replicache-status";
 import {
   githubPr,
@@ -333,11 +340,14 @@ export function Detail() {
       if (!run) return;
       if (!run.stageName) return { run };
       const stage = (await StageStore.list(tx)).find(
-        (stage) => stage.name === run.stageName && !stage.timeDeleted
+        (stage) =>
+          stage.name === run.stageName &&
+          stage.appID === run.appID &&
+          !stage.timeDeleted,
       );
       if (!stage) return { run };
       const update = (await StateUpdateStore.forStage(tx, stage.id)).find(
-        (update) => update.runID === run.id
+        (update) => update.runID === run.id,
       );
       return { run, stage, update };
     };
@@ -388,7 +398,7 @@ export function Detail() {
               onClick={async (e) => {
                 const force =
                   e.currentTarget.parentElement!.querySelector<HTMLInputElement>(
-                    "input[name='force']:checked"
+                    "input[name='force']:checked",
                   )?.value;
 
                 const id = createId();
@@ -430,18 +440,18 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-            ? trigger.tag
-            : trigger.type === "branch"
-              ? trigger.branch
-              : trigger.ref;
+          ? trigger.tag
+          : trigger.type === "branch"
+          ? trigger.branch
+          : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL, trigger.number)
           : trigger.type === "tag"
-            ? githubRef(repoURL, trigger.tag)
-            : trigger.type === "branch"
-              ? githubRef(repoURL, trigger.branch)
-              : githubRef(repoURL, trigger.ref);
+          ? githubRef(repoURL, trigger.tag)
+          : trigger.type === "branch"
+          ? githubRef(repoURL, trigger.branch)
+          : githubRef(repoURL, trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       const actor =
@@ -508,8 +518,9 @@ export function Detail() {
                             <img
                               width={AVATAR_SIZE}
                               height={AVATAR_SIZE}
-                              src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
-                                }?s=${2 * AVATAR_SIZE}&v=4`}
+                              src={`https://avatars.githubusercontent.com/u/${
+                                r.value!.gitUser!.id
+                              }?s=${2 * AVATAR_SIZE}&v=4`}
                             />
                           </ActorAvatar>
                         </Match>
@@ -521,7 +532,7 @@ export function Detail() {
                             rel="noreferrer"
                             href={githubCommit(
                               r.value!.repoURL,
-                              trigger.commit!.id
+                              trigger.commit!.id,
                             )}
                           >
                             <GitIcon size="md">
@@ -570,8 +581,9 @@ export function Detail() {
                   <Stack space="1.5">
                     <PanelTitle>Update</PanelTitle>
                     <PanelValueLink
-                      href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
-                        }`}
+                      href={`${appPath}/${data.value!.stage!.name!}/updates/${
+                        data.value!.update!.id
+                      }`}
                     >
                       #{data.value!.update!.index}
                     </PanelValueLink>
@@ -584,18 +596,18 @@ export function Detail() {
                     title={
                       data.value!.run.time.created
                         ? DateTime.fromISO(
-                          data.value!.run.time.created!
-                        ).toLocaleString(DateTime.DATETIME_FULL)
+                            data.value!.run.time.created!,
+                          ).toLocaleString(DateTime.DATETIME_FULL)
                         : undefined
                     }
                   >
                     {data.value!.run.time.created
                       ? formatSinceTime(
-                        DateTime.fromISO(
-                          data.value!.run.time.created!
-                        ).toSQL()!,
-                        true
-                      )
+                          DateTime.fromISO(
+                            data.value!.run.time.created!,
+                          ).toSQL()!,
+                          true,
+                        )
                       : "—"}
                   </Text>
                 </Stack>
@@ -610,15 +622,15 @@ export function Detail() {
                     }
                   >
                     {data.value!.run.time.started &&
-                      data.value!.run.time.completed
+                    data.value!.run.time.completed
                       ? formatDuration(
-                        DateTime.fromISO(data.value!.run.time.completed!)
-                          .diff(
-                            DateTime.fromISO(data.value!.run.time.started!)
-                          )
-                          .as("milliseconds"),
-                        true
-                      )
+                          DateTime.fromISO(data.value!.run.time.completed!)
+                            .diff(
+                              DateTime.fromISO(data.value!.run.time.started!),
+                            )
+                            .as("milliseconds"),
+                          true,
+                        )
                       : "—"}
                   </Text>
                 </Stack>
@@ -644,18 +656,18 @@ export function Detail() {
         if (log === true || log === false) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-          "/log/aws/scan?" +
-          new URLSearchParams({
-            stageID: data.value!.stage!.id,
-            logStream: log.logStream,
-            logGroup: log.logGroup,
-          }).toString(),
+            "/log/aws/scan?" +
+            new URLSearchParams({
+              stageID: data.value!.stage!.id,
+              logStream: log.logStream,
+              logGroup: log.logGroup,
+            }).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,
               Authorization: "Bearer " + auth.current.access,
             },
-          }
+          },
         ).then(
           (res) =>
             res.json() as Promise<
@@ -663,13 +675,13 @@ export function Detail() {
                 message: string;
                 timestamp: number;
               }[]
-            >
+            >,
         );
         return results;
       },
       {
         initialValue: [],
-      }
+      },
     );
     const trimmedLogs = createMemo(() => {
       return pipe(
@@ -677,7 +689,7 @@ export function Detail() {
         dropWhile((r) => !r.message.startsWith("[sst.deploy.start]")),
         drop(1),
         filter((r) => r.message.trim() != ""),
-        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]"))
+        takeWhile((r) => !r.message.startsWith("[sst.deploy.end]")),
       );
     });
 
@@ -700,7 +712,7 @@ export function Detail() {
           >
             Logs —{" "}
             {DateTime.fromMillis(trimmedLogs()![0].timestamp!).toLocaleString(
-              DATETIME_NO_TIME
+              DATETIME_NO_TIME,
             )}
           </PanelTitle>
         </Show>
@@ -714,7 +726,7 @@ export function Detail() {
                     .toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}
                 >
                   {DateTime.fromMillis(entry.timestamp).toFormat(
-                    "HH:mm:ss.SSS"
+                    "HH:mm:ss.SSS",
                   )}
                 </LogTime>
                 <LogMessage>{entry.message}</LogMessage>
