@@ -1,0 +1,1 @@
+CREATE INDEX `time_updated` ON `state_resource` (`time_updated`);

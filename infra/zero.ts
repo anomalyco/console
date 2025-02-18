@@ -29,7 +29,7 @@ const zeroEnv = {
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/5`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/6`,
       }),
 };
 
@@ -167,7 +167,7 @@ debezium.source.schema.history.internal.file.filename=data/schema_history.dat
 debezium.source.connector.class=io.debezium.connector.planetscale.PlanetScaleConnector
 debezium.source.vitess.keyspace=sst
 debezium.source.vitess.tablet.type=MASTER
-debezium.source.table.include.list=sst.user,sst.workspace,sst.state_update
+debezium.source.table.include.list=sst.user,sst.workspace
 debezium.source.database.hostname=us-east.connect.psdb.cloud
 debezium.source.database.port=443
 debezium.source.database.user=${database.properties.username}

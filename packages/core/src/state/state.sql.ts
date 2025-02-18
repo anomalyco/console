@@ -145,6 +145,7 @@ export const stateResourceTable = mysqlTable(
       columns: [table.workspaceID, table.updateModifiedID],
       foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
     }).onDelete("cascade"),
+    timeUpdated: index("time_updated").on(table.timeUpdated),
   }),
 );
 
