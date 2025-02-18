@@ -647,7 +647,7 @@ export function Detail() {
     const auth = useAuth();
     const [logs, logsAction] = createResource(
       () => {
-        if (data.value?.stage && data.value?.run.log) return data.value.run.log;
+        if (data.value?.run.log) return data.value.run.log;
         return true;
       },
       async (log) => {
@@ -658,7 +658,8 @@ export function Detail() {
           import.meta.env.VITE_API_URL +
             "/log/aws/scan?" +
             new URLSearchParams({
-              stageID: data.value!.stage!.id,
+              awsAccountExternalID: data.value!.run.awsAccountExternalID!,
+              region: data.value!.run.region!,
               logStream: log.logStream,
               logGroup: log.logGroup,
             }).toString(),

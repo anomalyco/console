@@ -17,6 +17,7 @@ import {
 } from "@aws-sdk/client-cloudwatch-logs";
 import { zValidator } from "@hono/zod-validator";
 import { DateTime } from "luxon";
+import { AWS } from "@console/core/aws/index";
 
 export const LogRoute = new Hono()
   .use(notPublic)
@@ -421,7 +422,9 @@ export const LogRoute = new Hono()
     zValidator(
       "query",
       z.object({
-        stageID: z.string(),
+        awsAccountExternalID: z.string().optional(),
+        region: z.string().optional(),
+        stageID: z.string().optional(),
         requestID: z.string().optional(),
         timestamp: z.number({ coerce: true }).optional(),
         logGroup: z.string(),
@@ -430,15 +433,25 @@ export const LogRoute = new Hono()
     ),
     async (c) => {
       const body = c.req.valid("query");
-      let start = Date.now() - 2 * 60 * 1000;
-      console.log("tailing from", start);
-      const config = await Stage.assumeRole(body.stageID);
+      const config = body.stageID
+        ? await Stage.assumeRole(body.stageID)
+        : await (async () => {
+            const credentials = await AWS.assumeRole(
+              body.awsAccountExternalID!,
+            );
+            if (!credentials) return;
+            return {
+              region: body.region!,
+              credentials: credentials!,
+            };
+          })();
       if (!config)
         throw new HTTPException(500, { message: "Failed to assume role" });
       const logs = await Log.scan({
         ...body,
         timestamp: body.timestamp || undefined,
-        config,
+        region: config.region,
+        credentials: config.credentials,
       });
       for (const log of logs) {
         if (!log.message) continue;

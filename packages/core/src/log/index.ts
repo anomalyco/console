@@ -5,7 +5,7 @@ import {
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { AWS } from "../aws";
+import { AWS, Credentials } from "../aws";
 import { SourceMapConsumer } from "source-map";
 import { filter, firstBy, pipe, sortBy } from "remeda";
 import { zod } from "../util/zod";
@@ -492,12 +492,14 @@ export const scan = zod(
     logGroup: z.string(),
     logStream: z.string(),
     requestID: z.string().optional(),
-    config: z.custom<StageCredentials>(),
+    region: z.string(),
+    credentials: z.custom<Credentials>(),
   }),
   async (input) => {
     console.log("scanning", input);
     const cw = new CloudWatchLogsClient({
-      ...input.config,
+      region: input.region,
+      credentials: input.credentials,
       // retryStrategy: RETRY_STRATEGY,
     });
     const events = [];
