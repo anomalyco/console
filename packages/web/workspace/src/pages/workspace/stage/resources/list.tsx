@@ -767,7 +767,6 @@ export function List() {
   });
 
   function renderStateOutputs() {
-    console.log(stateOutputs())
     return (
       <Show when={stateOutputs().length}>
         <Card>
@@ -853,42 +852,15 @@ export function List() {
         </HeaderRoot>
         <Children outline>
           <For each={resource.children}>
-            {(child) => {
-              const [copying, setCopying] = createSignal(false);
-              return (
-                <Child outline>
-                  <BlockLink href={encodeURIComponent(child.urn)}></BlockLink>
-                  <ChildKeyLink href={encodeURIComponent(child.urn)}>
-                    {child.name}
-                  </ChildKeyLink>
-                  <Row space="3" vertical="center">
-                    <ChildValue outline>{child.type}</ChildValue>
-                    <Dropdown
-                      size="sm"
-                      disabled={copying()}
-                      triggerClass={childDropdown}
-                      icon={
-                        copying() ? (
-                          <IconCheck width={16} height={16} />
-                        ) : (
-                          <IconEllipsisVertical width={16} height={16} />
-                        )
-                      }
-                    >
-                      <Dropdown.Item
-                        onSelect={() => {
-                          setCopying(true);
-                          navigator.clipboard.writeText(child.urn);
-                          setTimeout(() => setCopying(false), 2000);
-                        }}
-                      >
-                        Copy URN
-                      </Dropdown.Item>
-                    </Dropdown>
-                  </Row>
-                </Child>
-              );
-            }}
+            {(child) => (
+              <Child outline>
+                <BlockLink href={encodeURIComponent(child.urn)}></BlockLink>
+                <ChildKeyLink href={encodeURIComponent(child.urn)}>
+                  {child.name}
+                </ChildKeyLink>
+                <ChildValue outline>{child.type}</ChildValue>
+              </Child>
+            )}
           </For>
         </Children>
       </Card>

@@ -34,6 +34,12 @@ const AVATAR_SIZE = 24;
 const SIDEBAR_WIDTH = 300;
 const RES_LEFT_BORDER = "4px";
 
+const DATETIME_NO_TIME = {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+} as const;
+
 const Container = styled("div", {
   base: {
     ...utility.row(6),
@@ -332,7 +338,7 @@ const ResourceRoot = styled("div", {
         borderLeftColor: `hsla(${theme.color.blue.l2}, 100%)`,
       },
       updated: {
-        borderLeftColor: `hsla(${theme.color.brand.l2}, 100%)`,
+        borderLeftColor: `hsla(${theme.color.yellow.l1}, 100%)`,
       },
       deleted: {
         borderLeftColor: `hsla(${theme.color.red.l1}, 100%)`,
@@ -398,6 +404,7 @@ const EventRoot = styled("div", {
 
 const EventResource = styled("div", {
   base: {
+    cursor: "pointer",
     borderStyle: "solid",
     borderWidth: `0 1px 0 ${RES_LEFT_BORDER}`,
     borderColor: theme.color.divider.base,
@@ -424,7 +431,7 @@ const EventResource = styled("div", {
         borderLeftColor: `hsla(${theme.color.blue.l2}, 100%)`,
       },
       updated: {
-        borderLeftColor: `hsla(${theme.color.brand.l2}, 100%)`,
+        borderLeftColor: `hsla(${theme.color.yellow.l1}, 100%)`,
       },
       deleted: {
         borderLeftColor: `hsla(${theme.color.red.l1}, 100%)`,
@@ -953,7 +960,21 @@ export function Detail() {
       <>
         <Show when={useNew()}>
           <Stack space="2">
-            <PanelTitle id="raw">Feb 12, 2025</PanelTitle>
+            <Show when={update.value?.time.created}
+              fallback={
+                <PanelTitle>Events</PanelTitle>
+              }
+            >
+              <PanelTitle
+                title={DateTime.fromISO(update.value?.time.created!)
+                  .toUTC()
+                  .toLocaleString(DateTime.DATETIME_FULL)}
+              >
+                {DateTime.fromISO(
+                  update.value?.time.created!
+                ).toLocaleString(DATETIME_NO_TIME)}
+              </PanelTitle>
+            </Show>
             <div>
               <For each={stateEvents()}>
                 {(item) => {
@@ -1087,7 +1108,7 @@ export function Detail() {
                             <EventResourceName>{getResourceName(item.urn)}</EventResourceName>
                             <EventResourceType>{item.type}</EventResourceType>
                           </Row>
-                          <Show when={true}>
+                          <Show when={duration() > 0}>
                             <EventDuration>{formatDuration(duration())}</EventDuration>
                           </Show>
                         </EventResourceContent>

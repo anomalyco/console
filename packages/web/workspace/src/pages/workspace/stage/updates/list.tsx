@@ -271,7 +271,7 @@ const ChangeLegendTag = styled(A, {
         backgroundColor: `hsla(${theme.color.red.l1}, 100%)`,
       },
       updated: {
-        backgroundColor: `hsla(${theme.color.brand.l2}, 100%)`,
+        backgroundColor: `hsla(${theme.color.yellow.l1}, 100%)`,
       },
       same: {
         backgroundColor: theme.color.divider.base,
