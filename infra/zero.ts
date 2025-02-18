@@ -45,12 +45,12 @@ const replication = !$dev
       image,
       wait: true,
       link: [postgres, storage],
-      health: {
-        command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
-        interval: "5 seconds",
-        retries: 3,
-        startPeriod: "300 seconds",
-      },
+      // health: {
+      //   command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
+      //   interval: "5 seconds",
+      //   retries: 3,
+      //   startPeriod: "300 seconds",
+      // },
       loadBalancer: {
         rules: [
           {
