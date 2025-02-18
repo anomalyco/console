@@ -45,12 +45,12 @@ const replication = !$dev
       image,
       wait: true,
       link: [postgres, storage],
-      // health: {
-      //   command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
-      //   interval: "5 seconds",
-      //   retries: 3,
-      //   startPeriod: "300 seconds",
-      // },
+      health: {
+        command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
+        interval: "5 seconds",
+        retries: 3,
+        startPeriod: "300 seconds",
+      },
       loadBalancer: {
         rules: [
           {
@@ -69,6 +69,12 @@ const replication = !$dev
         retention: "1 month",
       },
       transform: {
+        service: {
+          deploymentCircuitBreaker: {
+            enable: false,
+            rollback: false,
+          },
+        },
         taskDefinition: {
           ephemeralStorage: {
             sizeInGib: 200,
@@ -139,6 +145,12 @@ export const zero = cluster.addService("Zero", {
     max: 4,
   },
   transform: {
+    service: {
+      deploymentCircuitBreaker: {
+        enable: false,
+        rollback: false,
+      },
+    },
     taskDefinition: {
       ephemeralStorage: {
         sizeInGib: 200,
