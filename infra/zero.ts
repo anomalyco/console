@@ -70,10 +70,7 @@ const replication = !$dev
       },
       transform: {
         service: {
-          deploymentCircuitBreaker: {
-            enable: false,
-            rollback: false,
-          },
+          healthCheckGracePeriodSeconds: 300,
         },
         taskDefinition: {
           ephemeralStorage: {
@@ -146,10 +143,7 @@ export const zero = cluster.addService("Zero", {
   },
   transform: {
     service: {
-      deploymentCircuitBreaker: {
-        enable: false,
-        rollback: false,
-      },
+      healthCheckGracePeriodSeconds: 300,
     },
     taskDefinition: {
       ephemeralStorage: {
