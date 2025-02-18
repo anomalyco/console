@@ -46,10 +46,11 @@ export const WorkspaceRoute = (
         storage.set("workspace", w.id);
       });
 
-      onMount(() => {
+      createEffect(() => {
+        const workspaceSlug = params.workspaceSlug;
         for (const item of auth.all()) {
           for (const workspace of item.workspaces) {
-            if (workspace.slug === params.workspaceSlug && item.id !== auth.current.id) {
+            if (workspace.slug === workspaceSlug && item.id !== auth.current.id) {
               auth.switch(item.id);
             }
           }
