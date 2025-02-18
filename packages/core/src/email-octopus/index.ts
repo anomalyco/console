@@ -24,8 +24,8 @@ export namespace EmailOctopus {
             api_key: Resource.EmailOctopusSecret.value,
             email_address: user?.email,
             fields: {
-              userID: user.id,
-              workspaceID: user.workspaceID,
+              UserID: user.id,
+              WorkspaceID: user.workspaceID,
             },
           }),
           headers: { "Content-Type": "application/json" },

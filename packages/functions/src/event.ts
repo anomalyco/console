@@ -3,6 +3,7 @@ import { Alert } from "@console/core/alert/index";
 import { App, Stage } from "@console/core/app/index";
 import { AWS } from "@console/core/aws/index";
 import { Stripe } from "@console/core/billing/stripe";
+import { EmailOctopus } from "@console/core/email-octopus/index";
 import { Issue } from "@console/core/issue/index";
 import { Run } from "@console/core/run/index";
 import { State } from "@console/core/state/index";
@@ -42,6 +43,9 @@ export const handler = bus.subscriber(
       switch (evt.type) {
         case User.Events.UserCreated.type:
           await User.sendEmailInvite(evt.properties.userID);
+        await EmailOctopus.subscribe({
+          email: 
+        })
           break;
         case AWS.Account.Events.Created.type:
           const account = await AWS.Account.fromID(evt.properties.awsAccountID);
