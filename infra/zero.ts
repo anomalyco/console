@@ -94,7 +94,7 @@ if ($app.stage === "production") {
           memory: "4 GB",
         }
       : {}),
-    image: "rocicorp/zero:0.16.2025021901",
+    image: "rocicorp/zero:0.16.2025021902",
     wait: true,
     link: [postgres, storage],
     health: {
