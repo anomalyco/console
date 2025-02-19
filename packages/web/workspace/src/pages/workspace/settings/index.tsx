@@ -56,7 +56,7 @@ function calculateCost(
     }
   }
 
-  cost = discount ? cost * (discount / 100) : cost;
+  cost = discount ? cost * (1 - discount / 100) : cost;
 
   return cost === 0 ? "0" : cost.toFixed(2);
 }
@@ -413,7 +413,12 @@ export function SettingsRoute() {
                         <Text color="dimmed" on="surface" size="xs">
                           →
                         </Text>
-                        <Text code size="mono_xs" on="surface" color="secondary">
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
                           ${RESOURCES_PRICING_PLAN[1].rate} per
                         </Text>
                       </Row>
@@ -424,7 +429,12 @@ export function SettingsRoute() {
                         <Text color="dimmed" on="surface" size="xs">
                           →
                         </Text>
-                        <Text code size="mono_xs" on="surface" color="secondary">
+                        <Text
+                          code
+                          size="mono_xs"
+                          on="surface"
+                          color="secondary"
+                        >
                           ${RESOURCES_PRICING_PLAN[2].rate} per
                         </Text>
                       </Row>
