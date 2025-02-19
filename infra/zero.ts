@@ -113,6 +113,8 @@ if ($app.stage === "production") {
     },
     environment: {
       ...zeroEnv,
+      ZERO_CHANGE_MAX_CONNS: "3",
+      ZERO_NUM_SYNC_WORKERS: "0",
       ZERO_SHARD_ID: $app.stage + "_test",
       ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/test`,
     },
