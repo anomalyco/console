@@ -7,11 +7,20 @@ import { stripeTable } from "@console/core/billing/billing.sql";
 import { DateTime } from "luxon";
 
 const args = process.argv.slice(2);
-if (args.length !== 1 || !args[0]) {
-  console.error("Usage: apply-coupon.ts <workspace>");
+const workspaceSlug = args[0];
+const discount = args[1];
+const coupon =
+  discount === "50%"
+    ? Resource.StripeCoupon50ID.value
+    : discount === "80%"
+    ? Resource.StripeCoupon80ID.value
+    : undefined;
+
+if (args.length !== 2 || !workspaceSlug || !coupon) {
+  console.error("Usage: apply-coupon.ts <workspace> <50%|80%>");
   process.exit(1);
 }
-const workspaceSlug = args[0];
+
 const result = await useTransaction((tx) =>
   tx
     .select({
@@ -31,7 +40,7 @@ if (!result || !result.stripeCustomerID) {
 }
 
 const response = await stripe.customers.update(result.stripeCustomerID, {
-  coupon: Resource.StripeCouponID.value,
+  coupon,
 });
 
 console.log("");

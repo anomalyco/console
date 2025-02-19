@@ -151,7 +151,11 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bucket"
     }
-    "StripeCouponID": {
+    "StripeCoupon50ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "StripeCoupon80ID": {
       "type": "sst.sst.Secret"
       "value": string
     }

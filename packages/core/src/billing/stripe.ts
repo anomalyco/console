@@ -39,7 +39,12 @@ export function serialize(input: typeof stripeTable.$inferSelect): Info {
         : input.priceID === Resource.StripeResourcesPriceID.value
         ? ("resources" as const)
         : undefined,
-    discount: input.couponID === Resource.StripeCouponID.value ? 50 : undefined,
+    discount:
+      input.couponID === Resource.StripeCoupon50ID.value
+        ? 50
+        : input.couponID === Resource.StripeCoupon80ID.value
+        ? 80
+        : undefined,
     standing: input.standing ?? "good",
     time: {
       created: input.timeCreated,

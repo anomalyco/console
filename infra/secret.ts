@@ -14,9 +14,13 @@ export const secret = {
       ? "price_1QhwLAEAHP8a0ogpjRV91Yl8"
       : "price_1Qi4QzEAHP8a0ogpDvPDu8Bm",
   ),
-  StripeCouponID: new sst.Secret(
-    "StripeCouponID",
+  StripeCoupon50ID: new sst.Secret(
+    "StripeCoupon50ID",
     $app.stage === "production" ? "SQfanxGc" : "O6e5LLnW",
+  ),
+  StripeCoupon80ID: new sst.Secret(
+    "StripeCoupon80ID",
+    $app.stage === "production" ? "iZuY8E7x" : "xihoZNwb",
   ),
   SlackClientID: new sst.Secret("SlackClientID"),
   SlackClientSecret: new sst.Secret("SlackClientSecret"),
