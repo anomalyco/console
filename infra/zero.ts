@@ -84,7 +84,7 @@ const replication = !$dev
     })
   : undefined;
 
-if ($app.stage === "production") {
+if ($app.stage === "production" && false) {
   new sst.aws.Service(`ZeroReplicationTest`, {
     cluster,
     ...($app.stage === "production"
