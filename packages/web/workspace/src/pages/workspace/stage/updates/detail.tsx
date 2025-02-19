@@ -21,6 +21,7 @@ import {
   IconXCircle,
   IconEllipsisVertical,
   IconDocumentDuplicate,
+  IconExclamationTriangle,
 } from "@console/web/ui/icons";
 import { githubPr, githubRepo, githubRef } from "@console/web/common/url-builder";
 import { sortBy } from "remeda";
@@ -460,6 +461,17 @@ const EventResourceContent = styled("div", {
   },
 });
 
+const EventDuration = styled("div", {
+  base: {
+    ...utility.text.line,
+    lineHeight: "normal",
+    fontFamily: theme.font.family.code,
+    textAlign: "right",
+    fontSize: theme.font.size.mono_sm,
+    color: theme.color.text.dimmed.base,
+  },
+});
+
 const EventResourceEmpty = styled("div", {
   base: {
     paddingLeft: 4,
@@ -515,18 +527,20 @@ const EventResourceType = styled("span", {
     color: theme.color.text.dimmed.base,
     lineHeight: "normal",
   },
+  variants: {
+    error: {
+      true: {
+        color: theme.color.text.danger.base,
+      },
+    },
+  },
 });
 
-const EventDuration = styled("div", {
+const ErrorResourceIcon = styled("div", {
   base: {
-    ...utility.text.line,
-    lineHeight: "normal",
-    fontFamily: theme.font.family.code,
-    flexShrink: 0,
-    minWidth: 70,
-    textAlign: "right",
-    fontSize: theme.font.size.mono_sm,
-    color: theme.color.text.dimmed.base,
+    lineHeight: 0,
+    opacity: theme.iconOpacity,
+    color: theme.color.text.danger.base,
   },
 });
 
@@ -691,15 +705,6 @@ const GitBranch = styled("span", {
     ...utility.text.line,
     lineHeight: "normal",
     maxWidth: SIDEBAR_WIDTH - AVATAR_SIZE - 24,
-  },
-});
-
-const AutodeployLinkIcon = styled("span", {
-  base: {
-    marginLeft: 2,
-    lineHeight: 0,
-    verticalAlign: -2,
-    opacity: theme.iconOpacity,
   },
 });
 
@@ -1053,7 +1058,7 @@ export function Detail() {
                         <ErrorIcon>
                           <IconXCircle width={16} height={16} />
                         </ErrorIcon>
-                        <ErrorMessage>{message}</ErrorMessage>
+                        <ErrorMessage>{message.trim()}</ErrorMessage>
                       </EventError>
                     );
                   }
@@ -1106,10 +1111,21 @@ export function Detail() {
                               )}
                             </EventTime>
                             <EventResourceName>{getResourceName(item.urn)}</EventResourceName>
-                            <EventResourceType>{item.type}</EventResourceType>
+                            <Row space="1.5" vertical="center">
+                              <Show when={item.error}>
+                                <ErrorResourceIcon>
+                                  <IconExclamationTriangle width="14" height="14" />
+                                </ErrorResourceIcon>
+                              </Show>
+                              <EventResourceType error={item.error !== null}>
+                                {item.type}
+                              </EventResourceType>
+                            </Row>
                           </Row>
                           <Show when={duration() > 0}>
-                            <EventDuration>{formatDuration(duration())}</EventDuration>
+                            <EventDuration>
+                              {formatDuration(duration())}
+                            </EventDuration>
                           </Show>
                         </EventResourceContent>
                       </EventResource>
@@ -1379,8 +1395,4 @@ function countCopy(count?: number) {
 
 function getResourceName(urn: string) {
   return urn.split("::").at(-1)?.split(".sst").at(0)
-}
-
-function shortenCommit(commit: string) {
-  return commit.slice(0, 7);
 }
