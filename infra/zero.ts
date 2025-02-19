@@ -84,7 +84,7 @@ const replication = !$dev
     })
   : undefined;
 
-if ($app.stage === "production" && false) {
+if ($app.stage === "production") {
   new sst.aws.Service(`ZeroReplicationTest`, {
     cluster,
     ...($app.stage === "production"
@@ -93,7 +93,7 @@ if ($app.stage === "production" && false) {
           memory: "4 GB",
         }
       : {}),
-    image,
+    image: "rocicorp/zero:0.16.2025021901",
     wait: true,
     link: [postgres, storage],
     health: {
