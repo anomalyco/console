@@ -281,10 +281,7 @@ async function processResources(workspaceID: string) {
   const workspace = await Workspace.fromID(workspaceID);
   if (!workspace) return;
 
-  const count = await Billing.countResourcesByMonth({
-    month: DateTime.utc().startOf("month").toSQLDate()!,
-    timeCreatedBefore: DateTime.utc().minus({ days: 14 }).toSQL()!,
-  });
+  const count = await Billing.countActiveResources();
 
   console.log(`workspace ${workspaceID} has ${count} resources`);
 

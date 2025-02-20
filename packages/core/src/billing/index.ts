@@ -3,7 +3,17 @@ import { Resource } from "sst";
 import { usage } from "./billing.sql";
 import { z } from "zod";
 import { zod } from "../util/zod";
-import { eq, and, between, sql, lt } from "drizzle-orm";
+import {
+  eq,
+  and,
+  between,
+  sql,
+  lt,
+  or,
+  isNotNull,
+  not,
+  isNull,
+} from "drizzle-orm";
 import { useTransaction } from "../util/transaction";
 import { useWorkspace } from "../actor";
 import { workspace } from "../workspace/workspace.sql";
@@ -46,37 +56,46 @@ export const countInvocationsByStartAndEndDay = zod(
   },
 );
 
-export const countResourcesByMonth = zod(
-  z.object({
-    month: z.string().min(1),
-    timeCreatedBefore: z.string().min(1),
-  }),
-  async (input) => {
-    return await useTransaction((tx) =>
-      tx
-        .select({
-          total: sql<number>`SUM(${stateCountTable.count})`,
-        })
-        .from(stateCountTable)
-        .innerJoin(
-          stage,
-          and(
-            eq(stage.id, stateCountTable.stageID),
-            eq(stage.workspaceID, stateCountTable.workspaceID),
+export const countActiveResources = zod(z.void(), async () => {
+  return await useTransaction((tx) =>
+    tx
+      .select({
+        total: sql<number>`SUM(${stateCountTable.count})`,
+      })
+      .from(stateCountTable)
+      .innerJoin(
+        stage,
+        and(
+          eq(stage.id, stateCountTable.stageID),
+          eq(stage.workspaceID, stateCountTable.workspaceID),
+        ),
+      )
+      .where(
+        and(
+          eq(stateCountTable.workspaceID, useWorkspace()),
+          eq(
+            stateCountTable.month,
+            DateTime.utc().startOf("month").toSQLDate()!,
           ),
-        )
-        .where(
-          and(
-            eq(stateCountTable.workspaceID, useWorkspace()),
-            eq(stateCountTable.month, input.month),
-            lt(stage.timeCreated, input.timeCreatedBefore),
+          or(
+            and(
+              isNull(stage.timeDeleted),
+              lt(stage.timeCreated, sql`NOW() - INTERVAL 14 DAY`),
+            ),
+            and(
+              isNotNull(stage.timeDeleted),
+              lt(
+                stage.timeCreated,
+                sql`${stage.timeDeleted} - INTERVAL 14 DAY`,
+              ),
+            ),
           ),
-        )
-        .execute()
-        .then((x) => x[0]?.total ?? 0),
-    );
-  },
-);
+        ),
+      )
+      .execute()
+      .then((x) => x[0]?.total ?? 0),
+  );
+});
 
 export const updateGatingStatus = zod(z.void(), async () => {
   async function isGated() {
@@ -110,10 +129,7 @@ export const updateGatingStatus = zod(z.void(), async () => {
     if (customer?.priceID === Resource.StripeResourcesPriceID.value)
       return false;
 
-    const resources = await countResourcesByMonth({
-      month: DateTime.utc().startOf("month").toSQLDate()!,
-      timeCreatedBefore: DateTime.utc().minus({ days: 14 }).toSQL()!,
-    });
+    const resources = await countActiveResources();
     return resources > FREE_RESOURCES;
   }
 
