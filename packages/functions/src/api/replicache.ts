@@ -15,6 +15,7 @@ import {
   MySqlColumn,
   desc,
   lt,
+  or,
 } from "@console/core/drizzle/index";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { stripeTable, usage } from "@console/core/billing/billing.sql";
@@ -244,9 +245,18 @@ ReplicacheRoute.post("/pull1", async (c) => {
           .from(stage)
           .where(
             and(
-              lt(
-                stage.timeCreated,
-                DateTime.utc().minus({ days: 14 }).toSQL()!,
+              or(
+                and(
+                  isNull(stage.timeDeleted),
+                  lt(stage.timeCreated, sql`NOW() - INTERVAL 14 DAY`),
+                ),
+                and(
+                  isNotNull(stage.timeDeleted),
+                  lt(
+                    stage.timeCreated,
+                    sql`${stage.timeDeleted} - INTERVAL 14 DAY`,
+                  ),
+                ),
               ),
               eq(stage.workspaceID, useWorkspace()),
             ),
