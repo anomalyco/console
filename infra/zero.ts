@@ -30,7 +30,7 @@ const zeroEnv = {
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/9`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/10`,
       }),
 };
 
