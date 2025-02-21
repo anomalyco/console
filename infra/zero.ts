@@ -52,6 +52,15 @@ const replication = !$dev
         retries: 3,
         startPeriod: "300 seconds",
       },
+      loadBalancer: {
+        rules: [
+          {
+            listen: "80/http",
+            forward: "4849/http",
+          },
+        ],
+        public: false,
+      },
       environment: {
         ...zeroEnv,
         ZERO_CHANGE_MAX_CONNS: "3",
@@ -93,15 +102,6 @@ if ($app.stage === "production") {
       interval: "5 seconds",
       retries: 3,
       startPeriod: "300 seconds",
-    },
-    loadBalancer: {
-      rules: [
-        {
-          listen: "80/http",
-          forward: "4849/http",
-        },
-      ],
-      public: false,
     },
     environment: {
       ...zeroEnv,
