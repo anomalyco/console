@@ -55,19 +55,19 @@ export async function handler({
     packageJson = await loadPackageJson();
     installNode();
     installUv();
-    createDockerBuilder();
+    configureDockerMirror();
     sstConfig = await loadSstConfig();
     installSstGlobally();
 
     sstConfig.console?.autodeploy?.workflow
       ? runWorkflow()
       : (() => {
-        installNodeDeps();
-        const sstPath = findLocalSstBinary() ?? "sst";
-        trigger.action === "removed" || trigger.action === "remove"
-          ? shell(`${sstPath} remove`)
-          : shell(`${sstPath} deploy`);
-      })();
+          installNodeDeps();
+          const sstPath = findLocalSstBinary() ?? "sst";
+          trigger.action === "removed" || trigger.action === "remove"
+            ? shell(`${sstPath} remove`)
+            : shell(`${sstPath} deploy`);
+        })();
 
     for (const item of [".git", ...(cache?.paths ?? [])])
       await storeCache(item);
@@ -101,7 +101,7 @@ export async function handler({
 
     try {
       return JSON.parse(fs.readFileSync("package.json", "utf8"));
-    } catch (e) { }
+    } catch (e) {}
     return {};
   }
 
@@ -149,6 +149,23 @@ export async function handler({
   }
   function installUv() {
     if (findInRepo("uv.lock")) shell("pip install uv");
+  }
+  function configureDockerMirror() {
+    fs.mkdirSync("/etc/docker", { recursive: true });
+    fs.mkdirSync("/root/.docker/buildx", { recursive: true });
+    // configures docker to use the mirror.gcr.io registry
+    fs.writeFileSync(
+      "/etc/docker/daemon.json",
+      '{ "registry-mirrors": ["https://mirror.gcr.io"] }',
+    );
+    // configures buildx to use the mirror.gcr.io registry
+    fs.writeFileSync(
+      "/root/.docker/buildx/buildkitd.default.toml",
+      [`[registry."docker.io"]`, `  mirrors = ["mirror.gcr.io"]`].join("\n"),
+    );
+    // reload docker daemon without restarting
+    shell('sudo kill -SIGHUP $(pgrep -f "/usr/local/bin/dockerd --host")');
+    shell("docker info");
   }
   function createDockerBuilder() {
     const builder = "sst-builder";
@@ -380,7 +397,7 @@ export async function handler({
         shellError = new Error(
           JSON.parse(fs.readFileSync(WORKFLOW_RESULT, "utf8")).error,
         );
-      } catch (_) { }
+      } catch (_) {}
       throw shellError;
     }
   }
