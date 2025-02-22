@@ -35,6 +35,7 @@ import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
 import { useWorkspace } from "../../context";
+import { WindowVirtualizer } from "virtua/solid"
 
 const COL_COUNT_WIDTH = 260;
 const COL_TIME_WIDTH = 140;
@@ -731,18 +732,16 @@ export function List() {
                 }
               >
                 <KeyboardNavigator value={navigator}>
-                  <For each={filtered()}>
-                    {(issue, i) => {
-                      return (
-                        <IssueRow
-                          issue={issue}
-                          unread={view() === "active"}
-                          last={i() === filtered().length - 1}
-                          logName={issue.pointer?.logGroup || ""}
-                        />
-                      );
-                    }}
-                  </For>
+                  <WindowVirtualizer data={filtered() || []} >
+                    {(issue, i) =>
+                      <IssueRow
+                        issue={issue}
+                        unread={view() === "active"}
+                        last={i === filtered().length - 1}
+                        logName={issue.pointer?.logGroup || ""}
+                      />
+                    }
+                  </WindowVirtualizer>
                 </KeyboardNavigator>
               </Show>
             </div>
