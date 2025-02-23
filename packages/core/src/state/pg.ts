@@ -1,4 +1,8 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  ListObjectsV2Command,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { createInterface } from "readline";
 import { Readable } from "stream";
 import { z } from "zod";
@@ -7,12 +11,24 @@ import { AWS } from "../aws";
 import { RETRY_STRATEGY } from "../util/aws";
 import { zod } from "../util/zod";
 import { and, eq, sql } from "../drizzle";
-import { stateEventTable, stateUpdateTable } from "./state.pg";
+import {
+  stateUpdateTable as pg_stateUpdateTable,
+  stateEventTable as pg_stateEventTable,
+} from "./state.pg";
 import { createId } from "../util/sql.pg";
 import { useWorkspace } from "../actor";
 import { EngineEvent } from "../util/pulumi";
 import { postgres } from "../drizzle/postgres";
-import { useTransaction } from "../util/transaction";
+import {
+  createTransaction,
+  createTransactionEffect,
+  useTransaction,
+} from "../util/transaction";
+import { stateEventTable, stateUpdateTable } from "./state.sql";
+import { Replicache } from "../replicache";
+import { mapValues } from "remeda";
+import { stage } from "../app/app.sql";
+import { objectFlatten } from "../util/object";
 
 export const stateReceiveEventLog = zod(
   z.object({
@@ -45,7 +61,7 @@ export const stateReceiveEventLog = zod(
     const lines = createInterface({
       input: Readable.from(obj.Body?.transformToWebStream()!),
     });
-    const inserts = [] as (typeof stateEventTable.$inferInsert)[];
+    const inserts = [] as (typeof pg_stateEventTable.$inferInsert)[];
     const workspaceID = useWorkspace();
 
     const progress = new Set<string>();
@@ -172,15 +188,15 @@ export const stateReceiveEventLog = zod(
     if (inserts.length) {
       console.log("events found", inserts.length);
       await postgres
-        .insert(stateEventTable)
+        .insert(pg_stateEventTable)
         .values(inserts)
         .onConflictDoUpdate({
           target: [
-            stateEventTable.workspaceID,
-            stateEventTable.stageID,
-            stateEventTable.updateID,
-            stateEventTable.urn,
-            stateEventTable.action,
+            pg_stateEventTable.workspaceID,
+            pg_stateEventTable.stageID,
+            pg_stateEventTable.updateID,
+            pg_stateEventTable.urn,
+            pg_stateEventTable.action,
           ],
           set: {
             timeStarted: sql`excluded.time_started`,
