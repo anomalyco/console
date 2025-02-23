@@ -5,7 +5,6 @@ import { domain } from "./dns";
 import { email } from "./email";
 import { issueDetectionQueue } from "./issues";
 import { database } from "./planetscale";
-import { postgres } from "./postgres";
 import { allSecrets, secret } from "./secret";
 import { storage } from "./storage";
 import { websocket } from "./websocket";
@@ -18,7 +17,6 @@ const api = new sst.aws.Function("Api", {
     storage,
     auth,
     database,
-    postgres,
     bus,
     email,
     autodeploy,

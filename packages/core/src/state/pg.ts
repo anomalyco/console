@@ -6,11 +6,12 @@ import { StageCredentials } from "../app/stage";
 import { AWS } from "../aws";
 import { RETRY_STRATEGY } from "../util/aws";
 import { zod } from "../util/zod";
-import { postgres, sql } from "../drizzle";
+import { sql } from "../drizzle";
 import { stateEventTable } from "./state.pg";
 import { createId } from "../util/sql.pg";
 import { useWorkspace } from "../actor";
 import { EngineEvent } from "../util/pulumi";
+import { postgres } from "../drizzle/postgres";
 
 export const stateReceiveEventLog = zod(
   z.object({

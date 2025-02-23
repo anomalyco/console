@@ -5,7 +5,6 @@ import { database } from "./planetscale";
 import { secret } from "./secret";
 import { bus } from "./bus";
 import { websocket } from "./websocket";
-import { postgres } from "./postgres";
 
 const { bucket, version } = createBuildScript();
 const repo = createEcrRepo();
@@ -90,7 +89,6 @@ function createBuildTimeoutMonitor() {
     handler: "packages/functions/src/run/monitor.handler",
     link: [
       database,
-      postgres,
       bus,
       websocket,
       secret.GithubAppID,
@@ -137,7 +135,7 @@ function createRunnerRemover() {
   );
   const handler = new sst.aws.Function("AutodeployRunnerRemover", {
     handler: "packages/functions/src/run/runner-remover.handler",
-    link: [postgres, database, websocket],
+    link: [database, websocket],
     environment: {
       RUNNER_REMOVER_SCHEDULE_GROUP_NAME: scheduleGroup.name!,
       RUNNER_REMOVER_SCHEDULE_ROLE_ARN: monitor.role.arn,

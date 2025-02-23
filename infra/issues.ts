@@ -6,7 +6,6 @@ import { database } from "./planetscale";
 import { publicStorage, storage } from "./storage";
 import { domain } from "./dns";
 import { multiregion, regions } from "./regions";
-import { postgres } from "./postgres";
 
 export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   fifo: true,
@@ -14,7 +13,7 @@ export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
 });
 issueDetectionQueue.subscribe({
   handler: "packages/functions/src/issue-detected.handler",
-  link: [database, email, postgres],
+  link: [database, email],
 });
 
 const stream = new sst.aws.KinesisStream("IssueStream");
@@ -27,7 +26,7 @@ stream.subscribe(
     nodejs: {
       install: ["source-map"],
     },
-    link: [bus, storage, postgres, database, issueDetectionQueue],
+    link: [bus, storage, database, issueDetectionQueue],
   },
   {
     transform: {
@@ -259,7 +258,7 @@ new sst.aws.Cron("IssueCleanup", {
   job: {
     handler: "packages/functions/src/issues/cleanup.handler",
     timeout: "15 minutes",
-    link: [postgres, database],
+    link: [database],
     environment: {
       DRIZZLE_LOG: "true",
     },

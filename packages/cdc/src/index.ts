@@ -8,7 +8,7 @@ import {
   stateUpdateTable,
 } from "@console/core/state/state.pg";
 import { getTableColumns, sql } from "drizzle-orm";
-import { postgres } from "@console/core/drizzle/index";
+import { postgres } from "@console/core/drizzle/postgres";
 
 function transform<Table extends PgTableWithColumns<any>>(
   table: Table,

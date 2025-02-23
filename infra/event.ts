@@ -2,9 +2,10 @@ import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
 import { email } from "./email";
 import { issues } from "./issues";
+import { vpc } from "./network";
 import { database } from "./planetscale";
 import { postgres } from "./postgres";
-import { secret, allSecrets } from "./secret";
+import { allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
 bus.subscribe(
@@ -14,6 +15,7 @@ bus.subscribe(
     nodejs: {
       install: ["source-map"],
     },
+    vpc,
     permissions: [
       {
         actions: [
@@ -37,8 +39,8 @@ bus.subscribe(
       },
     ],
     link: [
-      postgres,
       database,
+      postgres,
       bus,
       issues,
       email,
@@ -60,7 +62,7 @@ bus.subscribe(
   "StackUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/stack-updated-external.handler",
-    link: [bus, postgres, database, websocket],
+    link: [bus, database, websocket],
     timeout: "1 minute",
   },
   {
@@ -74,15 +76,7 @@ bus.subscribe(
   "RunnerUpdatedSubscriber",
   {
     handler: "packages/functions/src/events/runner-updated-external.handler",
-    link: [
-      postgres,
-      database,
-      bus,
-      email,
-      autodeploy,
-      ...allSecrets,
-      websocket,
-    ],
+    link: [database, bus, email, autodeploy, ...allSecrets, websocket],
     permissions: [
       { actions: ["iot:*", "sts:*", "iam:PassRole"], resources: ["*"] },
     ],
@@ -99,15 +93,7 @@ bus.subscribe(
   {
     handler:
       "packages/functions/src/events/runner-updated-external.codebuildHandler",
-    link: [
-      postgres,
-      database,
-      bus,
-      email,
-      autodeploy,
-      ...allSecrets,
-      websocket,
-    ],
+    link: [database, bus, email, autodeploy, ...allSecrets, websocket],
     permissions: [{ actions: ["iot:*", "sts:*"], resources: ["*"] }],
   },
   {

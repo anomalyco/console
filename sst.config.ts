@@ -38,11 +38,6 @@ export default $config({
     },
   },
   async run() {
-    const { vpc } = await import("./infra/network");
-    $transform(sst.aws.Function, (args) => {
-      args.vpc = vpc;
-    });
-
     await import("./infra/dns");
     await import("./infra/cluster");
     await import("./infra/planetscale");
