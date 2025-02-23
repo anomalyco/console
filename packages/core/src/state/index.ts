@@ -46,8 +46,8 @@ import {
 } from "@aws-sdk/client-cloudformation";
 import { runTable } from "../run/run.sql";
 import { objectFlatten } from "../util/object";
-import { postgres } from "../drizzle";
 import { logger } from "../util/log";
+import { postgres } from "../drizzle/postgres";
 
 export module State {
   export const Event = {
