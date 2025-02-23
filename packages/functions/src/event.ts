@@ -7,7 +7,10 @@ import { EmailOctopus } from "@console/core/email-octopus/index";
 import { Issue } from "@console/core/issue/index";
 import { Run } from "@console/core/run/index";
 import { State } from "@console/core/state/index";
-import { stateReceiveEventLog } from "@console/core/state/pg";
+import {
+  stateReceiveEventLog,
+  stateReceiveSnapshot,
+} from "@console/core/state/pg";
 import { User } from "@console/core/user/index";
 import { Workspace } from "@console/core/workspace/index";
 import { bus } from "sst/aws/bus";
@@ -128,7 +131,7 @@ export const handler = bus.subscriber(
         case State.Event.SnapshotCreated.type: {
           const config = await Stage.assumeRole(evt.properties.stageID);
           if (!config) return;
-          await State.receiveSnapshot({
+          await stateReceiveSnapshot({
             config,
             updateID: evt.properties.updateID,
           });
