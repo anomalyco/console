@@ -4,8 +4,9 @@ import { bus } from "./bus";
 import { cluster } from "./cluster";
 import { domain } from "./dns";
 import { email } from "./email";
-import { issueDetectionQueue } from "./issues";
+import { issueDetectionQueue, issues } from "./issues";
 import { database } from "./planetscale";
+import { postgres } from "./postgres";
 import { allSecrets, secret } from "./secret";
 import { storage } from "./storage";
 import { websocket } from "./websocket";
@@ -53,6 +54,8 @@ export const backend = new sst.aws.Service("Backend", {
     autodeploy,
     websocket,
     issueDetectionQueue,
+    postgres,
+    issues,
     ...allSecrets,
   ],
   wait: true,
@@ -72,7 +75,21 @@ export const backend = new sst.aws.Service("Backend", {
       },
     ],
   },
-  permissions: [{ actions: ["sts:*", "iot:*", "ssm:*"], resources: ["*"] }],
+  permissions: [
+    {
+      resources: ["*"],
+      actions: [
+        "sts:*",
+        "logs:*",
+        "ses:*",
+        "iot:*",
+        "s3:*",
+        "ssm:*",
+        "cloudwatch:*",
+        "iam:PassRole",
+      ],
+    },
+  ],
   dev: {
     command: "bun dev",
     directory: "packages/backend",

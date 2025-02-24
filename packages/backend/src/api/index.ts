@@ -19,6 +19,7 @@ import { IngestRoute } from "./ingest";
 import { WorkspaceRoute } from "./workspace";
 import { LinkRoute } from "./link";
 import { cors } from "hono/cors";
+import { EventRoute } from "./event";
 
 export const app = new Hono()
   .use(cors())
@@ -70,6 +71,7 @@ export const app = new Hono()
   .get("/", async (c) => {
     return c.text("ok");
   })
+  .route("/event", EventRoute)
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
   .route("/github", GithubRoute)

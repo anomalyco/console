@@ -1,5 +1,7 @@
+import { backend } from "./api";
 import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
+import { domain } from "./dns";
 import { email } from "./email";
 import { issues } from "./issues";
 import { vpc } from "./network";
@@ -8,55 +10,57 @@ import { postgres } from "./postgres";
 import { allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
-bus.subscribe(
-  "EventSubscriber",
-  {
-    handler: "packages/backend/src/function/events/event.handler",
-    nodejs: {
-      install: ["source-map"],
-    },
-    vpc,
-    permissions: [
-      {
-        actions: [
-          "sts:*",
-          "logs:*",
-          "ses:*",
-          "iot:*",
-          "s3:*",
-          "ssm:*",
-          "cloudwatch:*",
-          "iam:PassRole",
-        ],
-        resources: ["*"],
+if (!$dev) {
+  bus.subscribe(
+    "EventSubscriber",
+    {
+      handler: "packages/backend/src/function/events/event.handler",
+      nodejs: {
+        install: ["source-map"],
       },
-      {
-        actions: ["iam:PassRole"],
-        resources: [
-          issues.properties.role,
-          autodeploy.properties.timeoutMonitorScheduleRoleArn,
-        ],
-      },
-    ],
-    link: [
-      database,
-      postgres,
-      bus,
-      issues,
-      email,
-      autodeploy,
-      ...allSecrets,
-      websocket,
-      email,
-    ],
-    timeout: "15 minute",
-  },
-  {
-    pattern: {
-      source: [`console.${$app.stage}`],
+      vpc,
+      permissions: [
+        {
+          actions: [
+            "sts:*",
+            "logs:*",
+            "ses:*",
+            "iot:*",
+            "s3:*",
+            "ssm:*",
+            "cloudwatch:*",
+            "iam:PassRole",
+          ],
+          resources: ["*"],
+        },
+        {
+          actions: ["iam:PassRole"],
+          resources: [
+            issues.properties.role,
+            autodeploy.properties.timeoutMonitorScheduleRoleArn,
+          ],
+        },
+      ],
+      link: [
+        database,
+        postgres,
+        bus,
+        issues,
+        email,
+        autodeploy,
+        ...allSecrets,
+        websocket,
+        email,
+      ],
+      timeout: "15 minute",
     },
-  },
-);
+    {
+      pattern: {
+        source: [`console.${$app.stage}`],
+      },
+    },
+  );
+}
 
 bus.subscribe(
   "StackUpdatedSubscriber",
@@ -105,9 +109,63 @@ bus.subscribe(
   },
 );
 
-const rule = new aws.cloudwatch.EventRule("EventBackendRule", {
-  name: bus.name,
+const connection = new aws.cloudwatch.EventConnection("EventConnection", {
+  authorizationType: "API_KEY",
+  authParameters: {
+    apiKey: {
+      key: "x-sst-authorization",
+      value: "1234567890",
+    },
+  },
+});
+
+const destination = new aws.cloudwatch.EventApiDestination("EventDestination", {
+  connectionArn: connection.arn,
+  httpMethod: "POST",
+  invocationEndpoint:
+    ($dev
+      ? `https://bbeb-103-195-102-115.ngrok-free.app`
+      : `https://backend.` + domain) + `/event`,
+});
+
+const rule = new aws.cloudwatch.EventRule("EventRule", {
+  eventBusName: bus.name,
   eventPattern: JSON.stringify({
     source: [`console.${$app.stage}`],
   }),
+});
+
+const role = new aws.iam.Role("EventInvokeRole", {
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Action: "sts:AssumeRole",
+        Effect: "Allow",
+        Principal: {
+          Service: "events.amazonaws.com",
+        },
+      },
+    ],
+  }),
+});
+new aws.iam.RolePolicy("EventInvokePolicy", {
+  role: role.id,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Action: ["events:InvokeApiDestination"],
+        Resource: "*",
+      },
+    ],
+  }),
+});
+
+const target = new aws.cloudwatch.EventTarget("EventTarget", {
+  rule: rule.name,
+  arn: destination.arn,
+  eventBusName: bus.name,
+  roleArn: role.arn,
 });

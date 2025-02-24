@@ -150,8 +150,6 @@ const TABLE_PROJECTION = {
   [key in TableName]?: (input: (typeof TABLES)[key]["$inferSelect"]) => any;
 };
 
-const s3 = new S3Client({});
-
 ReplicacheRoute.post("/pull1", async (c) => {
   const actor = useActor();
   function log(...args: any[]) {
