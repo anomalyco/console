@@ -19,7 +19,7 @@ new sst.aws.StaticSite("Workspace", {
     }),
   },
   environment: {
-    VITE_API_URL: backend.url,
+    VITE_API_URL: backend.url.apply((x) => x.replace(/\/$/, "")),
     VITE_AUTH_URL: auth.url,
     VITE_STAGE: $app.stage,
     VITE_ZERO_URL: zero.url,
