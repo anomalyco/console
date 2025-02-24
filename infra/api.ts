@@ -44,6 +44,8 @@ const error = new sst.aws.Function("Error", {
 });
 
 export const backend = new sst.aws.Service("Backend", {
+  cpu: "1 vCPU",
+  memory: "2 GB",
   cluster,
   link: [
     storage,
