@@ -67,6 +67,9 @@ export const app = new Hono()
       500,
     );
   })
+  .get("/", async (c) => {
+    return c.text("ok");
+  })
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
   .route("/github", GithubRoute)
