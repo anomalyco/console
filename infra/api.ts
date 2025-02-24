@@ -55,6 +55,9 @@ export const backend = new sst.aws.Service("Backend", {
     issueDetectionQueue,
     ...allSecrets,
   ],
+  image: {
+    dockerfile: "./packages/backend/Dockerfile",
+  },
   loadBalancer: {
     domain: "backend." + domain,
     rules: [
