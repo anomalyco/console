@@ -66,6 +66,10 @@ export const backend = new sst.aws.Service("Backend", {
         listen: "80/http",
         forward: "3001/http",
       },
+      {
+        listen: "443/https",
+        forward: "3001/https",
+      },
     ],
   },
   permissions: [{ actions: ["sts:*", "iot:*", "ssm:*"], resources: ["*"] }],
