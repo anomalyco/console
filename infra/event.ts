@@ -10,7 +10,7 @@ import { postgres } from "./postgres";
 import { allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
-if (false) {
+if ($app.stage === "production") {
   bus.subscribe(
     "EventSubscriber",
     {
@@ -109,63 +109,68 @@ bus.subscribe(
   },
 );
 
-const connection = new aws.cloudwatch.EventConnection("EventConnection", {
-  authorizationType: "API_KEY",
-  authParameters: {
-    apiKey: {
-      key: "x-sst-authorization",
-      value: "1234567890",
+if ($app.stage !== "production") {
+  const connection = new aws.cloudwatch.EventConnection("EventConnection", {
+    authorizationType: "API_KEY",
+    authParameters: {
+      apiKey: {
+        key: "x-sst-authorization",
+        value: "1234567890",
+      },
     },
-  },
-});
+  });
 
-const destination = new aws.cloudwatch.EventApiDestination("EventDestination", {
-  connectionArn: connection.arn,
-  httpMethod: "POST",
-  invocationEndpoint:
-    ($dev
-      ? `https://bbeb-103-195-102-115.ngrok-free.app`
-      : `https://backend.` + domain) + `/event`,
-});
+  const destination = new aws.cloudwatch.EventApiDestination(
+    "EventDestination",
+    {
+      connectionArn: connection.arn,
+      httpMethod: "POST",
+      invocationEndpoint:
+        ($dev
+          ? `https://bbeb-103-195-102-115.ngrok-free.app`
+          : `https://backend.` + domain) + `/event`,
+    },
+  );
 
-const rule = new aws.cloudwatch.EventRule("EventRule", {
-  eventBusName: bus.name,
-  eventPattern: JSON.stringify({
-    source: [`console.${$app.stage}`],
-  }),
-});
+  const rule = new aws.cloudwatch.EventRule("EventRule", {
+    eventBusName: bus.name,
+    eventPattern: JSON.stringify({
+      source: [`console.${$app.stage}`],
+    }),
+  });
 
-const role = new aws.iam.Role("EventInvokeRole", {
-  assumeRolePolicy: JSON.stringify({
-    Version: "2012-10-17",
-    Statement: [
-      {
-        Action: "sts:AssumeRole",
-        Effect: "Allow",
-        Principal: {
-          Service: "events.amazonaws.com",
+  const role = new aws.iam.Role("EventInvokeRole", {
+    assumeRolePolicy: JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Action: "sts:AssumeRole",
+          Effect: "Allow",
+          Principal: {
+            Service: "events.amazonaws.com",
+          },
         },
-      },
-    ],
-  }),
-});
-new aws.iam.RolePolicy("EventInvokePolicy", {
-  role: role.id,
-  policy: JSON.stringify({
-    Version: "2012-10-17",
-    Statement: [
-      {
-        Effect: "Allow",
-        Action: ["events:InvokeApiDestination"],
-        Resource: "*",
-      },
-    ],
-  }),
-});
+      ],
+    }),
+  });
+  new aws.iam.RolePolicy("EventInvokePolicy", {
+    role: role.id,
+    policy: JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Action: ["events:InvokeApiDestination"],
+          Resource: "*",
+        },
+      ],
+    }),
+  });
 
-const target = new aws.cloudwatch.EventTarget("EventTarget", {
-  rule: rule.name,
-  arn: destination.arn,
-  eventBusName: bus.name,
-  roleArn: role.arn,
-});
+  new aws.cloudwatch.EventTarget("EventTarget", {
+    rule: rule.name,
+    arn: destination.arn,
+    eventBusName: bus.name,
+    roleArn: role.arn,
+  });
+}
