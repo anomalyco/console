@@ -155,7 +155,7 @@ const s3 = new S3Client({});
 ReplicacheRoute.post("/pull1", async (c) => {
   const actor = useActor();
   function log(...args: any[]) {
-    if (process.env.SST_DEV) return;
+    if (!process.env.SST_DEV) return;
     console.log(...args);
   }
   log("actor", actor);
