@@ -2,7 +2,7 @@ import { auth } from "./auth";
 import { database } from "./planetscale";
 
 const websocketAuthorizer = new sst.aws.Function("WebsocketAuthorizer", {
-  handler: "packages/functions/src/auth-websocket.handler",
+  handler: "packages/backend/src/function/auth/websocket.handler",
   link: [database, auth],
 });
 

@@ -1,6 +1,7 @@
 import { auth } from "./auth";
 import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
+import { cluster } from "./cluster";
 import { domain } from "./dns";
 import { email } from "./email";
 import { issueDetectionQueue } from "./issues";
@@ -32,12 +33,42 @@ const api = new sst.aws.Function("Api", {
 });
 
 const error = new sst.aws.Function("Error", {
-  handler: "packages/functions/src/error.handler",
+  handler: "packages/backend/src/function/error.handler",
   url: true,
   dev: false,
   live: false,
   environment: {
     BAR: "lol",
+  },
+});
+
+export const backend = new sst.aws.Service("Backend", {
+  cluster,
+  link: [
+    storage,
+    auth,
+    database,
+    bus,
+    email,
+    autodeploy,
+    websocket,
+    issueDetectionQueue,
+    ...allSecrets,
+  ],
+  loadBalancer: {
+    domain: "backend." + domain,
+    rules: [
+      {
+        listen: "80/http",
+        forward: "3001/http",
+      },
+    ],
+  },
+  permissions: [{ actions: ["sts:*", "iot:*", "ssm:*"], resources: ["*"] }],
+  dev: {
+    command: "bun dev",
+    directory: "packages/backend",
+    url: "http://localhost:3001",
   },
 });
 

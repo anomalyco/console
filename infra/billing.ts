@@ -10,7 +10,7 @@ const queue = new sst.aws.Queue("BillingQueue", {
 queue.subscribe(
   {
     link: [database, ...allSecrets],
-    handler: "packages/functions/src/billing/fetch-usage.handler",
+    handler: "packages/backend/src/function/billing/fetch-usage.handler",
     permissions: [assumable],
     timeout: "3 minutes",
   },
@@ -24,7 +24,7 @@ queue.subscribe(
 new sst.aws.Cron("BillingCron", {
   schedule: "cron(0 5 * * ? *)",
   job: {
-    handler: "packages/functions/src/billing/cron.handler",
+    handler: "packages/backend/src/function/billing/cron.handler",
     timeout: "900 seconds",
     permissions: [assumable],
     link: [bus, database, queue, ...allSecrets],

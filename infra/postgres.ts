@@ -39,7 +39,7 @@ new sst.x.DevCommand("Studio", {
 });
 
 const migrator = new sst.aws.Function("DatabaseMigrator", {
-  handler: "packages/functions/src/migrator.handler",
+  handler: "packages/backend/src/function/migrator.handler",
   link: [postgres, database],
   vpc,
   copyFiles: [

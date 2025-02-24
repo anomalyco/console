@@ -5,7 +5,7 @@ import { websocket } from "./websocket";
 
 export const identity = aws.getCallerIdentityOutput();
 const connect = new sst.aws.Function("Connect", {
-  handler: "packages/functions/src/connect.handler",
+  handler: "packages/backend/src/function/connect.handler",
   permissions: [{ actions: ["sts:*", "iot:*"], resources: ["*"] }],
   link: [bus, database, websocket],
 });

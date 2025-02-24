@@ -12,7 +12,7 @@ export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   visibilityTimeout: "5 minutes",
 });
 issueDetectionQueue.subscribe({
-  handler: "packages/functions/src/issue-detected.handler",
+  handler: "packages/backend/src/function/issues/detected.handler",
   link: [database, email],
 });
 
@@ -20,7 +20,7 @@ const stream = new sst.aws.KinesisStream("IssueStream");
 stream.subscribe(
   "IssueStreamSubscriber",
   {
-    handler: "packages/functions/src/issues/subscriber.handler",
+    handler: "packages/backend/src/function/issues/subscriber.handler",
     timeout: "15 minutes",
     permissions: [{ actions: ["sts:*", "logs:*"], resources: ["*"] }],
     nodejs: {
@@ -48,7 +48,8 @@ const issuePermissions = [
   "s3:GetObject",
 ];
 const issueLambda = new sst.aws.Function("IssueLambda", {
-  handler: "packages/functions/src/issues/subscriber-self-hosted.handler",
+  handler:
+    "packages/backend/src/function/issues/subscriber-self-hosted.handler",
   dev: false,
   nodejs: {
     install: ["source-map"],
@@ -256,7 +257,7 @@ export const issues = new sst.Linkable("IssueDestination", {
 new sst.aws.Cron("IssueCleanup", {
   schedule: "cron(0 4 * * ? *)",
   job: {
-    handler: "packages/functions/src/issues/cleanup.handler",
+    handler: "packages/backend/src/function/issues/cleanup.handler",
     timeout: "15 minutes",
     link: [database],
     environment: {

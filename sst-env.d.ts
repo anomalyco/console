@@ -43,6 +43,11 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "Backend": {
+      "service": string
+      "type": "sst.aws.Service"
+      "url": string
+    }
     "BillingQueue": {
       "type": "sst.aws.Queue"
       "url": string

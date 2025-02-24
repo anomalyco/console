@@ -86,7 +86,7 @@ function createBuildTimeoutMonitor() {
     { name: `${$app.name}-${$app.stage}-run-timeout-monitor` },
   );
   const handler = new sst.aws.Function("AutodeployTimeoutMonitor", {
-    handler: "packages/functions/src/run/monitor.handler",
+    handler: "packages/backend/src/function/run/monitor.handler",
     link: [
       database,
       bus,
@@ -134,7 +134,7 @@ function createRunnerRemover() {
     { name: `${$app.name}-${$app.stage}-runner-remover` },
   );
   const handler = new sst.aws.Function("AutodeployRunnerRemover", {
-    handler: "packages/functions/src/run/runner-remover.handler",
+    handler: "packages/backend/src/function/run/runner-remover.handler",
     link: [database, websocket],
     environment: {
       RUNNER_REMOVER_SCHEDULE_GROUP_NAME: scheduleGroup.name!,
@@ -152,7 +152,7 @@ function createRunnerRemover() {
 
 function createConfigParser() {
   return new sst.aws.Function("AutodeployConfigParser", {
-    handler: "packages/functions/src/run/config-parser.handler",
+    handler: "packages/backend/src/function/run/config-parser.handler",
     timeout: "1 minute",
     nodejs: {
       install: ["esbuild", "@esbuild/linux-arm64"],

@@ -11,7 +11,7 @@ import { websocket } from "./websocket";
 bus.subscribe(
   "EventSubscriber",
   {
-    handler: "packages/functions/src/event.handler",
+    handler: "packages/backend/src/function/events/event.handler",
     nodejs: {
       install: ["source-map"],
     },
@@ -61,7 +61,8 @@ bus.subscribe(
 bus.subscribe(
   "StackUpdatedSubscriber",
   {
-    handler: "packages/functions/src/events/stack-updated-external.handler",
+    handler:
+      "packages/backend/src/function/events/stack-updated-external.handler",
     link: [bus, database, websocket],
     timeout: "1 minute",
   },
@@ -75,7 +76,8 @@ bus.subscribe(
 bus.subscribe(
   "RunnerUpdatedSubscriber",
   {
-    handler: "packages/functions/src/events/runner-updated-external.handler",
+    handler:
+      "packages/backend/src/function/events/runner-updated-external.handler",
     link: [database, bus, email, autodeploy, ...allSecrets, websocket],
     permissions: [
       { actions: ["iot:*", "sts:*", "iam:PassRole"], resources: ["*"] },
@@ -92,7 +94,7 @@ bus.subscribe(
   "RunnerCodeBuildSubscriber",
   {
     handler:
-      "packages/functions/src/events/runner-updated-external.codebuildHandler",
+      "packages/backend/src/function/events/runner-updated-external.codebuildHandler",
     link: [database, bus, email, autodeploy, ...allSecrets, websocket],
     permissions: [{ actions: ["iot:*", "sts:*"], resources: ["*"] }],
   },
@@ -102,3 +104,10 @@ bus.subscribe(
     },
   },
 );
+
+const rule = new aws.cloudwatch.EventRule("EventBackendRule", {
+  name: bus.name,
+  eventPattern: JSON.stringify({
+    source: [`console.${$app.stage}`],
+  }),
+});

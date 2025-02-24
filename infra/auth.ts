@@ -6,7 +6,7 @@ export const auth = new sst.aws.Auth("OpenAuth", {
   domain: "openauth." + domain,
   issuer: {
     link: [database, email],
-    handler: "packages/functions/src/issuer.handler",
+    handler: "packages/backend/src/function/issuer.handler",
     environment: {
       AUTH_FRONTEND_URL: $dev ? "http://localhost:3000" : "https://" + domain,
     },
