@@ -10,7 +10,7 @@ import { postgres } from "./postgres";
 import { allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
-if (!$dev) {
+if (false) {
   bus.subscribe(
     "EventSubscriber",
     {
