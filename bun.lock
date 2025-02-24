@@ -10,7 +10,7 @@
         "@tsconfig/node16": "^16.1.0",
         "@types/bun": "^1.1.18",
         "constructs": "10.3.0",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
         "turbo": "2.3.4",
         "typescript": "5.5.4",
       },
@@ -56,7 +56,7 @@
         "@types/aws-lambda": "^8.10.114",
         "@types/luxon": "3.4.2",
         "@types/node": "^22.10.1",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
         "typescript": "5.5.4",
       },
     },
@@ -77,7 +77,7 @@
         "@console/core": "workspace:*",
         "drizzle-orm": "0.39.1",
         "planetscale-stream-ts": "^1.1.0",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
       },
     },
     "packages/core": {
@@ -129,7 +129,7 @@
         "@types/react": "18.0.25",
         "@types/relaxed-json": "^1.0.1",
         "drizzle-kit": "0.30.4",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
         "typescript": "5.5.4",
         "vitest": "^0.25.3",
       },
@@ -175,7 +175,7 @@
         "@types/aws-lambda": "^8.10.114",
         "@types/luxon": "3.4.2",
         "@types/node": "^22.10.1",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
         "typescript": "5.5.4",
       },
     },
@@ -199,7 +199,7 @@
         "@jsx-email/render": "^1.1.0",
         "@tsconfig/node16": "^16.1.0",
         "luxon": "3.5.0",
-        "sst": "3.8.9",
+        "sst": "3.9.10",
         "tsx": "^3.12.7",
       },
       "devDependencies": {
@@ -2193,17 +2193,17 @@
 
     "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
 
-    "sst": ["sst@3.8.9", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.8.9", "sst-darwin-x64": "3.8.9", "sst-linux-arm64": "3.8.9", "sst-linux-x64": "3.8.9", "sst-linux-x86": "3.8.9" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-4gcCaHy6v28+NFALic5PwrVMNHDIaCU00Mw6yjbnz8yczY6OaVrWY5YucdQaynOf7u544VNVe8k5/1c1/5Zk8Q=="],
+    "sst": ["sst@3.9.10", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.9.10", "sst-darwin-x64": "3.9.10", "sst-linux-arm64": "3.9.10", "sst-linux-x64": "3.9.10", "sst-linux-x86": "3.9.10" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-+BH2p6T12+kvPR5DbXZGtYPQfscXHmZ0NgMUIvfXIZxr8dhh9pcHv8Dzm4YEguJ5ZTudRTgkkQX0y3qJZPnBNA=="],
 
-    "sst-darwin-arm64": ["sst-darwin-arm64@3.8.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-2NZfaG0NkxYgRtgesNHNvt3ebGk6SSFig9CUORSq6sCpjvhPzhNJFM5SaNqQtuxvOzuePhQ1KI+eFsdo0kjbdw=="],
+    "sst-darwin-arm64": ["sst-darwin-arm64@3.9.10", "", { "os": "darwin", "cpu": "arm64" }, "sha512-X+fLAd7SbX+Al17NqAijFUke1ZkD5/l/Go8+vjxKWhDc2QvzmZu9Yk9csK4K7Y7iYt6F0RnjW5bFhBMlq6/P2g=="],
 
-    "sst-darwin-x64": ["sst-darwin-x64@3.8.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-Qwcrn/r3pv0+zOnT0eXP89Tv7/HdMfJd6IdPnM1tjiwSy997XkETyJu/HgCpDcG3t2gjgJQcuIN1T56DueVCeg=="],
+    "sst-darwin-x64": ["sst-darwin-x64@3.9.10", "", { "os": "darwin", "cpu": "x64" }, "sha512-hSJTjgsS5b70Jld+N2dmgFOej5oQYOsoFWvawuuqEFg2lirQOvczy+KKGlv+99ceAyONIRksCiOFu3gY3OOsbQ=="],
 
-    "sst-linux-arm64": ["sst-linux-arm64@3.8.9", "", { "os": "linux", "cpu": "arm64" }, "sha512-bhHfNn7y+YUxxOl0vKgncYMoltBClQt/rn2SewBxGKu4iJHRNQYaNCfhnx8wOmshH1fm8cgKM+vV24jEu+MkkA=="],
+    "sst-linux-arm64": ["sst-linux-arm64@3.9.10", "", { "os": "linux", "cpu": "arm64" }, "sha512-CzwlaVbxNf3j9OU42MuvupcAfx+cQcJJBi4GU0aF738/nasOoGN+2Nz3+F4zYuAWqxRyIc6gjRs69X5Qx9k/0A=="],
 
-    "sst-linux-x64": ["sst-linux-x64@3.8.9", "", { "os": "linux", "cpu": "x64" }, "sha512-MxgHb1R4rGj7Uo/EeQkZWUhCwIH0gCHaHNI4PS8OU/QO3fIMXcWVz/zDF0MtEsH8khTka8NUziaLYkmSKaBlkQ=="],
+    "sst-linux-x64": ["sst-linux-x64@3.9.10", "", { "os": "linux", "cpu": "x64" }, "sha512-4M6Jt7t6eUDFLjXfVcJhksDyNI1R6DYCG8p1ELl4Eu9QIEFrXBncUssY3UdIkjzOXBOUubmp1W7XkLYELs0DKw=="],
 
-    "sst-linux-x86": ["sst-linux-x86@3.8.9", "", { "os": "linux", "cpu": "none" }, "sha512-EH7ukIaLj5BXrJQKxV7oYb3kduIbykMkWI3bgPD3mBu+UksT8pE7UY0Awb9p8lkLW90ZYaPv03CiOkvGvXJeDQ=="],
+    "sst-linux-x86": ["sst-linux-x86@3.9.10", "", { "os": "linux", "cpu": "none" }, "sha512-6KTIbnndKHH8UrpbuSHuOgLRDMbr8tkjoboa+O6Z68JDjNSIf+Qnkw92n6nROA4io+yPmcACtH5AfOK3oe0WhQ=="],
 
     "stream-shift": ["stream-shift@1.0.3", "", {}, "sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ=="],
 
