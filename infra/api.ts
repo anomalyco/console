@@ -68,7 +68,7 @@ export const backend = new sst.aws.Service("Backend", {
       },
       {
         listen: "443/https",
-        forward: "3001/https",
+        forward: "3001/http",
       },
     ],
   },
