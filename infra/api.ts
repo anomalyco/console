@@ -73,6 +73,10 @@ export const backend = new sst.aws.Service("Backend", {
     directory: "packages/backend",
     url: "http://localhost:3001",
   },
+  scaling: {
+    min: 1,
+    max: 10,
+  },
 });
 
 export const apiRouter = new sst.aws.Router("ApiRouter", {
