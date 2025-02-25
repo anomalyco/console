@@ -12,7 +12,7 @@ import { Credentials } from "../aws";
 import { lazy } from "../util/lazy";
 import { bootstrap, bootstrapIon } from "../aws/bootstrap";
 
-export namespace Log.Error {
+export namespace LogError {
   export type Parsed = {
     error: string;
     message: string;

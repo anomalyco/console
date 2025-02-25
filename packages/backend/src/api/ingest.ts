@@ -15,7 +15,7 @@ import { withActor } from "@console/core/actor";
 import { Events } from "@console/core/issue/index";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Resource } from "sst";
-import { Log } from "@console/core/log/error";
+import { LogError } from "@console/core/log/error";
 
 const sqs = new SQSClient({});
 
@@ -37,7 +37,7 @@ export const IngestRoute = new Hono().post(
             .object({
               group: z.string(),
               timestamp: z.number(),
-              err: z.custom<Log.Error.Parsed>(),
+              err: z.custom<LogError.Parsed>(),
             })
             .array(),
         }),

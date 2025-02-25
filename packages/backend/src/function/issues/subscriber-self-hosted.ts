@@ -5,7 +5,7 @@ import { uniqueBy } from "remeda";
 import { formatUrl } from "@aws-sdk/util-format-url";
 import { SignatureV4 } from "@aws-sdk/signature-v4";
 import { Sha256 } from "@aws-crypto/sha256-js";
-import { Log } from "@console/core/log/error";
+import { LogError } from "@console/core/log/error";
 
 export async function handler(input: CloudWatchLogsEvent) {
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
@@ -25,12 +25,12 @@ export async function handler(input: CloudWatchLogsEvent) {
   const results = [];
   for (const item of decoded.logEvents) {
     const splits = item.message.split(`\t`).map((x) => x.trim());
-    const extracted = Log.Error.extract(splits);
+    const extracted = LogError.extract(splits);
     if (!extracted) {
       console.log("no extracted error", item.id);
       continue;
     }
-    const sourcemapCache = Log.Error.createSourcemapCache({
+    const sourcemapCache = LogError.createSourcemapCache({
       key: sourcemapKey,
       logGroup: `arn:aws:logs:${region}:${accountID}:log-group:${decoded.logGroup}`,
       config: {
@@ -44,7 +44,7 @@ export async function handler(input: CloudWatchLogsEvent) {
         region: region!,
       },
     });
-    const err = await Log.Error.applySourcemap(
+    const err = await LogError.applySourcemap(
       sourcemapCache,
       item.timestamp,
       extracted,
