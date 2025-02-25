@@ -43,11 +43,20 @@ const error = new sst.aws.Function("Error", {
   },
 });
 
+export const backendKey = new sst.Linkable("BackendKey", {
+  properties: {
+    key: new random.RandomString("BackendKeyString", {
+      length: 32,
+    }).result,
+  },
+});
+
 export const backend = new sst.aws.Service("Backend", {
-  cpu: "1 vCPU",
-  memory: "2 GB",
+  cpu: $app.stage === "production" ? "1 vCPU" : undefined,
+  memory: $app.stage === "production" ? "2 GB" : undefined,
   cluster,
   link: [
+    backendKey,
     storage,
     auth,
     database,
@@ -97,10 +106,13 @@ export const backend = new sst.aws.Service("Backend", {
     directory: "packages/backend",
     url: "http://localhost:3001",
   },
-  scaling: {
-    min: 1,
-    max: 10,
-  },
+  scaling:
+    $app.stage === "production"
+      ? {
+          min: 2,
+          max: 10,
+        }
+      : undefined,
 });
 
 export const apiRouter = new sst.aws.Router("ApiRouter", {

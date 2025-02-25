@@ -1,4 +1,4 @@
-import { backend } from "./api";
+import { backendKey } from "./api";
 import { autodeploy } from "./autodeploy";
 import { bus } from "./bus";
 import { domain } from "./dns";
@@ -114,8 +114,8 @@ if ($app.stage !== "production") {
     authorizationType: "API_KEY",
     authParameters: {
       apiKey: {
-        key: "x-sst-authorization",
-        value: "1234567890",
+        key: "x-sst-key",
+        value: backendKey.properties.key,
       },
     },
   });

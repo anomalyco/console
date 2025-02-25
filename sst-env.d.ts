@@ -48,6 +48,10 @@ declare module "sst" {
       "type": "sst.aws.Service"
       "url": string
     }
+    "BackendKey": {
+      "key": string
+      "type": "sst.sst.Linkable"
+    }
     "BillingQueue": {
       "type": "sst.aws.Queue"
       "url": string

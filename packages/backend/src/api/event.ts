@@ -16,6 +16,8 @@ import { User } from "@console/core/user/index";
 import { Workspace } from "@console/core/workspace/index";
 import { EventBridgeEvent } from "aws-lambda";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { Resource } from "sst";
 import { event } from "sst/event";
 
 const subscriptions: {
@@ -24,6 +26,8 @@ const subscriptions: {
 }[] = [];
 
 export const EventRoute = new Hono().post("/", async (c) => {
+  const key = c.req.header("x-sst-key");
+  if (!key || key !== Resource.BackendKey.key) throw new HTTPException(401);
   const json = await c.req.json();
   for (const { events, cb } of subscriptions) {
     for (const event of events) {

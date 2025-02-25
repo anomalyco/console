@@ -12,6 +12,7 @@ export default $config({
         },
         planetscale: "0.2.2",
         command: "1.0.2",
+        random: "4.17.0",
       },
     };
   },
@@ -55,7 +56,6 @@ export default $config({
     await import("./infra/autodeploy");
     await import("./infra/billing");
     await import("./infra/cluster");
-
     return {
       bar: "ok",
     };
