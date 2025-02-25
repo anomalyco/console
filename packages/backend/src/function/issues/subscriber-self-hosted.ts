@@ -2,14 +2,10 @@ import { unzipSync } from "zlib";
 import { CloudWatchLogsEvent, CloudWatchLogsDecodedData } from "aws-lambda";
 import { createHash } from "crypto";
 import { uniqueBy } from "remeda";
-import {
-  applySourcemap,
-  createSourcemapCache,
-  extractError,
-} from "@console/core/log/error";
 import { formatUrl } from "@aws-sdk/util-format-url";
 import { SignatureV4 } from "@aws-sdk/signature-v4";
 import { Sha256 } from "@aws-crypto/sha256-js";
+import { Log } from "@console/core/log/error";
 
 export async function handler(input: CloudWatchLogsEvent) {
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
@@ -26,29 +22,33 @@ export async function handler(input: CloudWatchLogsEvent) {
   const sourcemapKey =
     `arn:aws:lambda:${region}:${accountID}:function:` +
     decoded.logGroup.split("/").slice(3, 5).join("/");
-  const sourcemapCache = createSourcemapCache({
-    key: sourcemapKey,
-    logGroup: `arn:aws:logs:${region}:${accountID}:log-group:${decoded.logGroup}`,
-    config: {
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        sessionToken: process.env.AWS_SESSION_TOKEN!,
-      },
-      app: appName!,
-      stage: stageName!,
-      region: region!,
-    },
-  });
   const results = [];
   for (const item of decoded.logEvents) {
     const splits = item.message.split(`\t`).map((x) => x.trim());
-    const extracted = extractError(splits);
+    const extracted = Log.Error.extract(splits);
     if (!extracted) {
       console.log("no extracted error", item.id);
       continue;
     }
-    const err = await applySourcemap(sourcemapCache, item.timestamp, extracted);
+    const sourcemapCache = Log.Error.createSourcemapCache({
+      key: sourcemapKey,
+      logGroup: `arn:aws:logs:${region}:${accountID}:log-group:${decoded.logGroup}`,
+      config: {
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+          sessionToken: process.env.AWS_SESSION_TOKEN!,
+        },
+        app: appName!,
+        stage: stageName!,
+        region: region!,
+      },
+    });
+    const err = await Log.Error.applySourcemap(
+      sourcemapCache,
+      item.timestamp,
+      extracted,
+    );
     if (
       err.error !== "Runtime.HandlerNotFound" &&
       err.stack.length &&

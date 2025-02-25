@@ -1,26 +1,26 @@
 import { VisibleError } from "@console/core/util/error";
 import { Hono } from "hono";
-import { ZodError } from "zod";
-import { ReplicacheRoute } from "./replicache";
-import { auth } from "./auth";
-import { WebhookRoute } from "./webhook";
-import { GithubRoute } from "./github";
-import { BillingRoute } from "./billing";
-import { AccountRoute } from "./account";
-import { logger } from "hono/logger";
-import { DebugRoute } from "./debug";
-import { LogRoute } from "./log";
-import { LambdaRoute } from "./lambda";
-import { SlackRoute } from "./slack";
-import { HTTPException } from "hono/http-exception";
-import { LocalRoute } from "./local";
-import { IngestRoute } from "./ingest";
-import { WorkspaceRoute } from "./workspace";
-import { LinkRoute } from "./link";
+import { handle } from "hono/aws-lambda";
 import { cors } from "hono/cors";
-import { EventRoute } from "./event";
+import { HTTPException } from "hono/http-exception";
+import { logger } from "hono/logger";
+import { AccountRoute } from "src/api/account";
+import { auth } from "src/api/auth";
+import { BillingRoute } from "src/api/billing";
+import { DebugRoute } from "src/api/debug";
+import { GithubRoute } from "src/api/github";
+import { IngestRoute } from "src/api/ingest";
+import { LambdaRoute } from "src/api/lambda";
+import { LinkRoute } from "src/api/link";
+import { LocalRoute } from "src/api/local";
+import { LogRoute } from "src/api/log";
+import { ReplicacheRoute } from "src/api/replicache";
+import { SlackRoute } from "src/api/slack";
+import { WebhookRoute } from "src/api/webhook";
+import { WorkspaceRoute } from "src/api/workspace";
+import { ZodError } from "zod";
 
-export const app = new Hono()
+const app = new Hono()
   .use(cors())
   .use(logger())
   .use(async (c, next) => {
@@ -70,11 +70,6 @@ export const app = new Hono()
   .get("/", async (c) => {
     return c.text("ok");
   })
-  .get("/error", async (c) => {
-    console.error(new Error("test"));
-    return c.text("ok");
-  })
-  .route("/event", EventRoute)
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
   .route("/github", GithubRoute)
@@ -88,3 +83,5 @@ export const app = new Hono()
   .route("/workspace", WorkspaceRoute)
   .route("/link", LinkRoute)
   .route("/local", LocalRoute);
+
+export const handler = handle(app);

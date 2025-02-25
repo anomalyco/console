@@ -10,7 +10,7 @@ import { postgres } from "./postgres";
 import { allSecrets } from "./secret";
 import { websocket } from "./websocket";
 
-if ($app.stage === "production") {
+if ($app.stage === "production" || true) {
   bus.subscribe(
     "EventSubscriber",
     {
@@ -109,7 +109,7 @@ bus.subscribe(
   },
 );
 
-if ($app.stage !== "production") {
+if ($app.stage !== "production" && false) {
   const connection = new aws.cloudwatch.EventConnection("EventConnection", {
     authorizationType: "API_KEY",
     authParameters: {

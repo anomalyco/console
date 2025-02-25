@@ -12,7 +12,7 @@ import { storage } from "./storage";
 import { websocket } from "./websocket";
 
 const api = new sst.aws.Function("Api", {
-  handler: "packages/functions/src/api/api.handler",
+  handler: "packages/backend/src/function/api.handler",
   timeout: "3 minutes",
   permissions: [{ actions: ["sts:*", "iot:*", "ssm:*"], resources: ["*"] }],
   link: [
