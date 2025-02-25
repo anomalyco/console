@@ -9,8 +9,8 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import { Client } from "@console/functions/replicache/framework";
-import type { ServerType } from "@console/functions/replicache/server";
+import { Client } from "@console/backend/replicache/framework";
+import type { ServerType } from "@console/backend/replicache/server";
 import { bus } from "./bus";
 import { UserStore } from "@console/web/data/user";
 import { LambdaPayloadStore } from "@console/web/data/lambda-payload";

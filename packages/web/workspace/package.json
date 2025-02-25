@@ -22,7 +22,7 @@
   "dependencies": {
     "@botpoison/browser": "0.1.30",
     "@console/core": "workspace:*",
-    "@console/functions": "workspace:*",
+    "@console/backend": "workspace:*",
     "@console/zero": "workspace:*",
     "@fontsource/ibm-plex-mono": "4.5.13",
     "@fontsource/rubik": "4.5.14",

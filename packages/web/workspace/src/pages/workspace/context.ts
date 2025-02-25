@@ -1,7 +1,7 @@
 import { createInitializedContext } from "@console/web/common/context";
 import { useAuth } from "@console/web/providers/auth";
 import { Workspace } from "@console/core/workspace/index";
-import { type app } from "@console/functions/api/api";
+import { type app } from "@console/backend/api/index";
 import { useReplicache } from "@console/web/providers/replicache";
 import {
   RESOURCES_PRICING_PLAN,

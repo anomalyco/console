@@ -1,5 +1,5 @@
 import { createInitializedContext } from "@console/web/common/context";
-import type { DummyMode } from "@console/functions/replicache/dummy/data";
+import type { DummyMode } from "@console/backend/replicache/dummy/data";
 import { useSearchParams } from "@solidjs/router";
 import { useStorage } from "./account";
 
