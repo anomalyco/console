@@ -73,6 +73,9 @@ export const backend = new sst.aws.Service("Backend", {
   image: {
     dockerfile: "./packages/backend/Dockerfile",
   },
+  environment: {
+    NO_COLOR: "1",
+  },
   loadBalancer: {
     domain: "backend." + domain,
     rules: [
