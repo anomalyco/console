@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { ParsedError } from "@console/core/log/error";
 import { and, db, eq, isNull, sql } from "@console/core/drizzle/index";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import { app, stage } from "@console/core/app/app.sql";
@@ -16,6 +15,7 @@ import { withActor } from "@console/core/actor";
 import { Events } from "@console/core/issue/index";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Resource } from "sst";
+import { Log } from "@console/core/log/error";
 
 const sqs = new SQSClient({});
 
@@ -37,7 +37,7 @@ export const IngestRoute = new Hono().post(
             .object({
               group: z.string(),
               timestamp: z.number(),
-              err: z.custom<ParsedError>(),
+              err: z.custom<Log.Error.Parsed>(),
             })
             .array(),
         }),
