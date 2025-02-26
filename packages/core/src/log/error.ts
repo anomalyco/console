@@ -84,13 +84,11 @@ export namespace LogError {
     }
 
     // NodeJS inline
-    if (
-      tabs[0]?.length === 24 &&
-      (tabs[1]?.length === 36 || tabs[1] === "undefined") &&
-      tabs[3]
-    ) {
-      const line = tabs[3];
-
+    const line = (() => {
+      if (tabs[0] === "ERROR") return tabs[1];
+      if (tabs[2] === "ERROR") return tabs[3];
+    })();
+    if (line) {
       // JSON like
       if (line[0] === "{") {
         const parts = extractJSON(line);
@@ -131,7 +129,7 @@ export namespace LogError {
       }
 
       // default
-      const [description, ...stack] = line.split(/\n\s{4}(?=at)/g);
+      const [description, ...stack] = line.split(/[\n\r]\s{4}(?=at)/g);
       if (!description) return;
       if (description.startsWith("(node:")) return;
       const [error, message] = (() => {

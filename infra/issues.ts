@@ -50,7 +50,6 @@ const issuePermissions = [
 const issueLambda = new sst.aws.Function("IssueLambda", {
   handler:
     "packages/backend/src/function/issues/subscriber-self-hosted.handler",
-  dev: false,
   nodejs: {
     install: ["source-map"],
   },
