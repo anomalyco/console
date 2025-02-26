@@ -8,6 +8,7 @@ import { Sha256 } from "@aws-crypto/sha256-js";
 import { LogError } from "@console/core/log/error";
 
 export async function handler(input: CloudWatchLogsEvent) {
+  process.stdout.write(JSON.stringify(input));
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
@@ -24,7 +25,6 @@ export async function handler(input: CloudWatchLogsEvent) {
     decoded.logGroup.split("/").slice(3, 5).join("/");
   const results = [];
   for (const item of decoded.logEvents) {
-    console.log(item.message);
     const extracted = LogError.extract(item.message);
     if (!extracted) {
       console.log("no extracted error", item.id);

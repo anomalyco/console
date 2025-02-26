@@ -466,7 +466,7 @@ export const subscribeIon = zod(
                   // Timeout
                   `?"Task timed out after"`,
                   // NodeJS Uncaught and console.error
-                  `?"\tERROR\t"`,
+                  `?"ERROR\t"`,
                   `?"[ERROR]"`,
                   // ...(fn.enrichment.runtime?.startsWith("nodejs")
                   //   ? [`?"\tERROR\t"`]
