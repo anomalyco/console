@@ -758,7 +758,7 @@ export module State {
             timeCompleted: update.timeCompleted
               ? new Date(update.timeCompleted)
               : null,
-            command: update.command,
+            command: update.command || "unknown",
           })
           .onDuplicateKeyUpdate({
             set: {
