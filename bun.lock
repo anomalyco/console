@@ -37,7 +37,7 @@
         "@console/mail": "workspace:*",
         "@esbuild/linux-arm64": "0.21.4",
         "@hono/zod-validator": "^0.4.1",
-        "@openauthjs/openauth": "^0.3.6",
+        "@openauthjs/openauth": "^0.4.0",
         "@paralleldrive/cuid2": "2.2.2",
         "esbuild": "0.21.4",
         "fast-jwt": "^2.2.1",
@@ -713,7 +713,7 @@
 
     "@one-ini/wasm": ["@one-ini/wasm@0.1.1", "", {}, "sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw=="],
 
-    "@openauthjs/openauth": ["@openauthjs/openauth@0.3.6", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-WZ/53Rc7DLI8W/6ZGvmwoMJAB035Yk1zzf/cKIHfLCoUbzEHKnxRPO2ADLwq992H45X0ZyIJs+YQ9ehoqrSFnQ=="],
+    "@openauthjs/openauth": ["@openauthjs/openauth@0.4.0", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-w0Q6YWHB0YjVQ/TFYOnBHTsBEhwXHwIbJh3PLhKdLuafFYjPulEJbhHw0S/odJ0QY8eQ7llGglwf78WxuFfSRQ=="],
 
     "@openauthjs/openevent": ["@openauthjs/openevent@0.0.27", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6", "ulid": "2.3.0" }, "peerDependencies": { "drizzle-orm": "^0.x", "mysql2": "^3.x", "postgres": "^3.x" }, "optionalPeers": ["drizzle-orm", "mysql2", "postgres"] }, "sha512-Peyl8hWGPmwTPC9gp3ufjEQ55mu64sSa9suBdW7SfHFBMnvxwD+XIoErneXyAH/ydomRghlh6t4N9mCCHjaF4g=="],
 
