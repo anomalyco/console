@@ -4,7 +4,7 @@ export function patchLogger() {
   const log =
     (level: "INFO" | "WARN" | "TRACE" | "DEBUG" | "ERROR") =>
     (msg: string, ...rest: any[]) => {
-      let line = `${level}\t${format(msg, ...rest)}`;
+      let line = `${new Date().toISOString()}\t${level}\t${format(msg, ...rest)}`;
       line = line.replace(/\n/g, "\r");
       process.stdout.write(line + "\n");
     };
