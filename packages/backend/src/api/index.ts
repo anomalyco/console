@@ -72,6 +72,7 @@ export const app = new Hono()
   })
   .get("/error", async (c) => {
     console.error(new Error("test"));
+    console.log(new Error("test"));
     return c.text("ok");
   })
   .route("/event", EventRoute)

@@ -1,0 +1,41 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`container error 1`] = `
+{
+  "error": "Error",
+  "failed": false,
+  "message": "test",
+  "stack": [
+    {
+      "raw": "at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:74:23)",
+    },
+    {
+      "raw": "at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:73:25)",
+    },
+    {
+      "raw": "at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)",
+    },
+    {
+      "raw": "at dispatch (/home/bun/app/node_modules/hono/dist/compose.js:7:32)",
+    },
+    {
+      "raw": "at run (node:async_hooks:64:22)",
+    },
+    {
+      "raw": "at auth (/home/bun/app/packages/backend/src/api/auth.ts:22:47)",
+    },
+    {
+      "raw": "at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)",
+    },
+    {
+      "raw": "at dispatch (/home/bun/app/node_modules/hono/dist/compose.js:7:32)",
+    },
+    {
+      "raw": "at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:26:15)",
+    },
+    {
+      "raw": "at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)",
+    },
+  ],
+}
+`;

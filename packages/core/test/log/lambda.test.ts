@@ -33,6 +33,17 @@ const SAMPLE = [
   `2025-01-20T19:35:51.464Z	8c29efea-a156-4ef4-92d1-f8a30110af75	ERROR	Error: logged a different error
     at Runtime.handler (file:///var/task/bundle.mjs:13:17)
     at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1173:29)`,
+  `2025-02-26T06:23:50.811Z	00000000-0000-0000-0000-000000000000	ERROR	Error: test
+    at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:74:23)
+    at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:73:25)
+    at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)
+    at dispatch (/home/bun/app/node_modules/hono/dist/compose.js:7:32)
+    at run (node:async_hooks:64:22)
+    at auth (/home/bun/app/packages/backend/src/api/auth.ts:22:47)
+    at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)
+    at dispatch (/home/bun/app/node_modules/hono/dist/compose.js:7:32)
+    at <anonymous> (/home/bun/app/packages/backend/src/api/index.ts:26:15)
+    at <anonymous> (/home/bun/app/node_modules/hono/dist/compose.js:29:23)`,
   `END RequestId: 8c29efea-a156-4ef4-92d1-f8a30110af75`,
   `REPORT RequestId: 8c29efea-a156-4ef4-92d1-f8a30110af75	Duration: 1.91 ms	Billed Duration: 2 ms	Memory Size: 1024 MB	Max Memory Used: 65 MB`,
 ];

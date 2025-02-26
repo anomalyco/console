@@ -24,8 +24,8 @@ export async function handler(input: CloudWatchLogsEvent) {
     decoded.logGroup.split("/").slice(3, 5).join("/");
   const results = [];
   for (const item of decoded.logEvents) {
-    const splits = item.message.split(`\t`).map((x) => x.trim());
-    const extracted = LogError.extract(splits);
+    console.log(item.message);
+    const extracted = LogError.extract(item.message);
     if (!extracted) {
       console.log("no extracted error", item.id);
       continue;

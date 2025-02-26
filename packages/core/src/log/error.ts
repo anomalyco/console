@@ -19,7 +19,8 @@ export namespace LogError {
     stack: StackFrame[];
     failed: boolean;
   };
-  export function extract(tabs: string[]): Parsed | undefined {
+  export function extract(msg: string): Parsed | undefined {
+    const tabs = msg.split("\t").map((i) => i.trim());
     // Lambda runtime error
     if (tabs.length === 1 && tabs[0]?.includes("LAMBDA_RUNTIME Failed")) {
       return {
