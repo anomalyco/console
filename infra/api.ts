@@ -112,7 +112,7 @@ export const backend = new sst.aws.Service("Backend", {
   scaling:
     $app.stage === "production"
       ? {
-          min: 2,
+          min: 3,
           max: 10,
         }
       : undefined,
