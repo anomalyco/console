@@ -18,6 +18,8 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { DateTime } from "luxon";
 import { AWS } from "@console/core/aws/index";
+import { logger } from "@console/core/util/log";
+import { useWorkspace } from "@console/core/actor";
 
 export const LogRoute = new Hono()
   .use(notPublic)
@@ -337,6 +339,10 @@ export const LogRoute = new Hono()
       }),
     ),
     async (c) => {
+      const log = logger();
+      log.tag("service", "aws-log");
+      log.tag("workspace", useWorkspace());
+
       const query = c.req.valid("query");
       const config = await Stage.assumeRole(query.stageID);
       if (!config) throw new HTTPException(500);
@@ -365,7 +371,7 @@ export const LogRoute = new Hono()
             );
           })();
 
-      console.log("start", start, "stream", query.stream);
+      log.info("start", start, "stream", query.stream);
       const response = await client.send(
         new FilterLogEventsCommand({
           logGroupName: query.group,
@@ -376,6 +382,7 @@ export const LogRoute = new Hono()
           nextToken: query.next,
         }),
       );
+      log.info("got", response.events?.length, "events");
       const entries = [] as LogEntry[];
 
       if (query.hint === "normal" || query.pattern || query.stream) {
