@@ -582,7 +582,12 @@ export function AWSNext() {
             start: (filterLoopState.last || search.start) as any,
           },
         })
-        .then((r) => r.json());
+        .then((r) => r.json())
+        .catch(() => { });
+      if (!result) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        continue
+      }
       if (cancelled) continue
       if (!search.start) {
         setSearch({ start: result.start, }, { replace: true })
