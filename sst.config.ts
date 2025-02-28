@@ -39,6 +39,9 @@ export default $config({
     },
   },
   async run() {
+    $transform(sst.aws.Function, (input) => {
+      input.runtime = "nodejs22.x";
+    });
     await import("./infra/dns");
     await import("./infra/cluster");
     await import("./infra/planetscale");
