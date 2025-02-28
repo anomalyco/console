@@ -59,11 +59,13 @@ export function LambdaGrouper() {
       if (startMatch) {
         const requestID = startMatch[1]!;
         const invocation: InvocationNext = {
+          ...pending.get(requestID)!,
           id: requestID,
-          logs: stream.buffer,
           cold: stream.cold,
           start: input.timestamp,
         };
+        invocation.logs = invocation.logs || [];
+        invocation.logs.push(...stream.buffer);
         pending.set(requestID, invocation);
         stream.cold = false;
         stream.buffer = [];
@@ -127,7 +129,14 @@ export function LambdaGrouper() {
           message: input.line.substring(logMatch[0].length).trim(),
         };
         if (invocation) invocation.logs.push(log);
-        if (!invocation) stream.buffer.push(log);
+        if (!invocation) {
+          pending.set(requestID, {
+            logs: [log],
+            id: requestID,
+            cold: stream.cold,
+            start: input.timestamp,
+          });
+        }
         return [];
       }
 
@@ -148,6 +157,9 @@ export function LambdaGrouper() {
       stream.buffer.push(log);
 
       return [];
+    },
+    flush() {
+      return pending.values();
     },
   };
 }

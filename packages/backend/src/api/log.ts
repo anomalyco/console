@@ -164,6 +164,7 @@ export const LogRoute = new Hono()
             }),
           );
         }
+        data.push(...grouper.flush());
         data.sort((a, b) => b.start - a.start);
         const trimmed = data.slice(0, 50);
         for (const invocation of trimmed) {
@@ -224,14 +225,6 @@ export const LogRoute = new Hono()
         if (!start) return;
 
         const grouper = LambdaGrouper();
-        // const processor = Log.createProcessor({
-        //   sourcemapKey:
-        //     `arn:aws:lambda:${config.region}:${config.awsAccountID}:function:` +
-        //     query.logGroup.split("/").slice(3, 5).join("/"),
-        //   logGroup: `arn:aws:logs:${config.region}:${config.awsAccountID}:log-group:${query.logGroup}`,
-        //   group: query.logGroup,
-        //   config,
-        // });
 
         while (true) {
           console.log("scanning from", start?.toISO(), "to", end.toISO());
