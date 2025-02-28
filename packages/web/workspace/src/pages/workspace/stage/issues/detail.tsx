@@ -199,6 +199,7 @@ export function Detail() {
     );
     return Interval.fromDateTimes(
       DateTime.now().toUTC().startOf("hour").minus({ hours: 23 }),
+
       DateTime.now().toUTC().startOf("hour").plus({ hours: 1 }),
     )
       .splitBy({ hours: 1 })

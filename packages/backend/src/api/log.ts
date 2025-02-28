@@ -4,7 +4,6 @@ import { notPublic } from "./auth";
 import { Stage } from "@console/core/app/stage";
 import { Log, LogEntry } from "@console/core/log/index";
 import stripAnsi from "strip-ansi";
-import { Issue } from "@console/core/issue/index";
 import { LambdaGrouper } from "@console/core/log/lambda";
 import { Replicache } from "@console/core/replicache/index";
 import { z } from "zod";
@@ -13,13 +12,12 @@ import {
   DescribeLogStreamsCommand,
   FilterLogEventsCommand,
   GetLogEventsCommand,
-  GetQueryResultsCommand,
-  StartQueryCommand,
 } from "@aws-sdk/client-cloudwatch-logs";
 import { zValidator } from "@hono/zod-validator";
 import { DateTime } from "luxon";
 import { AWS } from "@console/core/aws/index";
 import { logger } from "@console/core/util/log";
+import { disposable } from "@console/core/util/disposable";
 import { useWorkspace } from "@console/core/actor";
 
 export const LogRoute = new Hono()
@@ -70,7 +68,10 @@ export const LogRoute = new Hono()
       const query = c.req.valid("query");
       const config = await Stage.assumeRole(query.stageID);
       if (!config) throw new HTTPException(500);
-      const client = new CloudWatchLogsClient(config);
+      using client = disposable(
+        () => new CloudWatchLogsClient(config),
+        (client) => client.destroy(),
+      );
 
       const start = query.start
         ? query.start
@@ -164,7 +165,11 @@ export const LogRoute = new Hono()
       console.log("expanding", query);
       const config = await Stage.assumeRole(query.stageID);
       if (!config) throw new HTTPException(500);
-      const client = new CloudWatchLogsClient(config);
+
+      using client = disposable(
+        () => new CloudWatchLogsClient(config),
+        (client) => client.destroy(),
+      );
 
       if (query.group.includes("/aws/lambda")) {
         const result = await Log.expand({
