@@ -170,38 +170,34 @@ export const connectStage = zod(
       (client) => client.destroy(),
     );
 
-    try {
-      const destination = await cw.send(
-        new PutDestinationCommand({
-          destinationName: uniqueIdentifier,
-          roleArn: SSTResource.IssueDestination.role,
-          targetArn: SSTResource.IssueDestination.stream,
-        }),
-      );
-      console.log("created destination", destination.destination);
+    const destination = await cw.send(
+      new PutDestinationCommand({
+        destinationName: uniqueIdentifier,
+        roleArn: SSTResource.IssueDestination.role,
+        targetArn: SSTResource.IssueDestination.stream,
+      }),
+    );
+    console.log("created destination", destination.destination);
 
-      const policy = await cw.send(
-        new PutDestinationPolicyCommand({
-          destinationName: uniqueIdentifier,
-          accessPolicy: JSON.stringify({
-            Version: "2012-10-17",
-            Statement: [
-              {
-                Effect: "Allow",
-                Principal: {
-                  AWS: config.awsAccountID,
-                },
-                Action: "logs:PutSubscriptionFilter",
-                Resource: destination.destination!.arn,
+    const policy = await cw.send(
+      new PutDestinationPolicyCommand({
+        destinationName: uniqueIdentifier,
+        accessPolicy: JSON.stringify({
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: {
+                AWS: config.awsAccountID,
               },
-            ],
-          }),
+              Action: "logs:PutSubscriptionFilter",
+              Resource: destination.destination!.arn,
+            },
+          ],
         }),
-      );
-      console.log("created policy", policy.$metadata);
-    } finally {
-      cw.destroy();
-    }
+      }),
+    );
+    console.log("created policy", policy.$metadata);
   },
 );
 
@@ -371,219 +367,215 @@ export const subscribeIon = zod(
       return destinations.set(region, destination), destination!;
     }
 
-    try {
-      const limited = await db
-        .select({
-          target: warning.target,
-        })
-        .from(warning)
-        .where(
-          and(
-            eq(warning.workspaceID, useWorkspace()),
-            eq(warning.stageID, config.stageID),
-            eq(warning.type, "issue_rate_limited"),
-          ),
-        )
-        .then((x) => new Set(x.map((x) => x.target)));
-      const resources = await db
-        .select()
-        .from(stateResourceTable)
-        .where(
-          and(
-            inArray(stateResourceTable.type, [
-              "aws:lambda/function:Function",
-              "aws:cloudwatch/logGroup:LogGroup",
-              "sstv2:aws:Function",
-            ]),
-            eq(stateResourceTable.workspaceID, useWorkspace()),
-            eq(stateResourceTable.stageID, config.stageID),
-          ),
-        );
-
-      if (!resources.length) return;
-
-      await connectStage(config);
-
-      const groups = pipe(
-        resources,
-        flatMap((resource) => {
-          const arn = resource.outputs?.arn?.split(":");
-          const region = arn?.at(3);
-          const accountID = arn?.at(4);
-          if (
-            resource.type === "aws:lambda/function:Function" &&
-            resource.outputs.loggingConfig
-          ) {
-            return [
-              {
-                logGroup: resource.outputs.loggingConfig.logGroup,
-                accountID,
-                region,
-              },
-            ];
-          }
-          if (resource.type === "aws:cloudwatch/logGroup:LogGroup") {
-            return [
-              {
-                logGroup: resource.outputs.name,
-                accountID,
-                region,
-              },
-            ];
-          }
-          if (resource.type === "sstv2:aws:Function") {
-            return [
-              {
-                logGroup: resource.outputs.enrichment?.logGroup,
-                accountID,
-                region: config.region,
-              },
-            ];
-          }
-          return [];
-        }),
-        uniqueBy((x) => x.logGroup),
+    const limited = await db
+      .select({
+        target: warning.target,
+      })
+      .from(warning)
+      .where(
+        and(
+          eq(warning.workspaceID, useWorkspace()),
+          eq(warning.stageID, config.stageID),
+          eq(warning.type, "issue_rate_limited"),
+        ),
+      )
+      .then((x) => new Set(x.map((x) => x.target)));
+    const resources = await db
+      .select()
+      .from(stateResourceTable)
+      .where(
+        and(
+          inArray(stateResourceTable.type, [
+            "aws:lambda/function:Function",
+            "aws:cloudwatch/logGroup:LogGroup",
+            "sstv2:aws:Function",
+          ]),
+          eq(stateResourceTable.workspaceID, useWorkspace()),
+          eq(stateResourceTable.stageID, config.stageID),
+        ),
       );
-      if (!groups.length) return;
-      await queue(1, groups, async (item) => {
-        if (!item.logGroup) return;
-        if (limited.has(item.logGroup)) {
-          console.log("skipping", item.logGroup, "because it's rate limited");
-        }
+
+    if (!resources.length) return;
+
+    await connectStage(config);
+
+    const groups = pipe(
+      resources,
+      flatMap((resource) => {
+        const arn = resource.outputs?.arn?.split(":");
+        const region = arn?.at(3);
+        const accountID = arn?.at(4);
         if (
-          config.app === "console" &&
-          item.logGroup.includes("IssueStreamSubscriberIssueStreamSubscriber")
-        )
-          return;
-        const destination = await getDestination(item.region);
-        console.log(
-          "subscribing",
-          item.logGroup,
-          "in",
-          item.region,
-          "to",
-          destination,
-        );
-        while (true) {
-          try {
-            await cw.send(
-              new PutSubscriptionFilterCommand({
-                destinationArn: destination,
-                filterName:
-                  uniqueIdentifier +
-                  (SSTResource.App.stage === "production" ? "" : `#dev`),
-                filterPattern: [
-                  `?"Invoke Error"`,
-                  // OOM and other runtime error
-                  `?"Error: Runtime exited"`,
-                  // Timeout
-                  `?"Task timed out after"`,
-                  // NodeJS Uncaught and console.error
-                  `?"ERROR\t"`,
-                  `?"[ERROR]"`,
-                  // ...(fn.enrichment.runtime?.startsWith("nodejs")
-                  //   ? [`?"\tERROR\t"`]
-                  //   : []),
-                ].join(" "),
-                logGroupName: item.logGroup,
-              }),
-            );
+          resource.type === "aws:lambda/function:Function" &&
+          resource.outputs.loggingConfig
+        ) {
+          return [
+            {
+              logGroup: resource.outputs.loggingConfig.logGroup,
+              accountID,
+              region,
+            },
+          ];
+        }
+        if (resource.type === "aws:cloudwatch/logGroup:LogGroup") {
+          return [
+            {
+              logGroup: resource.outputs.name,
+              accountID,
+              region,
+            },
+          ];
+        }
+        if (resource.type === "sstv2:aws:Function") {
+          return [
+            {
+              logGroup: resource.outputs.enrichment?.logGroup,
+              accountID,
+              region: config.region,
+            },
+          ];
+        }
+        return [];
+      }),
+      uniqueBy((x) => x.logGroup),
+    );
+    if (!groups.length) return;
+    await queue(1, groups, async (item) => {
+      if (!item.logGroup) return;
+      if (limited.has(item.logGroup)) {
+        console.log("skipping", item.logGroup, "because it's rate limited");
+      }
+      if (
+        config.app === "console" &&
+        item.logGroup.includes("IssueStreamSubscriberIssueStreamSubscriber")
+      )
+        return;
+      const destination = await getDestination(item.region);
+      console.log(
+        "subscribing",
+        item.logGroup,
+        "in",
+        item.region,
+        "to",
+        destination,
+      );
+      while (true) {
+        try {
+          await cw.send(
+            new PutSubscriptionFilterCommand({
+              destinationArn: destination,
+              filterName:
+                uniqueIdentifier +
+                (SSTResource.App.stage === "production" ? "" : `#dev`),
+              filterPattern: [
+                `?"Invoke Error"`,
+                // OOM and other runtime error
+                `?"Error: Runtime exited"`,
+                // Timeout
+                `?"Task timed out after"`,
+                // NodeJS Uncaught and console.error
+                `?"ERROR\t"`,
+                `?"[ERROR]"`,
+                // ...(fn.enrichment.runtime?.startsWith("nodejs")
+                //   ? [`?"\tERROR\t"`]
+                //   : []),
+              ].join(" "),
+              logGroupName: item.logGroup,
+            }),
+          );
 
-            await Warning.remove({
-              target: item.logGroup,
-              type: "log_subscription",
-              stageID: config.stageID,
-            });
+          await Warning.remove({
+            target: item.logGroup,
+            type: "log_subscription",
+            stageID: config.stageID,
+          });
 
-            break;
-          } catch (e: any) {
-            console.log(e);
-            // Create log group if the function has never been invoked
-            if (
-              e instanceof ResourceNotFoundException &&
-              e.message.startsWith("The specified log group does not exist")
-            ) {
-              console.log("creating log group");
-              await cw
-                .send(
-                  new CreateLogGroupCommand({
-                    logGroupName: item.logGroup,
-                  }),
-                )
-                .catch((e) => {
-                  if (e instanceof ResourceAlreadyExistsException) return;
-                  throw e;
-                });
-              continue;
-            }
-
-            // There are too many log subscribers
-            if (e instanceof LimitExceededException) {
-              await Warning.create({
-                stageID: config.stageID,
-                target: item.logGroup,
-                type: "log_subscription",
-                data: {
-                  error: "limited",
-                },
+          break;
+        } catch (e: any) {
+          console.log(e);
+          // Create log group if the function has never been invoked
+          if (
+            e instanceof ResourceNotFoundException &&
+            e.message.startsWith("The specified log group does not exist")
+          ) {
+            console.log("creating log group");
+            await cw
+              .send(
+                new CreateLogGroupCommand({
+                  logGroupName: item.logGroup,
+                }),
+              )
+              .catch((e) => {
+                if (e instanceof ResourceAlreadyExistsException) return;
+                throw e;
               });
-              break;
-            }
+            continue;
+          }
 
-            // Permissions issue
-            if (e.name === "AccessDeniedException") {
-              await Warning.create({
-                stageID: config.stageID,
-                target: item.logGroup,
-                type: "log_subscription",
-                data: {
-                  error: "permissions",
-                },
-              });
-              break;
-            }
-
-            // The destination hasn't been created yet so try again
-            if (
-              e instanceof ResourceNotFoundException &&
-              e.message === "The specified destination does not exist."
-            ) {
-              try {
-                await connectStage(config);
-              } catch (e: any) {
-                console.log(e);
-                if (e.name === "AccessDeniedException") {
-                  await Warning.create({
-                    stageID: config.stageID,
-                    target: item.logGroup,
-                    type: "log_subscription",
-                    data: {
-                      error: "permissions",
-                    },
-                  });
-                  break;
-                }
-              }
-              continue;
-            }
-
-            console.error(e);
+          // There are too many log subscribers
+          if (e instanceof LimitExceededException) {
             await Warning.create({
               stageID: config.stageID,
               target: item.logGroup,
               type: "log_subscription",
               data: {
-                error: "unknown",
-                message: e.toString(),
+                error: "limited",
               },
             });
             break;
           }
+
+          // Permissions issue
+          if (e.name === "AccessDeniedException") {
+            await Warning.create({
+              stageID: config.stageID,
+              target: item.logGroup,
+              type: "log_subscription",
+              data: {
+                error: "permissions",
+              },
+            });
+            break;
+          }
+
+          // The destination hasn't been created yet so try again
+          if (
+            e instanceof ResourceNotFoundException &&
+            e.message === "The specified destination does not exist."
+          ) {
+            try {
+              await connectStage(config);
+            } catch (e: any) {
+              console.log(e);
+              if (e.name === "AccessDeniedException") {
+                await Warning.create({
+                  stageID: config.stageID,
+                  target: item.logGroup,
+                  type: "log_subscription",
+                  data: {
+                    error: "permissions",
+                  },
+                });
+                break;
+              }
+            }
+            continue;
+          }
+
+          console.error(e);
+          await Warning.create({
+            stageID: config.stageID,
+            target: item.logGroup,
+            type: "log_subscription",
+            data: {
+              error: "unknown",
+              message: e.toString(),
+            },
+          });
+          break;
         }
-      });
-    } finally {
-      cw.destroy();
-    }
+      }
+    });
   },
 );
 

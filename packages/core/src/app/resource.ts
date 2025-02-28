@@ -163,7 +163,6 @@ export const Enrichers = {
         FunctionName: resource.data.arn,
       }),
     );
-    client.destroy();
     return {
       size: info.Configuration?.CodeSize,
       runtime: info.Configuration?.Runtime,
@@ -191,7 +190,6 @@ export const Enrichers = {
         StackName: resource.id,
       }),
     );
-    client.destroy();
     const [stack] = result.Stacks || [];
     const parsed = JSON.parse(
       stack?.Outputs?.find((o) => o.OutputKey === "SSTMetadata")?.OutputValue ||

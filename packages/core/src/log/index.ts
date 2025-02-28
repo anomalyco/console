@@ -99,14 +99,10 @@ export function createSourcemapCache(input: {
   logGroup?: string;
   key: string;
 }) {
-  using s3bootstrap = disposable(
-    () =>
-      new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      }),
-    (client) => client.destroy(),
-  );
+  const s3bootstrap = new S3Client({
+    ...input.config,
+    retryStrategy: RETRY_STRATEGY,
+  });
   const sourcemapCache = new Map<string, any>();
 
   const getBootstrap = lazy(() => AWS.Account.bootstrap(input.config));
@@ -489,7 +485,6 @@ export const expand = zod(
       });
     }
 
-    cw.destroy();
     return result;
   },
 );
@@ -547,7 +542,6 @@ export const scan = zod(
         break;
       nextToken = response.nextForwardToken;
     }
-    cw.destroy();
     return events;
   },
 );

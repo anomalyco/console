@@ -176,13 +176,9 @@ export namespace LogError {
     logGroup?: string;
     key: string;
   }) {
-    using s3bootstrap = disposable(
-      () =>
-        new S3Client({
-          ...input.config,
-        }),
-      (client) => client.destroy(),
-    );
+    const s3bootstrap = new S3Client({
+      ...input.config,
+    });
     const sourcemapCache = new Map<string, any>();
 
     const getBootstrap = lazy(() => bootstrap(input.config));

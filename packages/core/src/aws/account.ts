@@ -399,7 +399,6 @@ export const disintegrate = zod(
     await client.send(
       new DeleteStackCommand({ StackName: `SSTConsole-${useWorkspace()}` }),
     );
-    client.destroy();
   },
 );
 
