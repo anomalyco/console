@@ -1,7 +1,7 @@
 import { theme } from "@console/web/ui/theme";
 import { A, useParams } from "@solidjs/router";
 import { styled } from "@macaron-css/solid";
-import { Show, Switch, Match, createMemo, createEffect, For } from "solid-js";
+import { Show, Switch, Match, createMemo, createEffect, For, onMount, createResource } from "solid-js";
 import { IconCheck, IconNoSymbol } from "@console/web/ui/icons";
 import { IconCaretRight, IconArrowPathSpin } from "@console/web/ui/icons/custom";
 import { formatSinceTime, parseTime } from "@console/web/common/format";
@@ -166,34 +166,19 @@ export function Detail() {
   });
   const api = useApi();
 
-  createEffect(async () => {
-    if (!issue()) return;
-    if (issue()?.invocation) return;
-    await fetch(
-      import.meta.env.VITE_API_URL +
-      "/log?" +
-      new URLSearchParams({
-        pointer: JSON.stringify(issue()!.pointer),
-        stageID: issue()!.stageID,
-        groupID: issue()!.group,
-      }),
-      {
-        headers: {
-          authorization: rep().auth,
-          "x-sst-workspace": issue()!.workspaceID,
+  const [logs] = createResource(() => issue()?.pointer, async (pointer) => {
+    if (!pointer) return;
+    return api.client.log.aws.expand
+      .$get({
+        query: {
+          stageID: ctx.stage.id,
+          group: pointer.logGroup,
+          stream: pointer.logStream,
+          timestamp: pointer.timestamp as any,
         },
-      },
-    ).then((x) => x.json());
-  });
+      }).then((r) => r.json());
+  })
 
-  createEffect(() => {
-    console.log(issue());
-  });
-
-  const invocation = createMemo(
-    () =>
-      (issue()?.invocation || invocations.get(issue()?.id).at(0)) as Invocation,
-  );
 
   const min = DateTime.now()
     .startOf("hour")
@@ -221,11 +206,6 @@ export function Detail() {
       .map((hour) => ({ label: hour, value: hours[hour] || 0 }));
   });
 
-  createEffect(() => {
-    console.log("count", counts());
-    console.log("histogram", histogram());
-    console.log({ issue: issue(), invocation: invocation() });
-  });
 
   const bar = useCommandBar();
   bar.register("issues-detail", async () => {
@@ -318,23 +298,23 @@ export function Detail() {
               </Stack>
               <Stack space="2">
                 <Show
-                  when={invocation()?.logs.length}
+                  when={logs()?.length}
                   fallback={<PanelTitle>Logs</PanelTitle>}
                 >
                   <PanelTitle
-                    title={DateTime.fromMillis(invocation()?.logs[0].timestamp!)
+                    title={DateTime.fromMillis(logs()![0].timestamp!)
                       .toUTC()
                       .toLocaleString(DateTime.DATETIME_FULL)}
                   >
                     Logs —{" "}
                     {DateTime.fromMillis(
-                      invocation()?.logs[0].timestamp!,
+                      logs()![0].timestamp!,
                     ).toLocaleString(DATETIME_NO_TIME)}
                   </PanelTitle>
                 </Show>
                 <LogsBackground>
                   <Show
-                    when={invocation()?.logs.length}
+                    when={!logs.loading}
                     fallback={
                       <LogsLoading>
                         <LogsLoadingIcon>
@@ -344,7 +324,7 @@ export function Detail() {
                       </LogsLoading>
                     }
                   >
-                    <For each={invocation()?.logs || []}>
+                    <For each={logs() || []}>
                       {(entry) => (
                         <Log>
                           <LogTime

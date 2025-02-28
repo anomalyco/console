@@ -413,11 +413,6 @@ export const expand = zod(
 
     const offset = 1000 * 60 * 15;
 
-    const processor = createProcessor({
-      config: input.config,
-      group: input.group,
-    });
-
     async function fetchEvents(start: number, end: number) {
       let nextToken: string | undefined;
       const result = [];
@@ -471,18 +466,22 @@ export const expand = zod(
       fetchEvents(input.timestamp, input.timestamp + offset),
     ]).then((r) => r.flat());
 
+    const result = [] as Log[];
     for (let i = 0; i < events.length; i++) {
       const event = events[i]!;
-      await processor.process({
-        streamName: input.logStream,
+      result.push({
+        stream: input.logStream,
         timestamp: event.timestamp!,
         id: i.toString(),
-        line: event.message!,
+        message: event.message!.replace(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\t/,
+          "",
+        ),
       });
     }
 
     cw.destroy();
-    return processor.flush();
+    return result;
   },
 );
 
