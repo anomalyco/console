@@ -165,7 +165,6 @@ export async function handler({
     );
     // reload docker daemon without restarting
     shell('sudo kill -SIGHUP $(pgrep -f "/usr/local/bin/dockerd --host")');
-    shell("docker info");
   }
   function createDockerBuilder() {
     const builder = "sst-builder";
