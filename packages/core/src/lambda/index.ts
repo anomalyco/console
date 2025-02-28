@@ -8,6 +8,7 @@ import { useActor, useWorkspace } from "../actor";
 import { createSelectSchema } from "drizzle-zod";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq } from "drizzle-orm";
+import { disposable } from "../util/disposable";
 
 export * as Lambda from ".";
 
@@ -20,16 +21,19 @@ export const invoke = zod(
   async (input) => {
     const config = await Stage.assumeRole(input.stageID);
     if (!config) return;
-    const client = new LambdaClient(config);
+    using client = disposable(
+      () => new LambdaClient(config),
+      (client) => client.destroy(),
+    );
     const result = await client.send(
       new InvokeCommand({
         FunctionName: input.functionARN,
         Payload: Buffer.from(JSON.stringify(input.payload)),
         InvocationType: "Event",
-      })
+      }),
     );
     return result.$metadata.requestId!;
-  }
+  },
 );
 
 export const LambdaPayload = createSelectSchema(lambdaPayload, {
@@ -57,7 +61,7 @@ export const savePayload = zod(
         workspaceID: useWorkspace(),
         payload: input.payload,
       });
-    })
+    }),
 );
 
 export const removePayload = zod(LambdaPayload.shape.id, (input) =>
@@ -67,9 +71,9 @@ export const removePayload = zod(LambdaPayload.shape.id, (input) =>
       .where(
         and(
           eq(lambdaPayload.id, input),
-          eq(lambdaPayload.workspaceID, useWorkspace())
-        )
+          eq(lambdaPayload.workspaceID, useWorkspace()),
+        ),
       );
     return input;
-  })
+  }),
 );

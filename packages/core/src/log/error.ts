@@ -11,6 +11,7 @@ import { extractJSON } from "../util/json";
 import { Credentials } from "../aws";
 import { lazy } from "../util/lazy";
 import { bootstrap, bootstrapIon } from "../aws/bootstrap";
+import { disposable } from "../util/disposable";
 
 export namespace LogError {
   export type Parsed = {
@@ -175,9 +176,13 @@ export namespace LogError {
     logGroup?: string;
     key: string;
   }) {
-    const s3bootstrap = new S3Client({
-      ...input.config,
-    });
+    using s3bootstrap = disposable(
+      () =>
+        new S3Client({
+          ...input.config,
+        }),
+      (client) => client.destroy(),
+    );
     const sourcemapCache = new Map<string, any>();
 
     const getBootstrap = lazy(() => bootstrap(input.config));

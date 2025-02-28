@@ -13,6 +13,7 @@ import { useTransaction } from "../util/transaction";
 import { and, eq, inArray } from "drizzle-orm";
 import { useWorkspace } from "../actor";
 import { RETRY_STRATEGY } from "../util/aws";
+import { disposable } from "../util/disposable";
 
 export const Events = {
   Updated: createEvent(
@@ -148,11 +149,15 @@ export type InfoByType<Type extends Info["type"]> = Extract<
 
 export const Enrichers = {
   async Function(resource, credentials, region) {
-    const client = new LambdaClient({
-      credentials,
-      region,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using client = disposable(
+      () =>
+        new LambdaClient({
+          credentials,
+          region,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const info = await client.send(
       new GetFunctionCommand({
         FunctionName: resource.data.arn,
@@ -172,11 +177,15 @@ export const Enrichers = {
     return { cloudfrontUrl: "" };
   },
   async Stack(resource, credentials, region) {
-    const client = new CloudFormationClient({
-      credentials,
-      region,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using client = disposable(
+      () =>
+        new CloudFormationClient({
+          credentials,
+          region,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const result = await client.send(
       new DescribeStacksCommand({
         StackName: resource.id,

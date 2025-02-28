@@ -48,6 +48,7 @@ import { runTable } from "../run/run.sql";
 import { objectFlatten } from "../util/object";
 import { logger } from "../util/log";
 import { postgres } from "../drizzle/postgres";
+import { disposable } from "../util/disposable";
 
 export module State {
   export const Event = {
@@ -306,10 +307,14 @@ export module State {
         console.log("update not found", { updateID });
         return;
       }
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            ...input.config,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const bootstrap = await AWS.Account.bootstrapIon(input.config);
       if (!bootstrap) return;
       console.log("processing", input.key);
@@ -521,10 +526,14 @@ export module State {
     }),
     async (input) => {
       console.log("receiveLock");
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            ...input.config,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const bootstrap = await AWS.Account.bootstrapIon(input.config);
       if (!bootstrap) return;
       const obj = await s3
@@ -616,10 +625,14 @@ export module State {
     }),
     async (input) => {
       console.log("receive summary", input.updateID);
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            ...input.config,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const bootstrap = await AWS.Account.bootstrapIon(input.config);
       if (!bootstrap) return;
       const obj = await s3
@@ -684,10 +697,14 @@ export module State {
     }),
     async (input) => {
       console.log("receive update", input.updateID);
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            ...input.config,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const bootstrap = await AWS.Account.bootstrapIon(input.config);
       if (!bootstrap) return;
       const obj = await s3
@@ -798,10 +815,14 @@ export module State {
         stage: input.config.stage,
         app: input.config.app,
       });
-      const s3 = new S3Client({
-        ...input.config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            ...input.config,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const resourceInserts = [] as (typeof stateResourceTable.$inferInsert)[];
       const workspaceID = useWorkspace();
       log.tag("workspaceID", workspaceID);
@@ -867,10 +888,14 @@ export module State {
             }),
           )
           .catch(() => {});
-        const cfn = new CloudFormationClient({
-          ...input.config,
-          retryStrategy: RETRY_STRATEGY,
-        });
+        using cfn = disposable(
+          () =>
+            new CloudFormationClient({
+              ...input.config,
+              retryStrategy: RETRY_STRATEGY,
+            }),
+          (client) => client.destroy(),
+        );
         if (list && list.Contents?.length) {
           log.info("found", list.Contents?.length, "stacks");
           for (const obj of list.Contents || []) {
@@ -1061,11 +1086,15 @@ export module State {
         version: "v2" | "v3";
       }[];
 
-      const s3 = new S3Client({
-        credentials: input.credentials,
-        retryStrategy: RETRY_STRATEGY,
-        region: input.region,
-      });
+      using s3 = disposable(
+        () =>
+          new S3Client({
+            credentials: input.credentials,
+            retryStrategy: RETRY_STRATEGY,
+            region: input.region,
+          }),
+        (client) => client.destroy(),
+      );
       const v2bootstrap = await AWS.Account.bootstrap(input);
       if (v2bootstrap) {
         console.log("scanning v2");

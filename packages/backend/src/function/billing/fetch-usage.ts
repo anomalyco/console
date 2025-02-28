@@ -20,6 +20,7 @@ import {
   stateResourceTable,
 } from "@console/core/state/state.sql";
 import { Resource } from "sst";
+import { disposable } from "@console/core/util/disposable";
 
 export async function handler(event: SQSEvent) {
   console.log("got", event.Records.length, "records");
@@ -185,7 +186,10 @@ async function processInvocations(stageID: string) {
     );
 
     async function queryUsageFromAWS() {
-      const client = new CloudWatchClient(config!);
+      using client = disposable(
+        () => new CloudWatchClient(config!),
+        (client) => client.destroy(),
+      );
 
       const queryBatch = async (batch: typeof functions) => {
         const metrics = await client.send(

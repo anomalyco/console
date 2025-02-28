@@ -70,6 +70,7 @@ import { bus } from "sst/aws/bus";
 import { githubOrgTable, githubRepoTable } from "../git/git.sql";
 import { Workspace } from "../workspace";
 import { bootstrapIon } from "../aws/bootstrap";
+import { disposable } from "../util/disposable";
 
 export { RunConfig } from "./config";
 
@@ -279,18 +280,18 @@ export module Run {
         ? input.error
           ? "error"
           : input.timeStarted
-          ? "updated"
-          : "skipped"
+            ? "updated"
+            : "skipped"
         : input.error
-        ? input.error.type === "config_branch_remove_skipped" ||
-          input.error.type === "config_tag_skipped" ||
-          input.error.type === "config_target_returned_undefined" ||
-          input.error.type === "target_not_matched"
-          ? "skipped"
-          : "error"
-        : input.active
-        ? "updating"
-        : "queued",
+          ? input.error.type === "config_branch_remove_skipped" ||
+            input.error.type === "config_tag_skipped" ||
+            input.error.type === "config_target_returned_undefined" ||
+            input.error.type === "target_not_matched"
+            ? "skipped"
+            : "error"
+          : input.active
+            ? "updating"
+            : "queued",
     };
   }
 
@@ -316,7 +317,10 @@ export module Run {
       trigger: Trigger,
     }),
     async (input) => {
-      const lambda = new LambdaClient({ retryStrategy: RETRY_STRATEGY });
+      using lambda = disposable(
+        () => new LambdaClient({ retryStrategy: RETRY_STRATEGY }),
+        (client) => client.destroy(),
+      );
       const ret = await lambda.send(
         new InvokeCommand({
           FunctionName: SSTResource.AutodeployConfig.configParserFunctionArn,
@@ -332,14 +336,14 @@ export module Run {
                     .replace(/^-/g, "")
                     .replace(/-$/g, "")
                 : input.trigger.type === "tag"
-                ? input.trigger.tag
-                    .replace(/[^a-zA-Z0-9-]/g, "-")
-                    .replace(/-+/g, "-")
-                    .replace(/^-/g, "")
-                    .replace(/-$/g, "")
-                : input.trigger.type === "pull_request"
-                ? `pr-${input.trigger.number}`
-                : input.trigger.stageName,
+                  ? input.trigger.tag
+                      .replace(/[^a-zA-Z0-9-]/g, "-")
+                      .replace(/-+/g, "-")
+                      .replace(/^-/g, "")
+                      .replace(/-$/g, "")
+                  : input.trigger.type === "pull_request"
+                    ? `pr-${input.trigger.number}`
+                    : input.trigger.stageName,
           } satisfies ConfigParserEvent),
         }),
       );
@@ -961,11 +965,15 @@ export module Run {
           const bootstrap = await bootstrapIon({ credentials, region });
           if (bootstrap) {
             const app = await App.fromID(appID);
-            const s3 = new S3Client({
-              credentials,
-              region,
-              retryStrategy: RETRY_STRATEGY,
-            });
+            using s3 = disposable(
+              () =>
+                new S3Client({
+                  credentials,
+                  region,
+                  retryStrategy: RETRY_STRATEGY,
+                }),
+              (client) => client.destroy(),
+            );
             await s3.send(
               new DeleteObjectCommand({
                 Bucket: bootstrap.bucket,
@@ -1072,7 +1080,10 @@ export module Run {
       const timeout =
         timeoutToMinutes(run.config.target?.runner?.timeout) ??
         CodebuildRunner.DEFAULT_BUILD_TIMEOUT_IN_MINUTES;
-      const scheduler = new SchedulerClient({ retryStrategy: RETRY_STRATEGY });
+      using scheduler = disposable(
+        () => new SchedulerClient({ retryStrategy: RETRY_STRATEGY }),
+        (client) => client.destroy(),
+      );
       await scheduler.send(
         new CreateScheduleCommand({
           Name: `run-timeout-${run.id}`,
@@ -1234,7 +1245,10 @@ export module Run {
       // Create bucket
       const bucketName = await (async () => {
         const paramName = `/sst/console/bucketName`;
-        const ssm = new SSMClient(sdkConfig);
+        using ssm = disposable(
+          () => new SSMClient(sdkConfig),
+          (client) => client.destroy(),
+        );
         try {
           const param = await ssm.send(
             new GetParameterCommand({
@@ -1246,7 +1260,10 @@ export module Run {
           if (!(e instanceof ParameterNotFound)) throw e;
         }
 
-        const s3 = new S3Client(sdkConfig);
+        using s3 = disposable(
+          () => new S3Client(sdkConfig),
+          (client) => client.destroy(),
+        );
         const bucketName = `sst-console-${createId()}`;
         await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
 
@@ -1262,7 +1279,10 @@ export module Run {
 
       // Create bucket lifecycle policy
       await (async () => {
-        const s3 = new S3Client(sdkConfig);
+        using s3 = disposable(
+          () => new S3Client(sdkConfig),
+          (client) => client.destroy(),
+        );
         try {
           const config = await s3.send(
             new GetBucketLifecycleConfigurationCommand({
@@ -1445,7 +1465,10 @@ export module Run {
         let roleArn: string | undefined;
         const useRoleArn = async () => {
           if (roleArn) return roleArn;
-          const iam = new IAMClient({ credentials });
+          using iam = disposable(
+            () => new IAMClient({ credentials }),
+            (client) => client.destroy(),
+          );
           const roleRet = await iam.send(
             new GetRoleCommand({
               RoleName: "SSTConsolePublisher" + suffix,
@@ -1454,11 +1477,15 @@ export module Run {
           roleArn = roleRet.Role?.Arn!;
           return roleArn;
         };
-        const eb = new EventBridgeClient({
-          credentials,
-          region,
-          retryStrategy: RETRY_STRATEGY,
-        });
+        using eb = disposable(
+          () =>
+            new EventBridgeClient({
+              credentials,
+              region,
+              retryStrategy: RETRY_STRATEGY,
+            }),
+          (client) => client.destroy(),
+        );
 
         // Create "sst.runner" forwarder
         await (async () => {
@@ -1635,9 +1662,10 @@ export module Run {
   export const scheduleRunnerRemover = zod(
     z.string().cuid2(),
     async (runnerID) => {
-      const scheduler = new SchedulerClient({
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using scheduler = disposable(
+        () => new SchedulerClient({ retryStrategy: RETRY_STRATEGY }),
+        (client) => client.destroy(),
+      );
 
       // Check 1 day after the "RUNNER_INACTIVE_TIME" period. Remove the runner if
       // it has not been used during the "RUNNER_INACTIVE_TIME" period.

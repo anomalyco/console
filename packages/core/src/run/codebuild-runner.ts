@@ -20,6 +20,7 @@ import { Resource, Architecture, Compute, Vpc } from "./run.sql";
 import { RETRY_STRATEGY } from "../util/aws";
 import { Credentials } from "../aws";
 import { Run } from ".";
+import { disposable } from "../util/disposable";
 
 export module CodebuildRunner {
   export const DEFAULT_BUILD_TIMEOUT_IN_MINUTES = 60; // 60 minutes
@@ -28,7 +29,7 @@ export module CodebuildRunner {
   export const getImage = zod(z.enum(Architecture), (architecture) =>
     architecture === "x86_64"
       ? `aws/codebuild/amazonlinux2-x86_64-standard:5.0`
-      : `aws/codebuild/amazonlinux2-aarch64-standard:3.0`
+      : `aws/codebuild/amazonlinux2-aarch64-standard:3.0`,
   );
 
   export const createResource = zod(
@@ -77,7 +78,10 @@ export module CodebuildRunner {
       };
 
       async function createIamRoleInUserAccount() {
-        const iam = new IAMClient(sdkConfig);
+        using iam = disposable(
+          () => new IAMClient(sdkConfig),
+          (client) => client.destroy(),
+        );
         const roleName = `sst-runner-${region}-${suffix}`;
         try {
           const ret = await iam.send(
@@ -95,7 +99,7 @@ export module CodebuildRunner {
                   },
                 ],
               }),
-            })
+            }),
           );
           await iam.send(
             new PutRolePolicyCommand({
@@ -158,7 +162,7 @@ export module CodebuildRunner {
                   },
                 ],
               }),
-            })
+            }),
           );
           return ret.Role?.Arn!;
         } catch (e: any) {
@@ -170,14 +174,17 @@ export module CodebuildRunner {
             .send(
               new GetRoleCommand({
                 RoleName: roleName,
-              })
+              }),
             )
             .then((ret) => ret.Role?.Arn!);
         }
       }
 
       async function createProjectInUserAccount() {
-        const codebuild = new CodeBuildClient(sdkConfig);
+        using codebuild = disposable(
+          () => new CodeBuildClient(sdkConfig),
+          (client) => client.destroy(),
+        );
         try {
           const ret = await codebuild.send(
             new CreateProjectCommand({
@@ -221,7 +228,7 @@ export module CodebuildRunner {
                 },
               },
               cache: { type: "NO_CACHE" },
-            })
+            }),
           );
           return ret.project?.arn!;
         } catch (e: any) {
@@ -230,7 +237,7 @@ export module CodebuildRunner {
             e.message === `Region ${region} is not supported for ARM_CONTAINER`
           )
             throw new Error(
-              `AWS CodeBuild does not support ARM architecture in ${region} region`
+              `AWS CodeBuild does not support ARM architecture in ${region} region`,
             );
           else if (
             e.name === "InvalidInputException" &&
@@ -245,7 +252,7 @@ export module CodebuildRunner {
           return `arn:aws:codebuild:${region}:${awsAccountExternalID}:project/${projectName}`;
         }
       }
-    }
+    },
   );
 
   export const removeResource = zod(
@@ -268,13 +275,16 @@ export module CodebuildRunner {
         if (!roleArn) return;
         const roleName = roleArn.split("/").pop()!;
 
-        const iam = new IAMClient(sdkConfig);
+        using iam = disposable(
+          () => new IAMClient(sdkConfig),
+          (client) => client.destroy(),
+        );
         try {
           await iam.send(
             new DeleteRolePolicyCommand({
               RoleName: roleName,
               PolicyName: "default",
-            })
+            }),
           );
         } catch (e: any) {
           console.error(e);
@@ -288,18 +298,21 @@ export module CodebuildRunner {
       }
 
       async function removeProjectInUserAccount() {
-        const codebuild = new CodeBuildClient(sdkConfig);
+        using codebuild = disposable(
+          () => new CodeBuildClient(sdkConfig),
+          (client) => client.destroy(),
+        );
         try {
           await codebuild.send(
             new DeleteProjectCommand({
               name: resource.properties.project.split("/").pop()!,
-            })
+            }),
           );
         } catch (e: any) {
           console.error(e);
         }
       }
-    }
+    },
   );
 
   export const invoke = zod(
@@ -311,11 +324,15 @@ export module CodebuildRunner {
       timeout: z.number().int(),
     }),
     async (input) => {
-      const codebuild = new CodeBuildClient({
-        credentials: input.credentials,
-        region: input.region,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using codebuild = disposable(
+        () =>
+          new CodeBuildClient({
+            credentials: input.credentials,
+            region: input.region,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       const projectName = input.resource.properties.project.split("/").pop()!;
       try {
         const ret = await codebuild.send(
@@ -346,7 +363,7 @@ export module CodebuildRunner {
               },
             ],
             timeoutInMinutesOverride: input.timeout,
-          })
+          }),
         );
         return {
           logGroup: `/aws/codebuild/${projectName}`,
@@ -355,17 +372,17 @@ export module CodebuildRunner {
       } catch (e: any) {
         if (e.name === "AccountLimitExceededException") {
           throw new Error(
-            `AWS CodeBuild has reached the limit: ${e.message}. Open an AWS support case to increase the limit.`
+            `AWS CodeBuild has reached the limit: ${e.message}. Open an AWS support case to increase the limit.`,
           );
         }
         if (e.name === "ResourceNotFoundException") {
           throw new RunnerNotExistError(
-            `It seems the CodeBuild project "${projectName}" used by the runner was removed from your AWS account. Trigger a new deploy to re-create the runner.`
+            `It seems the CodeBuild project "${projectName}" used by the runner was removed from your AWS account. Trigger a new deploy to re-create the runner.`,
           );
         }
         throw e;
       }
-    }
+    },
   );
 
   export const cancel = zod(
@@ -375,12 +392,16 @@ export module CodebuildRunner {
       buildID: z.string().min(1),
     }),
     async ({ credentials, region, buildID }) => {
-      const codebuild = new CodeBuildClient({
-        credentials,
-        region,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using codebuild = disposable(
+        () =>
+          new CodeBuildClient({
+            credentials,
+            region,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
       await codebuild.send(new StopBuildCommand({ id: buildID }));
-    }
+    },
   );
 }

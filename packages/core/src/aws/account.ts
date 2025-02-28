@@ -177,13 +177,18 @@ import { createEvent } from "../event";
 import { bus } from "sst/aws/bus";
 import { State } from "../state";
 import { Credentials } from ".";
+import { disposable } from "../util/disposable";
 
 export const regions = zod(
   bootstrap.schema.shape.credentials,
   async (credentials) => {
-    const client = new EC2Client({
-      credentials,
-    });
+    using client = disposable(
+      () =>
+        new EC2Client({
+          credentials,
+        }),
+      (client) => client.destroy(),
+    );
     const regions = await client
       .send(new DescribeRegionsCommand({}))
       .then((r) => r.Regions || []);
@@ -213,9 +218,13 @@ export const integrate = zod(
     await Replicache.poke();
     console.log("integrating account", account);
     if (!account) return;
-    const iam = new IAMClient({
-      credentials: input.credentials,
-    });
+    using iam = disposable(
+      () =>
+        new IAMClient({
+          credentials: input.credentials,
+        }),
+      (client) => client.destroy(),
+    );
     const suffix =
       Resource.App.stage !== "production" ? "-" + Resource.App.stage : "";
     const roleName = "SSTConsolePublisher" + suffix;
@@ -295,14 +304,15 @@ export const integrate = zod(
       ]).then((items) => items.flatMap((x) => (x ? [x] : [])));
       if (!bootstrapBuckets.length) continue;
 
-      const s3 = new S3Client({
-        ...config,
-        retryStrategy: RETRY_STRATEGY,
-      });
-      const eb = new EventBridgeClient({
-        ...config,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using s3 = disposable(
+        () => new S3Client({ ...config, retryStrategy: RETRY_STRATEGY }),
+        (client) => client.destroy(),
+      );
+      using eb = disposable(
+        () =>
+          new EventBridgeClient({ ...config, retryStrategy: RETRY_STRATEGY }),
+        (client) => client.destroy(),
+      );
 
       for (const b of bootstrapBuckets) {
         console.log(region, "found", b.version, "bucket", b);
@@ -379,17 +389,17 @@ export const disintegrate = zod(
     credentials: z.custom<Credentials>(),
   }),
   async (input) => {
-    const client = new CloudFormationClient({
-      credentials: input.credentials,
-    });
-
-    try {
-      await client.send(
-        new DeleteStackCommand({ StackName: `SSTConsole-${useWorkspace()}` }),
-      );
-    } finally {
-      client.destroy();
-    }
+    using client = disposable(
+      () =>
+        new CloudFormationClient({
+          credentials: input.credentials,
+        }),
+      (client) => client.destroy(),
+    );
+    await client.send(
+      new DeleteStackCommand({ StackName: `SSTConsole-${useWorkspace()}` }),
+    );
+    client.destroy();
   },
 );
 

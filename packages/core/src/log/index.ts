@@ -99,10 +99,14 @@ export function createSourcemapCache(input: {
   logGroup?: string;
   key: string;
 }) {
-  const s3bootstrap = new S3Client({
-    ...input.config,
-    retryStrategy: RETRY_STRATEGY,
-  });
+  using s3bootstrap = disposable(
+    () =>
+      new S3Client({
+        ...input.config,
+        retryStrategy: RETRY_STRATEGY,
+      }),
+    (client) => client.destroy(),
+  );
   const sourcemapCache = new Map<string, any>();
 
   const getBootstrap = lazy(() => AWS.Account.bootstrap(input.config));
@@ -396,6 +400,7 @@ import { RETRY_STRATEGY } from "../util/aws";
 import { StageCredentials } from "../app/stage";
 import { extractJSON } from "../util/json";
 import { InvocationNext } from "./lambda";
+import { disposable } from "../util/disposable";
 
 export const expand = zod(
   z.object({
@@ -406,10 +411,14 @@ export const expand = zod(
     config: z.custom<StageCredentials>(),
   }),
   async (input) => {
-    const cw = new CloudWatchLogsClient({
-      ...input.config,
-      // retryStrategy: RETRY_STRATEGY,
-    });
+    using cw = disposable(
+      () =>
+        new CloudWatchLogsClient({
+          ...input.config,
+          // retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
 
     const offset = 1000 * 60 * 15;
 
@@ -496,11 +505,15 @@ export const scan = zod(
   }),
   async (input) => {
     console.log("scanning", input);
-    const cw = new CloudWatchLogsClient({
-      region: input.region,
-      credentials: input.credentials,
-      // retryStrategy: RETRY_STRATEGY,
-    });
+    using cw = disposable(
+      () =>
+        new CloudWatchLogsClient({
+          region: input.region,
+          credentials: input.credentials,
+          // retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const events = [];
     let limit = true;
     let nextToken: string | undefined;

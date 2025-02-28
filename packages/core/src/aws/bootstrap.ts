@@ -6,6 +6,7 @@ import {
   DescribeStacksCommand,
 } from "@aws-sdk/client-cloudformation";
 import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
+import { disposable } from "../util/disposable";
 
 export const bootstrap = zod(
   z.object({
@@ -13,7 +14,10 @@ export const bootstrap = zod(
     region: z.string(),
   }),
   async (input) => {
-    const cf = new CloudFormationClient(input);
+    using cf = disposable(
+      () => new CloudFormationClient(input),
+      (client) => client.destroy(),
+    );
 
     const bootstrap = await cf
       .send(
@@ -61,26 +65,24 @@ export const bootstrapIon = zod(
     region: z.string(),
   }),
   async (input) => {
-    const ssm = new SSMClient(input);
-    try {
-      const param = await ssm
-        .send(
-          new GetParameterCommand({
-            Name: "/sst/bootstrap",
-          }),
-        )
-        .catch((err) => {});
-      if (!param?.Parameter?.Value) return;
-      const parsed = JSON.parse(param.Parameter.Value);
-      return {
-        bucket: parsed.state,
-        asset: parsed.asset,
-        version: "v3" as const,
-      };
-    } catch {
-      return;
-    } finally {
-      ssm.destroy();
-    }
+    using ssm = disposable(
+      () => new SSMClient(input),
+      (client) => client.destroy(),
+    );
+
+    const param = await ssm
+      .send(
+        new GetParameterCommand({
+          Name: "/sst/bootstrap",
+        }),
+      )
+      .catch((err) => {});
+    if (!param?.Parameter?.Value) return;
+    const parsed = JSON.parse(param.Parameter.Value);
+    return {
+      bucket: parsed.state,
+      asset: parsed.asset,
+      version: "v3" as const,
+    };
   },
 );

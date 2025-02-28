@@ -37,6 +37,7 @@ import {
   UpdateStackCommand,
 } from "@aws-sdk/client-cloudformation";
 import { workspace } from "../workspace/workspace.sql";
+import { disposable } from "../util/disposable";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -160,10 +161,14 @@ export const connectStage = zod(
       SSTResource.IssueDestination.role,
       SSTResource.IssueDestination.stream,
     );
-    const cw = new CloudWatchLogsClient({
-      region: config.region,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using cw = disposable(
+      () =>
+        new CloudWatchLogsClient({
+          region: config.region,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
 
     try {
       const destination = await cw.send(
@@ -208,11 +213,15 @@ export const subscribeIon = zod(
       SSTResource.IssueDestination.prefix.replace("<region>", config.region) +
       uniqueIdentifier;
     const workspaceID = useWorkspace();
-    const cw = new CloudWatchLogsClient({
-      region: config.region,
-      credentials: config.credentials,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using cw = disposable(
+      () =>
+        new CloudWatchLogsClient({
+          region: config.region,
+          credentials: config.credentials,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const enabled = await db
       .select({ enabled: workspace.settingIssue })
       .from(workspace)
@@ -230,11 +239,15 @@ export const subscribeIon = zod(
         target: config.region,
       });
 
-      const cfn = new CloudFormationClient({
-        region,
-        credentials: config.credentials,
-        retryStrategy: RETRY_STRATEGY,
-      });
+      using cfn = disposable(
+        () =>
+          new CloudFormationClient({
+            region,
+            credentials: config.credentials,
+            retryStrategy: RETRY_STRATEGY,
+          }),
+        (client) => client.destroy(),
+      );
 
       try {
         while (true) {
@@ -593,11 +606,15 @@ export const disableLogGroup = zod(
         ),
       );
     if (existing.length) return;
-    const cw = new CloudWatchLogsClient({
-      region: input.config.region,
-      credentials: input.config.credentials,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using cw = disposable(
+      () =>
+        new CloudWatchLogsClient({
+          region: input.config.region,
+          credentials: input.config.credentials,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const uniqueIdentifier = destinationIdentifier(input.config);
     const deleted = await cw
       .send(

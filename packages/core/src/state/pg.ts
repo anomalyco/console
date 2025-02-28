@@ -29,6 +29,7 @@ import { Replicache } from "../replicache";
 import { mapValues } from "remeda";
 import { stage } from "../app/app.sql";
 import { objectFlatten } from "../util/object";
+import { disposable } from "../util/disposable";
 
 export const stateReceiveEventLog = zod(
   z.object({
@@ -37,10 +38,14 @@ export const stateReceiveEventLog = zod(
   }),
   async (input) => {
     console.log("receive eventlog", input.updateID);
-    const s3 = new S3Client({
-      ...input.config,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using s3 = disposable(
+      () =>
+        new S3Client({
+          ...input.config,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const bootstrap = await AWS.Account.bootstrapIon(input.config);
     if (!bootstrap) return;
     const obj = await s3
@@ -232,10 +237,14 @@ export const stateReceiveSnapshot = zod(
       console.log("update not found", { updateID: input.updateID });
       return;
     }
-    const s3 = new S3Client({
-      ...input.config,
-      retryStrategy: RETRY_STRATEGY,
-    });
+    using s3 = disposable(
+      () =>
+        new S3Client({
+          ...input.config,
+          retryStrategy: RETRY_STRATEGY,
+        }),
+      (client) => client.destroy(),
+    );
     const bootstrap = await AWS.Account.bootstrapIon(input.config);
     if (!bootstrap) return;
     const key = `snapshot/${input.config.app}/${input.config.stage}/${input.updateID}.json`;
