@@ -11,7 +11,6 @@ import { extractJSON } from "../util/json";
 import { Credentials } from "../aws";
 import { lazy } from "../util/lazy";
 import { bootstrap, bootstrapIon } from "../aws/bootstrap";
-import { disposable } from "../util/disposable";
 
 export namespace LogError {
   export type Parsed = {

@@ -57,6 +57,13 @@
       "when": 1739822221683,
       "tag": "0007_skinny_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1740753518758,
+      "tag": "0008_lyrical_shatterstar",
+      "breakpoints": true
     }
   ]
 }

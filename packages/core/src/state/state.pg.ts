@@ -97,9 +97,9 @@ export const stateEventTable = pgTable(
     action: varchar("action", { length: 255 }).$type<
       "created" | "updated" | "deleted"
     >(),
-    urn: varchar("urn", { length: 255 }).notNull(),
+    urn: varchar("urn", { length: 512 }).notNull(),
     type: varchar("type", { length: 255 }).notNull(),
-    parent: varchar("parent", { length: 255 }),
+    parent: varchar("parent", { length: 512 }),
     inputs: json("inputs").$type<Diff>(),
     outputs: json("outputs").$type<Diff>(),
     logs: json("logs")
