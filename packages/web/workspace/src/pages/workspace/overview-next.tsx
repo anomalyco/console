@@ -532,7 +532,7 @@ export function OverviewRoute() {
                 <Text size="sm" on="surface" color="secondary">
                   Issues container support.{" "}
                   <a
-                    href="https://sst.dev/blog/console-container-issues"
+                    href="https://sst.dev/blog/issues-container-support"
                     target="_blank"
                   >
                     Learn more
