@@ -522,7 +522,7 @@ export function OverviewRoute() {
         </Match>
         <Match when={r.value!}>
           <>
-            <Show when={DateTime.now() < DateTime.fromISO("2025-02-21")}>
+            <Show when={DateTime.now() < DateTime.fromISO("2025-03-12")}>
               <Announcement>
                 <AnnouncementTag>New</AnnouncementTag>
                 <Text size="sm" on="surface" color="dimmed">
@@ -530,9 +530,9 @@ export function OverviewRoute() {
                   —{" "}
                 </Text>
                 <Text size="sm" on="surface" color="secondary">
-                  Console pricing update.{" "}
+                  Issues container support.{" "}
                   <a
-                    href="https://sst.dev/blog/console-pricing-update"
+                    href="https://sst.dev/blog/console-container-issues"
                     target="_blank"
                   >
                     Learn more
