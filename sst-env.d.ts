@@ -130,6 +130,11 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.KinesisStream"
     }
+    "MCP": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
     "OpenAuth": {
       "type": "sst.aws.Auth"
       "url": string

@@ -130,6 +130,7 @@ if ($app.stage === "production" && false) {
   });
 }
 
+aws.getCallerIdentityOutput().apply(console.log);
 if (replication)
   new command.local.Command(
     "ZeroPermission",
