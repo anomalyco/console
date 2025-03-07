@@ -59,10 +59,10 @@ export default $config({
     await import("./infra/autodeploy");
     await import("./infra/billing");
     await import("./infra/cluster");
-    const mcp = await import("./infra/mcp");
+    const opencontrol = await import("./infra/opencontrol");
 
     return {
-      ...mcp.outputs,
+      ...opencontrol.outputs,
       bar: "ok",
     };
   },
