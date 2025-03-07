@@ -98,7 +98,7 @@ const stripe = tool({
       method: input.method,
       headers: {
         Authorization: `Bearer ${Resource.StripeOpenControlSecretKey.value}`,
-        "Content-Type": input.contentType,
+        ...(input.contentType ? { Authorization: "Content-Type" } : undefined),
       },
       body: input.body ? input.body : undefined,
     });
