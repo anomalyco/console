@@ -70,7 +70,7 @@ const aws = tool({
   }),
   async run(input) {
     // @ts-ignore
-    const c = new AWS[input.client]();
+    const c = AWS[input.client];
     if (!c) throw new Error(`Could not find client ${input.client}`);
     const client = new c();
     if (!client[input.command])
