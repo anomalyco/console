@@ -5,6 +5,7 @@ import { db } from "@console/core/drizzle/index";
 import { z } from "zod";
 import AWS from "aws-sdk";
 import { tools } from "sst/opencontrol";
+import { Resource } from "sst";
 
 const ping = tool({
   name: "ping",
@@ -74,11 +75,37 @@ const aws = tool({
   },
 });
 
+const stripe = tool({
+  name: "stripe",
+  description: "make a call to the stripe api",
+  args: z.object({
+    method: z.string().describe("HTTP method to use"),
+    path: z.string().describe("Path to call"),
+    query: z.record(z.string()).optional().describe("Query params"),
+    contentType: z.string().optional().describe("HTTP content type to use"),
+    body: z.string().optional().describe("HTTP body to use if it is not GET"),
+  }),
+  async run(input) {
+    const url = new URL("https://api.stripe.com" + input.path);
+    if (input.query) url.search = new URLSearchParams(input.query).toString();
+    const response = await fetch(url.toString(), {
+      method: input.method,
+      headers: {
+        Authorization: `Bearer ${Resource.StripeOpenControlSecretKey.value}`,
+        "Content-Type": input.contentType,
+      },
+      body: input.body ? input.body : undefined,
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return response.text();
+  },
+});
+
 console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 
 const app = create({
   key: process.env.OPENCONTROL_KEY,
-  tools: [ping, dbQuery, aws, ...tools],
+  tools: [ping, dbQuery, aws, stripe, ...tools],
 });
 // @ts-ignore
 export const handler = handle(app);

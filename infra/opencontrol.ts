@@ -1,12 +1,17 @@
 import { database } from "./planetscale";
+import { allSecrets } from "./secret";
 
-export const server = new sst.aws.OpenControl("OpenControl", {
+new sst.aws.OpenControl("OpenControl", {
   server: {
     handler: "packages/backend/src/function/opencontrol/server.handler",
-    link: [database],
+    link: [database, ...allSecrets],
+    transform: {
+      role: (args) => {
+        args.managedPolicyArns = $output(args.managedPolicyArns).apply((v) => [
+          ...(v ?? []),
+          "arn:aws:iam::aws:policy/ReadOnlyAccess",
+        ]);
+      },
+    },
   },
 });
-
-export const outputs = {
-  openControl: server.url,
-};
