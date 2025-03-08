@@ -15,6 +15,7 @@ export const workspace = mysqlTable(
     ...id,
     ...timestamps,
     slug: varchar("slug", { length: 255 }).notNull(),
+    oldSlug: varchar("old_slug", { length: 255 }),
     settingIssue: boolean("setting_issue").notNull().default(true),
     timeGated: timestamp("time_gated", {
       mode: "string",

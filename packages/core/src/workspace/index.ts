@@ -76,8 +76,10 @@ export const remove = zod(Info.shape.id, (input) =>
     const row = await tx
       .select({
         workspaceID: user.workspaceID,
+        slug: workspace.slug,
       })
       .from(user)
+      .innerJoin(workspace, eq(workspace.id, user.workspaceID))
       .where(
         and(
           eq(user.workspaceID, input),
@@ -87,10 +89,13 @@ export const remove = zod(Info.shape.id, (input) =>
       .execute()
       .then((rows) => rows.at(0));
     if (!row) return;
+    
     await tx
       .update(workspace)
       .set({
         timeDeleted: sql`now()`,
+        oldSlug: row.slug,
+        slug: row.workspaceID, // Use the workspace ID as the slug
       })
       .where(eq(workspace.id, row.workspaceID));
   }),

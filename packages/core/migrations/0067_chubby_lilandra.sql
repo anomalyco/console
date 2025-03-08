@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `old_slug` varchar(255);
