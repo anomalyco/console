@@ -91,7 +91,7 @@ export const { use: useAuth, provider: AuthProvider } =
           access: account.access,
           refresh: account.refresh,
         }
-        fetch(import.meta.env.VITE_API_URL + "/account", {
+        await fetch(import.meta.env.VITE_API_URL + "/account", {
           headers: {
             authorization: `Bearer ${tokens.access}`,
           },

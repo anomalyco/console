@@ -10,7 +10,7 @@ import { Slack } from "@console/core/slack/index";
 
 export const SlackRoute = new Hono()
   .get("/authorize", async (c) => {
-    const origin = c.req.header("x-forwarded-host");
+    const origin = c.req.header("x-forwarded-host") || c.req.header("host");
     const state = createId();
     const authorize = new URL("https://slack.com/oauth/v2/authorize");
     authorize.search = new URLSearchParams({
