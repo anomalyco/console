@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@botpoison/browser": "0.1.30",
-    "@console/core": "workspace:*",
     "@console/backend": "workspace:*",
+    "@console/core": "workspace:*",
     "@console/zero": "workspace:*",
     "@fontsource/ibm-plex-mono": "4.5.13",
     "@fontsource/rubik": "4.5.14",
@@ -30,6 +30,7 @@
     "@macaron-css/core": "1.5.1",
     "@macaron-css/solid": "1.5.3",
     "@modular-forms/solid": "0.25.0",
+    "@openauthjs/solid": "0.0.0-20250311201457",
     "@paralleldrive/cuid2": "2.2.2",
     "@rocicorp/zero": "*",
     "@solid-primitives/event-bus": "1.0.11",

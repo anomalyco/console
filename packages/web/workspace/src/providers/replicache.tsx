@@ -33,7 +33,7 @@ import {
 import { useReplicacheStatus } from "./replicache-status";
 import { createStore, reconcile } from "solid-js/store";
 import { Splash } from "@console/web/ui/splash";
-import { useAuth } from "./auth";
+import { useOpenAuth } from "@openauthjs/solid"
 
 const mutators = new Client<ServerType>()
   .mutation("app_stage_sync", async () => { })
@@ -224,12 +224,11 @@ const mutators = new Client<ServerType>()
 const ReplicacheContext =
   createContext<() => ReturnType<typeof createReplicache>>();
 
-function createReplicache(workspaceID: string, token: string) {
+function createReplicache(workspaceID: string, auth: ReturnType<typeof useOpenAuth>) {
   const dummy = useDummy();
   const status = useReplicacheStatus();
   const replicache = new Replicache({
     name: workspaceID,
-    auth: `Bearer ${token}`,
     licenseKey: "l24ea5a24b71247c1b2bb78fa2bca2336",
     pullURL:
       import.meta.env.VITE_API_URL +
@@ -252,6 +251,7 @@ function createReplicache(workspaceID: string, token: string) {
   };
 
   replicache.puller = async (req) => {
+    const token = await auth.access()
     const result = await fetch(replicache.pullURL, {
       headers: {
         "x-sst-workspace": workspaceID,
@@ -271,6 +271,7 @@ function createReplicache(workspaceID: string, token: string) {
   };
 
   replicache.pusher = async (req) => {
+    const token = await auth.access()
     const result = await fetch(replicache.pushURL, {
       headers: {
         "x-sst-workspace": workspaceID,
@@ -294,9 +295,9 @@ function createReplicache(workspaceID: string, token: string) {
 export function ReplicacheProvider(
   props: ParentProps<{ workspaceID: string }>,
 ) {
-  const auth = useAuth();
+  const auth = useOpenAuth();
   const rep = createMemo(() => {
-    return createReplicache(props.workspaceID, auth.current.access);
+    return createReplicache(props.workspaceID, auth);
   });
   makeEventListener(window, "focus", () => {
     console.log("refocused");

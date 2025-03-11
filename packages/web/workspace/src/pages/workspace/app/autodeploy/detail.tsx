@@ -50,7 +50,6 @@ import {
 } from "@console/web/common/url-builder";
 import { pipe, dropWhile, drop, takeWhile, filter } from "remeda";
 import { useWorkspace } from "../../context";
-import { useAuth } from "@console/web/providers/auth";
 import { IconTag, IconXCircle } from "@console/web/ui/icons";
 import { utility } from "@console/web/ui/utility";
 import { theme } from "@console/web/ui/theme";
@@ -58,6 +57,7 @@ import { Stack, Row } from "@console/web/ui/layout";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
 import { createId } from "@paralleldrive/cuid2";
+import { useOpenAuth } from "@openauthjs/solid"
 
 const DATETIME_NO_TIME = {
   month: "short",
@@ -440,18 +440,18 @@ export function Detail() {
         trigger.type === "pull_request"
           ? `pr#${trigger.number}`
           : trigger.type === "tag"
-          ? trigger.tag
-          : trigger.type === "branch"
-          ? trigger.branch
-          : trigger.ref;
+            ? trigger.tag
+            : trigger.type === "branch"
+              ? trigger.branch
+              : trigger.ref;
       const uri =
         trigger.type === "pull_request"
           ? githubPr(repoURL, trigger.number)
           : trigger.type === "tag"
-          ? githubRef(repoURL, trigger.tag)
-          : trigger.type === "branch"
-          ? githubRef(repoURL, trigger.branch)
-          : githubRef(repoURL, trigger.ref);
+            ? githubRef(repoURL, trigger.tag)
+            : trigger.type === "branch"
+              ? githubRef(repoURL, trigger.branch)
+              : githubRef(repoURL, trigger.ref);
       const gitUser = trigger.type === "user" ? undefined : trigger.sender;
 
       const actor =
@@ -518,9 +518,8 @@ export function Detail() {
                             <img
                               width={AVATAR_SIZE}
                               height={AVATAR_SIZE}
-                              src={`https://avatars.githubusercontent.com/u/${
-                                r.value!.gitUser!.id
-                              }?s=${2 * AVATAR_SIZE}&v=4`}
+                              src={`https://avatars.githubusercontent.com/u/${r.value!.gitUser!.id
+                                }?s=${2 * AVATAR_SIZE}&v=4`}
                             />
                           </ActorAvatar>
                         </Match>
@@ -581,9 +580,8 @@ export function Detail() {
                   <Stack space="1.5">
                     <PanelTitle>Update</PanelTitle>
                     <PanelValueLink
-                      href={`${appPath}/${data.value!.stage!.name!}/updates/${
-                        data.value!.update!.id
-                      }`}
+                      href={`${appPath}/${data.value!.stage!.name!}/updates/${data.value!.update!.id
+                        }`}
                     >
                       #{data.value!.update!.index}
                     </PanelValueLink>
@@ -596,18 +594,18 @@ export function Detail() {
                     title={
                       data.value!.run.time.created
                         ? DateTime.fromISO(
-                            data.value!.run.time.created!,
-                          ).toLocaleString(DateTime.DATETIME_FULL)
+                          data.value!.run.time.created!,
+                        ).toLocaleString(DateTime.DATETIME_FULL)
                         : undefined
                     }
                   >
                     {data.value!.run.time.created
                       ? formatSinceTime(
-                          DateTime.fromISO(
-                            data.value!.run.time.created!,
-                          ).toSQL()!,
-                          true,
-                        )
+                        DateTime.fromISO(
+                          data.value!.run.time.created!,
+                        ).toSQL()!,
+                        true,
+                      )
                       : "—"}
                   </Text>
                 </Stack>
@@ -622,15 +620,15 @@ export function Detail() {
                     }
                   >
                     {data.value!.run.time.started &&
-                    data.value!.run.time.completed
+                      data.value!.run.time.completed
                       ? formatDuration(
-                          DateTime.fromISO(data.value!.run.time.completed!)
-                            .diff(
-                              DateTime.fromISO(data.value!.run.time.started!),
-                            )
-                            .as("milliseconds"),
-                          true,
-                        )
+                        DateTime.fromISO(data.value!.run.time.completed!)
+                          .diff(
+                            DateTime.fromISO(data.value!.run.time.started!),
+                          )
+                          .as("milliseconds"),
+                        true,
+                      )
                       : "—"}
                   </Text>
                 </Stack>
@@ -644,7 +642,7 @@ export function Detail() {
 
   function Logs() {
     const workspace = useWorkspace();
-    const auth = useAuth();
+    const auth = useOpenAuth()
     const [logs, logsAction] = createResource(
       () => {
         if (data.value?.run.log) return data.value.run.log;
@@ -656,17 +654,17 @@ export function Detail() {
         if (log === true || log === false) return [];
         const results = await fetch(
           import.meta.env.VITE_API_URL +
-            "/log/aws/scan?" +
-            new URLSearchParams({
-              awsAccountExternalID: data.value!.run.awsAccountExternalID!,
-              region: data.value!.run.region!,
-              logStream: log.logStream,
-              logGroup: log.logGroup,
-            }).toString(),
+          "/log/aws/scan?" +
+          new URLSearchParams({
+            awsAccountExternalID: data.value!.run.awsAccountExternalID!,
+            region: data.value!.run.region!,
+            logStream: log.logStream,
+            logGroup: log.logGroup,
+          }).toString(),
           {
             headers: {
               "x-sst-workspace": workspace().id,
-              Authorization: "Bearer " + auth.current.access,
+              Authorization: "Bearer " + await auth.access(),
             },
           },
         ).then(

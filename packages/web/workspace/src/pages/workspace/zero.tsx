@@ -1,19 +1,21 @@
 import { Query, Schema, Zero } from "@rocicorp/zero"
 import { useQuery } from "@rocicorp/zero/solid"
 import { schema } from "@console/zero/schema"
-import { useAuth } from "@console/web/providers/auth"
 import { useWorkspace } from "./context"
 import { createInitializedContext } from "@console/web/common/context"
 import { createEffect } from "solid-js"
+import { useOpenAuth } from "@openauthjs/solid"
+import { useAccount } from "@console/web/providers/account"
 
 export const { use: useZero, provider: ZeroProvider } =
   createInitializedContext("ZeroContext", () => {
-    const auth = useAuth()
+    const auth = useOpenAuth()
+    const account = useAccount()
     const workspace = useWorkspace()
     const zero = new Zero({
       schema: schema,
-      auth: auth.current.access,
-      userID: auth.current.email,
+      auth: () => auth.access(),
+      userID: account.current.email,
       storageKey: workspace().id,
       server: import.meta.env.VITE_ZERO_URL,
     })

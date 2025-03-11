@@ -23,13 +23,13 @@ import { Header } from "./header";
 import { useLocalContext } from "@console/web/providers/local";
 import { filter, flatMap, groupBy, map, pipe, sortBy, entries } from "remeda";
 import { User } from "@console/core/user/index";
-import { useAuth } from "@console/web/providers/auth";
 import { TextButton } from "@console/web/ui/button";
 import { Tag } from "@console/web/ui/tag";
 import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
+import { useAccount } from "@console/web/providers/account";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -197,13 +197,13 @@ export function Overview() {
     () => [],
     (accounts) => accounts.filter((a) => !a.timeDeleted),
   );
-  const auth = useAuth();
+  const account = useAccount()
   const users = UserStore.list.watch(rep, () => []);
   const cols = createMemo(() => splitCols(accounts() || []));
   const stages = StageStore.list.watch(rep, () => []);
   const apps = AppStore.all.watch(rep, () => []);
   const nav = useNavigate();
-  const selfEmail = createMemo(() => auth.current.email);
+  const selfEmail = createMemo(() => account.current.email);
   const ambiguous = createMemo(() => {
     const result = pipe(
       stages(),
@@ -628,7 +628,7 @@ type UserCardProps = {
 function UserCard(props: UserCardProps) {
   const rep = useReplicache();
   const user = UserStore.get.watch(rep, () => [props.id]);
-  const auth = useAuth();
+  const account = useAccount()
 
   return (
     <UserRoot>
@@ -646,7 +646,7 @@ function UserCard(props: UserCardProps) {
         <Show when={!user()?.timeSeen}>
           <Tag level="tip">Invited</Tag>
         </Show>
-        <Show when={auth.current.email !== user()?.email}>
+        <Show when={account.current.email !== user()?.email}>
           <Dropdown
             size="sm"
             icon={<IconEllipsisVertical width={18} height={18} />}

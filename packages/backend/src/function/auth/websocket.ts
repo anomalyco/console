@@ -27,6 +27,7 @@ export async function handler(event: any) {
     return { isAuthorized: true };
   }
   const workspaceID = event.requestContext.channel.split("/").at(2)!;
+  const email = verified.subject.properties.email;
   return withActor(
     {
       type: "system",
@@ -35,7 +36,7 @@ export async function handler(event: any) {
       },
     },
     async () => {
-      const user = await User.fromEmail(verified.subject.properties.email);
+      const user = await User.fromEmail(email);
       if (!user || user.timeDeleted) {
         return { isAuthorized: false };
       }

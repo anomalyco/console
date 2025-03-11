@@ -6,4 +6,8 @@ export const subjects = createSubjects({
     accountID: z.string(),
     email: z.string(),
   }),
+  user: z.object({
+    userID: z.string(),
+    workspaceID: z.string(),
+  }),
 });

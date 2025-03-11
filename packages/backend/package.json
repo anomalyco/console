@@ -36,7 +36,7 @@
     "@console/mail": "workspace:*",
     "@esbuild/linux-arm64": "0.21.4",
     "@hono/zod-validator": "^0.4.1",
-    "@openauthjs/openauth": "0.4.0",
+    "@openauthjs/openauth": "0.4.3",
     "@paralleldrive/cuid2": "2.2.2",
     "aws-sdk": "2.1692.0",
     "esbuild": "0.21.4",

@@ -2,7 +2,8 @@ import { useNavigate } from "@solidjs/router";
 import { createEffect } from "solid-js";
 import { useLocalContext } from "../providers/local";
 import { Splash } from "../ui/splash";
-import { useAuth } from "../providers/auth";
+import { useOpenAuth } from "@openauthjs/solid"
+
 
 export function Local() {
   const ctx = useLocalContext();
@@ -10,8 +11,9 @@ export function Local() {
   createEffect(async () => {
     const { app, stage } = ctx;
     if (!app || !stage) return;
-    const auth = useAuth();
-    for (const account of auth.all()) {
+    const auth = useOpenAuth();
+    for (const item of Object.keys(auth.all)) {
+      const access = await auth.access(item)
       const result = await fetch(
         import.meta.env.VITE_API_URL +
         "/local?" +
@@ -21,7 +23,7 @@ export function Local() {
         }).toString(),
         {
           headers: {
-            authorization: `Bearer ${account.access}`,
+            authorization: `Bearer ${access}`,
             "content-type": "application/json",
           },
         },

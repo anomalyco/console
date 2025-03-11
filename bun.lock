@@ -4,6 +4,7 @@
     "": {
       "name": "console",
       "dependencies": {
+        "@openauthjs/solid": "^0.0.0-20250310215115",
         "@tsconfig/node20": "^20.1.4",
       },
       "devDependencies": {
@@ -37,7 +38,7 @@
         "@console/mail": "workspace:*",
         "@esbuild/linux-arm64": "0.21.4",
         "@hono/zod-validator": "^0.4.1",
-        "@openauthjs/openauth": "0.4.0",
+        "@openauthjs/openauth": "0.4.3",
         "@paralleldrive/cuid2": "2.2.2",
         "aws-sdk": "2.1692.0",
         "esbuild": "0.21.4",
@@ -180,6 +181,7 @@
         "@macaron-css/core": "1.5.1",
         "@macaron-css/solid": "1.5.3",
         "@modular-forms/solid": "0.25.0",
+        "@openauthjs/solid": "0.0.0-20250311201457",
         "@paralleldrive/cuid2": "2.2.2",
         "@rocicorp/zero": "*",
         "@solid-primitives/event-bus": "1.0.11",
@@ -717,9 +719,11 @@
 
     "@one-ini/wasm": ["@one-ini/wasm@0.1.1", "", {}, "sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw=="],
 
-    "@openauthjs/openauth": ["@openauthjs/openauth@0.4.0", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-w0Q6YWHB0YjVQ/TFYOnBHTsBEhwXHwIbJh3PLhKdLuafFYjPulEJbhHw0S/odJ0QY8eQ7llGglwf78WxuFfSRQ=="],
+    "@openauthjs/openauth": ["@openauthjs/openauth@0.4.3", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-RlnjqvHzqcbFVymEwhlUEuac4utA5h4nhSK/i2szZuQmxTIqbGUxZ+nM+avM+VV4Ing+/ZaNLKILoXS3yrkOOw=="],
 
     "@openauthjs/openevent": ["@openauthjs/openevent@0.0.27", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6", "ulid": "2.3.0" }, "peerDependencies": { "drizzle-orm": "^0.x", "mysql2": "^3.x", "postgres": "^3.x" }, "optionalPeers": ["drizzle-orm", "mysql2", "postgres"] }, "sha512-Peyl8hWGPmwTPC9gp3ufjEQ55mu64sSa9suBdW7SfHFBMnvxwD+XIoErneXyAH/ydomRghlh6t4N9mCCHjaF4g=="],
+
+    "@openauthjs/solid": ["@openauthjs/solid@0.0.0-20250310215115", "", { "dependencies": { "@openauthjs/openauth": "0.4.2", "@solid-primitives/storage": "^4.3.1" }, "peerDependencies": { "solid-js": "^1.8.0" } }, "sha512-VJMV1ljxQRYYMOvjAkV9Kpv+yp90pdNzWFKHT1Jq9kaSYtG4/GTtW+Rz5lSvakEgoAgpxQ+1uNF0BRdDayp5wA=="],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.0", "", {}, "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="],
 
@@ -2569,6 +2573,8 @@
 
     "@babel/helper-create-class-features-plugin/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
+    "@console/workspace/@openauthjs/solid": ["@openauthjs/solid@0.0.0-20250311201457", "", { "dependencies": { "@openauthjs/openauth": "0.4.2", "@solid-primitives/storage": "^4.3.1" }, "peerDependencies": { "solid-js": "^1.8.0" } }, "sha512-LEkW4FuAOjlME9m16WDlGOttrGSh1iiY2dmoGfST+vU41sbmFezlOhfl8Z2Iq82OYP67jCZprEHuD/zNMzNblA=="],
+
     "@console/workspace/sst": ["sst@3.7.9", "", { "dependencies": { "aws4fetch": "^1.0.18", "jose": "5.2.3", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.7.9", "sst-darwin-x64": "3.7.9", "sst-linux-arm64": "3.7.9", "sst-linux-x64": "3.7.9", "sst-linux-x86": "3.7.9" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-d+54xJdJ0Cuzz3AkXcjTjgLgtB794Uc6sPiBqY+eP2AzGN9lFryiighUefP9oo5eqNJbIdtQtWe6lwKwUjhXQQ=="],
 
     "@console/workspace/valibot": ["valibot@1.0.0-beta.6", "", { "peerDependencies": { "typescript": ">=5" }, "optionalPeers": ["typescript"] }, "sha512-x9ObzhqDCWFaWOa6Zri1mbFcc8OIIKP7cQtD9JauKt5pJFhpJkvAXT+49bFKjoVikiKVk7m33mXgUJb/Wfknmw=="],
@@ -2606,6 +2612,10 @@
     "@openauthjs/openauth/jose": ["jose@5.9.6", "", {}, "sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ=="],
 
     "@openauthjs/openevent/jose": ["jose@5.9.6", "", {}, "sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ=="],
+
+    "@openauthjs/solid/@openauthjs/openauth": ["@openauthjs/openauth@0.4.2", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-8+Bia559iffrZXfQ0LWXrVVVriochS88pDtB8indyQ1S+40MQgDBu8aBzKt+fgSrTmoQGCTT+wlOXgbjc9qIcw=="],
+
+    "@openauthjs/solid/@solid-primitives/storage": ["@solid-primitives/storage@4.3.1", "", { "dependencies": { "@solid-primitives/utils": "^6.3.0" }, "peerDependencies": { "@tauri-apps/plugin-store": "*", "solid-js": "^1.6.12" }, "optionalPeers": ["@tauri-apps/plugin-store"] }, "sha512-xAJsY2pvXrAaCai4N2grmWY3xh5om9suTDVzGkRF5JBpDzs3Apk+xIovdTErbW0iCzXIEefENXb9xmSzdjuLYA=="],
 
     "@opentelemetry/propagator-b3/@opentelemetry/core": ["@opentelemetry/core@1.30.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "1.28.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-OOCM2C/QIURhJMuKaekP3TRBxBKxG/TWWA0TL2J6nXUtDnuCtccy49LUJF8xPFXMX+0LMcxFpCo8M9cGY1W6rQ=="],
 
@@ -2865,6 +2875,10 @@
 
     "@babel/helper-compilation-targets/lru-cache/yallist": ["yallist@3.1.1", "", {}, "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g=="],
 
+    "@console/workspace/@openauthjs/solid/@openauthjs/openauth": ["@openauthjs/openauth@0.4.2", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-8+Bia559iffrZXfQ0LWXrVVVriochS88pDtB8indyQ1S+40MQgDBu8aBzKt+fgSrTmoQGCTT+wlOXgbjc9qIcw=="],
+
+    "@console/workspace/@openauthjs/solid/@solid-primitives/storage": ["@solid-primitives/storage@4.3.1", "", { "dependencies": { "@solid-primitives/utils": "^6.3.0" }, "peerDependencies": { "@tauri-apps/plugin-store": "*", "solid-js": "^1.6.12" }, "optionalPeers": ["@tauri-apps/plugin-store"] }, "sha512-xAJsY2pvXrAaCai4N2grmWY3xh5om9suTDVzGkRF5JBpDzs3Apk+xIovdTErbW0iCzXIEefENXb9xmSzdjuLYA=="],
+
     "@console/workspace/sst/sst-darwin-arm64": ["sst-darwin-arm64@3.7.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-7GurprJW+VLbLQMmiQh9htToj3eQOucgqZac/gqB+ioB8uzQqvmuAFgCd7D7BBdPb5uRWOCHcs51TlJ76mJwCQ=="],
 
     "@console/workspace/sst/sst-darwin-x64": ["sst-darwin-x64@3.7.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-oow5KpjavFvbohrVn0WqMmuL+CYYua/SUcPtZIouM+EdrUgHzo1f6dZ7jh1nDmBbabUZ5q/PLPQZBVWJNyGYmQ=="],
@@ -2986,6 +3000,8 @@
     "@jsx-email/cli/vite/rollup": ["rollup@3.29.5", "", { "optionalDependencies": { "fsevents": "~2.3.2" }, "bin": { "rollup": "dist/bin/rollup" } }, "sha512-GVsDdsbJzzy4S/v3dqWPJ7EfvZJfCHiDqe80IyrF59LYuP+e6U1LJoUqeuqRbwAWoMNoXivMNeNAOf5E22VA1w=="],
 
     "@macaron-css/integration/esbuild/@esbuild/linux-loong64": ["@esbuild/linux-loong64@0.14.54", "", { "os": "linux", "cpu": "none" }, "sha512-bZBrLAIX1kpWelV0XemxBZllyRmM6vgFQQG2GdNb+r3Fkp0FOh1NJSvekXDs7jq70k4euu1cryLMfU+mTXlEpw=="],
+
+    "@openauthjs/solid/@openauthjs/openauth/jose": ["jose@5.9.6", "", {}, "sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ=="],
 
     "@opentelemetry/sdk-node/@opentelemetry/sdk-trace-node/@opentelemetry/context-async-hooks": ["@opentelemetry/context-async-hooks@1.29.0", "", { "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-TKT91jcFXgHyIDF1lgJF3BHGIakn6x0Xp7Tq3zoS3TMPzT9IlP0xEavWP8C1zGjU9UmZP2VR1tJhW9Az1A3w8Q=="],
 
@@ -3246,6 +3262,8 @@
     "@aws-sdk/middleware-sdk-ec2/@aws-sdk/util-format-url/@smithy/querystring-builder/@smithy/util-uri-escape": ["@smithy/util-uri-escape@3.0.0", "", { "dependencies": { "tslib": "^2.6.2" } }, "sha512-LqR7qYLgZTD7nWLBecUi4aqolw8Mhza9ArpNEQ881MJJIU2sE5iHCK6TdyqqzcDLy0OPe10IY4T8ctVdtynubg=="],
 
     "@aws-sdk/s3-request-presigner/@aws-sdk/util-format-url/@smithy/querystring-builder/@smithy/util-uri-escape": ["@smithy/util-uri-escape@3.0.0", "", { "dependencies": { "tslib": "^2.6.2" } }, "sha512-LqR7qYLgZTD7nWLBecUi4aqolw8Mhza9ArpNEQ881MJJIU2sE5iHCK6TdyqqzcDLy0OPe10IY4T8ctVdtynubg=="],
+
+    "@console/workspace/@openauthjs/solid/@openauthjs/openauth/jose": ["jose@5.9.6", "", {}, "sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ=="],
 
     "@dot/log/chalk/ansi-styles/color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
