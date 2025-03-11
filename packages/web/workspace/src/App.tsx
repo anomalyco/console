@@ -191,6 +191,7 @@ export const App: Component = () => {
               component={(props) => (
                 <CommandBar>
                   <AccountProvider>
+                    <RealtimeProvider />
                     <ReplicacheStatusProvider>
                       <DummyProvider>
                         <DummyConfigProvider>

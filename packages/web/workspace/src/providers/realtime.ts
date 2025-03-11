@@ -1,0 +1,141 @@
+import { createEffect, createResource, onCleanup } from "solid-js";
+import { bus } from "./bus";
+import { useOpenAuth } from "@openauthjs/solid";
+import { useAccount } from "./account";
+
+export function RealtimeProvider() {
+  const auth = useOpenAuth();
+  const account = useAccount();
+  const [access] = createResource(() => auth.access());
+
+  createEffect(() => {
+    if (!access()) return;
+    const header = btoa(
+      JSON.stringify({
+        host: import.meta.env.VITE_WEBSOCKET_HTTP,
+        Authorization: access(),
+      }),
+    )
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    const ws = new WebSocket(
+      "wss://" + import.meta.env.VITE_WEBSOCKET_REALTIME + "/event/realtime",
+      ["aws-appsync-event-ws", "header-" + header],
+    );
+    ws.onopen = () => {
+      console.log("connected");
+      ws.send(
+        JSON.stringify({
+          type: "connection_init",
+        }),
+      );
+    };
+
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "connection_ack") {
+        for (const workspace of account.current.workspaces) {
+          ws.send(
+            JSON.stringify({
+              type: "subscribe",
+              id: workspace.id,
+              channel: "/workspace/" + workspace.id,
+              authorization: {
+                host: import.meta.env.VITE_WEBSOCKET_HTTP,
+                Authorization: access(),
+              },
+            }),
+          );
+        }
+      }
+
+      if (msg.type === "data") {
+        const evt = JSON.parse(msg.event);
+        bus.emit(evt.type, evt.properties);
+      }
+    };
+
+    onCleanup(() => {
+      ws.close();
+    });
+  });
+
+  // onMount(async () => {
+  //   const url = import.meta.env.VITE_IOT_HOST;
+  //   const tokens = auth.all.map((account) => account.token).join(";");
+
+  //   async function createConnection() {
+  //     if (dummy()) return;
+  //     console.log("creating new connection");
+  //     if (connection) await connection.disconnect();
+  //     const config = iot.AwsIotMqttConnectionConfigBuilder.new_with_websockets()
+  //       .with_clean_session(true)
+  //       .with_client_id("client_" + createId())
+  //       .with_endpoint(url)
+  //       .with_custom_authorizer(
+  //         "",
+  //         `${import.meta.env.VITE_STAGE}-console-authorizer`,
+  //         "",
+  //         tokens,
+  //       )
+  //       .with_keep_alive_seconds(1200)
+  //       .build();
+  //     const client = new mqtt.MqttClient();
+  //     connection = client.new_connection(config);
+
+  //     connection.on("connect", async () => {
+  //       console.log("WS connected");
+  //       for (const workspace of auth.all.flatMap((a) => a.workspaces)) {
+  //         console.log("subscribing to", workspace);
+  //         await connection.subscribe(
+  //           `console/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
+  //           mqtt.QoS.AtLeastOnce,
+  //         );
+
+  //         await connection.subscribe(
+  //           `console/${import.meta.env.VITE_STAGE}/${
+  //             workspace.id
+  //           }/${profileID}/#`,
+  //           mqtt.QoS.AtLeastOnce,
+  //         );
+  //       }
+  //     });
+  //     connection.on("interrupt", (e) => {
+  //       console.log("interrupted, restarting", e, JSON.stringify(e));
+  //       createConnection();
+  //     });
+  //     connection.on("error", (e) => {
+  //       console.log(
+  //         "connection error",
+  //         e,
+  //         e.error,
+  //         e.name,
+  //         e.cause,
+  //         e.message,
+  //         e.error_code,
+  //         e.error_name,
+  //       );
+  //     });
+  //     connection.on("resume", console.log);
+  //     connection.on("message", (fullTopic, payload) => {
+  //       const splits = fullTopic.split("/");
+  //       const workspaceID = splits[2];
+  //       const topic = splits[4];
+  //       const message = new TextDecoder("utf8").decode(new Uint8Array(payload));
+  //       const parsed = JSON.parse(message);
+  //       if (topic === "poke") {
+  //         bus.emit("poke", { workspaceID });
+  //       } else {
+  //         bus.emit(topic as any, parsed.properties);
+  //       }
+  //     });
+  //     connection.on("disconnect", console.log);
+  //     await connection.connect();
+  //   }
+
+  //   createConnection();
+  // });
+
+  return null;
+}
