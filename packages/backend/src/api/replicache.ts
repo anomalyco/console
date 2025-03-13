@@ -70,7 +70,6 @@ export const ReplicacheRoute = new Hono().use(notPublic);
 export const TABLES = {
   stateUpdate: stateUpdateTable,
   stateResource: stateResourceTable,
-  stateEvent: stateEventTable,
   stateCount: stateCountTable,
   workspace,
   stripe: stripeTable,
@@ -107,11 +106,6 @@ const TABLE_KEY = {
   usage: [usage.stageID, usage.id],
   stateUpdate: [stateUpdateTable.stageID, stateUpdateTable.id],
   stateResource: [stateResourceTable.stageID, stateResourceTable.id],
-  stateEvent: [
-    stateEventTable.stageID,
-    stateEventTable.updateID,
-    stateEventTable.id,
-  ],
   stateCount: [stateCountTable.stageID, stateCountTable.id],
   run: [runTable.id],
   stripe: [],
@@ -119,12 +113,7 @@ const TABLE_KEY = {
   [key in TableName]?: MySqlColumn[];
 };
 
-const TABLE_SELECT = {
-  stateEvent: (() => {
-    const { inputs, outputs, ...rest } = getTableColumns(stateEventTable);
-    return rest;
-  })(),
-} as {
+const TABLE_SELECT = {} as {
   [key in TableName]?: any;
 };
 
@@ -135,7 +124,6 @@ const TABLE_PROJECTION = {
   githubOrg: (input) => Github.serializeOrg(input),
   githubRepo: (input) => Github.serializeRepo(input),
   stateUpdate: (input) => State.serializeUpdate(input),
-  stateEvent: (input) => State.serializeEvent(input),
   stateResource: (input) => State.serializeResource(input),
   stateCount: (input) => State.serializeCount(input),
   runConfig: (input) => {
@@ -307,7 +295,6 @@ ReplicacheRoute.post("/pull1", async (c) => {
           issue: isNull(issue.timeDeleted),
           ...(updates.length
             ? {
-                stateEvent: inArray(stateEventTable.updateID, updates),
                 stateUpdate: inArray(stateUpdateTable.id, updates),
               }
             : {}),
