@@ -58,12 +58,12 @@ import { AppRepo } from "@console/core/app/repo";
 import { Github } from "@console/core/git/github";
 import { alert } from "@console/core/alert/alert.sql";
 import { Alert } from "@console/core/alert/index";
-import { S3Client } from "@aws-sdk/client-s3";
 import { Hono } from "hono";
 import { notPublic } from "./auth";
 import { VisibleError } from "@console/core/util/error";
 import { Billing } from "@console/core/billing/index";
 import { server } from "../replicache/server";
+import { logger } from "@console/core/util/log";
 
 export const ReplicacheRoute = new Hono().use(notPublic);
 
@@ -152,14 +152,13 @@ const TABLE_PROJECTION = {
 
 ReplicacheRoute.post("/pull1", async (c) => {
   const actor = useActor();
-  function log(...args: any[]) {
-    if (process.env.SST_DEV) return;
-    console.log(...args);
-  }
-  log("actor", actor);
+  const log = logger();
+  log.tag("workspaceID", useWorkspace());
+  log.tag("endpoint", "pull1");
+  log.info("actor", actor);
 
   const req: PullRequest = await c.req.json<PullRequest>();
-  log("request", req);
+  log.info("request", req);
   if (req.pullVersion !== 1) {
     return c.redirect("/replicache/pull");
   }
@@ -188,7 +187,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
         .then((rows) => rows.at(0)!);
 
       if (!isDeepEqual(group.actor, actor)) {
-        log("compare failed", group.actor, actor);
+        log.info("compare failed", group.actor, actor);
         return;
       }
 
@@ -225,7 +224,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
       ][] = [];
 
       if (actor.type === "user") {
-        log("syncing user");
+        log.info("syncing user");
 
         const deletedStages = await tx
           .select({ id: stage.id })
@@ -355,14 +354,14 @@ ReplicacheRoute.post("/pull1", async (c) => {
                   : []),
               ),
             );
-          log("getting updated from", name);
+          log.info("getting updated from", name);
           const rows = await query.execute();
           results.push([name, rows as any]);
         }
       }
 
       if (actor.type === "account") {
-        log("syncing account");
+        log.info("syncing account");
 
         const [users] = await Promise.all([
           await tx
@@ -416,16 +415,16 @@ ReplicacheRoute.post("/pull1", async (c) => {
         toPut[name] = arr;
       }
 
-      log(
+      log.info(
         "toPut",
         mapValues(toPut, (value) => value.length),
       );
 
-      log("toDel", cvr.data);
+      log.info("toDel", cvr.data);
 
       // new data
       for (const [name, items] of Object.entries(toPut)) {
-        log(name);
+        log.info(name);
         const ids = items.map((item) => item.id);
         const keys = Object.fromEntries(
           items.map((item) => [item.id, item.key]),
@@ -436,7 +435,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
         for (const group of chunk(ids, 200)) {
           const now = Date.now();
-          log(name, "fetching", group.length);
+          log.info(name, "fetching", group.length);
           const rows = await tx
             .select(
               TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
@@ -452,7 +451,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
               ),
             )
             .execute();
-          log(name, "got", rows.length, "in", Date.now() - now, "ms");
+          log.info(name, "got", rows.length, "in", Date.now() - now, "ms");
           const projection =
             TABLE_PROJECTION[name as keyof typeof TABLE_PROJECTION];
           for (const row of rows) {
@@ -493,7 +492,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
         clients.map((c) => [c.id, c.mutationID] as const),
       );
       if (patch.length > 0 || Object.keys(lastMutationIDChanges).length > 0) {
-        log("inserting", req.clientGroupID);
+        log.info("inserting", req.clientGroupID);
         await tx
           .update(replicache_client_group)
           .set({
