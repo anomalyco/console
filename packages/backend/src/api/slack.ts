@@ -38,7 +38,7 @@ export const SlackRoute = new Hono()
     "/callback",
     zValidator("query", z.object({ code: z.string(), state: z.string() })),
     async (c) => {
-      const origin = c.req.header("x-forwarded-host");
+      const origin = c.req.header("x-forwarded-host") || c.req.header("host");
       const workspaceID = getCookie(c, "workspaceID")!;
       const state = getCookie(c, "state");
       const query = c.req.valid("query");
