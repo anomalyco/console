@@ -47,7 +47,7 @@
         "luxon": "3.5.0",
         "oauth4webapi": "^3.1.2",
         "octokit": "^4.0.2",
-        "opencontrol": "0.0.11",
+        "opencontrol": "0.0.12",
         "remeda": "^2.17.3",
         "replicache": "14.2.2",
         "source-map": "^0.7.4",
@@ -1967,7 +1967,7 @@
 
     "open": ["open@9.1.0", "", { "dependencies": { "default-browser": "^4.0.0", "define-lazy-prop": "^3.0.0", "is-inside-container": "^1.0.0", "is-wsl": "^2.2.0" } }, "sha512-OS+QTnw1/4vrf+9hh1jc1jnYjzSG4ttTBB8UxOwAnInG3Uo4ssetzC1ihqaIHjLJnA5GGlRl6QlZXOTQhRBUvg=="],
 
-    "opencontrol": ["opencontrol@0.0.11", "", { "dependencies": { "@ai-sdk/anthropic": "1.1.17", "@ai-sdk/openai": "1.2.5", "@modelcontextprotocol/sdk": "1.6.1", "@tsconfig/bun": "1.0.7", "ai": "4.1.61", "hono": "4.7.4", "zod": "3.24.2", "zod-to-json-schema": "3.24.3" }, "bin": { "opencontrol": "bin/index.mjs" } }, "sha512-w0J69vF9e/0MbDlojYpkBpMiLcPjdcTJJUonm3a+g4AHFTq+2zdlz4iJAgyhdwfM/VPtmhasUKk3e24pDdPbLQ=="],
+    "opencontrol": ["opencontrol@0.0.12", "", { "dependencies": { "@ai-sdk/anthropic": "1.1.17", "@ai-sdk/openai": "1.2.5", "@modelcontextprotocol/sdk": "1.6.1", "@tsconfig/bun": "1.0.7", "ai": "4.1.61", "hono": "4.7.4", "zod": "3.24.2", "zod-to-json-schema": "3.24.3" }, "bin": { "opencontrol": "bin/index.mjs" } }, "sha512-1nNj8reF/TsNbPWBkIh/P6s8N9XACElWBVtYKu4UDmWhgE6te9wRiEgceuWSSLdg9i20r1jCct6fExkY1J7LIw=="],
 
     "openid-client": ["openid-client@5.6.4", "", { "dependencies": { "jose": "^4.15.4", "lru-cache": "^6.0.0", "object-hash": "^2.2.0", "oidc-token-hash": "^5.0.3" } }, "sha512-T1h3B10BRPKfcObdBklX639tVz+xh34O7GjofqrqiAQdm7eHsQ00ih18x6wuJ/E6FxdtS2u3FmUGPDeEcMwzNA=="],
 
