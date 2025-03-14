@@ -110,6 +110,7 @@ const stripe = tool({
 console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 
 const app = create({
+  anthropicApiKey: Resource.AnthropicKey.value,
   key: process.env.OPENCONTROL_KEY,
   tools: [ping, dbQuery, aws, stripe, ...tools],
 });

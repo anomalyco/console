@@ -9,6 +9,10 @@ declare module "sst" {
       "arn": string
       "type": "sst.aws.SnsTopic"
     }
+    "AnthropicKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Api": {
       "name": string
       "type": "sst.aws.Function"
