@@ -56,7 +56,7 @@ export const WorkspaceRoute = (
         for (const item of Object.values(account.all)) {
           for (const workspace of item.workspaces) {
             if (workspace.slug === workspaceSlug && item.id !== auth.subject!.id) {
-              auth.switch(item.id);
+              auth.switch(item.email);
             }
           }
         }
