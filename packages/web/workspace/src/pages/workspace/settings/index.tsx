@@ -177,6 +177,7 @@ export function SettingsRoute() {
   );
   const resourceStages = createMemo(() => resourcesUsages().length);
   const auth = useOpenAuth();
+  const nav = useNavigate();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
     const data = invocationsUsages();
@@ -188,21 +189,25 @@ export function SettingsRoute() {
   });
   const stripe = StripeStore.get.watch(rep, () => []);
 
-  let portalLink: Promise<string> | undefined;
-  let checkoutLink: Promise<string> | undefined;
+  let portalLink: Promise<Response> | undefined;
+  let checkoutLink: Promise<Response> | undefined;
 
   const api = useApi()
   async function generatePortalLink() {
     return api.client.billing.portal.$post({
-      return_url: window.location.href,
-      workspaceID: workspace().id,
-    }).then(r => r.url)
+      json: {
+        return_url: window.location.href,
+        workspaceID: workspace().id,
+      }
+    })
   }
   async function generateCheckoutLink() {
     return api.client.billing.checkout.$post({
-      return_url: window.location.href,
-      workspaceID: workspace().id,
-    }).then(r => r.url)
+      json: {
+        return_url: window.location.href,
+        workspaceID: workspace().id,
+      }
+    })
   }
 
   function handleHoverManageSubscription() {
@@ -220,13 +225,16 @@ export function SettingsRoute() {
   async function handleClickManageSubscription(e: MouseEvent) {
     e.stopPropagation();
     const response = await (portalLink || generatePortalLink());
-    window.location.href = response;
+    const result = await response.json();
+    window.location.href = result.url;
   }
 
   async function handleClickSubscribe(e: MouseEvent) {
     e.stopPropagation();
     const response = await (checkoutLink || generateCheckoutLink());
-    window.location.href = response;
+    const result = await response.json();
+    console.log(result.url);
+    window.location.href = result.url;
   }
 
   console.log(WorkspaceStore);
