@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal, Suspense, createResource } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
-import { useWorkspace } from "../context";
+import { useApi, useWorkspace } from "../context";
 import { utility } from "@console/web/ui/utility";
 import { Toggle } from "@console/web/ui/switch";
 import { IconLogosSlack, IconLogosGitHub } from "@console/web/ui/icons/custom";
@@ -177,7 +177,6 @@ export function SettingsRoute() {
   );
   const resourceStages = createMemo(() => resourcesUsages().length);
   const auth = useOpenAuth();
-  const nav = useNavigate();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
     const data = invocationsUsages();
@@ -189,28 +188,21 @@ export function SettingsRoute() {
   });
   const stripe = StripeStore.get.watch(rep, () => []);
 
-  let portalLink: Promise<Response> | undefined;
-  let checkoutLink: Promise<Response> | undefined;
+  let portalLink: Promise<string> | undefined;
+  let checkoutLink: Promise<string> | undefined;
 
-  function generatePortalLink() {
-    return fetch(import.meta.env.VITE_API_URL + "/billing/portal", {
-      method: "POST",
-      body: JSON.stringify({ return_url: window.location.href }),
-      headers: {
-        "x-sst-workspace": workspace().id,
-        Authorization: rep().auth,
-      },
-    });
+  const api = useApi()
+  async function generatePortalLink() {
+    return api.client.billing.portal.$post({
+      return_url: window.location.href,
+      workspaceID: workspace().id,
+    }).then(r => r.url)
   }
-  function generateCheckoutLink() {
-    return fetch(import.meta.env.VITE_API_URL + "/billing/checkout", {
-      method: "POST",
-      body: JSON.stringify({ return_url: window.location.href }),
-      headers: {
-        "x-sst-workspace": workspace().id,
-        Authorization: rep().auth,
-      },
-    });
+  async function generateCheckoutLink() {
+    return api.client.billing.checkout.$post({
+      return_url: window.location.href,
+      workspaceID: workspace().id,
+    }).then(r => r.url)
   }
 
   function handleHoverManageSubscription() {
@@ -228,16 +220,13 @@ export function SettingsRoute() {
   async function handleClickManageSubscription(e: MouseEvent) {
     e.stopPropagation();
     const response = await (portalLink || generatePortalLink());
-    const result = await response.json();
-    window.location.href = result.url;
+    window.location.href = response;
   }
 
   async function handleClickSubscribe(e: MouseEvent) {
     e.stopPropagation();
     const response = await (checkoutLink || generateCheckoutLink());
-    const result = await response.json();
-    console.log(result.url);
-    window.location.href = result.url;
+    window.location.href = response;
   }
 
   console.log(WorkspaceStore);
