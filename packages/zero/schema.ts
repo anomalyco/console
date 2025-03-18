@@ -79,7 +79,7 @@ const state_event = table("state_event")
   })
   .primaryKey("workspace_id", "id");
 
-export const schema = createSchema(2, {
+export const schema = createSchema({
   tables: [workspace, state_update, user, state_event],
   relationships: [
     relationships(state_update, (r) => ({
