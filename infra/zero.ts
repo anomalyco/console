@@ -25,7 +25,7 @@ const zeroEnv = {
   ZERO_CHANGE_DB: conn,
   ZERO_REPLICA_FILE: "/tmp/console.db",
   ZERO_LITESTREAM_RESTORE_PARALLELISM: "64",
-  ZERO_SHARD_ID: $app.stage,
+  ZERO_APP_ID: $app.stage,
   ZERO_AUTH_JWKS_URL: $interpolate`${auth.url}/.well-known/jwks.json`,
   ...($dev
     ? {}
