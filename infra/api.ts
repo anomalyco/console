@@ -69,7 +69,6 @@ export const backend = new sst.aws.Service("Backend", {
     issues,
     ...allSecrets,
   ],
-  wait: true,
   image: {
     dockerfile: "./packages/backend/Dockerfile",
   },
