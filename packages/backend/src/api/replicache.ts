@@ -420,35 +420,46 @@ ReplicacheRoute.post("/pull1", async (c) => {
         if (!ids.length) continue;
         const table = TABLES[name as keyof typeof TABLES];
 
-        for (const group of chunk(ids, 250)) {
-          const now = Date.now();
-          log.info(name, "fetching", group.length);
-          const rows = await tx
-            .select(
-              TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
-                getTableColumns(table),
-            )
-            .from(table)
-            .where(
-              and(
-                "workspaceID" in table && actor.type === "user"
-                  ? eq(table.workspaceID, useWorkspace())
-                  : undefined,
-                inArray(table.id, group),
-              ),
-            )
-            .execute();
-          log.info(name, "got", rows.length, "in", Date.now() - now, "ms");
-          const projection =
-            TABLE_PROJECTION[name as keyof typeof TABLE_PROJECTION];
-          for (const row of rows) {
-            const key = keys[row.id]!;
-            patch.push({
-              op: "put",
-              key,
-              value: projection ? projection(row as any) : row,
-            });
+        let chunksize = 1000;
+        while (true) {
+          let early = false;
+          for (const group of chunk(ids, chunksize)) {
+            const now = Date.now();
+            log.info(name, "fetching", group.length);
+            const rows = await tx
+              .select(
+                TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
+                  getTableColumns(table),
+              )
+              .from(table)
+              .where(
+                and(
+                  "workspaceID" in table && actor.type === "user"
+                    ? eq(table.workspaceID, useWorkspace())
+                    : undefined,
+                  inArray(table.id, group),
+                ),
+              )
+              .execute()
+              .catch(() => {});
+            if (!rows) {
+              early = true;
+              break;
+            }
+            log.info(name, "got", rows.length, "in", Date.now() - now, "ms");
+            const projection =
+              TABLE_PROJECTION[name as keyof typeof TABLE_PROJECTION];
+            for (const row of rows) {
+              const key = keys[row.id]!;
+              patch.push({
+                op: "put",
+                key,
+                value: projection ? projection(row as any) : row,
+              });
+            }
           }
+          if (!early) break;
+          chunksize = Math.floor(chunksize / 2);
         }
       }
 
