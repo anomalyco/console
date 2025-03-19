@@ -18,6 +18,7 @@
     "typescript": "5.5.4"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "1.1.18",
     "@aws-crypto/sha256-js": "^5.2.0",
     "@aws-sdk/client-cloudformation": "3.699.0",
     "@aws-sdk/client-cloudwatch": "3.600.0",
@@ -45,7 +46,7 @@
     "luxon": "3.5.0",
     "oauth4webapi": "^3.1.2",
     "octokit": "^4.0.2",
-    "opencontrol": "0.0.12",
+    "opencontrol": "0.0.13",
     "remeda": "^2.17.3",
     "replicache": "14.2.2",
     "source-map": "^0.7.4",

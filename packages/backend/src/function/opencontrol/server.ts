@@ -6,54 +6,30 @@ import { z } from "zod";
 import AWS from "aws-sdk";
 import { tools } from "sst/opencontrol";
 import { Resource } from "sst";
+import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
 
-const ping = tool({
-  name: "ping",
-  description: "sends a ping",
-  async run() {
-    return {
-      content: [
-        {
-          type: "text",
-          text: "pong",
-        },
-      ],
-    };
+const databaseRead = tool({
+  name: "database_query_readonly",
+  description:
+    "Readonly database query for MySQL, use this if there are no direct tools",
+  args: z.object({ query: z.string() }),
+  async run(input) {
+    return db.transaction(async (tx) => tx.execute(input.query), {
+      accessMode: "read only",
+      isolationLevel: "read committed",
+    });
   },
 });
 
-const dbQuery = tool({
-  name: "database_query",
-  description: "execute mysql query",
-  args: z.object({
-    query: z.string().describe("The query to execute"),
-  }),
+const databaseWrite = tool({
+  name: "database_query_write",
+  description:
+    "DANGEROUS operation that writes to the database. You MUST triple check with the user before using this tool - show them the query you are about to run.",
+  args: z.object({ query: z.string() }),
   async run(input) {
-    return db
-      .transaction(async (tx) => tx.execute(input.query), {
-        accessMode: "read only",
-        isolationLevel: "read committed",
-      })
-      .catch(async (error) => {
-        console.error(error);
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: error.toString(),
-            },
-          ],
-        };
-      })
-      .then((result) => ({
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result),
-          },
-        ],
-      }));
+    return db.transaction(async (tx) => tx.execute(input.query), {
+      isolationLevel: "read committed",
+    });
   },
 });
 
@@ -111,8 +87,10 @@ console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 
 const app = create({
   anthropicApiKey: Resource.AnthropicKey.value,
-  key: process.env.OPENCONTROL_KEY,
-  tools: [ping, dbQuery, aws, stripe, ...tools],
+  model: createAnthropic({
+    apiKey: Resource.AnthropicKey.value,
+  })("claude-3-7-sonnet-latest"),
+  tools: [ping, databaseRead, databaseWrite, aws, stripe, ...tools],
 });
 // @ts-ignore
 export const handler = handle(app);
