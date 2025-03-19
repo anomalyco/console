@@ -88,7 +88,7 @@ console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 const app = create({
   model: createAnthropic({
     apiKey: Resource.AnthropicKey.value,
-  })("claude-3-7-sonnet-latest"),
+  })("claude-3-7-sonnet-20250219"),
   tools: [databaseRead, databaseWrite, aws, stripe, ...tools],
 });
 // @ts-ignore
