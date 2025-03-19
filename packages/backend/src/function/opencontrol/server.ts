@@ -86,11 +86,10 @@ const stripe = tool({
 console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 
 const app = create({
-  anthropicApiKey: Resource.AnthropicKey.value,
   model: createAnthropic({
     apiKey: Resource.AnthropicKey.value,
   })("claude-3-7-sonnet-latest"),
-  tools: [ping, databaseRead, databaseWrite, aws, stripe, ...tools],
+  tools: [databaseRead, databaseWrite, aws, stripe, ...tools],
 });
 // @ts-ignore
 export const handler = handle(app);
