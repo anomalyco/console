@@ -85,51 +85,6 @@ const replication = !$dev
     })
   : undefined;
 
-if ($app.stage === "production" && false) {
-  new sst.aws.Service(`ZeroReplicationTest`, {
-    cluster,
-    ...($app.stage === "production"
-      ? {
-          cpu: "2 vCPU",
-          memory: "4 GB",
-        }
-      : {}),
-    image,
-    wait: true,
-    link: [postgres, storage],
-    health: {
-      command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
-      interval: "5 seconds",
-      retries: 3,
-      startPeriod: "300 seconds",
-    },
-    environment: {
-      ...zeroEnv,
-      ZERO_CHANGE_MAX_CONNS: "3",
-      ZERO_NUM_SYNC_WORKERS: "0",
-      ZERO_SHARD_ID: $app.stage + "_test",
-      // @ts-expect-error
-      ZERO_LITESTREAM_BACKUP_URL: undefined,
-    },
-    logging: {
-      retention: "1 month",
-    },
-    transform: {
-      service: {
-        healthCheckGracePeriodSeconds: 900,
-      },
-      taskDefinition: {
-        ephemeralStorage: {
-          sizeInGib: 200,
-        },
-      },
-      loadBalancer: {
-        idleTimeout: 60 * 60,
-      },
-    },
-  });
-}
-
 aws.getCallerIdentityOutput().apply(console.log);
 if (replication)
   new command.local.Command(
@@ -137,7 +92,8 @@ if (replication)
     {
       dir: process.cwd() + "/packages/zero",
       environment: {
-        ZERO_UPSTREAM_DB: conn,
+        ZERO_UPSTREAM_DB: zeroEnv.ZERO_UPSTREAM_DB,
+        ZERO_APP_ID: zeroEnv.ZERO_APP_ID,
       },
       create: "bun run zero-deploy-permissions",
       triggers: [Date.now()],
