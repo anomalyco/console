@@ -460,6 +460,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           }
           if (!early) break;
           chunksize = Math.floor(chunksize / 2);
+          log.info("adjusting chunksize", { chunksize });
         }
       }
 
