@@ -52,8 +52,8 @@ export const backendKey = new sst.Linkable("BackendKey", {
 });
 
 export const backend = new sst.aws.Service("Backend", {
-  cpu: $app.stage === "production" ? "1 vCPU" : undefined,
-  memory: $app.stage === "production" ? "2 GB" : undefined,
+  cpu: $app.stage === "production" ? "2 vCPU" : undefined,
+  memory: $app.stage === "production" ? "4 GB" : undefined,
   cluster,
   link: [
     backendKey,
