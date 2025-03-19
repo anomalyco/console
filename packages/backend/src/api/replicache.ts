@@ -276,7 +276,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           .from(runTable)
           .where(eq(runTable.workspaceID, useWorkspace()))
           .orderBy(desc(runTable.timeCreated))
-          .limit(200)
+          .limit(100)
           .then((rows) => rows.map((row) => row.id));
         const tableFilters = {
           log_search: eq(log_search.userID, actor.properties.userID),
