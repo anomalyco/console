@@ -40,7 +40,7 @@ const state_update = table("state_update")
     workspace_id: string(),
     stage_id: string(),
     run_id: string(),
-    command: string(),
+    command: json(),
     index: number(),
     time_started: number(),
     time_completed: number(),
