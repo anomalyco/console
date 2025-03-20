@@ -18,7 +18,7 @@
     "@types/react": "18.0.25",
     "@types/relaxed-json": "^1.0.1",
     "drizzle-kit": "0.30.4",
-    "sst": "3.9.30",
+    "sst": "3.10.0",
     "typescript": "5.5.4",
     "vitest": "^0.25.3"
   },
