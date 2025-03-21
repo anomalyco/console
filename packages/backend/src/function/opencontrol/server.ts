@@ -3,10 +3,9 @@ import { create } from "opencontrol";
 import { tool } from "opencontrol/tool";
 import { db } from "@console/core/drizzle/index";
 import { z } from "zod";
-import AWS from "aws-sdk";
 import { tools } from "sst/opencontrol";
 import { Resource } from "sst";
-import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
+import { createAnthropic } from "@ai-sdk/anthropic";
 
 const databaseRead = tool({
   name: "database_query_readonly",
@@ -30,30 +29,6 @@ const databaseWrite = tool({
     return db.transaction(async (tx) => tx.execute(input.query), {
       isolationLevel: "read committed",
     });
-  },
-});
-
-const aws = tool({
-  name: "aws",
-  description: "Make a call to the AWS SDK for JavaScript v2",
-  args: z.object({
-    client: z.string().describe("Class name of the client to use"),
-    command: z.string().describe("Command to call on the client"),
-    args: z
-      .record(z.string(), z.any())
-      .optional()
-      .describe("Arguments to pass to the command"),
-  }),
-  async run(input) {
-    // @ts-ignore
-    const c = AWS[input.client];
-    if (!c) throw new Error(`Could not find client ${input.client}`);
-    const client = new c();
-    if (!client[input.command])
-      throw new Error(
-        `Could not find command ${input.command} on client ${input.client}`,
-      );
-    return await client[input.command](input.args).promise();
   },
 });
 
@@ -89,7 +64,7 @@ const app = create({
   model: createAnthropic({
     apiKey: Resource.AnthropicKey.value,
   })("claude-3-7-sonnet-20250219"),
-  tools: [databaseRead, databaseWrite, aws, stripe, ...tools],
+  tools: [databaseRead, databaseWrite, stripe, ...tools],
 });
 // @ts-ignore
 export const handler = handle(app);
