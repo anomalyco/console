@@ -254,39 +254,6 @@ function GlobalCommands() {
   const auth = useOpenAuth();
   const account = useAccount()
   const nav = useNavigate();
-  bar.register("workspace-switcher", async () => {
-    const workspaces = Object.values(account.all).flatMap((account) =>
-      account.workspaces.map((w) => ({
-        accountID: account.id,
-        workspace: w,
-      })),
-    );
-    const splits = location.pathname.split("/");
-    return [
-      ...workspaces
-        .filter((item) => item.workspace?.slug !== splits[1])
-        .map((item) => ({
-          title: `Switch to ${item.workspace.slug} workspace`,
-          category: "Workspace",
-          icon: IconWorkspace,
-          run: (control: any) => {
-            console.log("switching to", item.accountID, item.workspace.slug);
-            auth.switch(item.accountID);
-            nav(`/${item.workspace.slug}`);
-            control.hide();
-          },
-        })),
-      {
-        icon: IconAddCircle,
-        category: "Workspace",
-        title: "Create new workspace",
-        run: (control) => {
-          nav("/workspace");
-          control.hide();
-        },
-      },
-    ];
-  });
 
   bar.register("auth", async () => {
     return [
@@ -323,5 +290,39 @@ function GlobalCommands() {
         })),
     ]
   })
+
+  bar.register("workspace-switcher", async () => {
+    const workspaces = Object.values(account.all).flatMap((account) =>
+      account.workspaces.map((w) => ({
+        accountID: account.id,
+        workspace: w,
+      })),
+    );
+    const splits = location.pathname.split("/");
+    return [
+      ...workspaces
+        .filter((item) => item.workspace?.slug !== splits[1])
+        .map((item) => ({
+          title: `Switch to ${item.workspace.slug} workspace`,
+          category: "Workspace",
+          icon: IconWorkspace,
+          run: (control: any) => {
+            console.log("switching to", item.accountID, item.workspace.slug);
+            auth.switch(item.accountID);
+            nav(`/${item.workspace.slug}`);
+            control.hide();
+          },
+        })),
+      {
+        icon: IconAddCircle,
+        category: "Workspace",
+        title: "Create new workspace",
+        run: (control) => {
+          nav("/workspace");
+          control.hide();
+        },
+      },
+    ];
+  });
   return undefined;
 }
