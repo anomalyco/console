@@ -305,7 +305,7 @@ function GlobalCommands() {
         category: "Account",
         icon: IconLogout,
         run: (control) => {
-          auth.logout(account.current.id)
+          auth.logout(auth.subject!.id)
           control.hide();
         },
       },
