@@ -273,6 +273,7 @@ function GlobalCommands() {
         run: (control) => {
           auth.logout(auth.subject!.id)
           control.hide();
+          nav("/");
         },
       },
       ...Object.values(auth.all)
