@@ -48,7 +48,7 @@
         "luxon": "3.5.0",
         "oauth4webapi": "^3.1.2",
         "octokit": "^4.0.2",
-        "opencontrol": "0.0.14",
+        "opencontrol": "0.0.16",
         "remeda": "^2.17.3",
         "replicache": "14.2.2",
         "source-map": "^0.7.4",
@@ -1966,7 +1966,7 @@
 
     "open": ["open@9.1.0", "", { "dependencies": { "default-browser": "^4.0.0", "define-lazy-prop": "^3.0.0", "is-inside-container": "^1.0.0", "is-wsl": "^2.2.0" } }, "sha512-OS+QTnw1/4vrf+9hh1jc1jnYjzSG4ttTBB8UxOwAnInG3Uo4ssetzC1ihqaIHjLJnA5GGlRl6QlZXOTQhRBUvg=="],
 
-    "opencontrol": ["opencontrol@0.0.14", "", { "dependencies": { "@hono/zod-validator": "0.4.3", "@modelcontextprotocol/sdk": "1.7.0", "@tsconfig/bun": "1.0.7", "ai": "4.1.63", "hono": "4.7.4", "zod": "3.24.2", "zod-to-json-schema": "3.24.4" }, "bin": { "opencontrol": "bin/index.mjs" } }, "sha512-dk489I1pFfYqrHS6qicPgSr2/qtlcB4qZFTWx3BT5UUr47DVUwdWvrBnxLndEedxGSqvaG5nCksaQ62T0pvqoQ=="],
+    "opencontrol": ["opencontrol@0.0.16", "", { "dependencies": { "@hono/zod-validator": "0.4.3", "@modelcontextprotocol/sdk": "1.7.0", "@tsconfig/bun": "1.0.7", "ai": "4.1.63", "hono": "4.7.4", "zod": "3.24.2", "zod-to-json-schema": "3.24.4" }, "bin": { "opencontrol": "bin/index.mjs" } }, "sha512-ygZmfEX//NdC2mmBU4Xw2vPE5f5101qBxj7owBHGkm8J/C2TcneHn4nAEt+VWz+r1PmWvb0LcOXqh5g4ggD9KQ=="],
 
     "openid-client": ["openid-client@5.6.4", "", { "dependencies": { "jose": "^4.15.4", "lru-cache": "^6.0.0", "object-hash": "^2.2.0", "oidc-token-hash": "^5.0.3" } }, "sha512-T1h3B10BRPKfcObdBklX639tVz+xh34O7GjofqrqiAQdm7eHsQ00ih18x6wuJ/E6FxdtS2u3FmUGPDeEcMwzNA=="],
 
