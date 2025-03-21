@@ -220,7 +220,6 @@ export const App: Component = () => {
                 path="/"
                 component={() => {
                   console.log("here");
-                  const auth = useOpenAuth();
                   const account = useAccount()
                   return (
                     <Switch>
@@ -316,8 +315,9 @@ function GlobalCommands() {
           category: "Account",
           icon: IconUser,
           run: (control: any) => {
+            console.log("switching to", item.id);
             auth.switch(item.id)
-            nav("/")
+            nav("/" + account.all[item.id].workspaces[0].slug);
             control.hide();
           },
         })),
