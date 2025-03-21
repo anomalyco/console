@@ -138,6 +138,10 @@ declare module "sst" {
       "type": "sst.aws.Auth"
       "url": string
     }
+    "OpenControlRouter": {
+      "type": "sst.aws.Router"
+      "url": string
+    }
     "Postgres": {
       "clusterArn": string
       "database": string
@@ -149,7 +153,119 @@ declare module "sst" {
       "type": "sst.aws.Aurora"
       "username": string
     }
+    "PublicStorage_af-south-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-east-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-northeast-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-northeast-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-northeast-3": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-south-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-south-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-southeast-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-southeast-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-southeast-3": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ap-southeast-4": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ca-central-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_ca-west-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-central-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-central-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-north-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-south-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-south-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-west-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-west-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_eu-west-3": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_il-central-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_me-central-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_me-south-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_sa-east-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
     "PublicStorage_us-east-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_us-east-2": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_us-west-1": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "PublicStorage_us-west-2": {
       "name": string
       "type": "sst.aws.Bucket"
     }
@@ -216,6 +332,11 @@ declare module "sst" {
       "url": string
     }
     "Zero": {
+      "service": string
+      "type": "sst.aws.Service"
+      "url": string
+    }
+    "ZeroReplication": {
       "service": string
       "type": "sst.aws.Service"
       "url": string

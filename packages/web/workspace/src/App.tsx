@@ -13,7 +13,7 @@ import { DebugRoute } from "./pages/debug";
 import { Design } from "./pages/design";
 import { WorkspaceRoute } from "./pages/workspace";
 import { WorkspaceCreate } from "./pages/workspace-create";
-import { IconAddCircle, IconWorkspace } from "./ui/icons/custom";
+import { IconAddCircle, IconLogout, IconWorkspace } from "./ui/icons/custom";
 import { LocalProvider } from "./providers/local";
 import { AccountProvider, useAccount, useStorage } from "./providers/account";
 import { DummyConfigProvider, DummyProvider } from "./providers/dummy";
@@ -24,6 +24,7 @@ import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
 import { RealtimeProvider } from "./providers/realtime";
 import { OpenAuthProvider, useOpenAuth } from "@openauthjs/solid";
+import { IconUser } from "./ui/icons";
 
 const Root = styled("div", {
   base: {
@@ -287,5 +288,40 @@ function GlobalCommands() {
       },
     ];
   });
+
+  bar.register("auth", async () => {
+    return [
+      {
+        title: "Add account",
+        category: "Account",
+        icon: IconAddCircle,
+        run: (control) => {
+          auth.authorize()
+          control.hide();
+        },
+      },
+      {
+        title: "Logout from " + account.current.email,
+        category: "Account",
+        icon: IconLogout,
+        run: (control) => {
+          auth.logout(account.current.id)
+          control.hide();
+        },
+      },
+      ...Object.values(auth.all)
+        .filter((item) => item.id !== auth.subject?.id)
+        .map((item) => ({
+          title: "Switch to " + account.all[item.id].email,
+          category: "Account",
+          icon: IconUser,
+          run: (control: any) => {
+            auth.switch(item.id)
+            nav("/")
+            control.hide();
+          },
+        })),
+    ]
+  })
   return undefined;
 }

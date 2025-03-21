@@ -33,8 +33,9 @@ export const auth: MiddlewareHandler = async (c, next) => {
   const bearerToken = match[1];
   let result = await client.verify(subjects, bearerToken!);
   if (result.err) {
+    console.error(result.err);
     throw new HTTPException(401, {
-      message: "Unauthorized",
+      message: "Unauthorized: " + result.err.message,
     });
   }
 
@@ -54,7 +55,7 @@ export const auth: MiddlewareHandler = async (c, next) => {
         const user = await User.fromEmail(email);
         if (!user || user.timeDeleted) {
           c.status(401);
-          return c.text("Unauthorized");
+          return c.text("Unauthorized: User not found");
         }
         return withActor(
           {

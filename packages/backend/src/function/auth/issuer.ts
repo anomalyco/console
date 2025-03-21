@@ -115,5 +115,8 @@ export const handler = handle(
         },
       );
     },
+    async allow() {
+      return true;
+    },
   }),
 );
