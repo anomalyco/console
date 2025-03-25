@@ -115,8 +115,14 @@ export const handler = handle(
         },
       );
     },
-    async allow() {
-      return true;
+    async allow(input) {
+      const url = new URL(input.redirectURI);
+      return (
+        url.hostname.endsWith("localhost") ||
+        url.hostname.endsWith("sst.dev") ||
+        url.hostname.endsWith("console.sst.dev") ||
+        url.hostname.endsWith("opencontrol.ai")
+      );
     },
   }),
 );
