@@ -70,7 +70,10 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
       },
     })
       .then(val => val.json())
-      .then(val => setStore("accounts", id, reconcile(val)))
+      .then(val => {
+        if (val.id)
+          setStore("accounts", id, reconcile(val))
+      })
   }
 
   createEffect((previous: string[]) => {
