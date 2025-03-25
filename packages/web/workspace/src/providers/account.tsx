@@ -95,7 +95,7 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
     refresh,
     get ready() {
       if (!auth.subject) return false
-      return store.accounts[auth.subject.id] !== undefined
+      return store.accounts[auth.subject.id]?.email != undefined
     }
   }
 })
