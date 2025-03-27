@@ -129,22 +129,7 @@ export const stateResourceTable = mysqlTable(
   },
   (table) => ({
     ...workspaceIndexes(table),
-    stageID: foreignKey({
-      name: "state_resource_stage_id",
-      columns: [table.workspaceID, table.stageID],
-      foreignColumns: [stage.workspaceID, stage.id],
-    }).onDelete("cascade"),
     urn: unique("urn").on(table.workspaceID, table.stageID, table.urn),
-    updateID: foreignKey({
-      name: "state_resource_update_created_id",
-      columns: [table.workspaceID, table.updateCreatedID],
-      foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
-    }).onDelete("cascade"),
-    modifiedID: foreignKey({
-      name: "state_resource_update_modified_id",
-      columns: [table.workspaceID, table.updateModifiedID],
-      foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
-    }).onDelete("cascade"),
     timeUpdated: index("time_updated").on(table.timeUpdated),
   }),
 );

@@ -211,7 +211,7 @@ export const App: Component = () => {
                 </CommandBar>
               )}
             >
-              <Route path="local" component={Local} />
+              <Route path="local/:app/:stage" component={Local} />
               <Route path="debug" component={DebugRoute} />
               <Route path="design" component={Design} />
               <Route path="workspace" component={WorkspaceCreate} />
@@ -219,7 +219,6 @@ export const App: Component = () => {
               <Route
                 path="/"
                 component={() => {
-                  console.log("here");
                   const account = useAccount()
                   return (
                     <Switch>
