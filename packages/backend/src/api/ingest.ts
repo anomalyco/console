@@ -81,7 +81,6 @@ export const IngestRoute = new Hono().post(
           .where(
             and(
               eq(awsAccount.accountID, accountID!),
-              eq(awsAccount.workspaceID, app.workspaceID),
               isNull(awsAccount.timeFailed),
             ),
           )
