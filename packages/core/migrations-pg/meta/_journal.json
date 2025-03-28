@@ -64,6 +64,13 @@
       "when": 1740753518758,
       "tag": "0008_lyrical_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1743133536198,
+      "tag": "0009_loud_tyrannus",
+      "breakpoints": true
     }
   ]
 }

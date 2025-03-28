@@ -39,6 +39,7 @@ export const stateUpdateTable = mysqlTable(
     runID: cuid("run_id"),
     command: mysqlEnum("command", Command).notNull(),
     index: bigint("index", { mode: "number" }),
+    version: varchar("version", { length: 255 }),
     ...timestampsNext,
     timeStarted: timestamp("time_started"),
     timeCompleted: timestamp("time_completed"),

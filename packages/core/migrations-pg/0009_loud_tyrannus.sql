@@ -1,0 +1,1 @@
+ALTER TABLE "state_update" ADD COLUMN "version" varchar(255);

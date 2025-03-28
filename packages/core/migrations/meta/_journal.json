@@ -484,6 +484,13 @@
       "when": 1742940487155,
       "tag": "0068_familiar_cerebro",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1743133529964,
+      "tag": "0069_famous_magneto",
+      "breakpoints": true
     }
   ]
 }

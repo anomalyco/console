@@ -40,6 +40,7 @@ export const stateUpdateTable = pgTable(
     runID: cuid("run_id"),
     command: jsonb("command").$type<UpdateCommand>().notNull(),
     index: integer("index"),
+    version: varchar("version", { length: 255 }),
     timeStarted: utc("time_started"),
     timeCompleted: utc("time_completed"),
     resourceDeleted: integer("resource_deleted"),

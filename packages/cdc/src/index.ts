@@ -96,6 +96,7 @@ const transforms = {
         id: input.id,
         workspaceID: input.workspace_id,
         stageID: input.stage_id,
+        version: input.version,
         runID: input.run_id,
         command: input.command,
         index: input.index,
