@@ -164,6 +164,53 @@ export const zero = cluster.addService("Zero", {
   },
 });
 
+if ($app.stage === "production") {
+  new sst.aws.Service(`ZeroReplicationTest`, {
+    cluster,
+    cpu: "2 vCPU",
+    memory: "4 GB",
+    image,
+    wait: true,
+    link: [postgres, storage],
+    health: {
+      command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
+      interval: "5 seconds",
+      retries: 3,
+      startPeriod: "300 seconds",
+    },
+    loadBalancer: {
+      rules: [
+        {
+          listen: "80/http",
+          forward: "4849/http",
+        },
+      ],
+      public: false,
+    },
+    environment: {
+      ...zeroEnv,
+      ZERO_CHANGE_MAX_CONNS: "3",
+      ZERO_NUM_SYNC_WORKERS: "0",
+    },
+    logging: {
+      retention: "1 month",
+    },
+    transform: {
+      service: {
+        healthCheckGracePeriodSeconds: 900,
+      },
+      taskDefinition: {
+        ephemeralStorage: {
+          sizeInGib: 200,
+        },
+      },
+      loadBalancer: {
+        idleTimeout: 60 * 60,
+      },
+    },
+  });
+}
+
 const context = $interpolate`debezium.sink.type=http
 quarkus.log.level=WARN
 debezium.format.value=json
