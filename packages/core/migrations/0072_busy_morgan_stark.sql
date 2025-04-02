@@ -1,0 +1,1 @@
+ALTER TABLE `state_update` MODIFY COLUMN `command` enum('deploy','refresh','remove','edit','unknown') NOT NULL;
