@@ -70,7 +70,7 @@ const replication = !$dev
       },
       transform: {
         service: {
-          healthCheckGracePeriodSeconds: 900,
+          healthCheckGracePeriodSeconds: 900000,
         },
         taskDefinition: {
           ephemeralStorage: {
@@ -144,7 +144,7 @@ export const zero = cluster.addService("Zero", {
   },
   transform: {
     service: {
-      healthCheckGracePeriodSeconds: 900,
+      healthCheckGracePeriodSeconds: 900000,
     },
     taskDefinition: {
       ephemeralStorage: {
@@ -186,6 +186,7 @@ if ($app.stage === "production") {
     },
     environment: {
       ...zeroEnv,
+      ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zerotest/11`,
       ZERO_CHANGE_MAX_CONNS: "3",
       ZERO_NUM_SYNC_WORKERS: "0",
       ZERO_APP_ID: $app.stage + "test",
@@ -195,7 +196,7 @@ if ($app.stage === "production") {
     },
     transform: {
       service: {
-        healthCheckGracePeriodSeconds: 900,
+        healthCheckGracePeriodSeconds: 900000,
       },
       taskDefinition: {
         ephemeralStorage: {
