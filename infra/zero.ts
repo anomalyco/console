@@ -163,7 +163,7 @@ export const zero = cluster.addService("Zero", {
 });
 
 if ($app.stage === "production") {
-  new sst.aws.Service(`ZeroReplicationTest`, {
+  new sst.aws.Service(`ZeroTestReplication`, {
     cluster,
     cpu: "2 vCPU",
     memory: "4 GB",
