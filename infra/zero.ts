@@ -44,7 +44,6 @@ const replication = !$dev
           }
         : {}),
       image,
-      wait: true,
       link: [postgres, storage],
       health: {
         command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
@@ -126,7 +125,6 @@ export const zero = cluster.addService("Zero", {
           ZERO_CVR_MAX_CONNS: "160",
         }),
   },
-  wait: true,
   health: {
     command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
     interval: "5 seconds",
@@ -170,7 +168,6 @@ if ($app.stage === "production") {
     cpu: "2 vCPU",
     memory: "4 GB",
     image,
-    wait: true,
     link: [postgres, storage],
     health: {
       command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
