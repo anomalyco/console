@@ -191,7 +191,7 @@ if ($app.stage === "production") {
       ...zeroEnv,
       ZERO_CHANGE_MAX_CONNS: "3",
       ZERO_NUM_SYNC_WORKERS: "0",
-      ZERO_APP_ID: $app.stage + "-test",
+      ZERO_APP_ID: $app.stage + "test",
     },
     logging: {
       retention: "1 month",
