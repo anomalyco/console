@@ -30,7 +30,7 @@ const zeroEnv = {
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/10`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/11`,
       }),
 };
 
@@ -39,8 +39,8 @@ const replication = !$dev
       cluster,
       ...($app.stage === "production"
         ? {
-            cpu: "2 vCPU",
-            memory: "4 GB",
+            cpu: "8 vCPU",
+            memory: "16 GB",
           }
         : {}),
       image,
