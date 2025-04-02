@@ -19,17 +19,10 @@ export const UpdateCommand = z.union([
   z.literal("refresh"),
   z.literal("remove"),
   z.literal("edit"),
+  z.literal("unknown"),
 ]);
 
 export type UpdateCommand = z.infer<typeof UpdateCommand>;
-
-export const Command = [
-  "deploy",
-  "refresh",
-  "remove",
-  "edit",
-  "unknown",
-] as const;
 
 export const Error = z.object({
   urn: z.string(),
