@@ -13,7 +13,7 @@
   "license": "MIT",
   "devDependencies": {
     "@macaron-css/vite": "1.5.1",
-    "sst": "3.7.9",
+    "sst": "3.9.44",
     "typescript": "5.5.4",
     "vite": "5.4.10",
     "vite-plugin-inspect": "0.7.42",
@@ -32,7 +32,7 @@
     "@modular-forms/solid": "0.25.0",
     "@openauthjs/solid": "0.0.0-20250311201457",
     "@paralleldrive/cuid2": "2.2.2",
-    "@rocicorp/zero": "*",
+    "@rocicorp/zero": "0.18",
     "@solid-primitives/event-bus": "1.0.11",
     "@solid-primitives/event-listener": "2.3.3",
     "@solid-primitives/input-mask": "0.2.2",
@@ -50,7 +50,7 @@
     "replicache": "14.2.2",
     "solid-js": "1.9.3",
     "solid-list": "^0.3.0",
-    "valibot": "1.0.0-beta.6",
+    "valibot": "^1.0.0-rc.1",
     "virtua": "0.39.3",
     "zod": "3.24.1"
   }
