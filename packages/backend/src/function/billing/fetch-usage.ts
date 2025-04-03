@@ -51,6 +51,7 @@ async function processInvocations(stageID: string) {
 
   const workspace = await Workspace.fromID(useWorkspace());
   if (!workspace) return;
+  if (workspace.timeDeleted) return;
 
   // Start processing from the greater of
   // - the last processed day
@@ -284,6 +285,7 @@ async function processInvocations(stageID: string) {
 async function processResources(workspaceID: string) {
   const workspace = await Workspace.fromID(workspaceID);
   if (!workspace) return;
+  if (workspace.timeDeleted) return;
 
   const count = await Billing.countActiveResources();
 
