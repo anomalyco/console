@@ -275,16 +275,16 @@ function GlobalCommands() {
           nav("/");
         },
       },
-      ...Object.values(auth.all)
+      ...(account.all)
         .filter((item) => item.id !== auth.subject?.id)
         .map((item) => ({
-          title: "Switch to " + account.all[item.id].email,
+          title: "Switch to " + item.email,
           category: "Account",
           icon: IconUser,
           run: (control: any) => {
             console.log("switching to", item.id);
             auth.switch(item.id)
-            nav("/" + account.all[item.id].workspaces[0].slug);
+            nav("/" + item.workspaces[0].slug);
             control.hide();
           },
         })),
