@@ -62,6 +62,7 @@ const replication = !$dev
       },
       environment: {
         ...zeroEnv,
+        NODE_OPTIONS: "--max-old-space-size=8192",
         ZERO_CHANGE_MAX_CONNS: "3",
         ZERO_NUM_SYNC_WORKERS: "0",
       },
