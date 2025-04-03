@@ -90,7 +90,7 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
 
   return {
     get all() {
-      return store.accounts
+      return Object.keys(auth.all).map(id => store.accounts[id])
     },
     get current() {
       return store.accounts[auth.subject!.id]
