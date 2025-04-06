@@ -5,6 +5,7 @@ import { domain } from "./dns";
 const opencontrol = new sst.aws.OpenControl("OpenControl", {
   server: {
     handler: "packages/backend/src/function/opencontrol/server.handler",
+    timeout: "3 minutes",
     link: [database, ...allSecrets],
     transform: {
       role: (args) => {
