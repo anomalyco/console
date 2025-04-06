@@ -39,8 +39,8 @@ const replication = !$dev
       cluster,
       ...($app.stage === "production"
         ? {
-            cpu: "8 vCPU",
-            memory: "16 GB",
+            cpu: "2 vCPU",
+            memory: "4 GB",
           }
         : {}),
       image,
