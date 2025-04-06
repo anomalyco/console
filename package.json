@@ -28,7 +28,7 @@
     "@tsconfig/node20": "^20.1.4",
     "@types/bun": "^1.1.18",
     "constructs": "10.3.0",
-    "sst": "3.9.44",
+    "sst": "3.12.5",
     "turbo": "2.3.4",
     "typescript": "5.5.4"
   },
