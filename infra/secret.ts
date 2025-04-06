@@ -1,5 +1,6 @@
 export const secret = {
   AnthropicKey: new sst.Secret("AnthropicKey"),
+  GeminiKey: new sst.Secret("GeminiKey"),
   StripeSecretKey: new sst.Secret("StripeSecretKey"),
   StripeOpenControlSecretKey: new sst.Secret("StripeOpenControlSecretKey"),
   StripeWebhookSigningSecret: new sst.Secret("StripeWebhookSigningSecret"),

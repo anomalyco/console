@@ -5,7 +5,7 @@ import { db } from "@console/core/drizzle/index";
 import { z } from "zod";
 import { tools } from "sst/opencontrol";
 import { Resource } from "sst";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
 const databaseRead = tool({
   name: "database_query_readonly",
@@ -61,10 +61,14 @@ const stripe = tool({
 console.log("opencontrol_key", process.env.OPENCONTROL_KEY);
 
 const app = create({
-  model: createAnthropic({
-    apiKey: Resource.AnthropicKey.value,
-  })("claude-3-7-sonnet-20250219"),
-  tools: [databaseRead, databaseWrite, stripe, ...tools],
+  // model: createAnthropic({
+  //   apiKey: Resource.AnthropicKey.value,
+  // })("claude-3-7-sonnet-20250219"),
+  model: createGoogleGenerativeAI({
+    apiKey: Resource.GeminiKey.value,
+  })("gemini-2.5-pro-exp-03-25"),
+  /* @ts-expect-error */
+  tools: [databaseRead, databaseWrite, stripe, tools[0]],
 });
 // @ts-ignore
 export const handler = handle(app);
