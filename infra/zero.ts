@@ -27,6 +27,7 @@ const zeroEnv = {
   ZERO_LITESTREAM_RESTORE_PARALLELISM: "64",
   ZERO_APP_ID: $app.stage,
   ZERO_AUTH_JWKS_URL: $interpolate`${auth.url}/.well-known/jwks.json`,
+  NODE_OPTIONS: "--max-old-space-size=8192",
   ...($dev
     ? {}
     : {
@@ -62,7 +63,6 @@ const replication = !$dev
       },
       environment: {
         ...zeroEnv,
-        NODE_OPTIONS: "--max-old-space-size=8192",
         ZERO_CHANGE_MAX_CONNS: "3",
         ZERO_NUM_SYNC_WORKERS: "0",
       },
