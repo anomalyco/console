@@ -61,7 +61,9 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
   async function refresh(id: string) {
     const access = await auth.access(id).catch(() => { })
     if (!access) {
-      auth.authorize()
+      auth.authorize({
+        provider: "email",
+      })
       return
     }
     return await fetch(import.meta.env.VITE_API_URL + "/account", {
@@ -78,7 +80,9 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
 
   createEffect((previous: string[]) => {
     if (!Object.values(auth.all).length) {
-      auth.authorize()
+      auth.authorize({
+        provider: "email",
+      })
       return []
     }
     for (const item of Object.values(auth.all)) {

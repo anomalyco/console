@@ -10,6 +10,7 @@ import { subjects } from "../subjects";
 const client = createClient({
   issuer: Resource.OpenAuth.url,
   clientID: "console",
+  subjects,
 });
 
 export const notPublic: MiddlewareHandler = async (c, next) => {
@@ -31,7 +32,7 @@ export const auth: MiddlewareHandler = async (c, next) => {
     );
   }
   const bearerToken = match[1];
-  let result = await client.verify(subjects, bearerToken!);
+  let result = await client.verify(bearerToken!);
   if (result.err) {
     console.error(result.err);
     throw new HTTPException(401, {
@@ -42,7 +43,8 @@ export const auth: MiddlewareHandler = async (c, next) => {
   if (result.subject.type === "account") {
     const workspaceID =
       c.req.header("x-sst-workspace") || c.req.query("workspaceID");
-    if (!workspaceID) return withActor(result.subject, next);
+
+    if (!workspaceID) return withActor(result.subject as any, next);
     const email = result.subject.properties.email;
     return withActor(
       {

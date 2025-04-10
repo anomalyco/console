@@ -261,7 +261,9 @@ function GlobalCommands() {
         category: "Account",
         icon: IconAddCircle,
         run: (control) => {
-          auth.authorize()
+          auth.authorize({
+            provider: "email",
+          })
           control.hide();
         },
       },

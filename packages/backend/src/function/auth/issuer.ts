@@ -1,6 +1,7 @@
 import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import { issuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
+import { GoogleOidcProvider } from "@openauthjs/openauth/provider/google";
 import { handle } from "hono/aws-lambda";
 import { Resource } from "sst";
 import { subjects } from "../../subjects";
@@ -67,6 +68,10 @@ export const handler = handle(
           await ses.send(cmd);
         },
       }),
+      google: GoogleOidcProvider({
+        clientID:
+          "1088750781468-10ijeep4oihppe60k1sk145vj73sd316.apps.googleusercontent.com",
+      }),
     },
     async success(ctx, response) {
       let email: string | undefined;
@@ -104,16 +109,10 @@ export const handler = handle(
           email: email!,
         });
       }
-      return ctx.subject(
-        "account",
-        {
-          accountID: accountID!,
-          email: email!,
-        },
-        {
-          subject: email!,
-        },
-      );
+      return ctx.subject("account", email!, {
+        accountID: accountID!,
+        email: email!,
+      });
     },
     async allow(input) {
       const url = new URL(input.redirectURI);

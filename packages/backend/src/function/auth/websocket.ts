@@ -9,11 +9,12 @@ import { subjects } from "../../subjects";
 const client = createClient({
   issuer: Resource.OpenAuth.url,
   clientID: "socket",
+  subjects,
 });
 
 export async function handler(event: any) {
   const token = event.authorizationToken;
-  const verified = await client.verify(subjects, token);
+  const verified = await client.verify(token);
   if (verified.err) return { isAuthorized: false };
   if (verified.subject.type !== "account") return { isAuthorized: false };
   if (event.requestContext.operation === "EVENT_CONNECT") {
