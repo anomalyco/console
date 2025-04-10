@@ -71,6 +71,7 @@ export const handler = handle(
       google: GoogleOidcProvider({
         clientID:
           "1088750781468-10ijeep4oihppe60k1sk145vj73sd316.apps.googleusercontent.com",
+        scopes: ["openid", "email"],
       }),
     },
     async success(ctx, response) {
@@ -102,7 +103,7 @@ export const handler = handle(
         }
       }
 
-      if (response.provider === "google") {
+      if (response.provider === "google" && response.id.email_verified) {
         console.log("google", response.id);
         email = response.id.email as string;
       }
