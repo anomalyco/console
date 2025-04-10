@@ -101,6 +101,11 @@ export const handler = handle(
             .then((rows) => rows.at(0)?.email);
         }
       }
+
+      if (response.provider === "google") {
+        console.log("google", response.id);
+        email = response.id.email as string;
+      }
       if (!email) throw new Error("No email found");
       let accountID = await Account.fromEmail(email).then((x) => x?.id);
       if (!accountID) {
