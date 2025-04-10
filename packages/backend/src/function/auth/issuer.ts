@@ -104,7 +104,6 @@ export const handler = handle(
       }
 
       if (response.provider === "google" && response.id.email_verified) {
-        console.log("google", response.id);
         email = response.id.email as string;
       }
       if (!email) throw new Error("No email found");
