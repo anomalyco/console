@@ -18,9 +18,9 @@
     "typescript": "5.5.4"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "1.1.18",
-    "@ai-sdk/google": "^1.2.8",
-    "@aws-crypto/sha256-js": "^5.2.0",
+    "@ai-sdk/anthropic": "1.2.1",
+    "@ai-sdk/google": "1.2.8",
+    "@aws-crypto/sha256-js": "5.2.0",
     "@aws-sdk/client-cloudformation": "3.699.0",
     "@aws-sdk/client-cloudwatch": "3.600.0",
     "@aws-sdk/client-cloudwatch-logs": "3.699.0",
@@ -37,7 +37,8 @@
     "@console/core": "workspace:*",
     "@console/mail": "workspace:*",
     "@esbuild/linux-arm64": "0.21.4",
-    "@hono/zod-validator": "^0.4.1",
+    "@hono/zod-validator": "0.4.3",
+    "@modelcontextprotocol/sdk": "1.10.2",
     "@openauthjs/openauth": "0.0.0-20250322224806",
     "@paralleldrive/cuid2": "2.2.2",
     "aws-sdk": "2.1692.0",

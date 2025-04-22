@@ -71,6 +71,13 @@
       "when": 1743133536198,
       "tag": "0009_loud_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1745347821663,
+      "tag": "0010_slippery_zeigeist",
+      "breakpoints": true
     }
   ]
 }
