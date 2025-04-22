@@ -8,3 +8,4 @@ packages/core/src/workflow/
 packages/scripts/src/workflow.ts
 .env
 .termai
+.opencode
