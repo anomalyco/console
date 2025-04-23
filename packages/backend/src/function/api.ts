@@ -71,7 +71,6 @@ const app = new Hono()
   .get("/", async (c) => {
     return c.text("ok");
   })
-  .route("/agent", AgentRoute)
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)
   .route("/github", GithubRoute)
