@@ -317,32 +317,39 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
         for (const [name, table] of Object.entries(TABLES)) {
           const key = TABLE_KEY[name as TableName] ?? [table.id];
-          const query = tx
-            .select({
-              name: sql`${name}`,
-              id: table.id,
-              version: table.timeUpdated,
-              key: sql.join([
-                sql`concat_ws(`,
-                sql.join([sql`'/'`, sql`''`, sql`${name}`, ...key], sql`, `),
-                sql.raw(`)`),
-              ]) as SQL<string>,
-            })
-            .from(table)
-            .where(
-              and(
-                eq(
-                  "workspaceID" in table ? table.workspaceID : table.id,
-                  workspaceID,
+          const rows = [];
+          while (true) {
+            const query = tx
+              .select({
+                name: sql`${name}`,
+                id: table.id,
+                version: table.timeUpdated,
+                key: sql.join([
+                  sql`concat_ws(`,
+                  sql.join([sql`'/'`, sql`''`, sql`${name}`, ...key], sql`, `),
+                  sql.raw(`)`),
+                ]) as SQL<string>,
+              })
+              .from(table)
+              .where(
+                and(
+                  eq(
+                    "workspaceID" in table ? table.workspaceID : table.id,
+                    workspaceID,
+                  ),
+                  ...(name === "stage" ? [] : [isNull(table.timeDeleted)]),
+                  ...(name in tableFilters
+                    ? [tableFilters[name as keyof typeof tableFilters]]
+                    : []),
                 ),
-                ...(name === "stage" ? [] : [isNull(table.timeDeleted)]),
-                ...(name in tableFilters
-                  ? [tableFilters[name as keyof typeof tableFilters]]
-                  : []),
-              ),
-            );
+              )
+              .offset(rows.length)
+              .limit(10_000);
+            const result = await query.execute();
+            rows.push(...result);
+            if (result.length < 10_000) break;
+          }
           log.info("getting updated from", name);
-          const rows = await query.execute();
           results.push([name, rows as any]);
         }
       }
