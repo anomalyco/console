@@ -344,7 +344,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
                 ),
               )
               .offset(rows.length)
-              .limit(10_000);
+              .limit(100_000);
             const result = await query.execute();
             rows.push(...result);
             if (result.length < 10_000) break;
