@@ -1763,9 +1763,7 @@ export module Run {
         ? `https://github.com/${run.trigger.repo.owner}/${run.trigger.repo.repo}/tree/${run.trigger.ref}`
         : `https://github.com/${run.trigger.repo.owner}/${run.trigger.repo.repo}/commit/${run.trigger.commit.id}`;
     const consoleUrl = "https://console.sst.dev";
-    const runUrl = stageName
-      ? `https://console.sst.dev/${workspaceSlug}/${appName}/${stageName}/autodeploy/${runID}`
-      : `https://console.sst.dev/${workspaceSlug}/${appName}/autodeploy/${runID}`;
+    const runUrl = `https://console.sst.dev/${workspaceSlug}/${appName}/autodeploy/${runID}`;
 
     const stage =
       run.stageName && run.region && run.awsAccountExternalID
