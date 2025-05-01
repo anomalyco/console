@@ -11,8 +11,8 @@ import {
   lt,
   or,
   isNotNull,
-  not,
   isNull,
+  gte,
 } from "drizzle-orm";
 import { useTransaction } from "../util/transaction";
 import { useWorkspace } from "../actor";
@@ -20,7 +20,7 @@ import { workspace } from "../workspace/workspace.sql";
 import { Stripe } from "./stripe";
 import { DateTime } from "luxon";
 import { Warning } from "../warning";
-import { stateCountTable } from "../state/state.sql";
+import { stateCountTable, stateUpdateTable } from "../state/state.sql";
 import { stage } from "../app/app.sql";
 export * as Billing from "./index";
 export { Stripe } from "./stripe";
@@ -57,26 +57,27 @@ export const countInvocationsByStartAndEndDay = zod(
 );
 
 export const countActiveResources = zod(z.void(), async () => {
-  return await useTransaction((tx) =>
-    tx
+  const currentMonthStart = DateTime.utc().startOf("month").toSQLDate()!;
+
+  return await useTransaction(async (tx) => {
+    // Get all stages with a deploy command in the current month
+    const activeStageIds = await tx
       .select({
-        total: sql<number>`SUM(${stateCountTable.count})`,
+        stageID: stateUpdateTable.stageID,
       })
-      .from(stateCountTable)
+      .from(stateUpdateTable)
       .innerJoin(
         stage,
         and(
-          eq(stage.id, stateCountTable.stageID),
-          eq(stage.workspaceID, stateCountTable.workspaceID),
+          eq(stage.id, stateUpdateTable.stageID),
+          eq(stage.workspaceID, stateUpdateTable.workspaceID),
         ),
       )
       .where(
         and(
-          eq(stateCountTable.workspaceID, useWorkspace()),
-          eq(
-            stateCountTable.month,
-            DateTime.utc().startOf("month").toSQLDate()!,
-          ),
+          eq(stateUpdateTable.workspaceID, useWorkspace()),
+          eq(stateUpdateTable.command, "deploy"),
+          gte(stateUpdateTable.timeStarted, sql`${currentMonthStart}`),
           or(
             and(
               isNull(stage.timeDeleted),
@@ -92,9 +93,28 @@ export const countActiveResources = zod(z.void(), async () => {
           ),
         ),
       )
+      .groupBy(stateUpdateTable.stageID)
       .execute()
-      .then((x) => x[0]?.total ?? 0),
-  );
+      .then((rows) => rows.map((row) => row.stageID));
+
+    if (activeStageIds.length === 0) return 0;
+
+    // Get the resource count only for stages with deploys in the current month
+    return tx
+      .select({
+        total: sql<number>`SUM(${stateCountTable.count})`,
+      })
+      .from(stateCountTable)
+      .where(
+        and(
+          eq(stateCountTable.workspaceID, useWorkspace()),
+          eq(stateCountTable.month, currentMonthStart),
+          sql`${stateCountTable.stageID} IN (${activeStageIds.join(", ")})`,
+        ),
+      )
+      .execute()
+      .then((x) => x[0]?.total ?? 0);
+  });
 });
 
 export const updateGatingStatus = zod(z.void(), async () => {
