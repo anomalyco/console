@@ -13,6 +13,7 @@ import {
   isNotNull,
   isNull,
   gte,
+  inArray,
 } from "drizzle-orm";
 import { useTransaction } from "../util/transaction";
 import { useWorkspace } from "../actor";
@@ -109,7 +110,7 @@ export const countActiveResources = zod(z.void(), async () => {
         and(
           eq(stateCountTable.workspaceID, useWorkspace()),
           eq(stateCountTable.month, currentMonthStart),
-          sql`${stateCountTable.stageID} IN (${activeStageIds.join(", ")})`,
+          inArray(stateCountTable.stageID, activeStageIds),
         ),
       )
       .execute()
