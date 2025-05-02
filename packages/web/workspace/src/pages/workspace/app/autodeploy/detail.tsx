@@ -381,9 +381,32 @@ export function Detail() {
             </Errors>
           </Match>
           <Match when={data.value!.run.error}>
-            <PageTitleMessage error={data.value!.run.status === "error"}>
-              {ERROR_MAP(data.value!.run.error!)}
-            </PageTitleMessage>
+            {error =>
+              <Switch fallback={
+                <PageTitleMessage error={data.value!.run.status === "error"}>
+                  {ERROR_MAP(error())}
+                </PageTitleMessage>
+              }>
+                <Match when={
+                  (error().type === "run_failed"
+                    && "message" in error().properties!)
+                  || (error().type === "unknown"
+                    && "message" in error().properties!)
+                }>
+                  <Errors>
+                    <Error>
+                      <ErrorIcon><IconXCircle width={16} height={16} /></ErrorIcon>
+                      <Stack space="0.5">
+                        <ErrorTitle>CLI Error</ErrorTitle>
+                        <ErrorMessage>
+                          {ERROR_MAP(error())}
+                        </ErrorMessage>
+                      </Stack>
+                    </Error>
+                  </Errors>
+                </Match>
+              </Switch>
+            }
           </Match>
           <Match when={true}>
             <PageTitleMessage>

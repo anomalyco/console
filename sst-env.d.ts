@@ -13,37 +13,11 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "Api": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "ApiRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
-    "AutodeployConfig": {
-      "buildImage": string
-      "buildspecBucketName": string
-      "buildspecVersion": string
-      "configParserFunctionArn": string
-      "runnerRemoverFunctionArn": string
-      "runnerRemoverScheduleGroupName": string
-      "runnerRemoverScheduleRoleArn": string
-      "timeoutMonitorFunctionArn": string
-      "timeoutMonitorScheduleGroupName": string
-      "timeoutMonitorScheduleRoleArn": string
-      "type": "sst.sst.Linkable"
+    "Auth": {
+      "publicKey": string
+      "type": "sst.aws.Auth"
     }
     "AutodeployConfigParser": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployRunnerRemover": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
-    "AutodeployTimeoutMonitor": {
       "name": string
       "type": "sst.aws.Function"
     }
@@ -73,10 +47,6 @@ declare module "sst" {
       "service": string
       "type": "sst.aws.Service"
     }
-    "Connect": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "Database": {
       "database": string
       "host": string
@@ -84,10 +54,6 @@ declare module "sst" {
       "port": number
       "type": "sst.sst.Linkable"
       "username": string
-    }
-    "DatabaseMigrator": {
-      "name": string
-      "type": "sst.aws.Function"
     }
     "Email": {
       "configSet": string
@@ -137,25 +103,6 @@ declare module "sst" {
     "IssueStream": {
       "name": string
       "type": "sst.aws.KinesisStream"
-    }
-    "OpenAuth": {
-      "type": "sst.aws.Auth"
-      "url": string
-    }
-    "OpenControlRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
-    "Postgres": {
-      "clusterArn": string
-      "database": string
-      "host": string
-      "password": string
-      "port": number
-      "reader": string
-      "secretArn": string
-      "type": "sst.aws.Aurora"
-      "username": string
     }
     "PublicStorage_us-east-1": {
       "name": string
@@ -210,10 +157,6 @@ declare module "sst" {
       "realtime": string
       "token": string
       "type": "sst.sst.Linkable"
-    }
-    "WebsocketAuthorizer": {
-      "name": string
-      "type": "sst.aws.Function"
     }
     "WebsocketToken": {
       "type": "sst.sst.Secret"
