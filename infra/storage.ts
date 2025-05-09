@@ -46,7 +46,7 @@ new aws.s3.BucketLifecycleConfigurationV2("StorageLifecycle", {
       id: "weekly",
       status: "Enabled",
       filter: {
-        prefix: "temporary/daily/",
+        prefix: "temporary/weekly/",
       },
       expiration: {
         days: 7,
