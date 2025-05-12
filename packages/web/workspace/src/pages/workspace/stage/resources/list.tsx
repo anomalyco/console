@@ -631,7 +631,7 @@ function sortStateResources(
       roots.push(idMap[r.urn]);
     } else {
       // If the object is a direct child of the stack, it is a root object
-      if (idMap[r.parent].type === "pulumi:pulumi:Stack") {
+      if (idMap[r.parent]?.type === "pulumi:pulumi:Stack") {
         roots.push(idMap[r.urn]);
       }
       // If the object has a parent, add it to the parent's children array
