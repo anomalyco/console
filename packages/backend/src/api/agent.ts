@@ -87,6 +87,7 @@ export const AgentRoute = new Hono()
       z.intersection(
         z.object({ stageID: z.string() }),
         z.discriminatedUnion("method", [
+          // @ts-ignore
           ListToolsRequestSchema,
           CallToolRequestSchema,
         ]),
