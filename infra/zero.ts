@@ -52,11 +52,6 @@ const ebsRole = new aws.iam.Role("ZeroEBSRole", {
     "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes",
   ],
 });
-new aws.ssm.Parameter("MyParameter", {
-  name: `/${$app.name}/${$app.stage}/MyParameter`,
-  type: "SecureString",
-  value: "xxx",
-});
 const replication = !$dev
   ? new sst.aws.Service(`ZeroReplication`, {
       cluster,
