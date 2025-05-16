@@ -35,6 +35,28 @@ const zeroEnv = {
       }),
 };
 
+const ebsRole = new aws.iam.Role("ZeroEBSRole", {
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Action: "sts:AssumeRole",
+        Effect: "Allow",
+        Principal: {
+          Service: "ecs.amazonaws.com",
+        },
+      },
+    ],
+  }),
+  managedPolicyArns: [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes",
+  ],
+});
+new aws.ssm.Parameter("MyParameter", {
+  name: `/${$app.name}/${$app.stage}/MyParameter`,
+  type: "SecureString",
+  value: "xxx",
+});
 const replication = !$dev
   ? new sst.aws.Service(`ZeroReplication`, {
       cluster,
@@ -72,11 +94,33 @@ const replication = !$dev
       transform: {
         service: {
           healthCheckGracePeriodSeconds: 900000,
-        },
-        taskDefinition: {
-          ephemeralStorage: {
-            sizeInGib: 200,
+          volumeConfiguration: {
+            name: "tmp",
+            managedEbsVolume: {
+              roleArn: ebsRole.arn,
+              volumeType: "gp3",
+              sizeInGb: 500,
+            },
           },
+        },
+        taskDefinition(args) {
+          args.volumes = [
+            {
+              name: "tmp",
+              configureAtLaunch: true,
+            },
+          ];
+          args.containerDefinitions = $jsonParse(
+            args.containerDefinitions,
+          ).apply((val) => {
+            val[0].mountPoints = [
+              {
+                sourceVolume: "tmp",
+                containerPath: "/tmp",
+              },
+            ];
+            return JSON.stringify(val);
+          });
         },
         loadBalancer: {
           idleTimeout: 60 * 60,
