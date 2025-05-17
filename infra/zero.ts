@@ -96,6 +96,7 @@ const replication = !$dev
               roleArn: ebsRole.arn,
               volumeType: "gp3",
               sizeInGb: 500,
+              iops: 16000,
             },
           },
         },
