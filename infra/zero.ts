@@ -25,6 +25,7 @@ const zeroEnv = {
   ZERO_CHANGE_DB: conn,
   ZERO_REPLICA_FILE: "/tmp/console.db",
   ZERO_LITESTREAM_RESTORE_PARALLELISM: "64",
+  ZERO_LITESTREAM_MULTIPART_SIZE: (16777216 * 4).toString(),
   ZERO_APP_ID: $app.stage,
   ZERO_AUTH_JWKS_URL: $interpolate`${auth.url}/.well-known/jwks.json`,
   NODE_OPTIONS: "--max-old-space-size=8192",
@@ -57,8 +58,8 @@ const replication = !$dev
       cluster,
       ...($app.stage === "production"
         ? {
-            cpu: "2 vCPU",
-            memory: "4 GB",
+            cpu: "16 vCPU",
+            memory: "32 GB",
           }
         : {}),
       image,
