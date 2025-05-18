@@ -187,11 +187,34 @@ export const zero = cluster.addService("Zero", {
   transform: {
     service: {
       healthCheckGracePeriodSeconds: 900000,
-    },
-    taskDefinition: {
-      ephemeralStorage: {
-        sizeInGib: 200,
+      volumeConfiguration: {
+        name: "tmp",
+        managedEbsVolume: {
+          roleArn: ebsRole.arn,
+          volumeType: "gp3",
+          sizeInGb: 500,
+          iops: 16000,
+        },
       },
+    },
+    taskDefinition(args) {
+      args.volumes = [
+        {
+          name: "tmp",
+          configureAtLaunch: true,
+        },
+      ];
+      args.containerDefinitions = $jsonParse(args.containerDefinitions).apply(
+        (val) => {
+          val[0].mountPoints = [
+            {
+              sourceVolume: "tmp",
+              containerPath: "/tmp",
+            },
+          ];
+          return JSON.stringify(val);
+        },
+      );
     },
     loadBalancer: {
       idleTimeout: 60 * 60,
