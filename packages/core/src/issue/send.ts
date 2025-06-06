@@ -67,6 +67,7 @@ export const triggerIssue = zod(
         .where(
           and(
             isNull(workspace.timeDeleted),
+            isNull(stage.timeDeleted),
             eq(issue.workspaceID, useWorkspace()),
             eq(issue.stageID, input.stageID),
             eq(issue.group, input.group),
