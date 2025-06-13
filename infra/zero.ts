@@ -230,7 +230,7 @@ export const zero = cluster.addService("Zero", {
 const context = $interpolate`debezium.sink.type=http
 quarkus.log.level=WARN
 debezium.format.value=json
-debezium.sink.http.url=http://localhost:3003
+debezium.sink.http.url=http://host.docker.internal:3003
 log4j.logger.io.debezium.relational.history=DEBUG, stdout
 debezium.source.offset.storage.file.filename=data/offsets.dat
 debezium.source.offset.flush.interval.ms=0
