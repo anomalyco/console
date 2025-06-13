@@ -1,9 +1,11 @@
 import { database } from "./planetscale";
 import { allSecrets } from "./secret";
+import { domain } from "./dns";
 
-new sst.aws.OpenControl("OpenControl", {
+const opencontrol = new sst.aws.OpenControl("OpenControl", {
   server: {
     handler: "packages/backend/src/function/opencontrol/server.handler",
+    timeout: "3 minutes",
     link: [database, ...allSecrets],
     transform: {
       role: (args) => {
@@ -14,4 +16,11 @@ new sst.aws.OpenControl("OpenControl", {
       },
     },
   },
+});
+
+new sst.aws.Router("OpenControlRouter", {
+  routes: {
+    "/*": opencontrol.url,
+  },
+  domain: "opencontrol." + domain,
 });

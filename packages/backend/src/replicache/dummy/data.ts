@@ -3174,6 +3174,7 @@ function workspace({ id, gated }: WorkspaceProps): DummyData {
     _type: "workspace",
     id,
     slug: id,
+    oldSlug: null,
     settingIssue: true,
     timeDeleted: null,
     timeGated: gated ? DateTime.now().startOf("day").toSQL()! : null,

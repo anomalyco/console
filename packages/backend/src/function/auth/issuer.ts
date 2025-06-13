@@ -1,6 +1,7 @@
 import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import { issuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
+import { GoogleOidcProvider } from "@openauthjs/openauth/provider/google";
 import { handle } from "hono/aws-lambda";
 import { Resource } from "sst";
 import { subjects } from "../../subjects";
@@ -67,6 +68,11 @@ export const handler = handle(
           await ses.send(cmd);
         },
       }),
+      google: GoogleOidcProvider({
+        clientID:
+          "1088750781468-10ijeep4oihppe60k1sk145vj73sd316.apps.googleusercontent.com",
+        scopes: ["openid", "email"],
+      }),
     },
     async success(ctx, response) {
       let email: string | undefined;
@@ -96,6 +102,10 @@ export const handler = handle(
             .then((rows) => rows.at(0)?.email);
         }
       }
+
+      if (response.provider === "google" && response.id.email_verified) {
+        email = response.id.email as string;
+      }
       if (!email) throw new Error("No email found");
       let accountID = await Account.fromEmail(email).then((x) => x?.id);
       if (!accountID) {
@@ -104,15 +114,18 @@ export const handler = handle(
           email: email!,
         });
       }
-      return ctx.subject(
-        "account",
-        {
-          accountID: accountID!,
-          email: email!,
-        },
-        {
-          subject: email!,
-        },
+      return ctx.subject("account", email!, {
+        accountID: accountID!,
+        email: email!,
+      });
+    },
+    async allow(input) {
+      const url = new URL(input.redirectURI);
+      return (
+        url.hostname.endsWith("localhost") ||
+        url.hostname.endsWith("sst.dev") ||
+        url.hostname.endsWith("console.sst.dev") ||
+        url.hostname.endsWith("opencontrol.ai")
       );
     },
   }),

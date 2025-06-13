@@ -159,8 +159,17 @@ export const assumeRole = zod(Info.shape.id, async (stageID) => {
         app: app.name,
       })
       .from(awsAccount)
-      .innerJoin(stage, eq(stage.awsAccountID, awsAccount.id))
-      .innerJoin(app, eq(stage.appID, app.id))
+      .innerJoin(
+        stage,
+        and(
+          eq(stage.awsAccountID, awsAccount.id),
+          eq(stage.workspaceID, useWorkspace()),
+        ),
+      )
+      .innerJoin(
+        app,
+        and(eq(stage.appID, app.id), eq(app.workspaceID, useWorkspace())),
+      )
       .where(and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())))
       .execute()
       .then((rows) => rows.at(0)),

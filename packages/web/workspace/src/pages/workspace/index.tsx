@@ -19,22 +19,27 @@ import { ApiProvider, WorkspaceContext } from "./context";
 import { AppStore } from "@console/web/data/app";
 import { IconApp, IconUserAdd, IconConnect } from "@console/web/ui/icons/custom";
 import { StageStore } from "@console/web/data/stage";
-import { useStorage } from "@console/web/providers/account";
+import { useAccount, useStorage } from "@console/web/providers/account";
 import { NotFound, NotAllowed } from "../not-found";
 import { DebugRoute } from "../debug";
-import { useAuth } from "@console/web/providers/auth";
 import { OverviewRoute } from "./overview-next";
 import { ZeroProvider } from "./zero";
+import { useOpenAuth } from "@openauthjs/solid";
 
 export const WorkspaceRoute = (
   <Route
     component={(props) => {
+      const openauth = useOpenAuth()
+      createEffect(() => {
+        console.log("auth", openauth.all, openauth.subject)
+      })
       const params = useParams();
-      const auth = useAuth();
+      const auth = useOpenAuth();
+      const account = useAccount()
       const storage = useStorage();
       const nav = useNavigate();
       const workspace = createMemo(() =>
-        auth.current.workspaces.find(
+        account.current.workspaces.find(
           (item) => item.slug === params.workspaceSlug,
         ),
       );
@@ -48,10 +53,10 @@ export const WorkspaceRoute = (
 
       createEffect(() => {
         const workspaceSlug = params.workspaceSlug;
-        for (const item of auth.all()) {
+        for (const item of Object.values(account.all)) {
           for (const workspace of item.workspaces) {
-            if (workspace.slug === workspaceSlug && item.id !== auth.current.id) {
-              auth.switch(item.id);
+            if (workspace.slug === workspaceSlug && item.id !== auth.subject!.id) {
+              auth.switch(item.email);
             }
           }
         }

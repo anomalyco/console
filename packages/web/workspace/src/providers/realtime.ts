@@ -1,61 +1,64 @@
-import { mqtt } from "aws-iot-device-sdk-v2";
-import { onCleanup } from "solid-js";
+import { createEffect, createResource, onCleanup } from "solid-js";
 import { bus } from "./bus";
-import { useDummy } from "./dummy";
-import { useAuth } from "./auth";
+import { useOpenAuth } from "@openauthjs/solid";
+import { useAccount } from "./account";
 
 export function RealtimeProvider() {
-  let connection: mqtt.MqttClientConnection;
-  const auth = useAuth();
-  const dummy = useDummy();
-  const header = btoa(
-    JSON.stringify({
-      host: import.meta.env.VITE_WEBSOCKET_HTTP,
-      Authorization: auth.current.access,
-    }),
-  )
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-  const ws = new WebSocket(
-    "wss://" + import.meta.env.VITE_WEBSOCKET_REALTIME + "/event/realtime",
-    ["aws-appsync-event-ws", "header-" + header],
-  );
-  ws.onopen = () => {
-    console.log("connected");
-    ws.send(
+  const auth = useOpenAuth();
+  const account = useAccount();
+  const [access] = createResource(() => auth.access());
+
+  createEffect(() => {
+    if (!access()) return;
+    const header = btoa(
       JSON.stringify({
-        type: "connection_init",
+        host: import.meta.env.VITE_WEBSOCKET_HTTP,
+        Authorization: access(),
       }),
+    )
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    const ws = new WebSocket(
+      "wss://" + import.meta.env.VITE_WEBSOCKET_REALTIME + "/event/realtime",
+      ["aws-appsync-event-ws", "header-" + header],
     );
-  };
+    ws.onopen = () => {
+      console.log("connected");
+      ws.send(
+        JSON.stringify({
+          type: "connection_init",
+        }),
+      );
+    };
 
-  ws.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === "connection_ack") {
-      for (const workspace of auth.current.workspaces) {
-        ws.send(
-          JSON.stringify({
-            type: "subscribe",
-            id: workspace.id,
-            channel: "/workspace/" + workspace.id,
-            authorization: {
-              host: import.meta.env.VITE_WEBSOCKET_HTTP,
-              Authorization: auth.current.access,
-            },
-          }),
-        );
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "connection_ack") {
+        for (const workspace of account.current.workspaces) {
+          ws.send(
+            JSON.stringify({
+              type: "subscribe",
+              id: workspace.id,
+              channel: "/workspace/" + workspace.id,
+              authorization: {
+                host: import.meta.env.VITE_WEBSOCKET_HTTP,
+                Authorization: access(),
+              },
+            }),
+          );
+        }
       }
-    }
 
-    if (msg.type === "data") {
-      const evt = JSON.parse(msg.event);
-      bus.emit(evt.type, evt.properties);
-    }
-  };
+      if (msg.type === "data") {
+        const evt = JSON.parse(msg.event);
+        bus.emit(evt.type, evt.properties);
+      }
+    };
 
-  onCleanup(() => {
-    ws.close();
+    onCleanup(() => {
+      ws.close();
+    });
   });
 
   // onMount(async () => {
@@ -133,10 +136,6 @@ export function RealtimeProvider() {
 
   //   createConnection();
   // });
-
-  onCleanup(() => {
-    if (connection) connection.disconnect();
-  });
 
   return null;
 }

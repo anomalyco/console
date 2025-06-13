@@ -113,6 +113,7 @@ export module State {
     stageID: z.string().cuid2(),
     command: z.enum(Command),
     runID: z.string().cuid2().optional(),
+    version: z.string().optional(),
     time: z.object({
       created: z.string(),
       deleted: z.string().optional(),
@@ -208,6 +209,7 @@ export module State {
         completed: input.timeCompleted?.toISOString(),
       },
       runID: input.runID || undefined,
+      version: input.version || undefined,
       errors: input.errors || [],
       stageID: input.stageID,
     };
@@ -769,6 +771,7 @@ export module State {
             errors: update.errors,
             stageID: input.config.stageID,
             workspaceID: useWorkspace(),
+            version: update.version,
             timeStarted: update.timeStarted
               ? new Date(update.timeStarted)
               : undefined,
@@ -780,13 +783,14 @@ export module State {
           .onDuplicateKeyUpdate({
             set: {
               errors: update.errors,
+              version: update.version,
               timeStarted: update.timeStarted
                 ? new Date(update.timeStarted)
                 : undefined,
               timeCompleted: update.timeCompleted
                 ? new Date(update.timeCompleted)
                 : null,
-              command: update.command,
+              command: update.command || "unknown",
             },
           });
         await tx

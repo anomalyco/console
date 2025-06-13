@@ -1,7 +1,7 @@
-import { Show, createMemo, createSignal, Suspense } from "solid-js";
+import { Show, createMemo, createSignal, Suspense, createResource } from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
-import { useWorkspace } from "../context";
+import { useApi, useWorkspace } from "../context";
 import { utility } from "@console/web/ui/utility";
 import { Toggle } from "@console/web/ui/switch";
 import { IconLogosSlack, IconLogosGitHub } from "@console/web/ui/icons/custom";
@@ -27,12 +27,13 @@ import {
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Alerts } from "./alerts";
 import { useNavigate } from "@solidjs/router";
-import { useAuth } from "@console/web/providers/auth";
 import { AWS } from "./aws";
 import { theme } from "@console/web/ui/theme";
 import { Stack, Row } from "@console/web/ui/layout";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
+import { useOpenAuth } from "@openauthjs/solid"
+
 
 export const PANEL_CONTENT_SPACE = "10";
 export const PANEL_HEADER_SPACE = "3";
@@ -175,7 +176,7 @@ export function SettingsRoute() {
       .reduce((a, b) => a + b, 0),
   );
   const resourceStages = createMemo(() => resourcesUsages().length);
-  const auth = useAuth();
+  const auth = useOpenAuth();
   const nav = useNavigate();
   const workspace = useWorkspace();
   const cycle = createMemo(() => {
@@ -191,25 +192,22 @@ export function SettingsRoute() {
   let portalLink: Promise<Response> | undefined;
   let checkoutLink: Promise<Response> | undefined;
 
-  function generatePortalLink() {
-    return fetch(import.meta.env.VITE_API_URL + "/billing/portal", {
-      method: "POST",
-      body: JSON.stringify({ return_url: window.location.href }),
-      headers: {
-        "x-sst-workspace": workspace().id,
-        Authorization: rep().auth,
-      },
-    });
+  const api = useApi()
+  async function generatePortalLink() {
+    return api.client.billing.portal.$post({
+      json: {
+        return_url: window.location.href,
+        workspaceID: workspace().id,
+      }
+    })
   }
-  function generateCheckoutLink() {
-    return fetch(import.meta.env.VITE_API_URL + "/billing/checkout", {
-      method: "POST",
-      body: JSON.stringify({ return_url: window.location.href }),
-      headers: {
-        "x-sst-workspace": workspace().id,
-        Authorization: rep().auth,
-      },
-    });
+  async function generateCheckoutLink() {
+    return api.client.billing.checkout.$post({
+      json: {
+        return_url: window.location.href,
+        workspaceID: workspace().id,
+      }
+    })
   }
 
   function handleHoverManageSubscription() {
@@ -551,7 +549,7 @@ export function SettingsRoute() {
                   {
                     method: "DELETE",
                     headers: {
-                      authorization: `Bearer ${auth.current.access}`,
+                      authorization: `Bearer ${await auth.access()}`,
                     },
                   },
                 );
@@ -570,7 +568,7 @@ export function SettingsRoute() {
 function Integrations() {
   const rep = useReplicache();
   const workspace = useWorkspace();
-  const auth = useAuth();
+  const auth = useOpenAuth();
   const slackTeam = SlackTeamStore.all.watch(
     rep,
     () => [],
@@ -593,6 +591,8 @@ function Integrations() {
       if (e.data === "github.success") setOverrideGithub(true);
     },
   );
+
+  const [access] = createResource(() => auth.access())
 
   return (
     <Show when={githubOrg.ready && slackTeam.ready}>
@@ -647,7 +647,7 @@ function Integrations() {
             <input
               type="hidden"
               name="authorization"
-              value={"Bearer " + auth.current.access}
+              value={"Bearer " + access()}
             />
             <input type="hidden" name="workspaceID" value={workspace().id} />
           </form>
@@ -692,7 +692,7 @@ function Integrations() {
             />
             <input type="hidden" name="provider" value="github" />
             <input type="hidden" name="workspaceID" value={workspace().id} />
-            <input type="hidden" name="token" value={auth.current.access} />
+            <input type="hidden" name="token" value={access()} />
           </form>
         </Row>
       </Stack>

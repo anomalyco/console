@@ -29,7 +29,13 @@ export const UpdateCommand = z.union([
 
 export type UpdateCommand = z.infer<typeof UpdateCommand>;
 
-export const Command = ["deploy", "refresh", "remove", "edit"] as const;
+export const Command = [
+  "deploy",
+  "refresh",
+  "remove",
+  "edit",
+  "unknown",
+] as const;
 
 export const stateUpdateTable = mysqlTable(
   "state_update",
@@ -39,6 +45,7 @@ export const stateUpdateTable = mysqlTable(
     runID: cuid("run_id"),
     command: mysqlEnum("command", Command).notNull(),
     index: bigint("index", { mode: "number" }),
+    version: varchar("version", { length: 255 }),
     ...timestampsNext,
     timeStarted: timestamp("time_started"),
     timeCompleted: timestamp("time_completed"),
@@ -129,22 +136,7 @@ export const stateResourceTable = mysqlTable(
   },
   (table) => ({
     ...workspaceIndexes(table),
-    stageID: foreignKey({
-      name: "state_resource_stage_id",
-      columns: [table.workspaceID, table.stageID],
-      foreignColumns: [stage.workspaceID, stage.id],
-    }).onDelete("cascade"),
     urn: unique("urn").on(table.workspaceID, table.stageID, table.urn),
-    updateID: foreignKey({
-      name: "state_resource_update_created_id",
-      columns: [table.workspaceID, table.updateCreatedID],
-      foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
-    }).onDelete("cascade"),
-    modifiedID: foreignKey({
-      name: "state_resource_update_modified_id",
-      columns: [table.workspaceID, table.updateModifiedID],
-      foreignColumns: [stateUpdateTable.workspaceID, stateUpdateTable.id],
-    }).onDelete("cascade"),
     timeUpdated: index("time_updated").on(table.timeUpdated),
   }),
 );

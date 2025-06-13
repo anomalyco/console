@@ -477,6 +477,41 @@
       "when": 1741451740869,
       "tag": "0067_chubby_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "5",
+      "when": 1742940487155,
+      "tag": "0068_familiar_cerebro",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1743133529964,
+      "tag": "0069_famous_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "5",
+      "when": 1743173041782,
+      "tag": "0070_useful_lady_ursula",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "5",
+      "when": 1743173081117,
+      "tag": "0071_bumpy_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "5",
+      "when": 1743605239187,
+      "tag": "0072_busy_morgan_stark",
+      "breakpoints": true
     }
   ]
 }

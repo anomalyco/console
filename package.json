@@ -23,21 +23,17 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
+    "@openauthjs/solid": "0.0.0-20250311201457",
     "@tsconfig/node16": "^16.1.0",
+    "@tsconfig/node20": "^20.1.4",
     "@types/bun": "^1.1.18",
     "constructs": "10.3.0",
-    "sst": "3.9.30",
+    "sst": "3.12.5",
     "turbo": "2.3.4",
     "typescript": "5.5.4"
   },
-  "dependencies": {
-    "@tsconfig/node20": "^20.1.4"
-  },
   "patchedDependencies": {
     "@macaron-css/solid@1.5.3": "patches/@macaron-css%2Fsolid@1.5.3.patch"
-  },
-  "overrides": {
-    "@rocicorp/zero": "0.16.2025022000"
   },
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",

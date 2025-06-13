@@ -5,7 +5,7 @@ import "@fontsource/ibm-plex-mono/latin.css";
 import { styled } from "@macaron-css/solid";
 import { darkClass, lightClass, theme } from "./ui/theme";
 import { globalStyle, macaron$ } from "@macaron-css/core";
-import { Match, Switch, onCleanup, Component, createSignal } from "solid-js";
+import { Match, Switch, onCleanup, Component, createSignal, createEffect } from "solid-js";
 import { Navigate, Route, Router, useNavigate } from "@solidjs/router";
 import { Auth } from "./pages/auth";
 import { CommandBar, useCommandBar } from "./pages/workspace/command-bar";
@@ -13,9 +13,9 @@ import { DebugRoute } from "./pages/debug";
 import { Design } from "./pages/design";
 import { WorkspaceRoute } from "./pages/workspace";
 import { WorkspaceCreate } from "./pages/workspace-create";
-import { IconAddCircle, IconWorkspace } from "./ui/icons/custom";
+import { IconAddCircle, IconLogout, IconWorkspace } from "./ui/icons/custom";
 import { LocalProvider } from "./providers/local";
-import { useStorage } from "./providers/account";
+import { AccountProvider, useAccount, useStorage } from "./providers/account";
 import { DummyConfigProvider, DummyProvider } from "./providers/dummy";
 import { LocalLogsProvider } from "./providers/invocation";
 import { FlagsProvider } from "./providers/flags";
@@ -23,7 +23,8 @@ import { NotFound } from "./pages/not-found";
 import { Local } from "./pages/local";
 import { ReplicacheStatusProvider } from "./providers/replicache-status";
 import { RealtimeProvider } from "./providers/realtime";
-import { AuthProvider, useAuth } from "./providers/auth";
+import { OpenAuthProvider, useOpenAuth } from "@openauthjs/solid";
+import { IconUser } from "./ui/icons";
 
 const Root = styled("div", {
   base: {
@@ -136,6 +137,30 @@ globalStyle("ul, ol", {
   padding: 0,
 });
 
+const legacyAuth = JSON.parse(localStorage.getItem("radiant.auth") || "{}")
+if (legacyAuth.accounts) {
+  const migrate = {
+    subjects: {} as Record<string, any>,
+    current: undefined,
+  }
+  for (const item of Object.values<any>(legacyAuth.accounts)) {
+    console.log(item)
+    const splits = item.refresh.split(":")
+    splits.pop()
+    const id = splits.join(":")
+    migrate.subjects[id] = {
+      id,
+      refresh: item.refresh,
+    }
+    if (item.id === legacyAuth.current) {
+      migrate.current = id
+    }
+  }
+  console.log("migrated", migrate)
+  localStorage.setItem(`${import.meta.env.VITE_AUTH_URL}.auth`, JSON.stringify(migrate))
+  localStorage.removeItem("radiant.auth")
+}
+
 export const App: Component = () => {
   const [theme, setTheme] = createSignal<string>(
     window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -154,77 +179,122 @@ export const App: Component = () => {
   const storage = useStorage();
 
   return (
-    <Root class={theme() === "light" ? lightClass : darkClass} id="styled">
-      <Router>
-        <Route>
-          <Route path="/auth">{Auth}</Route>
-          <Route
-            path="*"
-            component={(props) => (
-              <CommandBar>
-                <AuthProvider>
-                  <ReplicacheStatusProvider>
-                    <DummyProvider>
-                      <DummyConfigProvider>
-                        <FlagsProvider>
-                          <RealtimeProvider />
-                          <LocalProvider>
-                            <LocalLogsProvider>
-                              <GlobalCommands />
-                              {props.children}
-                            </LocalLogsProvider>
-                          </LocalProvider>
-                        </FlagsProvider>
-                      </DummyConfigProvider>
-                    </DummyProvider>
-                  </ReplicacheStatusProvider>
-                </AuthProvider>
-              </CommandBar>
-            )}
-          >
-            <Route path="local" component={Local} />
-            <Route path="debug" component={DebugRoute} />
-            <Route path="design" component={Design} />
-            <Route path="workspace" component={WorkspaceCreate} />
-            <Route path=":workspaceSlug">{WorkspaceRoute}</Route>
+    <OpenAuthProvider
+      issuer={import.meta.env.VITE_AUTH_URL}
+      clientID="web"
+    >
+      <Root class={theme() === "light" ? lightClass : darkClass} id="styled">
+        <Router>
+          <Route>
+            <Route path="/auth">{Auth}</Route>
             <Route
-              path="/"
-              component={() => {
-                console.log("here");
-                const auth = useAuth();
-                return (
-                  <Switch>
-                    <Match when={auth.current.workspaces.length > 0}>
-                      <Navigate
-                        href={`/${(
-                          auth.current.workspaces.find(
-                            (w) => w.id === storage.value.workspace,
-                          ) || auth.current.workspaces[0]
-                        ).slug
-                          }`}
-                      />
-                    </Match>
-                    <Match when={true}>
-                      <Navigate href={`/workspace`} />
-                    </Match>
-                  </Switch>
-                );
-              }}
-            />
-            <Route path="*" component={() => <NotFound />} />
+              path="*"
+              component={(props) => (
+                <CommandBar>
+                  <AccountProvider>
+                    <RealtimeProvider />
+                    <ReplicacheStatusProvider>
+                      <DummyProvider>
+                        <DummyConfigProvider>
+                          <FlagsProvider>
+                            <LocalProvider>
+                              <LocalLogsProvider>
+                                <GlobalCommands />
+                                {props.children}
+                              </LocalLogsProvider>
+                            </LocalProvider>
+                          </FlagsProvider>
+                        </DummyConfigProvider>
+                      </DummyProvider>
+                    </ReplicacheStatusProvider>
+                  </AccountProvider>
+                </CommandBar>
+              )}
+            >
+              <Route path="local/:app/:stage" component={Local} />
+              <Route path="debug" component={DebugRoute} />
+              <Route path="design" component={Design} />
+              <Route path="workspace" component={WorkspaceCreate} />
+              <Route path=":workspaceSlug">{WorkspaceRoute}</Route>
+              <Route
+                path="/"
+                component={() => {
+                  const account = useAccount()
+                  return (
+                    <Switch>
+                      <Match when={account.current.workspaces.length > 0}>
+                        <Navigate
+                          href={`/${(
+                            account.current.workspaces.find(
+                              (w) => w.id === storage.value.workspace,
+                            ) || account.current.workspaces[0]
+                          ).slug
+                            }`}
+                        />
+                      </Match>
+                      <Match when={true}>
+                        <Navigate href={`/workspace`} />
+                      </Match>
+                    </Switch>
+                  );
+                }}
+              />
+              <Route path="*" component={() => <NotFound />} />
+            </Route>
           </Route>
-        </Route>
-      </Router>
-    </Root>
+        </Router>
+      </Root>
+    </OpenAuthProvider>
   );
 };
 
 function GlobalCommands() {
   const bar = useCommandBar();
-  const auth = useAuth();
+  const auth = useOpenAuth();
+  const account = useAccount()
   const nav = useNavigate();
+
+  bar.register("auth", async () => {
+    return [
+      {
+        title: "Add account",
+        category: "Account",
+        icon: IconAddCircle,
+        run: (control) => {
+          auth.authorize({
+            provider: "email",
+          })
+          control.hide();
+        },
+      },
+      {
+        title: "Logout from " + account.current.email,
+        category: "Account",
+        icon: IconLogout,
+        run: (control) => {
+          auth.logout(auth.subject!.id)
+          control.hide();
+          nav("/");
+        },
+      },
+      ...(account.all)
+        .filter((item) => item.id !== auth.subject?.id)
+        .map((item) => ({
+          title: "Switch to " + item.email,
+          category: "Account",
+          icon: IconUser,
+          run: (control: any) => {
+            console.log("switching to", item.id);
+            auth.switch(item.id)
+            nav("/" + item.workspaces[0].slug);
+            control.hide();
+          },
+        })),
+    ]
+  })
+
   bar.register("workspace-switcher", async () => {
-    const workspaces = auth.all().flatMap((account) =>
+    const workspaces = Object.values(account.all).flatMap((account) =>
       account.workspaces.map((w) => ({
         accountID: account.id,
         workspace: w,

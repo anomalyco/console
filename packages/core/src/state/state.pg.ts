@@ -19,11 +19,10 @@ export const UpdateCommand = z.union([
   z.literal("refresh"),
   z.literal("remove"),
   z.literal("edit"),
+  z.literal("unknown"),
 ]);
 
 export type UpdateCommand = z.infer<typeof UpdateCommand>;
-
-export const Command = ["deploy", "refresh", "remove", "edit"] as const;
 
 export const Error = z.object({
   urn: z.string(),
@@ -40,6 +39,7 @@ export const stateUpdateTable = pgTable(
     runID: cuid("run_id"),
     command: jsonb("command").$type<UpdateCommand>().notNull(),
     index: integer("index"),
+    version: varchar("version", { length: 255 }),
     timeStarted: utc("time_started"),
     timeCompleted: utc("time_completed"),
     resourceDeleted: integer("resource_deleted"),

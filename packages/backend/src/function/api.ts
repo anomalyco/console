@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { AccountRoute } from "src/api/account";
+import { AgentRoute } from "src/api/agent";
 import { auth } from "src/api/auth";
 import { BillingRoute } from "src/api/billing";
 import { DebugRoute } from "src/api/debug";

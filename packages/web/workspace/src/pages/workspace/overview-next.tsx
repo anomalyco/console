@@ -14,7 +14,6 @@ import { AppStore, RepoFromApp, RunStore, StateUpdateStore } from "../../data/ap
 import { AccountStore } from "../../data/aws";
 import { ActiveStages } from "../../data/stage";
 import { UserStore } from "../../data/user";
-import { useAuth } from "../../providers/auth";
 import { useLocalContext } from "../../providers/local";
 import { useReplicache, createSubscription } from "../../providers/replicache";
 import { AvatarInitialsIcon } from "../../ui/avatar-icon";
@@ -29,6 +28,7 @@ import { Tag } from "../../ui/tag";
 import { theme } from "../../ui/theme";
 import { utility } from "../../ui/utility";
 import { Header } from "./header";
+import { useAccount } from "@console/web/providers/account";
 
 const OVERFLOW_APPS_COUNT = 9;
 const OVERFLOW_APPS_DISPLAY = 6;
@@ -301,7 +301,7 @@ export function OverviewRoute() {
     () => [],
     (accounts) => accounts.filter((a) => !a.timeDeleted),
   );
-  const auth = useAuth();
+  const account = useAccount()
   const local = useLocalContext();
   const users = UserStore.list.watch(rep, () => []);
   const r = createSubscription(() => async (tx) => {
@@ -345,7 +345,7 @@ export function OverviewRoute() {
     };
   });
   const nav = useNavigate();
-  const selfEmail = createMemo(() => auth.current.email);
+  const selfEmail = createMemo(() => account.current.email);
 
   const showApps = createMemo(() => {
     return (query.accounts || null)?.split(",") ?? [];
@@ -950,7 +950,7 @@ type UserCardProps = {
 function UserCard(props: UserCardProps) {
   const rep = useReplicache();
   const user = UserStore.get.watch(rep, () => [props.id]);
-  const auth = useAuth();
+  const account = useAccount()
 
   return (
     <UserRoot>
@@ -968,7 +968,7 @@ function UserCard(props: UserCardProps) {
         <Show when={!user()?.timeSeen}>
           <Tag level="tip">Invited</Tag>
         </Show>
-        <Show when={auth.current.email !== user()?.email}>
+        <Show when={account.current.email !== user()?.email}>
           <Dropdown
             size="sm"
             icon={<IconEllipsisVertical width={18} height={18} />}

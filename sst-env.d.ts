@@ -9,6 +9,10 @@ declare module "sst" {
       "arn": string
       "type": "sst.aws.SnsTopic"
     }
+    "AnthropicKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Api": {
       "name": string
       "type": "sst.aws.Function"
@@ -99,6 +103,10 @@ declare module "sst" {
       "type": "sst.aws.Function"
       "url": string
     }
+    "GeminiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "GithubAppID": {
       "type": "sst.sst.Secret"
       "value": string
@@ -132,6 +140,10 @@ declare module "sst" {
     }
     "OpenAuth": {
       "type": "sst.aws.Auth"
+      "url": string
+    }
+    "OpenControlRouter": {
+      "type": "sst.aws.Router"
       "url": string
     }
     "Postgres": {

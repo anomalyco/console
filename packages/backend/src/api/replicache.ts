@@ -58,19 +58,18 @@ import { AppRepo } from "@console/core/app/repo";
 import { Github } from "@console/core/git/github";
 import { alert } from "@console/core/alert/alert.sql";
 import { Alert } from "@console/core/alert/index";
-import { S3Client } from "@aws-sdk/client-s3";
 import { Hono } from "hono";
 import { notPublic } from "./auth";
 import { VisibleError } from "@console/core/util/error";
 import { Billing } from "@console/core/billing/index";
 import { server } from "../replicache/server";
+import { logger } from "@console/core/util/log";
 
 export const ReplicacheRoute = new Hono().use(notPublic);
 
 export const TABLES = {
   stateUpdate: stateUpdateTable,
   stateResource: stateResourceTable,
-  stateEvent: stateEventTable,
   stateCount: stateCountTable,
   workspace,
   stripe: stripeTable,
@@ -107,11 +106,6 @@ const TABLE_KEY = {
   usage: [usage.stageID, usage.id],
   stateUpdate: [stateUpdateTable.stageID, stateUpdateTable.id],
   stateResource: [stateResourceTable.stageID, stateResourceTable.id],
-  stateEvent: [
-    stateEventTable.stageID,
-    stateEventTable.updateID,
-    stateEventTable.id,
-  ],
   stateCount: [stateCountTable.stageID, stateCountTable.id],
   run: [runTable.id],
   stripe: [],
@@ -119,12 +113,7 @@ const TABLE_KEY = {
   [key in TableName]?: MySqlColumn[];
 };
 
-const TABLE_SELECT = {
-  stateEvent: (() => {
-    const { inputs, outputs, ...rest } = getTableColumns(stateEventTable);
-    return rest;
-  })(),
-} as {
+const TABLE_SELECT = {} as {
   [key in TableName]?: any;
 };
 
@@ -135,7 +124,6 @@ const TABLE_PROJECTION = {
   githubOrg: (input) => Github.serializeOrg(input),
   githubRepo: (input) => Github.serializeRepo(input),
   stateUpdate: (input) => State.serializeUpdate(input),
-  stateEvent: (input) => State.serializeEvent(input),
   stateResource: (input) => State.serializeResource(input),
   stateCount: (input) => State.serializeCount(input),
   runConfig: (input) => {
@@ -152,14 +140,13 @@ const TABLE_PROJECTION = {
 
 ReplicacheRoute.post("/pull1", async (c) => {
   const actor = useActor();
-  function log(...args: any[]) {
-    if (!process.env.SST_DEV) return;
-    console.log(...args);
-  }
-  log("actor", actor);
+  const log = logger();
+  log.tag("workspaceID", useWorkspace());
+  log.tag("endpoint", "pull1");
+  log.info("actor", actor);
 
   const req: PullRequest = await c.req.json<PullRequest>();
-  log("request", req);
+  log.info("request", req);
   if (req.pullVersion !== 1) {
     return c.redirect("/replicache/pull");
   }
@@ -188,7 +175,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
         .then((rows) => rows.at(0)!);
 
       if (!isDeepEqual(group.actor, actor)) {
-        log("compare failed", group.actor, actor);
+        log.info("compare failed", group.actor, actor);
         return;
       }
 
@@ -225,7 +212,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
       ][] = [];
 
       if (actor.type === "user") {
-        log("syncing user");
+        log.info("syncing user");
 
         const deletedStages = await tx
           .select({ id: stage.id })
@@ -289,7 +276,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
           .from(runTable)
           .where(eq(runTable.workspaceID, useWorkspace()))
           .orderBy(desc(runTable.timeCreated))
-          .limit(200)
+          .limit(100)
           .then((rows) => rows.map((row) => row.id));
         const tableFilters = {
           log_search: eq(log_search.userID, actor.properties.userID),
@@ -308,7 +295,6 @@ ReplicacheRoute.post("/pull1", async (c) => {
           issue: isNull(issue.timeDeleted),
           ...(updates.length
             ? {
-                stateEvent: inArray(stateEventTable.updateID, updates),
                 stateUpdate: inArray(stateUpdateTable.id, updates),
               }
             : {}),
@@ -331,38 +317,45 @@ ReplicacheRoute.post("/pull1", async (c) => {
 
         for (const [name, table] of Object.entries(TABLES)) {
           const key = TABLE_KEY[name as TableName] ?? [table.id];
-          const query = tx
-            .select({
-              name: sql`${name}`,
-              id: table.id,
-              version: table.timeUpdated,
-              key: sql.join([
-                sql`concat_ws(`,
-                sql.join([sql`'/'`, sql`''`, sql`${name}`, ...key], sql`, `),
-                sql.raw(`)`),
-              ]) as SQL<string>,
-            })
-            .from(table)
-            .where(
-              and(
-                eq(
-                  "workspaceID" in table ? table.workspaceID : table.id,
-                  workspaceID,
+          const rows = [];
+          while (true) {
+            const query = tx
+              .select({
+                name: sql`${name}`,
+                id: table.id,
+                version: table.timeUpdated,
+                key: sql.join([
+                  sql`concat_ws(`,
+                  sql.join([sql`'/'`, sql`''`, sql`${name}`, ...key], sql`, `),
+                  sql.raw(`)`),
+                ]) as SQL<string>,
+              })
+              .from(table)
+              .where(
+                and(
+                  eq(
+                    "workspaceID" in table ? table.workspaceID : table.id,
+                    workspaceID,
+                  ),
+                  ...(name === "stage" ? [] : [isNull(table.timeDeleted)]),
+                  ...(name in tableFilters
+                    ? [tableFilters[name as keyof typeof tableFilters]]
+                    : []),
                 ),
-                ...(name === "stage" ? [] : [isNull(table.timeDeleted)]),
-                ...(name in tableFilters
-                  ? [tableFilters[name as keyof typeof tableFilters]]
-                  : []),
-              ),
-            );
-          log("getting updated from", name);
-          const rows = await query.execute();
+              )
+              .offset(rows.length)
+              .limit(100_000);
+            const result = await query.execute();
+            rows.push(...result);
+            if (result.length < 10_000) break;
+          }
+          log.info("getting updated from", name);
           results.push([name, rows as any]);
         }
       }
 
       if (actor.type === "account") {
-        log("syncing account");
+        log.info("syncing account");
 
         const [users] = await Promise.all([
           await tx
@@ -416,16 +409,16 @@ ReplicacheRoute.post("/pull1", async (c) => {
         toPut[name] = arr;
       }
 
-      log(
+      log.info(
         "toPut",
         mapValues(toPut, (value) => value.length),
       );
 
-      log("toDel", cvr.data);
+      log.info("toDel", cvr.data);
 
       // new data
       for (const [name, items] of Object.entries(toPut)) {
-        log(name);
+        log.info(name);
         const ids = items.map((item) => item.id);
         const keys = Object.fromEntries(
           items.map((item) => [item.id, item.key]),
@@ -434,35 +427,47 @@ ReplicacheRoute.post("/pull1", async (c) => {
         if (!ids.length) continue;
         const table = TABLES[name as keyof typeof TABLES];
 
-        for (const group of chunk(ids, 200)) {
-          const now = Date.now();
-          log(name, "fetching", group.length);
-          const rows = await tx
-            .select(
-              TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
-                getTableColumns(table),
-            )
-            .from(table)
-            .where(
-              and(
-                "workspaceID" in table && actor.type === "user"
-                  ? eq(table.workspaceID, useWorkspace())
-                  : undefined,
-                inArray(table.id, group),
-              ),
-            )
-            .execute();
-          log(name, "got", rows.length, "in", Date.now() - now, "ms");
-          const projection =
-            TABLE_PROJECTION[name as keyof typeof TABLE_PROJECTION];
-          for (const row of rows) {
-            const key = keys[row.id]!;
-            patch.push({
-              op: "put",
-              key,
-              value: projection ? projection(row as any) : row,
-            });
+        let chunksize = 1000;
+        while (true) {
+          let early = false;
+          for (const group of chunk(ids, chunksize)) {
+            const now = Date.now();
+            log.info(name, "fetching", group.length);
+            const rows = await tx
+              .select(
+                TABLE_SELECT[name as keyof typeof TABLE_SELECT] ||
+                  getTableColumns(table),
+              )
+              .from(table)
+              .where(
+                and(
+                  "workspaceID" in table && actor.type === "user"
+                    ? eq(table.workspaceID, useWorkspace())
+                    : undefined,
+                  inArray(table.id, group),
+                ),
+              )
+              .execute()
+              .catch(() => {});
+            if (!rows) {
+              early = true;
+              break;
+            }
+            log.info(name, "got", rows.length, "in", Date.now() - now, "ms");
+            const projection =
+              TABLE_PROJECTION[name as keyof typeof TABLE_PROJECTION];
+            for (const row of rows) {
+              const key = keys[row.id]!;
+              patch.push({
+                op: "put",
+                key,
+                value: projection ? projection(row as any) : row,
+              });
+            }
           }
+          if (!early) break;
+          chunksize = Math.floor(chunksize / 2);
+          log.info("adjusting chunksize", { chunksize });
         }
       }
 
@@ -493,7 +498,7 @@ ReplicacheRoute.post("/pull1", async (c) => {
         clients.map((c) => [c.id, c.mutationID] as const),
       );
       if (patch.length > 0 || Object.keys(lastMutationIDChanges).length > 0) {
-        log("inserting", req.clientGroupID);
+        log.info("inserting", req.clientGroupID);
         await tx
           .update(replicache_client_group)
           .set({

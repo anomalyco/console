@@ -69,8 +69,6 @@ export const stateReceiveEventLog = zod(
     const inserts = [] as (typeof pg_stateEventTable.$inferInsert)[];
     const workspaceID = useWorkspace();
 
-    const progress = new Set<string>();
-
     const events: Record<
       string,
       {

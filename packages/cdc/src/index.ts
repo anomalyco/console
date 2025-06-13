@@ -80,14 +80,19 @@ const transforms = {
       timeSeen: input.time_seen ? new Date(input.time_seen) : undefined,
     }),
   ),
-  workspace: transform(workspaceTable, [workspaceTable.id], (input) => ({
-    id: input.id,
-    slug: input.slug,
-    timeGated: input.timeGated ? new Date(input.timeGated) : undefined,
-    timeCreated: new Date(input.timeCreated),
-    timeDeleted: input.timeDeleted ? new Date(input.timeDeleted) : undefined,
-    settingIssue: input.settingIssue,
-  })),
+  workspace: transform(workspaceTable, [workspaceTable.id], (input) => {
+    const result = {
+      id: input.id,
+      slug: input.slug,
+      timeGated: input.time_gated ? new Date(input.time_gated) : undefined,
+      timeCreated: new Date(input.time_created),
+      timeDeleted: input.time_deleted
+        ? new Date(input.time_deleted)
+        : undefined,
+      settingIssue: input.setting_issue,
+    };
+    return result;
+  }),
   state_update: transform(
     stateUpdateTable,
     [stateUpdateTable.workspaceID, stateUpdateTable.id],
@@ -96,6 +101,7 @@ const transforms = {
         id: input.id,
         workspaceID: input.workspace_id,
         stageID: input.stage_id,
+        version: input.version,
         runID: input.run_id,
         command: input.command,
         index: input.index,

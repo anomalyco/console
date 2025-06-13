@@ -5,6 +5,7 @@ import { database } from "./planetscale";
 export const auth = new sst.aws.Auth("OpenAuth", {
   domain: "openauth." + domain,
   issuer: {
+    dev: false,
     link: [database, email],
     handler: "packages/backend/src/function/auth/issuer.handler",
     environment: {

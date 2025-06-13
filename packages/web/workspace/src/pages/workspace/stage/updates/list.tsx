@@ -23,6 +23,7 @@ export const CMD_MAP = {
   refresh: "sst refresh",
   remove: "sst remove",
   edit: "sst state edit",
+  unknown: "unknown",
 };
 
 export const STATUS_MAP = {

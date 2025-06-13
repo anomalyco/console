@@ -121,6 +121,7 @@ export const extract = zod(
                   ),
                 );
               if (existing.length) return;
+              if (row.workspaceID === "x170ji34sou0dman0z40zy1c") return;
               await bus.publish(Resource.Bus, Events.RateLimited, {
                 stageID: row.stageID,
                 logGroup: input.logGroup,

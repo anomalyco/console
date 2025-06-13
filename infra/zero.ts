@@ -25,15 +25,34 @@ const zeroEnv = {
   ZERO_CHANGE_DB: conn,
   ZERO_REPLICA_FILE: "/tmp/console.db",
   ZERO_LITESTREAM_RESTORE_PARALLELISM: "64",
-  ZERO_SHARD_ID: $app.stage,
+  ZERO_APP_ID: $app.stage,
   ZERO_AUTH_JWKS_URL: $interpolate`${auth.url}/.well-known/jwks.json`,
+  ZERO_INITIAL_SYNC_ROW_BATCH_SIZE: "30000",
+  NODE_OPTIONS: "--max-old-space-size=8192",
   ...($dev
     ? {}
     : {
-        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/10`,
+        ZERO_LITESTREAM_BACKUP_URL: $interpolate`s3://${storage.name}/zero/12`,
       }),
 };
 
+const ebsRole = new aws.iam.Role("ZeroEBSRole", {
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Action: "sts:AssumeRole",
+        Effect: "Allow",
+        Principal: {
+          Service: "ecs.amazonaws.com",
+        },
+      },
+    ],
+  }),
+  managedPolicyArns: [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes",
+  ],
+});
 const replication = !$dev
   ? new sst.aws.Service(`ZeroReplication`, {
       cluster,
@@ -44,7 +63,6 @@ const replication = !$dev
           }
         : {}),
       image,
-      wait: true,
       link: [postgres, storage],
       health: {
         command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
@@ -71,12 +89,35 @@ const replication = !$dev
       },
       transform: {
         service: {
-          healthCheckGracePeriodSeconds: 900,
-        },
-        taskDefinition: {
-          ephemeralStorage: {
-            sizeInGib: 200,
+          healthCheckGracePeriodSeconds: 900000,
+          volumeConfiguration: {
+            name: "tmp",
+            managedEbsVolume: {
+              roleArn: ebsRole.arn,
+              volumeType: "gp3",
+              sizeInGb: 500,
+              iops: 16000,
+            },
           },
+        },
+        taskDefinition(args) {
+          args.volumes = [
+            {
+              name: "tmp",
+              configureAtLaunch: true,
+            },
+          ];
+          args.containerDefinitions = $jsonParse(
+            args.containerDefinitions,
+          ).apply((val) => {
+            val[0].mountPoints = [
+              {
+                sourceVolume: "tmp",
+                containerPath: "/tmp",
+              },
+            ];
+            return JSON.stringify(val);
+          });
         },
         loadBalancer: {
           idleTimeout: 60 * 60,
@@ -85,51 +126,6 @@ const replication = !$dev
     })
   : undefined;
 
-if ($app.stage === "production" && false) {
-  new sst.aws.Service(`ZeroReplicationTest`, {
-    cluster,
-    ...($app.stage === "production"
-      ? {
-          cpu: "2 vCPU",
-          memory: "4 GB",
-        }
-      : {}),
-    image,
-    wait: true,
-    link: [postgres, storage],
-    health: {
-      command: ["CMD-SHELL", "curl -f http://localhost:4849/ || exit 1"],
-      interval: "5 seconds",
-      retries: 3,
-      startPeriod: "300 seconds",
-    },
-    environment: {
-      ...zeroEnv,
-      ZERO_CHANGE_MAX_CONNS: "3",
-      ZERO_NUM_SYNC_WORKERS: "0",
-      ZERO_SHARD_ID: $app.stage + "_test",
-      // @ts-expect-error
-      ZERO_LITESTREAM_BACKUP_URL: undefined,
-    },
-    logging: {
-      retention: "1 month",
-    },
-    transform: {
-      service: {
-        healthCheckGracePeriodSeconds: 900,
-      },
-      taskDefinition: {
-        ephemeralStorage: {
-          sizeInGib: 200,
-        },
-      },
-      loadBalancer: {
-        idleTimeout: 60 * 60,
-      },
-    },
-  });
-}
-
 aws.getCallerIdentityOutput().apply(console.log);
 if (replication)
   new command.local.Command(
@@ -137,7 +133,8 @@ if (replication)
     {
       dir: process.cwd() + "/packages/zero",
       environment: {
-        ZERO_UPSTREAM_DB: conn,
+        ZERO_UPSTREAM_DB: zeroEnv.ZERO_UPSTREAM_DB,
+        ZERO_APP_ID: zeroEnv.ZERO_APP_ID,
       },
       create: "bun run zero-deploy-permissions",
       triggers: [Date.now()],
@@ -170,7 +167,6 @@ export const zero = cluster.addService("Zero", {
           ZERO_CVR_MAX_CONNS: "160",
         }),
   },
-  wait: true,
   health: {
     command: ["CMD-SHELL", "curl -f http://localhost:4848/ || exit 1"],
     interval: "5 seconds",
@@ -190,12 +186,35 @@ export const zero = cluster.addService("Zero", {
   },
   transform: {
     service: {
-      healthCheckGracePeriodSeconds: 900,
-    },
-    taskDefinition: {
-      ephemeralStorage: {
-        sizeInGib: 200,
+      healthCheckGracePeriodSeconds: 900000,
+      volumeConfiguration: {
+        name: "tmp",
+        managedEbsVolume: {
+          roleArn: ebsRole.arn,
+          volumeType: "gp3",
+          sizeInGb: 500,
+          iops: 16000,
+        },
       },
+    },
+    taskDefinition(args) {
+      args.volumes = [
+        {
+          name: "tmp",
+          configureAtLaunch: true,
+        },
+      ];
+      args.containerDefinitions = $jsonParse(args.containerDefinitions).apply(
+        (val) => {
+          val[0].mountPoints = [
+            {
+              sourceVolume: "tmp",
+              containerPath: "/tmp",
+            },
+          ];
+          return JSON.stringify(val);
+        },
+      );
     },
     loadBalancer: {
       idleTimeout: 60 * 60,
@@ -211,7 +230,7 @@ export const zero = cluster.addService("Zero", {
 const context = $interpolate`debezium.sink.type=http
 quarkus.log.level=WARN
 debezium.format.value=json
-debezium.sink.http.url=http://localhost:3003
+debezium.sink.http.url=http://host.docker.internal:3003
 log4j.logger.io.debezium.relational.history=DEBUG, stdout
 debezium.source.offset.storage.file.filename=data/offsets.dat
 debezium.source.offset.flush.interval.ms=0

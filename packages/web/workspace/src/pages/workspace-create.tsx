@@ -17,7 +17,8 @@ import { Fullscreen, Stack } from "../ui/layout";
 import { theme } from "../ui/theme";
 import { utility } from "../ui/utility";
 import { z } from "zod";
-import { useAuth } from "../providers/auth";
+import { useOpenAuth } from "@openauthjs/solid"
+import { useAccount } from "../providers/account";
 
 const CreateWorkspaceHint = styled("ul", {
   base: {
@@ -47,7 +48,8 @@ export function WorkspaceCreate() {
       }),
     ),
   });
-  const auth = useAuth();
+  const auth = useOpenAuth();
+  const account = useAccount()
   const nav = useNavigate();
 
   return (
@@ -81,7 +83,7 @@ export function WorkspaceCreate() {
                 {
                   method: "POST",
                   headers: {
-                    authorization: `Bearer ${auth.current.access}`,
+                    authorization: `Bearer ${await auth.access()}`,
                     "content-type": "application/json",
                   },
                   body: JSON.stringify(data),
@@ -91,8 +93,9 @@ export function WorkspaceCreate() {
                 setError(form, "slug", "Workspace name is taken.");
                 return;
               }
-              await auth.refresh();
               const workspace = (await result.json()) as Workspace.Info;
+              await account.refresh(account.current.email);
+              await new Promise(resolve => setTimeout(resolve, 1000));
               nav(`/${workspace.slug}`);
             }}
           >

@@ -1,12 +1,12 @@
 import { createInitializedContext } from "@console/web/common/context";
 import { createMemo } from "solid-js";
 import { useSearchParams } from "@solidjs/router";
-import { useAuth } from "./auth";
+import { useAccount } from "./account";
 
 export const { use: useFlags, provider: FlagsProvider } =
   createInitializedContext("FlagsContext", () => {
-    const auth = useAuth();
-    const email = createMemo(() => auth.current.email);
+    const account = useAccount()
+    const email = createMemo(() => account.current.email);
     const [search] = useSearchParams();
     const internal = createMemo(
       () => email().endsWith("@sst.dev") || search.internal === "true",

@@ -19,7 +19,6 @@ import type { RunConfig } from "@console/core/run/config";
 import { styled } from "@macaron-css/solid";
 import { useAppContext } from "../context";
 import { useWorkspace } from "../../context";
-import { useAuth } from "../../../../providers/auth";
 import { createId } from "@paralleldrive/cuid2";
 import { IconEllipsisVertical } from "../../../../ui/icons";
 import { createEventListener } from "@solid-primitives/event-listener";
@@ -32,6 +31,7 @@ import {
   createMemo,
   createSignal,
   batch,
+  createResource,
 } from "solid-js";
 import {
   useReplicache,
@@ -62,6 +62,8 @@ import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
+import { useAccount } from "@console/web/providers/account";
+import { useOpenAuth } from "@openauthjs/solid"
 
 const HEADER_HEIGHT = 54;
 
@@ -434,7 +436,8 @@ const EditRepoForm = v.object({
 });
 
 export function Settings() {
-  const auth = useAuth();
+  const auth = useOpenAuth();
+  const [access] = createResource(() => auth.access())
   const rep = useReplicache();
   const app = useAppContext();
   const workspace = useWorkspace();
@@ -1020,7 +1023,7 @@ export function Settings() {
                       <input
                         type="hidden"
                         name="token"
-                        value={auth.current.access}
+                        value={access()}
                       />
                     </form>
                   </GitOrgError>
