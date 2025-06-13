@@ -105,7 +105,7 @@ app.webhooks.on(
           repo,
         },
         number: event.payload.number,
-        title: event.payload.pull_request.title,
+        title: event.payload.pull_request.title?.substring(0, 100),
         base: event.payload.pull_request.base.ref.replace("refs/heads/", ""),
         head: event.payload.pull_request.head.ref.replace("refs/heads/", ""),
         commit: {
