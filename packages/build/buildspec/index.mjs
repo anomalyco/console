@@ -1,6 +1,7 @@
 /** @typedef {import("../../core/src/run").Run.RunnerEvent} RunnerEvent */
 import { spawnSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import { createHash } from "crypto";
 import { build } from "esbuild";
 import {
@@ -232,7 +233,7 @@ export async function handler({
    */
   async function storeCache(item) {
     const cacheKey = createHash("sha256").update(item).digest("hex");
-    const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
+    const s3Key = `${cache.prefix}/${cacheKey}.tar.zst`;
     const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
 
     console.log(`Storing cache for ${item}`);
@@ -240,8 +241,12 @@ export async function handler({
     try {
       const dirname = path.dirname(itemPath);
       const basename = path.basename(itemPath);
+
+      const maxCompressionCores = 8;
+      const compressionCores = Math.max(Math.min(os.availableParallelism() - 2, maxCompressionCores), 1);
+
       shell(
-        `tar -czf - -C ${dirname} ${basename} | aws s3 cp - s3://${cache.bucket}/${s3Key}`,
+        `tar -cf - -C ${dirname} ${basename} | zstd -T${compressionCores} | aws s3 cp - s3://${cache.bucket}/${s3Key}`,
       );
     } catch (e) {
       console.error("Failed to store cache", e);
@@ -253,7 +258,7 @@ export async function handler({
    */
   async function restoreCache(item) {
     const cacheKey = createHash("sha256").update(item).digest("hex");
-    const s3Key = `${cache.prefix}/${cacheKey}.tar.gz`;
+    const s3Key = `${cache.prefix}/${cacheKey}.tar.zst`;
     const itemPath = path.isAbsolute(item) ? item : path.join(REPO_PATH, item);
 
     console.log(`Restoring cache for ${item}`);
@@ -278,7 +283,7 @@ export async function handler({
       const dirname = path.dirname(itemPath);
       shell(`mkdir -p ${dirname}`);
       shell(
-        `aws s3 cp s3://${cache.bucket}/${s3Key} - | tar -xzf - -C ${dirname}`,
+        `aws s3 cp s3://${cache.bucket}/${s3Key} - | zstd -d | tar -xf - -C ${dirname}`,
       );
     } catch (e) {
       console.error("Failed to restore cache", e);
