@@ -241,8 +241,9 @@ export module CodebuildRunner {
             );
           else if (
             e.name === "InvalidInputException" &&
-            e.message ===
-              "CodeBuild is not authorized to perform: sts:AssumeRole on service role"
+            e.message.startsWith(
+              "CodeBuild is not authorized to perform: sts:AssumeRole on service role",
+            )
           )
             return createProjectInUserAccount();
           if (e.name === "ResourceAlreadyExistsException") {
