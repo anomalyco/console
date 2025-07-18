@@ -1,4 +1,10 @@
-import { Show, createMemo, createSignal, Suspense, createResource } from "solid-js";
+import {
+  Show,
+  createMemo,
+  createSignal,
+  Suspense,
+  createResource,
+} from "solid-js";
 import { DateTime } from "luxon";
 import { styled } from "@macaron-css/solid";
 import { useApi, useWorkspace } from "../context";
@@ -23,6 +29,7 @@ import {
   SlackTeamStore,
   StripeStore,
   GithubOrgStore,
+  AppStore,
 } from "@console/web/data/app";
 import { createEventListener } from "@solid-primitives/event-listener";
 import { Alerts } from "./alerts";
@@ -32,8 +39,8 @@ import { theme } from "@console/web/ui/theme";
 import { Stack, Row } from "@console/web/ui/layout";
 import { Text } from "@console/web/ui/text";
 import { Button } from "@console/web/ui/button";
-import { useOpenAuth } from "@openauthjs/solid"
-
+import { useOpenAuth } from "@openauthjs/solid";
+import { StageStore } from "@console/web/data/stage";
 
 export const PANEL_CONTENT_SPACE = "10";
 export const PANEL_HEADER_SPACE = "3";
@@ -165,6 +172,8 @@ export function SettingsRoute() {
   const rep = useReplicache();
   const invocationsUsages = InvocationsUsageStore.list.watch(rep, () => []);
   const resourcesUsages = ResourcesUsageStore.list.watch(rep, () => []);
+  const stages = StageStore.list.watch(rep, () => []);
+  const apps = AppStore.all.watch(rep, () => []);
   const invocations = createMemo(() =>
     invocationsUsages()
       .map((usage) => usage.invocations)
@@ -175,7 +184,22 @@ export function SettingsRoute() {
       .map((usage) => usage.count)
       .reduce((a, b) => a + b, 0),
   );
-  const resourceStages = createMemo(() => resourcesUsages().length);
+  const stageResources = createMemo(() =>
+    resourcesUsages()
+      .map((usage) => {
+        const stage = stages().find((stage) => stage.id === usage.stageID);
+        if (!stage) return;
+        const app = apps().find((app) => app.id === stage.appID);
+        if (!app) return;
+        return {
+          app: app.name,
+          stage: stage.name,
+          count: usage.count,
+        };
+      })
+      .filter((resource) => resource !== undefined),
+  );
+  const stageCount = createMemo(() => resourcesUsages().length);
   const auth = useOpenAuth();
   const nav = useNavigate();
   const workspace = useWorkspace();
@@ -192,22 +216,22 @@ export function SettingsRoute() {
   let portalLink: Promise<Response> | undefined;
   let checkoutLink: Promise<Response> | undefined;
 
-  const api = useApi()
+  const api = useApi();
   async function generatePortalLink() {
     return api.client.billing.portal.$post({
       json: {
         return_url: window.location.href,
         workspaceID: workspace().id,
-      }
-    })
+      },
+    });
   }
   async function generateCheckoutLink() {
     return api.client.billing.checkout.$post({
       json: {
         return_url: window.location.href,
         workspaceID: workspace().id,
-      }
-    })
+      },
+    });
   }
 
   function handleHoverManageSubscription() {
@@ -447,13 +471,22 @@ export function SettingsRoute() {
               </UsagePanel>
               <UsagePlanCopy>
                 Active resources from{" "}
-                {resourceStages() === 1
+                {stageCount() === 1
                   ? "1 updated stage"
-                  : `${resourceStages()} updated stages`}{" "}
+                  : `${stageCount()} updated stages`}{" "}
                 during {cycle().start} — {cycle().end}. Feel free to{" "}
                 <a href="mailto:hello@sst.dev">contact us</a> if you have any
                 questions.
               </UsagePlanCopy>
+              <Show when={["frank", "sst"].includes(workspace().slug)}>
+                <Show when={stageResources().length > 0}>
+                  {stageResources().map((resource) => (
+                    <Text size="sm" color="dimmed">
+                      {resource.app} / {resource.stage} - ({resource.count})
+                    </Text>
+                  ))}
+                </Show>
+              </Show>
             </Stack>
           </Stack>
         </Stack>
@@ -592,7 +625,7 @@ function Integrations() {
     },
   );
 
-  const [access] = createResource(() => auth.access())
+  const [access] = createResource(() => auth.access());
 
   return (
     <Show when={githubOrg.ready && slackTeam.ready}>
