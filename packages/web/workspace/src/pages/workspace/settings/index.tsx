@@ -163,8 +163,50 @@ const UsageStatTier = styled("span", {
 const UsagePlanCopy = styled("p", {
   base: {
     fontSize: theme.font.size.sm,
-    color: theme.color.text.secondary.base,
     lineHeight: theme.font.lineHeight,
+    color: theme.color.text.secondary.base,
+  },
+});
+
+const UsageShowMore = styled("button", {
+  base: {
+    textDecoration: "underline",
+  },
+});
+
+const UsageTable = styled("table", {
+  base: {
+    borderCollapse: "separate",
+    borderSpacing: 0,
+  },
+});
+
+const UsageTableHeaderCell = styled("th", {
+  base: {
+    padding: `${theme.space[2]} ${theme.space[3]} calc(${theme.space[2]} + 1px)`,
+    textAlign: "left",
+    backgroundColor: theme.color.background.surface,
+  },
+});
+
+const UsageTableHeaderCopy = styled("span", {
+  base: {
+    color: theme.color.text.dimmed.base,
+    fontSize: theme.font.size.mono_xs,
+    fontFamily: theme.font.family.code,
+    fontWeight: theme.font.weight.medium,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    lineHeight: 1,
+  },
+});
+
+const UsageTableCell = styled("td", {
+  base: {
+    padding: `${theme.space[3]} ${theme.space[3]}`,
+    fontSize: theme.font.size.xs,
+    color: theme.color.text.secondary.base,
+    borderBottom: `1px solid ${theme.color.divider.base}`,
   },
 });
 
@@ -212,6 +254,7 @@ export function SettingsRoute() {
     };
   });
   const stripe = StripeStore.get.watch(rep, () => []);
+  const [usageDetails, showUsageDetails] = createSignal(false);
 
   let portalLink: Promise<Response> | undefined;
   let checkoutLink: Promise<Response> | undefined;
@@ -261,7 +304,6 @@ export function SettingsRoute() {
     window.location.href = result.url;
   }
 
-  console.log(WorkspaceStore);
   const workspaceInfo = createSubscription(() => {
     const workspaceID = useWorkspace();
     return (tx) => WorkspaceStore.get(tx, workspaceID().id);
@@ -383,7 +425,7 @@ export function SettingsRoute() {
                 </UsagePlanCopy>
               </Stack>
             </Show>
-            <Stack space="2">
+            <Stack space="3">
               <UsagePanel>
                 <UsageStat stretch>
                   <Text code uppercase size="mono_xs" color="dimmed">
@@ -474,18 +516,49 @@ export function SettingsRoute() {
                 {stageCount() === 1
                   ? "1 updated stage"
                   : `${stageCount()} updated stages`}{" "}
-                during {cycle().start} — {cycle().end}. Feel free to{" "}
-                <a href="mailto:hello@sst.dev">contact us</a> if you have any
-                questions.
-              </UsagePlanCopy>
-              <Show when={["frank", "sst"].includes(workspace().slug)}>
+                during {cycle().start} — {cycle().end}.
                 <Show when={stageResources().length > 0}>
-                  {stageResources().map((resource) => (
-                    <Text size="sm" color="dimmed">
-                      {resource.app} / {resource.stage} - ({resource.count})
-                    </Text>
-                  ))}
+                  &nbsp;
+                  <UsageShowMore
+                    onClick={() => showUsageDetails(!usageDetails())}
+                  >
+                    {usageDetails() ? "Hide" : "Show details"}
+                  </UsageShowMore>
                 </Show>
+              </UsagePlanCopy>
+              <Show when={usageDetails()}>
+                <UsageTable>
+                  <thead>
+                    <tr>
+                      <UsageTableHeaderCell>
+                        <UsageTableHeaderCopy>App</UsageTableHeaderCopy>
+                      </UsageTableHeaderCell>
+                      <UsageTableHeaderCell>
+                        <UsageTableHeaderCopy>Stage</UsageTableHeaderCopy>
+                      </UsageTableHeaderCell>
+                      <UsageTableHeaderCell>
+                        <UsageTableHeaderCopy>Resources</UsageTableHeaderCopy>
+                      </UsageTableHeaderCell>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stageResources().map((resource) => (
+                      <tr>
+                        <UsageTableCell>{resource.app}</UsageTableCell>
+                        <UsageTableCell>{resource.stage}</UsageTableCell>
+                        <UsageTableCell>
+                          <Text color="secondary" code size="mono_xs">
+                            {resource.count}
+                          </Text>
+                        </UsageTableCell>
+                      </tr>
+                    ))}
+                  </tbody>
+                </UsageTable>
+                <UsagePlanCopy>
+                  Feel free to <a href="mailto:hello@sst.dev">contact us</a> if
+                  you have any questions.
+                </UsagePlanCopy>
               </Show>
             </Stack>
           </Stack>
