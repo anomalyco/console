@@ -46,7 +46,6 @@ import { githubOrgTable, githubRepoTable } from "@console/core/git/git.sql";
 import { slackTeam } from "@console/core/slack/slack.sql";
 import {
   stateCountTable,
-  stateEventTable,
   stateResourceTable,
   stateUpdateTable,
 } from "@console/core/state/state.sql";

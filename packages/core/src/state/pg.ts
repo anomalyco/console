@@ -24,7 +24,7 @@ import {
   createTransactionEffect,
   useTransaction,
 } from "../util/transaction";
-import { stateEventTable, stateUpdateTable } from "./state.sql";
+import { stateUpdateTable, stateEventTable } from "./state.sql";
 import { Replicache } from "../replicache";
 import { mapValues } from "remeda";
 import { stage } from "../app/app.sql";
@@ -450,8 +450,6 @@ export const stateReceiveSnapshot = zod(
               eq(stateUpdateTable.id, input.updateID),
             ),
           );
-        if (eventInserts.length)
-          await tx.insert(stateEventTable).ignore().values(eventInserts);
         await tx
           .update(stage)
           .set({

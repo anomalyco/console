@@ -2,7 +2,6 @@ import { z } from "zod";
 import { zod } from "../util/zod";
 import {
   stateUpdateTable,
-  stateEventTable,
   Action,
   UpdateCommand,
   Command,
@@ -11,10 +10,6 @@ import {
   stateCountTable,
 } from "./state.sql";
 
-import {
-  stateEventTable as pg_stateEventTable,
-  stateUpdateTable as pg_stateUpdateTable,
-} from "./state.pg";
 import {
   createTransaction,
   createTransactionEffect,
@@ -36,7 +31,7 @@ import { Replicache } from "../replicache";
 import { app, stage } from "../app/app.sql";
 import { bus } from "sst/aws/bus";
 import { Resource as SSTResource } from "sst";
-import { map, mapValues, pipe, unique } from "remeda";
+import { map, pipe, unique } from "remeda";
 import { Enrichers } from "../app/resource";
 import { queue } from "../util/queue";
 import { DateTime } from "luxon";
@@ -47,7 +42,6 @@ import {
 import { runTable } from "../run/run.sql";
 import { objectFlatten } from "../util/object";
 import { logger } from "../util/log";
-import { postgres } from "../drizzle/postgres";
 import { disposable } from "../util/disposable";
 
 export module State {
@@ -215,30 +209,6 @@ export module State {
     };
   }
 
-  export function serializeEvent(
-    input: typeof stateEventTable.$inferSelect,
-  ): ResourceEvent {
-    return {
-      id: input.id,
-      type: input.type,
-      time: {
-        created: input.timeCreated.toISOString(),
-        updated: input.timeUpdated.toISOString(),
-        deleted: input.timeDeleted?.toISOString(),
-        stateCreated: input.timeStateCreated?.toISOString(),
-        stateModified: input.timeStateModified?.toISOString(),
-      },
-      stageID: input.stageID,
-      custom: input.custom,
-      updateID: input.updateID,
-      urn: input.urn,
-      inputs: input.inputs,
-      parent: input.parent || undefined,
-      outputs: input.outputs,
-      action: input.action,
-    };
-  }
-
   export function serializeResource(
     input: typeof stateResourceTable.$inferSelect,
   ): Resource {
@@ -378,7 +348,6 @@ export module State {
         previousState.resources.map((r: any) => [r.urn, r]),
       );
 
-      const eventInserts = [] as (typeof stateEventTable.$inferInsert)[];
       const resourceDeletes = [] as string[];
       const counts = {} as Record<string, number>;
       console.log({
@@ -423,44 +392,11 @@ export module State {
 
           delete inputs["__provider"];
           delete outputs["__provider"];
-
-          eventInserts.push({
-            stageID: input.config.stageID,
-            updateID: updateID,
-            id: createId(),
-            timeStateModified: resource.modified
-              ? new Date(resource.modified)
-              : null,
-            timeStateCreated: resource.created
-              ? new Date(resource.created)
-              : null,
-            workspaceID: useWorkspace(),
-            type: resource.type,
-            urn: resource.urn,
-            custom: resource.custom,
-            inputs: inputs,
-            outputs: outputs,
-            parent: resource.parent,
-            action: action,
-          });
         }
       }
       for (const urn of Object.keys(previousResources)) {
         const resource = previousResources[urn];
         counts["deleted"] = (counts["deleted"] || 0) + 1;
-        eventInserts.push({
-          stageID: input.config.stageID,
-          updateID,
-          action: "deleted",
-          id: createId(),
-          workspaceID: useWorkspace(),
-          type: resource.type,
-          urn: resource.urn,
-          custom: resource.custom,
-          inputs: {},
-          outputs: {},
-          parent: resource.parent,
-        });
         resourceDeletes.push(resource.urn);
       }
       await createTransaction(
@@ -480,8 +416,6 @@ export module State {
                 eq(stateUpdateTable.id, updateID),
               ),
             );
-          if (eventInserts.length)
-            await tx.insert(stateEventTable).ignore().values(eventInserts);
           if (resourceDeletes.length)
             await tx
               .delete(stateResourceTable)
