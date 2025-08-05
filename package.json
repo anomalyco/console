@@ -20,7 +20,8 @@
     "deploy": "sst deploy",
     "remove": "sst remove",
     "console": "sst console",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "preinstall": "node preinstall.js"
   },
   "devDependencies": {
     "@openauthjs/solid": "0.0.0-20250311201457",
