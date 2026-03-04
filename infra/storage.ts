@@ -8,6 +8,15 @@ export const storage = new sst.aws.Bucket("Storage", {
       ignorePublicAcls: false,
       restrictPublicBuckets: false,
     },
+    bucket: {
+      serverSideEncryptionConfiguration: {
+        rule: {
+          applyServerSideEncryptionByDefault: {
+            sseAlgorithm: "AES256",
+          },
+        },
+      },
+    },
   },
 });
 
@@ -73,6 +82,13 @@ export const publicStorage = multiregion((region, provider) => {
       transform: {
         bucket(args, opts) {
           args.bucket = `sst-public-${$app.stage}-${region}`;
+          args.serverSideEncryptionConfiguration = {
+            rule: {
+              applyServerSideEncryptionByDefault: {
+                sseAlgorithm: "AES256",
+              },
+            },
+          };
           // opts.import = args.bucket;
           // opts.ignoreChanges = ["*"];
         },
