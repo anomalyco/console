@@ -1,8 +1,8 @@
-const mysql = planetscale.Database.get("Database", "sst,sst");
+const mysql = planetscale.Database.get("Database", "anomalyco,sst");
 
 const branch =
   $app.stage === "production"
-    ? planetscale.Branch.get("DatabaseBranch", "sst,sst,production")
+    ? planetscale.Branch.get("DatabaseBranch", "anomalyco,sst,production")
     : new planetscale.Branch(
         "DatabaseBranch",
         {
@@ -12,16 +12,20 @@ const branch =
           parentBranch: "production",
           production: $app.stage === "production",
         },
-        {},
+        { ignoreChanges: ["organization"] },
       );
 
-const password = new planetscale.Password("DatabasePassword", {
-  database: mysql.name,
-  organization: mysql.organization,
-  branch: branch.name,
-  role: "admin",
-  name: `${$app.name}-${$app.stage}-password`,
-});
+const password = new planetscale.Password(
+  "DatabasePassword",
+  {
+    database: mysql.name,
+    organization: mysql.organization,
+    branch: branch.name,
+    role: "admin",
+    name: `${$app.name}-${$app.stage}-password`,
+  },
+  { ignoreChanges: ["organization"] },
+);
 
 export const database = new sst.Linkable("Database", {
   properties: {
