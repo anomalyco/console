@@ -1,5 +1,10 @@
+// me-south-1 was permanently lost (aws, sep 2026)
+const unavailable = ["me-south-1"];
+
 export const regions = ["production"].includes($app.stage)
-  ? await aws.getRegions().then((r) => r.names)
+  ? await aws
+      .getRegions()
+      .then((r) => r.names.filter((name) => !unavailable.includes(name)))
   : ["us-east-1"];
 
 const providers = {} as Record<string, aws.Provider | undefined>;
