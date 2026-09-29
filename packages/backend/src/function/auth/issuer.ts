@@ -1,4 +1,3 @@
-import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import { issuer } from "@openauthjs/openauth";
 import { CodeProvider } from "@openauthjs/openauth/provider/code";
 import { GoogleOidcProvider } from "@openauthjs/openauth/provider/google";
@@ -9,9 +8,8 @@ import { and, db, eq, isNull } from "@console/core/drizzle/index";
 import { Account } from "@console/core/account/index";
 import { user } from "@console/core/user/user.sql";
 import { workspace } from "@console/core/workspace/workspace.sql";
+import { Email } from "@console/core/email/index";
 import { z } from "zod";
-
-const ses = new SESv2Client({});
 
 export const handler = handle(
   issuer({
@@ -44,28 +42,14 @@ export const handler = handle(
         },
         async sendCode(claims, code) {
           const email = z.string().email().parse(claims.email);
-          const cmd = new SendEmailCommand({
-            Destination: {
-              ToAddresses: [email],
-            },
-            FromEmailAddress: `SST <auth@${Resource.Email.sender}>`,
-            Content: {
-              Simple: {
-                Body: {
-                  Html: {
-                    Data: `Your pin code is <strong>${code}</strong>`,
-                  },
-                  Text: {
-                    Data: `Your pin code is ${code}`,
-                  },
-                },
-                Subject: {
-                  Data: "SST Console Pin Code: " + code,
-                },
-              },
-            },
+          await Email.send({
+            from: `auth@${Resource.Email.sender}`,
+            fromName: "SST",
+            to: [email],
+            subject: "SST Console Pin Code: " + code,
+            html: `Your pin code is <strong>${code}</strong>`,
+            text: `Your pin code is ${code}`,
           });
-          await ses.send(cmd);
         },
       }),
       google: GoogleOidcProvider({

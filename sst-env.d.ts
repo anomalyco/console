@@ -146,6 +146,10 @@ declare module "sst" {
       "type": "sst.aws.Router"
       "url": string
     }
+    "OpensendApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Postgres": {
       "clusterArn": string
       "database": string

@@ -1,4 +1,3 @@
-import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { createId } from "@paralleldrive/cuid2";
 import { eq, and, inArray, isNull, isNotNull } from "drizzle-orm";
 import { useWorkspace } from "../actor";
@@ -12,7 +11,7 @@ import { user } from "../user/user.sql";
 import { Slack } from "../slack";
 import type { KnownBlock, MessageAttachment } from "@slack/web-api";
 import { Warning } from "../warning";
-const ses = new SESv2Client({});
+import { Email } from "../email";
 
 export module Alert {
   export const Info = z.object({
@@ -180,8 +179,17 @@ export module Alert {
       plain: z.string().min(1),
       replyToAddress: z.string().min(1),
       fromAddress: z.string().min(1),
+      fromName: z.string().min(1),
     }),
-    ({ destination, subject, html, plain, replyToAddress, fromAddress }) =>
+    ({
+      destination,
+      subject,
+      html,
+      plain,
+      replyToAddress,
+      fromAddress,
+      fromName,
+    }) =>
       useTransaction(async (tx) => {
         const users = await db
           .select({ email: user.email })
@@ -205,24 +213,15 @@ export module Alert {
         if (!users.length) return;
 
         try {
-          await ses.send(
-            new SendEmailCommand({
-              Destination: {
-                ToAddresses: users.map((u) => u.email),
-              },
-              ReplyToAddresses: [replyToAddress],
-              FromEmailAddress: fromAddress,
-              Content: {
-                Simple: {
-                  Body: {
-                    Html: { Data: html },
-                    Text: { Data: plain },
-                  },
-                  Subject: { Data: subject },
-                },
-              },
-            }),
-          );
+          await Email.send({
+            from: fromAddress,
+            fromName,
+            to: users.map((u) => u.email),
+            replyTo: [replyToAddress],
+            subject,
+            html,
+            text: plain,
+          });
         } catch (ex) {
           console.error(ex);
         }
