@@ -173,7 +173,8 @@ export const triggerIssue = zod(
           ),
           plain: result.message,
           replyToAddress: `alert+issues+${result.id}@${Resource.Email.sender}`,
-          fromAddress: `${result.appName}/${result.stageName} via SST <alert+issues+${result.id}@${Resource.Email.sender}>`,
+          fromAddress: `alert+issues+${result.id}@${Resource.Email.sender}`,
+          fromName: `${result.appName}/${result.stageName} via SST`,
         });
       }
     }
@@ -259,8 +260,9 @@ export const triggerRateLimit = zod(
             }),
           ),
           plain: message,
-          replyToAddress: `alert+issues@${process.env.EMAIL_DOMAIN}`,
-          fromAddress: `${input.app}/${input.stage} via SST <alert+issues@${process.env.EMAIL_DOMAIN}>`,
+          replyToAddress: `alert+issues@${Resource.Email.sender}`,
+          fromAddress: `alert+issues@${Resource.Email.sender}`,
+          fromName: `${input.app}/${input.stage} via SST`,
         });
       }
     }

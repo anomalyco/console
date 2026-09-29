@@ -12,12 +12,10 @@ import { useActor, useWorkspace } from "../actor";
 import { createEvent } from "../event";
 import { render } from "@jsx-email/render";
 import { InviteEmail } from "@console/mail/emails/templates/InviteEmail";
-import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { workspace } from "../workspace/workspace.sql";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
-
-const ses = new SESv2Client({});
+import { Email } from "../email";
 
 export const Info = createSelectSchema(user, {
   id: (schema) => schema.id.cuid2(),
@@ -157,30 +155,15 @@ export const sendEmailInvite = zod(Info.shape.id, async (id) => {
     }),
   );
   try {
-    await ses.send(
-      new SendEmailCommand({
-        Destination: {
-          ToAddresses: [data.email],
-        },
-        ReplyToAddresses: [`invite@${Resource.Email.sender}`],
-        FromEmailAddress: `SST <invite@${Resource.Email.sender}>`,
-        Content: {
-          Simple: {
-            Body: {
-              Html: {
-                Data: html,
-              },
-              Text: {
-                Data: html,
-              },
-            },
-            Subject: {
-              Data: subject,
-            },
-          },
-        },
-      }),
-    );
+    await Email.send({
+      from: `invite@${Resource.Email.sender}`,
+      fromName: "SST",
+      to: [data.email],
+      replyTo: [`invite@${Resource.Email.sender}`],
+      subject,
+      html,
+      text: html,
+    });
   } catch (ex) {
     console.error(ex);
   }
