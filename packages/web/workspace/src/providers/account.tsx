@@ -80,6 +80,16 @@ export const { use: useAccount, provider: AccountProvider } = createInitializedC
 
   createEffect((previous: string[]) => {
     if (!Object.values(auth.all).length) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("error")) {
+        const target = new URLSearchParams();
+        const error = params.get("error");
+        const description = params.get("error_description");
+        if (error) target.set("error", error);
+        if (description) target.set("error_description", description);
+        window.location.replace("/auth/email?" + target.toString());
+        return [];
+      }
       auth.authorize({
         provider: "email",
       })

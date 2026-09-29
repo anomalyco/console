@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { IconApp } from "@console/web/ui/icons/custom";
+import { IconApp, IconGoogle } from "@console/web/ui/icons/custom";
 import { styled } from "@macaron-css/solid";
 import { IconChevronRight } from "@console/web/ui/icons";
 import {
@@ -8,6 +8,7 @@ import {
   useSearchParams,
 } from "@solidjs/router";
 import { For, Show, createSignal } from "solid-js";
+import { useOpenAuth } from "@openauthjs/solid";
 import Botpoison from "@botpoison/browser";
 import { NotFound } from "../not-found";
 import { FormField, Input } from "@console/web/ui/form";
@@ -15,7 +16,7 @@ import { Fullscreen, Stack, Row } from "@console/web/ui/layout";
 import { theme } from "@console/web/ui/theme";
 import { utility } from "@console/web/ui/utility";
 import { Text } from "@console/web/ui/text";
-import { Button } from "@console/web/ui/button";
+import { Button, ButtonIcon } from "@console/web/ui/button";
 
 const Root = styled("div", {
   base: {
@@ -99,6 +100,17 @@ const LegalLink = styled("a", {
   },
 });
 
+const ErrorBanner = styled("div", {
+  base: {
+    width: "100%",
+    padding: `${theme.space[3]} ${theme.space[4]}`,
+    backgroundColor: theme.color.background.red,
+    border: `1px solid ${theme.color.divider.danger}`,
+    borderRadius: theme.borderRadius,
+    lineHeight: 1.4,
+  },
+});
+
 const AnnouncementLinkIcon = styled("span", {
   base: {
     top: 2,
@@ -109,6 +121,7 @@ const AnnouncementLinkIcon = styled("span", {
 });
 
 export function Email() {
+  const auth = useOpenAuth();
   const botpoison = new Botpoison({
     publicKey: "pk_646d2d37-ab95-43d1-ae96-3ad59616e362",
   });
@@ -174,6 +187,24 @@ export function Email() {
           </LegalLinks>
         </Stack>
       </Stack>
+      <Show when={search.error_description || search.error}>
+        <ErrorBanner>
+          <Text size="sm" color="danger" on="base" center>
+            {search.error_description ||
+              "Something went wrong while signing in. Please try again."}
+          </Text>
+        </ErrorBanner>
+      </Show>
+      <Button
+        type="button"
+        color="secondary"
+        onClick={() => auth.authorize({ provider: "google" })}
+      >
+        <ButtonIcon>
+          <IconGoogle />
+        </ButtonIcon>
+        Continue with Google
+      </Button>
       <Form
         method="post"
         action={import.meta.env.VITE_AUTH_URL + "/email/authorize"}
