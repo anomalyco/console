@@ -38,6 +38,7 @@ import { useWorkspace } from "../../context";
 import { WindowVirtualizer } from "virtua/solid"
 
 const COL_COUNT_WIDTH = 260;
+const COL_TOTAL_WIDTH = 80;
 const COL_TIME_WIDTH = 140;
 
 const Content = styled("div", {
@@ -676,6 +677,22 @@ export function List() {
               </IssuesHeaderCol>
               <IssuesHeaderCol
                 align="right"
+                style={{ width: `${COL_TOTAL_WIDTH}px` }}
+                title="Total count in the last 24 hours"
+              >
+                <Text
+                  code
+                  uppercase
+                  on="surface"
+                  color="dimmed"
+                  size="mono_sm"
+                  weight="medium"
+                >
+                  Total
+                </Text>
+              </IssuesHeaderCol>
+              <IssuesHeaderCol
+                align="right"
                 style={{ width: `${COL_TIME_WIDTH}px` }}
                 title="Latest occurrence of the error"
               >
@@ -856,6 +873,10 @@ function IssueRow(props: IssueProps) {
       .map((hour) => ({ label: hour, value: hours[hour] || 0 }));
   });
 
+  const totalCount = createMemo(() => 
+    counts().reduce((sum, item) => sum + item.count, 0)
+  );
+
   const navigator = useKeyboardNavigator();
 
   return (
@@ -900,6 +921,17 @@ function IssueRow(props: IssueProps) {
           currentTime={Date.now()}
           tooltipAlignment={props.last ? "top" : "bottom"}
         />
+      </IssueCol>
+      <IssueCol align="right" style={{ width: `${COL_TOTAL_WIDTH}px` }}>
+        <Text
+          line
+          size="sm"
+          color="secondary"
+          leading="normal"
+          weight="medium"
+        >
+          {totalCount().toLocaleString()}
+        </Text>
       </IssueCol>
       <IssueCol align="right" style={{ width: `${COL_TIME_WIDTH}px` }}>
         <Text
