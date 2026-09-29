@@ -5,6 +5,7 @@ import { email } from "./email";
 import { database } from "./planetscale";
 import { publicStorage, storage } from "./storage";
 import { domain } from "./dns";
+import { secret } from "./secret";
 import { multiregion, regions } from "./regions";
 
 export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
@@ -13,7 +14,7 @@ export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
 });
 issueDetectionQueue.subscribe({
   handler: "packages/backend/src/function/issues/detected.handler",
-  link: [database, email],
+  link: [database, email, secret.OpensendApiKey],
 });
 
 const stream = new sst.aws.KinesisStream("IssueStream");

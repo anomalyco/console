@@ -1841,9 +1841,10 @@ export module Run {
           ),
           plain: message,
           replyToAddress: `alert+autodeploy@${SSTResource.Email.sender}`,
-          fromAddress: `${[appName, stageName]
+          fromAddress: `alert+autodeploy@${SSTResource.Email.sender}`,
+          fromName: `${[appName, stageName]
             .filter((name) => name)
-            .join("/")} via SST <alert+autodeploy@${SSTResource.Email.sender}>`,
+            .join("/")} via SST`,
         });
       }
     }
