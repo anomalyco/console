@@ -11,13 +11,25 @@ import { multiregion, regions } from "./regions";
 export const issueDetectionQueue = new sst.aws.Queue("IssueDetectionQueue", {
   fifo: true,
   visibilityTimeout: "5 minutes",
+  transform: {
+    queue: {
+      sqsManagedSseEnabled: true,
+    },
+  },
 });
 issueDetectionQueue.subscribe({
   handler: "packages/backend/src/function/issues/detected.handler",
   link: [database, email, secret.OpensendApiKey],
 });
 
-const stream = new sst.aws.KinesisStream("IssueStream");
+const stream = new sst.aws.KinesisStream("IssueStream", {
+  transform: {
+    stream: {
+      encryptionType: "KMS",
+      kmsKeyId: "alias/aws/kinesis",
+    },
+  },
+});
 stream.subscribe(
   "IssueStreamSubscriber",
   {
@@ -124,6 +136,17 @@ const cfnTemplate = $jsonStringify({
       Type: "String",
       Description: "The template URL",
     },
+    logGroupKmsKeyArn: {
+      Type: "String",
+      Default: "",
+      Description:
+        "Optional KMS key ARN for encrypting CloudWatch logs at rest. Leave empty to disable encryption.",
+    },
+  },
+  Conditions: {
+    HasLogGroupKmsKey: {
+      "Fn::Not": [{ "Fn::Equals": [{ Ref: "logGroupKmsKeyArn" }, ""] }],
+    },
   },
   Resources: {
     SubscriberRole: {
@@ -214,6 +237,13 @@ const cfnTemplate = $jsonStringify({
           "Fn::Sub": "/aws/lambda/sst-console-issue-${workspaceID}",
         },
         RetentionInDays: 1,
+        KmsKeyId: {
+          "Fn::If": [
+            "HasLogGroupKmsKey",
+            { Ref: "logGroupKmsKeyArn" },
+            { Ref: "AWS::NoValue" },
+          ],
+        },
       },
     },
     SubscriberPermission: {

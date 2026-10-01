@@ -5,6 +5,11 @@ import { allSecrets, assumable } from "./secret";
 const queue = new sst.aws.Queue("BillingQueue", {
   fifo: true,
   visibilityTimeout: "180 seconds",
+  transform: {
+    queue: {
+      sqsManagedSseEnabled: true,
+    },
+  },
 });
 
 queue.subscribe(
