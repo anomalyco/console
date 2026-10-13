@@ -348,7 +348,7 @@ export module CodebuildRunner {
               "      - mkdir -p /tmp/buildspec",
               `      - curl -o /tmp/buildspec/index.mjs https://${input.payload.buildspec.bucket}.s3.amazonaws.com/buildspec/${input.payload.buildspec.version}/index.mjs`,
               `      - echo '{"name":"buildspec"}' > /tmp/buildspec/package.json`,
-              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge @aws-sdk/client-s3 esbuild`,
+              `      - cd /tmp/buildspec && npm i @aws-sdk/client-eventbridge @aws-sdk/client-s3 esbuild smol-toml`,
               [
                 `      - node --input-type=module -e "`,
                 `import { handler } from '/tmp/buildspec/index.mjs';`,

@@ -9,6 +9,7 @@ import {
   PutEventsCommand,
 } from "@aws-sdk/client-eventbridge";
 import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { parse as parseToml } from "smol-toml";
 
 const eb = new EventBridgeClient({});
 const s3 = new S3Client({});
@@ -146,7 +147,24 @@ export async function handler({
       findUp(".nvmrc") ||
       packageJson.engines?.node
     )
-      shell(`n auto`);
+      return shell(`n auto`);
+
+    const version = loadMiseNodeVersion();
+    if (version) shell(`n ${version}`);
+  }
+  function loadMiseNodeVersion() {
+    const dir = findUp("mise.toml");
+    if (!dir) return;
+
+    try {
+      const node = parseToml(
+        fs.readFileSync(path.join(dir, "mise.toml"), "utf8"),
+      ).tools?.node;
+      if (typeof node === "object" && node?.version) return node.version;
+      if (typeof node === "string") return node;
+    } catch (e) {
+      console.log("mise.toml is not a valid TOML file");
+    }
   }
   function installUv() {
     if (findInRepo("uv.lock")) shell("pip install uv");
