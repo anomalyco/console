@@ -142,10 +142,6 @@ declare module "sst" {
       "type": "sst.aws.Auth"
       "url": string
     }
-    "OpenControlRouter": {
-      "type": "sst.aws.Router"
-      "url": string
-    }
     "OpensendApiKey": {
       "type": "sst.sst.Secret"
       "value": string
@@ -186,10 +182,6 @@ declare module "sst" {
       "value": string
     }
     "StripeInvocationsPriceID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "StripeOpenControlSecretKey": {
       "type": "sst.sst.Secret"
       "value": string
     }
