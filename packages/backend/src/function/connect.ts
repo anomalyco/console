@@ -10,7 +10,7 @@ import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 
 export async function handler(event: CloudFormationCustomResourceEvent) {
-  console.log(event);
+  console.log(event.RequestType, event.ResourceProperties.accountID);
   let status: CloudFormationCustomResourceResponse["Status"] = "SUCCESS";
   if (event.RequestType === "Create") {
     try {
@@ -30,7 +30,6 @@ export async function handler(event: CloudFormationCustomResourceEvent) {
               accountID: event.ResourceProperties.accountID,
             });
             await Replicache.poke();
-            console.log(credentials);
             status = "SUCCESS";
           } else {
             status = "FAILED";

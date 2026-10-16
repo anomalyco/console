@@ -17,7 +17,6 @@ export const handler = handle(
     providers: {
       email: CodeProvider({
         async request(req, state, form, error) {
-          console.log(state);
           const params = new URLSearchParams();
           if (error) {
             params.set("error", error.type);
@@ -60,7 +59,6 @@ export const handler = handle(
     },
     async success(ctx, response) {
       let email: string | undefined;
-      console.log(response);
       if (response.provider === "email") {
         email = response.claims.email;
 
