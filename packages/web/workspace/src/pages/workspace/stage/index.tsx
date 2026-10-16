@@ -16,7 +16,6 @@ import {
   LogsProvider,
 } from "./context";
 import { Logs } from "./logs";
-import { Agent } from "./agent";
 import { Issues } from "./issues";
 import { Updates } from "./updates";
 import { Resources } from "./resources";
@@ -31,7 +30,6 @@ import { NotFound } from "../../not-found";
 import { TabTitle } from "@console/web/ui/button";
 import { Row } from "@console/web/ui/layout";
 import { usePersistentQuery, useZero } from "../zero";
-import { useWorkspace } from "../context";
 
 export const StageRoute = (
   <Route
@@ -48,7 +46,6 @@ export const StageRoute = (
                     <IssuesProvider>
                       <HeaderProvider>
                         {(() => {
-                          const workspace = useWorkspace();
                           const header = useHeaderContext();
                           const updates = StateUpdateStore.forStage.watch(
                             rep,
@@ -111,15 +108,6 @@ export const StageRoute = (
                                       <A href="logs">
                                         <TabTitle size="sm">Logs</TabTitle>
                                       </A>
-                                      <Show
-                                        when={["frank", "sst"].includes(
-                                          workspace().slug,
-                                        )}
-                                      >
-                                        <A href="agent">
-                                          <TabTitle size="sm">Agent</TabTitle>
-                                        </A>
-                                      </Show>
                                       <Show when={ctx.connected && false}>
                                         <A href="local">
                                           <TabTitle size="sm">Local</TabTitle>
@@ -154,7 +142,6 @@ export const StageRoute = (
     <Route path="updates" children={Updates} />
     <Route path="issues" children={Issues} />
     <Route path="logs" children={Logs} />
-    <Route path="agent" children={Agent} />
     <Route path="" component={() => <Navigate href="resources" />} />
     <Route path="*" component={() => <NotFound inset="header-tabs" />} />
   </Route>
