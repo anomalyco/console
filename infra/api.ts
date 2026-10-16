@@ -115,6 +115,11 @@ export const backend = new sst.aws.Service("Backend", {
           max: 10,
         }
       : undefined,
+  transform: {
+    service: {
+      enableExecuteCommand: false,
+    },
+  },
 });
 
 export const apiRouter = new sst.aws.Router("ApiRouter", {
