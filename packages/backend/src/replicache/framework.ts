@@ -26,7 +26,7 @@ export class Server<Mutations> {
   ): Server<Mutations & { [key in Name]: Mutation<Name, Args> }> {
     this.mutations.set(name as string, {
       fn: async (args) => {
-        const parsed = args;
+        const parsed = shape.parse(args);
         return fn(parsed);
       },
       input: shape,
