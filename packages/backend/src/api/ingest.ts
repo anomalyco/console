@@ -19,6 +19,18 @@ import { LogError } from "@console/core/log/error";
 
 const sqs = new SQSClient({});
 
+function parseIdentityURL(input: string) {
+  const url = URL.canParse(input) ? new URL(input) : undefined;
+  if (!url) return;
+  if (url.protocol !== "https:") return;
+  if (url.port || url.username || url.password) return;
+  if (!/^sts(\.[a-z0-9-]+)?\.amazonaws\.com(\.cn)?$/.test(url.hostname))
+    return;
+  if (url.pathname !== "/") return;
+  if (url.searchParams.get("Action") !== "GetCallerIdentity") return;
+  return url;
+}
+
 export const IngestRoute = new Hono().post(
   "/",
   zValidator(
@@ -48,7 +60,11 @@ export const IngestRoute = new Hono().post(
     const body = c.req.valid("json");
     switch (body.type) {
       case "aws.issue":
-        const xml = await fetch(body.properties.identity).then((r) => r.text());
+        const identity = parseIdentityURL(body.properties.identity);
+        if (!identity) return c.json(false, 400);
+        const xml = await fetch(identity, { redirect: "error" }).then((r) =>
+          r.text(),
+        );
         const accountID = (xml.match(/<Account>(\d+)<\/Account>/) || [])[1];
         if (!accountID) {
           console.error(new Error("Failed to parse account ID " + xml));
