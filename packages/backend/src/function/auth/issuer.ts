@@ -17,7 +17,6 @@ export const handler = handle(
     providers: {
       email: CodeProvider({
         async request(req, state, form, error) {
-          console.log(state);
           const params = new URLSearchParams();
           if (error) {
             params.set("error", error.type);
@@ -60,7 +59,6 @@ export const handler = handle(
     },
     async success(ctx, response) {
       let email: string | undefined;
-      console.log(response);
       if (response.provider === "email") {
         email = response.claims.email;
 
@@ -104,12 +102,11 @@ export const handler = handle(
       });
     },
     async allow(input) {
-      const url = new URL(input.redirectURI);
+      const { hostname } = new URL(input.redirectURI);
       return (
-        url.hostname.endsWith("localhost") ||
-        url.hostname.endsWith("sst.dev") ||
-        url.hostname.endsWith("console.sst.dev") ||
-        url.hostname.endsWith("opencontrol.ai")
+        hostname === "localhost" ||
+        hostname === "sst.dev" ||
+        hostname.endsWith(".sst.dev")
       );
     },
   }),

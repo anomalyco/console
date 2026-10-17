@@ -5,6 +5,10 @@ import { isPermanent } from "./stage";
 export const postgres = new sst.aws.Aurora("Postgres", {
   vpc,
   engine: "postgres",
+  password:
+    $app.stage === "production"
+      ? new sst.Secret("PostgresPassword").value
+      : undefined,
   scaling: isPermanent
     ? undefined
     : {

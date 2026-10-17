@@ -66,7 +66,6 @@ export const SlackRoute = new Hono()
           message: "Unauthorized",
         });
       const data = (await response.json()) as { access_token: string };
-      console.log(data);
       await withActor(
         {
           type: "system",
