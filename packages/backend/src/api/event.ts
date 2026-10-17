@@ -19,6 +19,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { Resource } from "sst";
 import { event } from "sst/event";
+import { internalActor } from "../function/events/authorization";
 
 const subscriptions: {
   events: string[];
@@ -32,9 +33,12 @@ export const EventRoute = new Hono().post("/", async (c) => {
   for (const { events, cb } of subscriptions) {
     for (const event of events) {
       if (json["detail-type"] === event) {
-        await withActor(json.detail.metadata.actor, async () => {
-          await cb(json.detail, json);
-        });
+        await withActor(
+          await internalActor(json, json.detail.metadata),
+          async () => {
+            await cb(json.detail, json);
+          },
+        );
       }
     }
   }
@@ -83,6 +87,8 @@ subscribe(AWS.Account.Events.Created, async (input) => {
 });
 
 subscribe(Workspace.Events.Created, async (input) => {
+  const target = await Workspace.fromID(input.properties.workspaceID);
+  if (!target || target.timeDeleted) return;
   await withActor(
     {
       type: "system",

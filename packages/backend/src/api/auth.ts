@@ -1,5 +1,5 @@
-import { useActor, withActor } from "@console/core/actor";
-import { User } from "@console/core/user/index";
+import { AccountActor, useActor, withActor } from "@console/core/actor";
+import { Account } from "@console/core/account/index";
 import { VisibleError } from "@console/core/util/error";
 import { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -44,29 +44,19 @@ export const auth: MiddlewareHandler = async (c, next) => {
     const workspaceID =
       c.req.header("x-sst-workspace") || c.req.query("workspaceID");
 
-    if (!workspaceID) return withActor(result.subject as any, next);
-    const email = result.subject.properties.email;
+    const identity = AccountActor.parse(result.subject);
+    const authorized = await Account.authorize(
+      identity.properties,
+      workspaceID,
+    );
+    if (!authorized) throw new HTTPException(401, { message: "Unauthorized" });
+    if (!workspaceID) return withActor(identity, next);
     return withActor(
       {
-        type: "system",
-        properties: {
-          workspaceID,
-        },
+        type: "user",
+        properties: { userID: authorized.id, workspaceID },
       },
-      async () => {
-        const user = await User.fromEmail(email);
-        if (!user || user.timeDeleted) {
-          c.status(401);
-          return c.text("Unauthorized: User not found");
-        }
-        return withActor(
-          {
-            type: "user",
-            properties: { userID: user.id, workspaceID: user.workspaceID },
-          },
-          next,
-        );
-      },
+      next,
     );
   }
 };

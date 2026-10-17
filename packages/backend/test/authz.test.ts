@@ -38,6 +38,9 @@ mock.module("@console/core/git/github", () => ({
     syncRepos: async (installationID: number) => {
       githubSyncs.push(installationID);
     },
+    useClient: async () => {
+      throw new Error("Unexpected external client resolution");
+    },
     disconnectAll: async () => {},
     serializeOrg: (x: any) => x,
     serializeRepo: (x: any) => x,
@@ -70,7 +73,8 @@ const connect = await import("../src/function/connect");
 const app = new Hono()
   .use(auth)
   .onError((error, c) => {
-    if (error instanceof HTTPException) return c.text(error.message, error.status);
+    if (error instanceof HTTPException)
+      return c.text(error.message, error.status);
     return c.text(String(error), 500);
   })
   .route("/replicache", ReplicacheRoute)
@@ -208,7 +212,9 @@ describe("replicache push", () => {
     fake.selects.push([], []);
     const res = await app.request("/replicache/push1", req);
     expect(res.status).toBe(200);
-    expect(executed).toEqual([{ name: "app_create", workspaceID: WORKSPACE_A }]);
+    expect(executed).toEqual([
+      { name: "app_create", workspaceID: WORKSPACE_A },
+    ]);
   });
 });
 
@@ -281,6 +287,7 @@ describe("slack oauth", () => {
       .getSetCookie()
       .map((x) => x.split(";")[0])
       .join("; ");
+    fake.selects.push([{ id: USER_A }]);
     const res = await app.request(
       `/slack/callback?code=c&state=${encodeURIComponent(state)}`,
       { headers: { cookie: `${cookie}; workspaceID=${WORKSPACE_B}` } },

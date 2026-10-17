@@ -3,32 +3,29 @@ import { Stage } from "@console/core/app/stage";
 import { awsAccount } from "@console/core/aws/aws.sql";
 import { State } from "@console/core/state/index";
 import { useTransaction } from "@console/core/util/transaction";
-import { and, eq } from "@console/core/drizzle/index";
+import { and, eq, isNull } from "@console/core/drizzle/index";
+import { workspace } from "@console/core/workspace/workspace.sql";
+import { z } from "zod";
+import { Envelope } from "./authorization";
 import { Resource } from "sst";
 import { bus } from "sst/aws/bus";
 
-interface Events {
-  "Object Created": {
-    bucket: {
-      name: string;
-    };
-    object: {
-      key: string;
-    };
-  };
-}
+const StackEvent = Envelope.extend({
+  source: z.literal("aws.s3"),
+  "detail-type": z.enum(["Object Created", "Object Deleted"]),
+  detail: z.object({
+    bucket: z.object({ name: z.string().min(1) }),
+    object: z.object({
+      key: z.string().min(1),
+      "version-id": z.string().optional(),
+    }),
+  }),
+});
 
-type Payload = {
-  [key in keyof Events]: {
-    account: string;
-    region: string;
-    "detail-type": key;
-    detail: Events[key];
-  };
-}[keyof Events];
-
-export const handler = async (evt: Payload) => {
-  console.log(evt);
+export const handler = async (input: unknown) => {
+  const parsed = StackEvent.safeParse(input);
+  if (!parsed.success) return;
+  const evt = parsed.data;
   const region = evt.region;
 
   if (
@@ -183,7 +180,6 @@ export const handler = async (evt: Payload) => {
             });
             await bus.publish(Resource.Bus, State.Event.LockCreated, {
               stageID,
-              // @ts-expect-error
               versionID: evt.detail.object["version-id"]!,
             });
           },
@@ -309,7 +305,14 @@ async function findAccounts(account: string) {
         id: awsAccount.id,
       })
       .from(awsAccount)
-      .where(and(eq(awsAccount.accountID, account)))
+      .innerJoin(workspace, eq(workspace.id, awsAccount.workspaceID))
+      .where(
+        and(
+          eq(awsAccount.accountID, account),
+          isNull(awsAccount.timeDeleted),
+          isNull(workspace.timeDeleted),
+        ),
+      )
       .execute();
   });
   return rows;

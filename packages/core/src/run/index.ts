@@ -375,11 +375,19 @@ export module Run {
             installationID: githubOrgTable.installationID,
           })
           .from(runTable)
-          .innerJoin(appRepoTable, eq(runTable.appID, appRepoTable.appID))
+          .innerJoin(
+            appRepoTable,
+            and(
+              eq(runTable.appID, appRepoTable.appID),
+              eq(runTable.workspaceID, appRepoTable.workspaceID),
+              isNull(appRepoTable.timeDeleted),
+            ),
+          )
           .innerJoin(
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
+              eq(githubRepoTable.workspaceID, appRepoTable.workspaceID),
               isNull(githubRepoTable.timeDisconnected),
             ),
           )
@@ -388,6 +396,7 @@ export module Run {
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              isNull(githubOrgTable.timeDisconnected),
             ),
           )
           .where(
@@ -500,6 +509,7 @@ export module Run {
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
+              eq(githubRepoTable.workspaceID, appRepoTable.workspaceID),
               isNull(githubRepoTable.timeDisconnected),
             ),
           )
@@ -508,6 +518,7 @@ export module Run {
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              isNull(githubOrgTable.timeDisconnected),
             ),
           )
           .where(
@@ -923,6 +934,7 @@ export module Run {
               and(
                 eq(githubOrgTable.workspaceID, useWorkspace()),
                 eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+                isNull(githubOrgTable.timeDisconnected),
               ),
             )
             .where(

@@ -10,7 +10,11 @@ const Resource = new Proxy(
         {},
         {
           get: (_, prop) =>
-            prop === "stage" ? "test" : `test-${String(name)}-${String(prop)}`,
+            name === "Bus" && prop === "arn"
+              ? "arn:aws:events:us-east-1:999999999999:event-bus/test"
+              : prop === "stage"
+                ? "test"
+                : `test-${String(name)}-${String(prop)}`,
         },
       ),
   },
@@ -20,6 +24,17 @@ mock.module("sst", () => ({ Resource }));
 export const published: { type: string; properties: any }[] = [];
 mock.module("sst/aws/bus", () => ({
   bus: {
+    subscriber:
+      (_events: unknown, callback: (event: any, raw: any) => any) =>
+      (raw: any) =>
+        callback(
+          {
+            type: raw["detail-type"],
+            properties: raw.detail.properties,
+            metadata: raw.detail.metadata,
+          },
+          raw,
+        ),
     publish: async (_bus: unknown, def: { type: string }, properties: any) => {
       published.push({ type: def.type, properties });
     },
@@ -28,15 +43,20 @@ mock.module("sst/aws/bus", () => ({
 
 // Fake database: every select pops the next queued result, writes are recorded.
 export const fake = {
+  sql: undefined as any,
   selects: [] as any[][],
   writes: [] as { op: string; values?: any }[],
   reset() {
+    fake.sql = undefined;
     fake.selects = [];
     fake.writes = [];
   },
 };
 
-function chain(result: () => any, record?: (method: string, args: any[]) => void) {
+function chain(
+  result: () => any,
+  record?: (method: string, args: any[]) => void,
+) {
   const proxy: any = new Proxy(function () {}, {
     get(_, prop) {
       if (prop === "then") {
@@ -65,13 +85,17 @@ function write(op: string) {
 }
 
 export const fakeTx: any = {
-  select: () => {
+  select: (...args: any[]) => {
+    if (fake.sql) return fake.sql.select(...args);
     const rows = fake.selects.shift() ?? [];
     return chain(() => rows);
   },
-  insert: () => write("insert"),
-  update: () => write("update"),
-  delete: () => write("delete"),
+  insert: (...args: any[]) =>
+    fake.sql ? fake.sql.insert(...args) : write("insert"),
+  update: (...args: any[]) =>
+    fake.sql ? fake.sql.update(...args) : write("update"),
+  delete: (...args: any[]) =>
+    fake.sql ? fake.sql.delete(...args) : write("delete"),
   transaction: (cb: (tx: any) => any) => cb(fakeTx),
 };
 
