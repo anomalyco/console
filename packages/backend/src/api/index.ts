@@ -19,7 +19,6 @@ import { WorkspaceRoute } from "./workspace";
 import { LinkRoute } from "./link";
 import { cors } from "hono/cors";
 import { EventRoute } from "./event";
-import { AgentRoute } from "./agent";
 
 export const app = new Hono()
   .use(cors())
@@ -75,7 +74,6 @@ export const app = new Hono()
     console.error(new Error("bad error oh no"));
     return c.text("ok");
   })
-  .route("/agent", AgentRoute)
   .route("/event", EventRoute)
   .route("/replicache", ReplicacheRoute)
   .route("/webhook", WebhookRoute)

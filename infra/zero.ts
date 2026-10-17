@@ -89,6 +89,7 @@ const replication = !$dev
       },
       transform: {
         service: {
+          enableExecuteCommand: false,
           healthCheckGracePeriodSeconds: 900000,
           volumeConfiguration: {
             name: "tmp",
@@ -186,6 +187,7 @@ export const zero = cluster.addService("Zero", {
   },
   transform: {
     service: {
+      enableExecuteCommand: false,
       healthCheckGracePeriodSeconds: 900000,
       volumeConfiguration: {
         name: "tmp",
@@ -299,4 +301,9 @@ const cdc = cluster.addService("CDC", {
       },
     },
   ],
+  transform: {
+    service: {
+      enableExecuteCommand: false,
+    },
+  },
 });

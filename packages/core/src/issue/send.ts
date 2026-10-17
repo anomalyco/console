@@ -74,8 +74,8 @@ export const triggerIssue = zod(
             or(
               // alert first time
               isNull(issueAlertLimit.timeUpdated),
-              // do not alert more than once every 30min
-              lt(issueAlertLimit.timeUpdated, sql`NOW() - INTERVAL 30 MINUTE`),
+              // do not alert more than once every 24h
+              lt(issueAlertLimit.timeUpdated, sql`NOW() - INTERVAL 24 HOUR`),
               // if issue resolved after last alert, send alert
               and(
                 isNotNull(issue.timeResolved),

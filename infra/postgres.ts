@@ -5,12 +5,23 @@ import { isPermanent } from "./stage";
 export const postgres = new sst.aws.Aurora("Postgres", {
   vpc,
   engine: "postgres",
-  scaling: isPermanent
-    ? undefined
-    : {
-        min: "0 ACU",
-        max: "1 ACU",
-      },
+  version: $app.stage === "production" ? "16.11" : undefined,
+  password:
+    $app.stage === "production"
+      ? new sst.Secret("PostgresPassword").value
+      : undefined,
+  scaling:
+    $app.stage === "production"
+      ? {
+          min: "1 ACU",
+          max: "16 ACU",
+        }
+      : isPermanent
+        ? undefined
+        : {
+            min: "0 ACU",
+            max: "1 ACU",
+          },
   transform: {
     clusterParameterGroup: {
       parameters: [

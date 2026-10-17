@@ -15,7 +15,6 @@ let buildspec;
  * @param {Context} context
  */
 export async function handler(event, context) {
-  console.log(event);
   const version = event.buildspec.version;
   const bucket = event.buildspec.bucket;
   console.log("buildspec version:", version);
