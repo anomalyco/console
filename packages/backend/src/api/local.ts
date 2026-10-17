@@ -3,7 +3,7 @@ import { notPublic } from "./auth";
 import { assertActor } from "@console/core/actor";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { and, db, eq } from "@console/core/drizzle/index";
+import { and, db, eq, isNull } from "@console/core/drizzle/index";
 import { workspace } from "@console/core/workspace/workspace.sql";
 import { user } from "@console/core/user/user.sql";
 import { stage, app } from "@console/core/app/app.sql";
@@ -37,6 +37,10 @@ export const LocalRoute = new Hono().use(notPublic).get(
           eq(user.email, actor.properties.email),
           eq(app.name, query.app),
           eq(stage.name, query.stage),
+          isNull(user.timeDeleted),
+          isNull(workspace.timeDeleted),
+          isNull(stage.timeDeleted),
+          isNull(app.timeDeleted),
         ),
       );
 

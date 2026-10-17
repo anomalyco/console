@@ -138,11 +138,17 @@ export module Github {
           .from(appRepoTable)
           .innerJoin(
             githubRepoTable,
-            eq(appRepoTable.repoID, githubRepoTable.id),
+            and(
+              eq(appRepoTable.repoID, githubRepoTable.id),
+              eq(appRepoTable.workspaceID, githubRepoTable.workspaceID),
+            ),
           )
           .innerJoin(
             githubOrgTable,
-            eq(githubRepoTable.githubOrgID, githubOrgTable.id),
+            and(
+              eq(githubRepoTable.githubOrgID, githubOrgTable.id),
+              eq(githubRepoTable.workspaceID, githubOrgTable.workspaceID),
+            ),
           )
           .where(
             and(

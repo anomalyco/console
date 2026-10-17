@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { zod } from "../util/zod";
 import { createTransactionEffect, useTransaction } from "../util/transaction";
-import { appRepoTable } from "./app.sql";
+import { app, appRepoTable } from "./app.sql";
+import { githubOrgTable, githubRepoTable } from "../git/git.sql";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
+import { VisibleError } from "../util/error";
 import { createEvent } from "../event";
 import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
@@ -88,8 +90,57 @@ export module AppRepo {
       id: true,
     }),
     async (input) => {
-      await useTransaction(async (tx) =>
-        tx
+      await useTransaction(async (tx) => {
+        const target = await tx
+          .select({ id: app.id })
+          .from(app)
+          .innerJoin(
+            githubRepoTable,
+            eq(githubRepoTable.workspaceID, app.workspaceID),
+          )
+          .innerJoin(
+            githubOrgTable,
+            and(
+              eq(githubOrgTable.workspaceID, githubRepoTable.workspaceID),
+              eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+            ),
+          )
+          .where(
+            and(
+              eq(app.workspaceID, useWorkspace()),
+              eq(app.id, input.appID),
+              eq(githubRepoTable.id, input.repoID),
+              isNull(app.timeDeleted),
+              isNull(githubRepoTable.timeDeleted),
+              isNull(githubRepoTable.timeDisconnected),
+              isNull(githubOrgTable.timeDeleted),
+              isNull(githubOrgTable.timeDisconnected),
+            ),
+          )
+          .then((rows) => rows[0]);
+        if (!target)
+          throw new VisibleError(
+            "app_repo.target",
+            "App and connected repository required",
+          );
+        if (input.id) {
+          const existing = await tx
+            .select({ appID: appRepoTable.appID })
+            .from(appRepoTable)
+            .where(
+              and(
+                eq(appRepoTable.workspaceID, useWorkspace()),
+                eq(appRepoTable.id, input.id),
+              ),
+            )
+            .then((rows) => rows[0]);
+          if (existing && existing.appID !== input.appID)
+            throw new VisibleError(
+              "app_repo.app",
+              "Connection belongs to a different app",
+            );
+        }
+        await tx
           .insert(appRepoTable)
           .values({
             id: input.id ?? createId(),
@@ -104,8 +155,8 @@ export module AppRepo {
               repoID: input.repoID,
             },
           })
-          .execute(),
-      );
+          .execute();
+      });
       await createTransactionEffect(() =>
         bus.publish(Resource.Bus, Events.Connected, {
           appID: input.appID,

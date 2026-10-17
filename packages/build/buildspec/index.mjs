@@ -335,6 +335,7 @@ export async function handler({
                 engine,
                 workspaceID,
                 runID,
+                buildID: process.env.CODEBUILD_BUILD_ARN,
               },
             }),
           },
