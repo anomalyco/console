@@ -18,6 +18,11 @@ export default $config({
   },
   console: {
     autodeploy: {
+      // REVIEW ONLY: remove this guard only for an explicitly authorized rollout.
+      // Both branch pushes and PR-open events can otherwise trigger deployment.
+      target() {
+        return undefined;
+      },
       runner(input) {
         return {
           engine: "codebuild",

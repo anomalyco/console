@@ -68,3 +68,20 @@ test("manual stage names accept SST names, not JavaScript fragments", () => {
   for (const name of ["", "stage\nnext", 'stage";', "../stage"])
     expect(StageName.safeParse(name).success).toBe(false);
 });
+
+test("review-only config blocks branch and PR automatic deployments", async () => {
+  const review = Buffer.from(
+    await Bun.file(new URL("../../../sst.config.ts", import.meta.url)).text(),
+  ).toString("base64");
+  for (const trigger of [
+    { type: "branch", branch: "fix/auth-issuer-boundaries" },
+    { type: "pull_request", head: "fix/auth-issuer-boundaries", number: 1 },
+  ]) {
+    const result = await handler({
+      content: review,
+      defaultStage: "review",
+      trigger,
+    } as Run.ConfigParserEvent);
+    expect(result.error).toBe("config_target_returned_undefined");
+  }
+});
