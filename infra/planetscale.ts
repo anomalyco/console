@@ -1,8 +1,8 @@
-const mysql = planetscale.Database.get("Database", "sst,sst");
+const mysql = planetscale.Database.get("Database", "anomalyco,sst");
 
 const branch =
   $app.stage === "production"
-    ? planetscale.Branch.get("DatabaseBranch", "sst,sst,production")
+    ? planetscale.Branch.get("DatabaseBranch", "anomalyco,sst,production")
     : new planetscale.Branch(
         "DatabaseBranch",
         {
