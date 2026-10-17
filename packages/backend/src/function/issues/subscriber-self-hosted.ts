@@ -8,7 +8,6 @@ import { Sha256 } from "@aws-crypto/sha256-js";
 import { LogError } from "@console/core/log/error";
 
 export async function handler(input: CloudWatchLogsEvent) {
-  process.stdout.write(JSON.stringify(input));
   const decoded: CloudWatchLogsDecodedData = JSON.parse(
     unzipSync(Buffer.from(input.awslogs.data, "base64")).toString(),
   );
@@ -59,7 +58,7 @@ export async function handler(input: CloudWatchLogsEvent) {
     }
 
     if (!err.error || !err.message) {
-      console.log("error was undefined for some reason", item);
+      console.log("error was undefined for some reason", item.id);
       continue;
     }
 

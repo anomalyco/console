@@ -38,6 +38,7 @@ import {
 } from "@aws-sdk/client-cloudformation";
 import { workspace } from "../workspace/workspace.sql";
 import { disposable } from "../util/disposable";
+import { SubscriptionBatch } from "./subscription";
 
 export const Info = createSelectSchema(issue, {});
 export type Info = typeof issue.$inferSelect;
@@ -48,20 +49,7 @@ export const Events = {
   ErrorDetected: createEvent(
     "issue.error_detected",
     z.object({
-      records: z
-        .object({
-          logGroup: z.string(),
-          logStream: z.string(),
-          subscriptionFilters: z.string().array(),
-          logEvents: z
-            .object({
-              id: z.string(),
-              timestamp: z.number(),
-              message: z.string(),
-            })
-            .array(),
-        })
-        .array(),
+      records: SubscriptionBatch.array(),
     }),
   ),
   RateLimited: createEvent(

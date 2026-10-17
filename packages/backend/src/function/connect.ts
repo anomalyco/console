@@ -66,7 +66,7 @@ function isResponseURL(input: string) {
 export async function handler(event: CloudFormationCustomResourceEvent) {
   console.log(event.RequestType, event.ResourceProperties.accountID);
   if (!isResponseURL(event.ResponseURL)) {
-    console.error("invalid response url", event.ResponseURL);
+    console.error("invalid response url");
     return;
   }
   let status: CloudFormationCustomResourceResponse["Status"] = "SUCCESS";
@@ -81,7 +81,7 @@ export async function handler(event: CloudFormationCustomResourceEvent) {
           },
         },
         async () => {
-          const credentials = await AWS.assumeRole(
+          const credentials = await AWS.assumeRoleForConnect(
             event.ResourceProperties.accountID,
           );
           if (credentials && (await verify(event, credentials))) {

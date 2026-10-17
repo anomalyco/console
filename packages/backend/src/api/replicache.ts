@@ -45,6 +45,10 @@ import {
 import { githubOrgTable, githubRepoTable } from "@console/core/git/git.sql";
 import { slackTeam } from "@console/core/slack/slack.sql";
 import {
+  publicColumns as slackTeamColumns,
+  serializeTeam,
+} from "@console/core/slack/public";
+import {
   stateCountTable,
   stateResourceTable,
   stateUpdateTable,
@@ -117,11 +121,12 @@ const TABLE_KEY = {
   [key in TableName]?: MySqlColumn[];
 };
 
-const TABLE_SELECT = {} as {
+const TABLE_SELECT = { slackTeam: slackTeamColumns } as {
   [key in TableName]?: any;
 };
 
 const TABLE_PROJECTION = {
+  slackTeam: serializeTeam,
   alert: (input) => Alert.serialize(input),
   stripe: (input) => Billing.Stripe.serialize(input),
   appRepo: (input) => AppRepo.serializeAppRepo(input),

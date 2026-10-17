@@ -42,13 +42,18 @@ mock.module("sst/aws/bus", () => ({
 }));
 
 // Fake database: every select pops the next queued result, writes are recorded.
+type FakeQuery = { columns: any; calls: { method: string; args: any[] }[] };
 export const fake = {
   sql: undefined as any,
   selects: [] as any[][],
+  queries: [] as FakeQuery[],
+  resolveSelect: undefined as ((query: FakeQuery) => any[]) | undefined,
   writes: [] as { op: string; values?: any }[],
   reset() {
     fake.sql = undefined;
     fake.selects = [];
+    fake.queries = [];
+    fake.resolveSelect = undefined;
     fake.writes = [];
   },
 };
@@ -88,7 +93,12 @@ export const fakeTx: any = {
   select: (...args: any[]) => {
     if (fake.sql) return fake.sql.select(...args);
     const rows = fake.selects.shift() ?? [];
-    return chain(() => rows);
+    const query = { columns: args[0], calls: [] as { method: string; args: any[] }[] };
+    fake.queries.push(query);
+    return chain(
+      () => fake.resolveSelect?.(query) ?? rows,
+      (method, args) => query.calls.push({ method, args }),
+    );
   },
   insert: (...args: any[]) =>
     fake.sql ? fake.sql.insert(...args) : write("insert"),

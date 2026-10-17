@@ -42,7 +42,7 @@ export const handler = bus.subscriber(
   ],
   async (evt, raw) =>
     withActor(await internalActor(raw, evt.metadata), async () => {
-      console.log(JSON.stringify(evt));
+      console.log("handling event", evt.type);
       const now = Date.now();
       switch (evt.type) {
         case User.Events.UserCreated.type:

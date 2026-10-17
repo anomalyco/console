@@ -173,9 +173,9 @@ describe("repository ownership", () => {
       "INSERT INTO app_repository (workspace_id, id, app_id, repo_id) VALUES (?, 'connection', ?, ?)",
       [A, APP, repoID],
     );
-    const client = spyOn(Github, "useClient").mockRejectedValue(
-      new Error("Unexpected external client resolution"),
-    );
+    const client = spyOn(Github, "useClient").mockImplementation(async () => {
+      throw new Error("Unexpected external client resolution");
+    });
     try {
       await withActor(actor, () =>
         Run.triggerManualDeploy({
@@ -200,9 +200,9 @@ describe("repository ownership", () => {
       "INSERT INTO run (workspace_id, id, app_id) VALUES (?, ?, ?)",
       [A, RUN, APP],
     );
-    const client = spyOn(Github, "useClient").mockRejectedValue(
-      new Error("Unexpected external client resolution"),
-    );
+    const client = spyOn(Github, "useClient").mockImplementation(async () => {
+      throw new Error("Unexpected external client resolution");
+    });
     try {
       await withActor(actor, () =>
         Run.triggerRetry({ id: "runbbbbbbbbbbbbbbbbbbbbb", runID: RUN }),
