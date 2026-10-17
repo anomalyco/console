@@ -9,12 +9,18 @@ export const postgres = new sst.aws.Aurora("Postgres", {
     $app.stage === "production"
       ? new sst.Secret("PostgresPassword").value
       : undefined,
-  scaling: isPermanent
-    ? undefined
-    : {
-        min: "0 ACU",
-        max: "1 ACU",
-      },
+  scaling:
+    $app.stage === "production"
+      ? {
+          min: "1 ACU",
+          max: "16 ACU",
+        }
+      : isPermanent
+        ? undefined
+        : {
+            min: "0 ACU",
+            max: "1 ACU",
+          },
   transform: {
     clusterParameterGroup: {
       parameters: [
