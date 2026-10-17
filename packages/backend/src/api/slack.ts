@@ -3,15 +3,24 @@ import { Resource } from "sst";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { getCookie, setCookie } from "hono/cookie";
-import { useWorkspace, withActor } from "@console/core/actor";
+import { assertActor, useWorkspace, withActor } from "@console/core/actor";
+import { Account } from "@console/core/account/index";
 import { createId } from "@console/core/util/sql";
 import { HTTPException } from "hono/http-exception";
 import { Slack } from "@console/core/slack/index";
+import { signState, verifyState } from "./state";
+
+const STATE_PURPOSE = "slack-oauth";
 
 export const SlackRoute = new Hono()
   .get("/authorize", async (c) => {
     const origin = c.req.header("x-forwarded-host") || c.req.header("host");
-    const state = createId();
+    const nonce = createId();
+    const state = signState(Resource.SlackClientSecret.value, STATE_PURPOSE, {
+      workspaceID: useWorkspace(),
+      userID: assertActor("user").properties.userID,
+      nonce,
+    });
     const authorize = new URL("https://slack.com/oauth/v2/authorize");
     authorize.search = new URLSearchParams({
       client_id: Resource.SlackClientID.value,
@@ -19,18 +28,12 @@ export const SlackRoute = new Hono()
       redirect_uri: `https://${origin}/slack/callback`,
       state,
     }).toString();
-    setCookie(c, "state", state, {
+    setCookie(c, "state", nonce, {
       httpOnly: true,
       sameSite: "lax",
       secure: true,
       path: "/",
       maxAge: 600,
-    });
-    setCookie(c, "workspaceID", useWorkspace(), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      path: "/",
     });
     return c.redirect(authorize.toString());
   })
@@ -39,14 +42,24 @@ export const SlackRoute = new Hono()
     zValidator("query", z.object({ code: z.string(), state: z.string() })),
     async (c) => {
       const origin = c.req.header("x-forwarded-host") || c.req.header("host");
-      const workspaceID = getCookie(c, "workspaceID")!;
-      const state = getCookie(c, "state");
+      const nonce = getCookie(c, "state");
       const query = c.req.valid("query");
-      if (!state || state !== query.state) {
+      const state = verifyState(
+        Resource.SlackClientSecret.value,
+        STATE_PURPOSE,
+        query.state,
+      );
+      if (!state || !nonce || state.nonce !== nonce) {
         throw new HTTPException(400, {
           message: "invalid state parameter",
         });
       }
+      const workspaceID = state.workspaceID;
+      if (
+        !state.userID ||
+        !(await Account.authorizeUser(state.userID, workspaceID))
+      )
+        throw new HTTPException(401, { message: "Active membership required" });
       const response = await fetch("https://slack.com/api/oauth.v2.access", {
         method: "POST",
         headers: {
@@ -66,7 +79,6 @@ export const SlackRoute = new Hono()
           message: "Unauthorized",
         });
       const data = (await response.json()) as { access_token: string };
-      console.log(data);
       await withActor(
         {
           type: "system",

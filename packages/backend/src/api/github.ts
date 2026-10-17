@@ -1,18 +1,28 @@
 import { Hono } from "hono";
 import { App } from "octokit";
 import { HTTPException } from "hono/http-exception";
-import { withActor } from "@console/core/actor";
+import { useActor, withActor } from "@console/core/actor";
 import { Github } from "@console/core/git/github";
 import { Resource } from "sst";
 import { Run } from "@console/core/run/index";
+import { signState, verifyState } from "./state";
+
+const STATE_PURPOSE = "github-install";
 
 export const GithubRoute = new Hono();
 
 GithubRoute.get("/installed", async (c) => {
-  const workspaceID = c.req.query("state");
+  const state = c.req.query("state");
   const installationID = parseInt(c.req.query("installation_id") ?? "");
 
   if (!installationID)
+    throw new HTTPException(401, { message: "Unauthorized" });
+
+  const workspaceID = state
+    ? verifyState(Resource.GithubWebhookSecret.value, STATE_PURPOSE, state)
+        ?.workspaceID
+    : undefined;
+  if (state && !workspaceID)
     throw new HTTPException(401, { message: "Unauthorized" });
 
   // User has authorized the app
@@ -49,13 +59,18 @@ GithubRoute.get("/installed", async (c) => {
 });
 
 GithubRoute.get("/connect", async (c) => {
-  const workspaceID = c.req.query("workspaceID");
+  const actor = useActor();
+  if (actor.type !== "user")
+    throw new HTTPException(401, { message: "Unauthorized" });
+  const state = signState(Resource.GithubWebhookSecret.value, STATE_PURPOSE, {
+    workspaceID: actor.properties.workspaceID,
+  });
   const appName =
     Resource.App.stage === "production"
       ? "sst-console"
       : `sst-console-${Resource.App.stage}`;
   return c.redirect(
-    `https://github.com/apps/${appName}/installations/new?state=${workspaceID}`,
+    `https://github.com/apps/${appName}/installations/new?state=${encodeURIComponent(state)}`,
   );
 });
 

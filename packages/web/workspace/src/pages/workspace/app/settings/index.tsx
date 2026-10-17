@@ -1022,8 +1022,8 @@ export function Settings() {
                       />
                       <input
                         type="hidden"
-                        name="token"
-                        value={access()}
+                        name="authorization"
+                        value={"Bearer " + access()}
                       />
                     </form>
                   </GitOrgError>

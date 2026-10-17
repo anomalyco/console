@@ -497,7 +497,7 @@ export module State {
       if (!lock.created) return;
       const command = UpdateCommand.safeParse(lock.command);
       if (!command.success) return;
-      console.log(lock);
+      console.log("lock", { updateID: lock.updateID, runID: lock.runID });
       await createTransaction(async (tx) => {
         const runID = lock.runID
           ? await tx
@@ -669,7 +669,7 @@ export module State {
           message: string;
         }[];
       };
-      console.log("update", update);
+      console.log("update", input.updateID);
       await createTransaction(async (tx) => {
         const runID = update.runID
           ? await tx

@@ -5,8 +5,13 @@ import { workspace } from "./workspace.sql";
 import { z } from "zod";
 import { zod } from "../util/zod";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, sql } from "drizzle-orm";
-import { createTransactionEffect, useTransaction } from "../util/transaction";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { account as accountTable } from "../account/account.sql";
+import {
+  createTransaction,
+  createTransactionEffect,
+  useTransaction,
+} from "../util/transaction";
 import { createEvent } from "../event";
 import { VisibleError } from "../util/error";
 import { assertActor, useWorkspace } from "../actor";
@@ -71,7 +76,7 @@ export const create = zod(
 );
 
 export const remove = zod(Info.shape.id, (input) =>
-  useTransaction(async (tx) => {
+  createTransaction(async (tx) => {
     const account = assertActor("account");
     const row = await tx
       .select({
@@ -80,16 +85,25 @@ export const remove = zod(Info.shape.id, (input) =>
       })
       .from(user)
       .innerJoin(workspace, eq(workspace.id, user.workspaceID))
+      .innerJoin(accountTable, eq(accountTable.email, user.email))
       .where(
         and(
           eq(user.workspaceID, input),
           eq(user.email, account.properties.email),
+          eq(accountTable.id, account.properties.accountID),
+          isNull(accountTable.timeDeleted),
+          isNull(user.timeDeleted),
+          isNull(workspace.timeDeleted),
         ),
       )
       .execute()
       .then((rows) => rows.at(0));
-    if (!row) return;
-    
+    if (!row)
+      throw new VisibleError(
+        "workspace.unauthorized",
+        "Active membership required",
+      );
+
     await tx
       .update(workspace)
       .set({
@@ -97,7 +111,15 @@ export const remove = zod(Info.shape.id, (input) =>
         oldSlug: row.slug,
         slug: row.workspaceID, // Use the workspace ID as the slug
       })
-      .where(eq(workspace.id, row.workspaceID));
+      .where(
+        and(eq(workspace.id, row.workspaceID), isNull(workspace.timeDeleted)),
+      );
+    await tx
+      .update(user)
+      .set({ timeDeleted: sql`now()` })
+      .where(
+        and(eq(user.workspaceID, row.workspaceID), isNull(user.timeDeleted)),
+      );
   }),
 );
 

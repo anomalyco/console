@@ -71,6 +71,7 @@ import { githubOrgTable, githubRepoTable } from "../git/git.sql";
 import { Workspace } from "../workspace";
 import { bootstrapIon } from "../aws/bootstrap";
 import { disposable } from "../util/disposable";
+import { StageName } from "./stage-name";
 
 export { RunConfig } from "./config";
 
@@ -375,11 +376,19 @@ export module Run {
             installationID: githubOrgTable.installationID,
           })
           .from(runTable)
-          .innerJoin(appRepoTable, eq(runTable.appID, appRepoTable.appID))
+          .innerJoin(
+            appRepoTable,
+            and(
+              eq(runTable.appID, appRepoTable.appID),
+              eq(runTable.workspaceID, appRepoTable.workspaceID),
+              isNull(appRepoTable.timeDeleted),
+            ),
+          )
           .innerJoin(
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
+              eq(githubRepoTable.workspaceID, appRepoTable.workspaceID),
               isNull(githubRepoTable.timeDisconnected),
             ),
           )
@@ -388,6 +397,7 @@ export module Run {
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              isNull(githubOrgTable.timeDisconnected),
             ),
           )
           .where(
@@ -482,7 +492,7 @@ export module Run {
       id: z.string().cuid2(),
       ref: z.string().min(1),
       appID: z.string().cuid2(),
-      stageName: z.string().min(1),
+      stageName: StageName,
       force: z.boolean().optional(),
     }),
     async ({ id, ref, appID, stageName, force }) => {
@@ -500,6 +510,7 @@ export module Run {
             githubRepoTable,
             and(
               eq(githubRepoTable.id, appRepoTable.repoID),
+              eq(githubRepoTable.workspaceID, appRepoTable.workspaceID),
               isNull(githubRepoTable.timeDisconnected),
             ),
           )
@@ -508,6 +519,7 @@ export module Run {
             and(
               eq(githubOrgTable.workspaceID, useWorkspace()),
               eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+              isNull(githubOrgTable.timeDisconnected),
             ),
           )
           .where(
@@ -923,6 +935,7 @@ export module Run {
               and(
                 eq(githubOrgTable.workspaceID, useWorkspace()),
                 eq(githubOrgTable.id, githubRepoTable.githubOrgID),
+                isNull(githubOrgTable.timeDisconnected),
               ),
             )
             .where(

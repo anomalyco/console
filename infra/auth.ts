@@ -7,6 +7,7 @@ export const auth = new sst.aws.Auth("OpenAuth", {
   domain: "openauth." + domain,
   issuer: {
     dev: false,
+    concurrency: { reserved: 15 },
     link: [database, email, secret.OpensendApiKey],
     handler: "packages/backend/src/function/auth/issuer.handler",
     environment: {

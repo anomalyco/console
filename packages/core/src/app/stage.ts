@@ -163,6 +163,7 @@ export const assumeRole = zod(Info.shape.id, async (stageID) => {
         stage,
         and(
           eq(stage.awsAccountID, awsAccount.id),
+          eq(stage.workspaceID, awsAccount.workspaceID),
           eq(stage.workspaceID, useWorkspace()),
         ),
       )
@@ -170,7 +171,15 @@ export const assumeRole = zod(Info.shape.id, async (stageID) => {
         app,
         and(eq(stage.appID, app.id), eq(app.workspaceID, useWorkspace())),
       )
-      .where(and(eq(stage.id, stageID), eq(stage.workspaceID, useWorkspace())))
+      .where(
+        and(
+          eq(stage.id, stageID),
+          eq(stage.workspaceID, useWorkspace()),
+          isNull(stage.timeDeleted),
+          isNull(app.timeDeleted),
+          isNull(awsAccount.timeDeleted),
+        ),
+      )
       .execute()
       .then((rows) => rows.at(0)),
   );

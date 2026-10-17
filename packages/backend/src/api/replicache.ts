@@ -45,6 +45,10 @@ import {
 import { githubOrgTable, githubRepoTable } from "@console/core/git/git.sql";
 import { slackTeam } from "@console/core/slack/slack.sql";
 import {
+  publicColumns as slackTeamColumns,
+  serializeTeam,
+} from "@console/core/slack/public";
+import {
   stateCountTable,
   stateResourceTable,
   stateUpdateTable,
@@ -59,6 +63,7 @@ import { alert } from "@console/core/alert/alert.sql";
 import { Alert } from "@console/core/alert/index";
 import { Hono } from "hono";
 import { notPublic } from "./auth";
+import { HTTPException } from "hono/http-exception";
 import { VisibleError } from "@console/core/util/error";
 import { Billing } from "@console/core/billing/index";
 import { server } from "../replicache/server";
@@ -95,6 +100,10 @@ export const TABLES = {
 
 type TableName = keyof typeof TABLES;
 
+function isValidReplicacheID(id: unknown): id is string {
+  return typeof id === "string" && /^[A-Za-z0-9_-]{1,36}$/.test(id);
+}
+
 const TABLE_KEY = {
   appRepo: [appRepoTable.appID, appRepoTable.id],
   runConfig: [runConfigTable.appID, runConfigTable.id],
@@ -112,11 +121,12 @@ const TABLE_KEY = {
   [key in TableName]?: MySqlColumn[];
 };
 
-const TABLE_SELECT = {} as {
+const TABLE_SELECT = { slackTeam: slackTeamColumns } as {
   [key in TableName]?: any;
 };
 
 const TABLE_PROJECTION = {
+  slackTeam: serializeTeam,
   alert: (input) => Alert.serialize(input),
   stripe: (input) => Billing.Stripe.serialize(input),
   appRepo: (input) => AppRepo.serializeAppRepo(input),
@@ -149,6 +159,8 @@ ReplicacheRoute.post("/pull1", async (c) => {
   if (req.pullVersion !== 1) {
     return c.redirect("/replicache/pull");
   }
+  if (!isValidReplicacheID(req.clientGroupID))
+    throw new HTTPException(400, { message: "Invalid client group" });
 
   await db.insert(replicache_client_group).ignore().values({
     id: req.clientGroupID,
@@ -537,6 +549,10 @@ ReplicacheRoute.post("/push1", async (c) => {
 
   const body = await c.req.json<PushRequest>();
   if (body.pushVersion !== 1) return c.redirect("/replicache/push");
+  if (!isValidReplicacheID(body.clientGroupID))
+    throw new HTTPException(400, { message: "Invalid client group" });
+  if (!body.mutations.every((m) => isValidReplicacheID(m.clientID)))
+    throw new HTTPException(400, { message: "Invalid client" });
 
   for (const mutation of body.mutations) {
     await createTransaction(
@@ -562,11 +578,8 @@ ReplicacheRoute.post("/push1", async (c) => {
               },
           );
 
-        // if (!equals(group.actor, actor)) {
-        //   throw new Error(
-        //     `${actor} is not authorized to push to ${body.clientGroupID}}`
-        //   );
-        // }
+        if (!isDeepEqual(group.actor, actor))
+          throw new HTTPException(403, { message: "Forbidden" });
 
         const client = await tx
           .select({
@@ -582,12 +595,15 @@ ReplicacheRoute.post("/push1", async (c) => {
           .then(
             (rows) =>
               rows.at(0) || {
-                id: body.clientGroupID,
+                id: mutation.clientID,
                 clientGroupID: body.clientGroupID,
                 mutationID: 0,
                 clientVersion: 0,
               },
           );
+
+        if (client.clientGroupID !== group.id)
+          throw new HTTPException(403, { message: "Forbidden" });
 
         const nextClientVersion = group.clientVersion + 1;
         const nextMutationID = client.mutationID + 1;

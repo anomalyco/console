@@ -85,15 +85,18 @@ export async function handler({
     if (fs.existsSync(path.join(REPO_PATH, ".git"))) {
       process.chdir(REPO_PATH);
       shell("git reset --hard");
-      shell(`git remote set-url origin ${repo.cloneUrl}`);
+      shell(
+        `git remote set-url origin ${repo.cloneUrl}`,
+        "git remote set-url origin",
+      );
     } else {
       process.chdir(ROOT_PATH);
-      shell(`git clone --depth 1 ${repo.cloneUrl} ${REPO_DIR_NAME}`);
+      shell(`git clone --depth 1 ${repo.cloneUrl} ${REPO_DIR_NAME}`, "git clone");
     }
 
     // Checkout commit
     process.chdir(REPO_PATH);
-    shell(`git fetch origin ${trigger.commit.id}`);
+    shell(`git fetch origin ${trigger.commit.id}`, "git fetch origin");
     shell(`git -c advice.detachedHead=false checkout ${trigger.commit.id}`);
   }
 
@@ -292,11 +295,15 @@ export async function handler({
 
   /**
    * @param {string} command
+   * @param {string} [privateCommandLabel]
    */
-  function shell(command) {
-    console.log(`Running: ${command}`);
+  function shell(command, privateCommandLabel) {
+    const label = privateCommandLabel ?? command;
+    console.log(`Running: ${label}`);
     const ret = spawnSync(command, {
-      stdio: "inherit",
+      // Repository setup includes an authenticated URL. Git may echo it in
+      // its own diagnostics, so do not forward those streams either.
+      stdio: privateCommandLabel ? "pipe" : "inherit",
       shell: true,
       env: {
         ...process.env,
@@ -304,7 +311,7 @@ export async function handler({
     });
 
     if (ret.status !== 0) {
-      throw new Error(`Failed to run: ${command}`);
+      throw new Error(`Failed to run: ${label}`);
     }
     return ret;
   }
@@ -328,6 +335,7 @@ export async function handler({
                 engine,
                 workspaceID,
                 runID,
+                buildID: process.env.CODEBUILD_BUILD_ARN,
               },
             }),
           },

@@ -17,7 +17,7 @@ WebhookRoute.post("/stripe", async (c) => {
     Resource.StripeWebhookSigningSecret.value,
   );
 
-  console.log(body.type, body);
+  console.log(body.type, body.id);
   if (body.type === "customer.subscription.created") {
     const { id: subscriptionID, customer, items } = body.data.object;
     const item = await Billing.Stripe.fromCustomerID(customer as string);

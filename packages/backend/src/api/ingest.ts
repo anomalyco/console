@@ -15,9 +15,21 @@ import { withActor } from "@console/core/actor";
 import { Events } from "@console/core/issue/index";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Resource } from "sst";
-import { LogError } from "@console/core/log/error";
+import { workspace } from "@console/core/workspace/workspace.sql";
+import { ParsedIssue } from "./ingest-schema";
 
 const sqs = new SQSClient({});
+
+function parseIdentityURL(input: string) {
+  const url = URL.canParse(input) ? new URL(input) : undefined;
+  if (!url) return;
+  if (url.protocol !== "https:") return;
+  if (url.port || url.username || url.password) return;
+  if (!/^sts(\.[a-z0-9-]+)?\.amazonaws\.com(\.cn)?$/.test(url.hostname)) return;
+  if (url.pathname !== "/") return;
+  if (url.searchParams.get("Action") !== "GetCallerIdentity") return;
+  return url;
+}
 
 export const IngestRoute = new Hono().post(
   "/",
@@ -27,19 +39,20 @@ export const IngestRoute = new Hono().post(
       z.object({
         type: z.literal("aws.issue"),
         properties: z.object({
-          identity: z.string(),
-          app: z.string(),
-          stage: z.string(),
-          region: z.string(),
-          logGroup: z.string(),
-          logStream: z.string(),
+          identity: z.string().max(8192),
+          app: z.string().min(1).max(255),
+          stage: z.string().min(1).max(255),
+          region: z.string().regex(/^[a-z]{2}(?:-[a-z]+)+-\d+$/),
+          logGroup: z.string().min(1).max(512),
+          logStream: z.string().min(1).max(512),
           issues: z
             .object({
-              group: z.string(),
-              timestamp: z.number(),
-              err: z.custom<LogError.Parsed>(),
+              group: z.string().min(1).max(255),
+              timestamp: z.number().int().min(0).max(8_640_000_000_000_000),
+              err: ParsedIssue,
             })
-            .array(),
+            .array()
+            .max(1000),
         }),
       }),
     ]),
@@ -48,13 +61,25 @@ export const IngestRoute = new Hono().post(
     const body = c.req.valid("json");
     switch (body.type) {
       case "aws.issue":
-        const xml = await fetch(body.properties.identity).then((r) => r.text());
-        const accountID = (xml.match(/<Account>(\d+)<\/Account>/) || [])[1];
-        if (!accountID) {
-          console.log(body.properties.identity);
-          console.error(new Error("Failed to parse account ID " + xml));
-          return c.json(false);
-        }
+        const identity = parseIdentityURL(body.properties.identity);
+        if (!identity) return c.json(false, 400);
+        const response = await fetch(identity, { redirect: "error" }).catch(
+          () => undefined,
+        );
+        if (!response) return c.json(false, 401);
+        if (!response.ok) return c.json(false, 401);
+        const xml = await response.text();
+        const accountID = (xml.match(/<Account>(\d{12})<\/Account>/) || [])[1];
+        const arn = (xml.match(/<Arn>([^<]+)<\/Arn>/) || [])[1];
+        // The subscriber role is provisioned per workspace and region. A
+        // caller identity from another role/account is not a publisher proof.
+        const publisher = arn?.match(
+          /^arn:aws(?:-cn)?:sts::(\d{12}):assumed-role\/sst-console-issue-([a-z0-9]+)-([a-z]{2}(?:-[a-z]+)+-\d+)\/[^/]+$/,
+        );
+        // A stage can subscribe resources in another region; the publisher's
+        // deployment region need not be the stage's region.
+        if (!accountID || !publisher || publisher[1] !== accountID)
+          return c.json(false, 401);
         const workspaces = await db
           .select({
             accountID: awsAccount.accountID,
@@ -63,6 +88,7 @@ export const IngestRoute = new Hono().post(
             stageID: stage.id,
           })
           .from(awsAccount)
+          .innerJoin(workspace, eq(workspace.id, awsAccount.workspaceID))
           .leftJoin(
             app,
             and(
@@ -74,14 +100,22 @@ export const IngestRoute = new Hono().post(
             stage,
             and(
               eq(stage.workspaceID, app.workspaceID),
+              eq(stage.workspaceID, awsAccount.workspaceID),
+              eq(stage.awsAccountID, awsAccount.id),
               eq(stage.appID, app.id),
               eq(stage.name, body.properties.stage),
+              eq(stage.region, body.properties.region),
             ),
           )
           .where(
             and(
               eq(awsAccount.accountID, accountID!),
+              eq(awsAccount.workspaceID, publisher[2]!),
               isNull(awsAccount.timeFailed),
+              isNull(awsAccount.timeDeleted),
+              isNull(workspace.timeDeleted),
+              isNull(app.timeDeleted),
+              isNull(stage.timeDeleted),
             ),
           )
           .execute();

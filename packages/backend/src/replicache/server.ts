@@ -43,10 +43,10 @@ export const server = new Server()
   .expose("workspace_setting_issue", Workspace.setSettingIssue)
   .expose("workspace_remove", Workspace.remove)
   .mutation("aws_account_remove", z.string(), async (input) => {
-    await AWS.Account.disconnect(input);
     const account = await AWS.Account.fromID(input);
     if (!account) return;
     const credentials = await AWS.assumeRole(account.accountID);
+    await AWS.Account.disconnect(input);
     if (!credentials) {
       return;
     }
