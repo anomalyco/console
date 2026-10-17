@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export interface StatePayload {
   workspaceID: string;
+  userID?: string;
   nonce?: string;
 }
 
@@ -39,5 +40,9 @@ export function verifyState(
     Buffer.from(body, "base64url").toString(),
   );
   if (parsed.exp < Date.now()) return;
-  return { workspaceID: parsed.workspaceID, nonce: parsed.nonce };
+  return {
+    workspaceID: parsed.workspaceID,
+    userID: parsed.userID,
+    nonce: parsed.nonce,
+  };
 }

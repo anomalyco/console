@@ -43,6 +43,9 @@ mock.module("@console/core/git/github", () => ({
     syncRepos: async (installationID: number) => {
       githubSyncs.push(installationID);
     },
+    useClient: async () => {
+      throw new Error("Unexpected external client resolution");
+    },
     disconnectAll: async () => {},
     serializeOrg: (x: any) => x,
     serializeRepo: (x: any) => x,
@@ -355,6 +358,7 @@ describe("slack oauth", () => {
       .getSetCookie()
       .map((x) => x.split(";")[0])
       .join("; ");
+    fake.selects.push([{ id: USER_A }]);
     const res = await app.request(
       `/slack/callback?code=c&state=${encodeURIComponent(state)}`,
       { headers: { cookie: `${cookie}; workspaceID=${WORKSPACE_B}` } },

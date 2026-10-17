@@ -3,7 +3,8 @@ import { Resource } from "sst";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { getCookie, setCookie } from "hono/cookie";
-import { useWorkspace, withActor } from "@console/core/actor";
+import { assertActor, useWorkspace, withActor } from "@console/core/actor";
+import { Account } from "@console/core/account/index";
 import { createId } from "@console/core/util/sql";
 import { HTTPException } from "hono/http-exception";
 import { Slack } from "@console/core/slack/index";
@@ -17,6 +18,7 @@ export const SlackRoute = new Hono()
     const nonce = createId();
     const state = signState(Resource.SlackClientSecret.value, STATE_PURPOSE, {
       workspaceID: useWorkspace(),
+      userID: assertActor("user").properties.userID,
       nonce,
     });
     const authorize = new URL("https://slack.com/oauth/v2/authorize");
@@ -53,6 +55,11 @@ export const SlackRoute = new Hono()
         });
       }
       const workspaceID = state.workspaceID;
+      if (
+        !state.userID ||
+        !(await Account.authorizeUser(state.userID, workspaceID))
+      )
+        throw new HTTPException(401, { message: "Active membership required" });
       const response = await fetch("https://slack.com/api/oauth.v2.access", {
         method: "POST",
         headers: {

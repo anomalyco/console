@@ -1,103 +1,103 @@
 import { withActor } from "@console/core/actor";
 import { Run } from "@console/core/run/index";
-import { bus } from "sst/aws/bus";
+import { z } from "zod";
+import { Envelope, RunnerIdentity, runnerWorkspace } from "./authorization";
 
-export const handler = bus.subscriber(
-  [Run.Event.RunnerStarted, Run.Event.RunnerCompleted],
-  async (evt) => {
-    const { workspaceID } = evt.properties;
-    await withActor(
-      {
-        type: "system",
-        properties: { workspaceID },
-      },
-      async () => {
-        console.log(evt.type);
-        switch (evt.type) {
-          case Run.Event.RunnerStarted.type:
-            await Run.markRunStarted({
-              engine: evt.properties.engine,
-              runID: evt.properties.runID,
-            });
-            break;
-          case Run.Event.RunnerCompleted.type:
-            await Run.markRunCompleted({
-              runID: evt.properties.runID,
-              error: evt.properties.error
-                ? {
-                    type: "run_failed",
-                    properties: { message: evt.properties.error },
-                  }
-                : undefined,
-            });
-            break;
-        }
-      },
-    );
-  },
-);
+const RunnerEvent = Envelope.extend({
+  source: z.literal("sst.runner"),
+  "detail-type": z.enum(["runner.started", "runner.completed"]),
+  detail: z.object({
+    properties: RunnerIdentity.extend({
+      buildID: z.string().min(1),
+      engine: z.literal("codebuild").optional(),
+      error: z.string().min(1).optional(),
+    }),
+  }),
+});
 
-interface Events {
-  "CodeBuild Build State Change": {
-    "build-status": string;
-    "project-name": string;
-    "additional-information": {
-      environment: {
-        "environment-variables": {
-          name: string;
-          value: string;
-        }[];
-      };
-    };
-  };
-}
-
-type Payload = {
-  [key in keyof Events]: {
-    account: string;
-    region: string;
-    "detail-type": key;
-    detail: Events[key];
-  };
-}[keyof Events];
-
-export const codebuildHandler = async (evt: Payload) => {
-  console.log("CodeBuild state changed", {
-    account: evt.account,
-    region: evt.region,
-    project: evt.detail["project-name"],
-    status: evt.detail["build-status"],
+export const handler = async (input: unknown) => {
+  const parsed = RunnerEvent.safeParse(input);
+  if (!parsed.success) return;
+  const evt = parsed.data;
+  const properties = evt.detail.properties;
+  const workspaceID = await runnerWorkspace(
+    evt,
+    properties,
+    properties.buildID,
+  );
+  if (!workspaceID) return;
+  await withActor({ type: "system", properties: { workspaceID } }, async () => {
+    if (evt["detail-type"] === "runner.started") {
+      await Run.markRunStarted({
+        engine: "codebuild",
+        runID: properties.runID,
+      });
+    } else {
+      await Run.markRunCompleted({
+        runID: properties.runID,
+        error: properties.error
+          ? {
+              type: "run_failed",
+              properties: { message: properties.error },
+            }
+          : undefined,
+      });
+    }
   });
+};
 
-  if (!evt.detail["project-name"].startsWith("sst-runner-")) return;
+const CodebuildEvent = Envelope.extend({
+  source: z.literal("aws.codebuild"),
+  "detail-type": z.literal("CodeBuild Build State Change"),
+  detail: z.object({
+    "build-id": z.string().min(1),
+    "build-status": z.enum(["FAILED", "FAULT", "STOPPED", "TIMED_OUT"]),
+    "additional-information": z.object({
+      environment: z.object({
+        "environment-variables": z.array(
+          z.object({ name: z.string(), value: z.string() }),
+        ),
+      }),
+    }),
+  }),
+});
 
-  const runnerEnv = evt.detail["additional-information"]["environment"][
+export const codebuildHandler = async (input: unknown) => {
+  const parsed = CodebuildEvent.safeParse(input);
+  if (!parsed.success) return;
+  const evt = parsed.data;
+  const runnerEnv = evt.detail["additional-information"].environment[
     "environment-variables"
   ].find((v) => v.name === "SST_RUNNER_EVENT");
   if (!runnerEnv) return;
-
-  const runnerEvent = JSON.parse(runnerEnv.value);
-  await withActor(
-    {
-      type: "system",
-      properties: { workspaceID: runnerEvent.workspaceID },
-    },
-    async () => {
-      const status = evt.detail["build-status"];
-      await Run.markRunCompleted({
-        runID: runnerEvent.runID,
-        error: {
-          type: "run_failed",
-          properties: {
-            message:
-              status === "TIMED_OUT"
-                ? "CodeBuild run timed out"
-                : status === "STOPPED"
-                  ? "CodeBuild run stopped"
-                  : "CodeBuild run failed",
-          },
+  let json: unknown;
+  try {
+    json = JSON.parse(runnerEnv.value);
+  } catch {
+    return;
+  }
+  const hint = RunnerIdentity.safeParse(json);
+  if (!hint.success) return;
+  const workspaceID = await runnerWorkspace(
+    evt,
+    hint.data,
+    evt.detail["build-id"],
+  );
+  if (!workspaceID) return;
+  await withActor({ type: "system", properties: { workspaceID } }, () =>
+    Run.markRunCompleted({
+      runID: hint.data.runID,
+      error: {
+        type: "run_failed",
+        properties: {
+          message:
+            evt.detail["build-status"] === "TIMED_OUT"
+              ? "CodeBuild run timed out"
+              : evt.detail["build-status"] === "STOPPED"
+                ? "CodeBuild run stopped"
+                : "CodeBuild run failed",
         },
-      });
-    },
+      },
+    }),
   );
 };

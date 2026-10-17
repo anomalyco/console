@@ -10,7 +10,11 @@ const Resource = new Proxy(
         {},
         {
           get: (_, prop) =>
-            prop === "stage" ? "test" : `test-${String(name)}-${String(prop)}`,
+            name === "Bus" && prop === "arn"
+              ? "arn:aws:events:us-east-1:999999999999:event-bus/test"
+              : prop === "stage"
+                ? "test"
+                : `test-${String(name)}-${String(prop)}`,
         },
       ),
   },
@@ -20,7 +24,17 @@ mock.module("sst", () => ({ Resource }));
 export const published: { type: string; properties: any }[] = [];
 mock.module("sst/aws/bus", () => ({
   bus: {
-    subscriber: (_definitions: any, handler: any) => handler,
+    subscriber:
+      (_events: unknown, callback: (event: any, raw: any) => any) =>
+      (raw: any) =>
+        callback(
+          {
+            type: raw["detail-type"],
+            properties: raw.detail.properties,
+            metadata: raw.detail.metadata,
+          },
+          raw,
+        ),
     publish: async (_bus: unknown, def: { type: string }, properties: any) => {
       published.push({ type: def.type, properties });
     },
@@ -30,11 +44,13 @@ mock.module("sst/aws/bus", () => ({
 // Fake database: every select pops the next queued result, writes are recorded.
 type FakeQuery = { columns: any; calls: { method: string; args: any[] }[] };
 export const fake = {
+  sql: undefined as any,
   selects: [] as any[][],
   queries: [] as FakeQuery[],
   resolveSelect: undefined as ((query: FakeQuery) => any[]) | undefined,
   writes: [] as { op: string; values?: any }[],
   reset() {
+    fake.sql = undefined;
     fake.selects = [];
     fake.queries = [];
     fake.resolveSelect = undefined;
@@ -74,18 +90,22 @@ function write(op: string) {
 }
 
 export const fakeTx: any = {
-  select: (columns: any) => {
+  select: (...args: any[]) => {
+    if (fake.sql) return fake.sql.select(...args);
     const rows = fake.selects.shift() ?? [];
-    const query = { columns, calls: [] as { method: string; args: any[] }[] };
+    const query = { columns: args[0], calls: [] as { method: string; args: any[] }[] };
     fake.queries.push(query);
     return chain(
       () => fake.resolveSelect?.(query) ?? rows,
       (method, args) => query.calls.push({ method, args }),
     );
   },
-  insert: () => write("insert"),
-  update: () => write("update"),
-  delete: () => write("delete"),
+  insert: (...args: any[]) =>
+    fake.sql ? fake.sql.insert(...args) : write("insert"),
+  update: (...args: any[]) =>
+    fake.sql ? fake.sql.update(...args) : write("update"),
+  delete: (...args: any[]) =>
+    fake.sql ? fake.sql.delete(...args) : write("delete"),
   transaction: (cb: (tx: any) => any) => cb(fakeTx),
 };
 

@@ -14,6 +14,7 @@ import {
 import { User } from "@console/core/user/index";
 import { Workspace } from "@console/core/workspace/index";
 import { bus } from "sst/aws/bus";
+import { internalActor } from "./authorization";
 
 export const handler = bus.subscriber(
   [
@@ -39,8 +40,8 @@ export const handler = bus.subscriber(
     Run.Event.CreateFailed,
     User.Events.UserCreated,
   ],
-  async (evt) =>
-    withActor(evt.metadata.actor, async () => {
+  async (evt, raw) =>
+    withActor(await internalActor(raw, evt.metadata), async () => {
       console.log("handling event", evt.type);
       const now = Date.now();
       switch (evt.type) {
@@ -65,6 +66,8 @@ export const handler = bus.subscriber(
           break;
 
         case Workspace.Events.Created.type:
+          const target = await Workspace.fromID(evt.properties.workspaceID);
+          if (!target || target.timeDeleted) return;
           await withActor(
             {
               type: "system",

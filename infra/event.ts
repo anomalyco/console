@@ -57,6 +57,7 @@ if ($app.stage === "production" || true) {
     {
       pattern: {
         source: [`console.${$app.stage}`],
+        account: [aws.getCallerIdentityOutput({}).accountId],
       },
     },
   );
