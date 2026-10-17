@@ -798,7 +798,11 @@ function Integrations() {
             />
             <input type="hidden" name="provider" value="github" />
             <input type="hidden" name="workspaceID" value={workspace().id} />
-            <input type="hidden" name="token" value={access()} />
+            <input
+              type="hidden"
+              name="authorization"
+              value={"Bearer " + access()}
+            />
           </form>
         </Row>
       </Stack>

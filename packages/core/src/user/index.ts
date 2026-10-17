@@ -49,6 +49,7 @@ export const create = zod(
       id: true,
     })
     .extend({
+      email: z.string().trim().toLowerCase().email(),
       first: z.boolean().optional(),
     }),
   (input) =>
