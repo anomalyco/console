@@ -13,7 +13,6 @@ export const handler = bus.subscriber(
       },
       async () => {
         console.log(evt.type);
-        console.log(evt);
         switch (evt.type) {
           case Run.Event.RunnerStarted.type:
             await Run.markRunStarted({
@@ -63,7 +62,12 @@ type Payload = {
 }[keyof Events];
 
 export const codebuildHandler = async (evt: Payload) => {
-  console.log(evt);
+  console.log("CodeBuild state changed", {
+    account: evt.account,
+    region: evt.region,
+    project: evt.detail["project-name"],
+    status: evt.detail["build-status"],
+  });
 
   if (!evt.detail["project-name"].startsWith("sst-runner-")) return;
 

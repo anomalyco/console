@@ -499,7 +499,12 @@ export const scan = zod(
     credentials: z.custom<Credentials>(),
   }),
   async (input) => {
-    console.log("scanning", input);
+    console.log("scanning", {
+      region: input.region,
+      logGroup: input.logGroup,
+      logStream: input.logStream,
+      requestID: input.requestID,
+    });
     using cw = disposable(
       () =>
         new CloudWatchLogsClient({

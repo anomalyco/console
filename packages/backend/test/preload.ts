@@ -20,6 +20,7 @@ mock.module("sst", () => ({ Resource }));
 export const published: { type: string; properties: any }[] = [];
 mock.module("sst/aws/bus", () => ({
   bus: {
+    subscriber: (_definitions: any, handler: any) => handler,
     publish: async (_bus: unknown, def: { type: string }, properties: any) => {
       published.push({ type: def.type, properties });
     },
@@ -27,16 +28,24 @@ mock.module("sst/aws/bus", () => ({
 }));
 
 // Fake database: every select pops the next queued result, writes are recorded.
+type FakeQuery = { columns: any; calls: { method: string; args: any[] }[] };
 export const fake = {
   selects: [] as any[][],
+  queries: [] as FakeQuery[],
+  resolveSelect: undefined as ((query: FakeQuery) => any[]) | undefined,
   writes: [] as { op: string; values?: any }[],
   reset() {
     fake.selects = [];
+    fake.queries = [];
+    fake.resolveSelect = undefined;
     fake.writes = [];
   },
 };
 
-function chain(result: () => any, record?: (method: string, args: any[]) => void) {
+function chain(
+  result: () => any,
+  record?: (method: string, args: any[]) => void,
+) {
   const proxy: any = new Proxy(function () {}, {
     get(_, prop) {
       if (prop === "then") {
@@ -65,9 +74,14 @@ function write(op: string) {
 }
 
 export const fakeTx: any = {
-  select: () => {
+  select: (columns: any) => {
     const rows = fake.selects.shift() ?? [];
-    return chain(() => rows);
+    const query = { columns, calls: [] as { method: string; args: any[] }[] };
+    fake.queries.push(query);
+    return chain(
+      () => fake.resolveSelect?.(query) ?? rows,
+      (method, args) => query.calls.push({ method, args }),
+    );
   },
   insert: () => write("insert"),
   update: () => write("update"),

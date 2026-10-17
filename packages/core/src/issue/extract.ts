@@ -21,6 +21,7 @@ import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 import { warning } from "../warning/warning.sql";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { workspace } from "../workspace/workspace.sql";
 
 const sqs = new SQSClient({});
 
@@ -52,6 +53,7 @@ export const extract = zod(
         stageID: stage.id,
       })
       .from(awsAccount)
+      .innerJoin(workspace, eq(workspace.id, awsAccount.workspaceID))
       .leftJoin(
         app,
         and(
@@ -63,14 +65,21 @@ export const extract = zod(
         stage,
         and(
           eq(stage.workspaceID, app.workspaceID),
+          eq(stage.workspaceID, awsAccount.workspaceID),
+          eq(stage.awsAccountID, awsAccount.id),
           eq(stage.appID, app.id),
           eq(stage.name, stageName!),
+          eq(stage.region, region!),
         ),
       )
       .where(
         and(
           eq(awsAccount.accountID, accountID!),
           isNull(awsAccount.timeFailed),
+          isNull(awsAccount.timeDeleted),
+          isNull(workspace.timeDeleted),
+          isNull(app.timeDeleted),
+          isNull(stage.timeDeleted),
         ),
       )
       .execute();
@@ -187,7 +196,7 @@ export const extract = zod(
               }
 
               if (!err.error || !err.message) {
-                console.log("error was undefined for some reason", event);
+                console.log("error was undefined for some reason", event.id);
                 return;
               }
 

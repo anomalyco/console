@@ -215,15 +215,23 @@ export const LogRoute = new Hono()
     "/aws/scan",
     zValidator(
       "query",
-      z.object({
-        awsAccountExternalID: z.string().optional(),
-        region: z.string().optional(),
-        stageID: z.string().optional(),
-        requestID: z.string().optional(),
-        timestamp: z.number({ coerce: true }).optional(),
-        logGroup: z.string(),
-        logStream: z.string(),
-      }),
+      z
+        .object({
+          awsAccountExternalID: AWS.AccountID.optional(),
+          region: z.string().optional(),
+          stageID: z.string().optional(),
+          requestID: z.string().optional(),
+          timestamp: z.number({ coerce: true }).optional(),
+          logGroup: z.string(),
+          logStream: z.string(),
+        })
+        .refine(
+          (input) =>
+            input.stageID || (input.awsAccountExternalID && input.region),
+          {
+            message: "A stage or AWS account and region is required",
+          },
+        ),
     ),
     async (c) => {
       const body = c.req.valid("query");
@@ -240,7 +248,9 @@ export const LogRoute = new Hono()
             };
           })();
       if (!config)
-        throw new HTTPException(500, { message: "Failed to assume role" });
+        throw new HTTPException(404, {
+          message: "AWS account or stage unavailable",
+        });
       const logs = await Log.scan({
         ...body,
         timestamp: body.timestamp || undefined,

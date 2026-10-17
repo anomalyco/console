@@ -11,11 +11,11 @@ import { slackTeam } from "./slack.sql";
 import { useWorkspace } from "../actor";
 import { createId } from "@paralleldrive/cuid2";
 import { and, db, eq } from "../drizzle";
-import { createSelectSchema } from "drizzle-zod";
+import { PublicInfo } from "./public";
 
 export * as Slack from "./index";
 
-export const Info = createSelectSchema(slackTeam);
+export const Info = PublicInfo;
 export type Info = z.infer<typeof Info>;
 
 export const connect = zod(z.string().nonempty(), async (token) => {
