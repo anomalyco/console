@@ -69,19 +69,61 @@ test("manual stage names accept SST names, not JavaScript fragments", () => {
     expect(StageName.safeParse(name).success).toBe(false);
 });
 
-test("review-only config blocks branch and PR automatic deployments", async () => {
-  const review = Buffer.from(
+test("manual rollout marker skips automation without disabling normal branch/PR targets", async () => {
+  const current = Buffer.from(
     await Bun.file(new URL("../../../sst.config.ts", import.meta.url)).text(),
   ).toString("base64");
   for (const trigger of [
-    { type: "branch", branch: "fix/auth-issuer-boundaries" },
-    { type: "pull_request", head: "fix/auth-issuer-boundaries", number: 1 },
+    { type: "branch", branch: "production", action: "pushed" },
+    { type: "branch", branch: "dev", action: "pushed" },
+    {
+      type: "pull_request",
+      head: "fix/auth-issuer-boundaries",
+      number: 87,
+      action: "pushed",
+    },
   ]) {
     const result = await handler({
-      content: review,
+      content: current,
       defaultStage: "review",
+      trigger: {
+        ...trigger,
+        commit: { message: "Refine issuer authorization [manual rollout]" },
+      },
+    } as Run.ConfigParserEvent);
+    expect(result.error).toBe("config_target_returned_undefined");
+  }
+  for (const [trigger, expected] of [
+    [{ type: "branch", branch: "production", action: "pushed" }, "production"],
+    [{ type: "branch", branch: "dev", action: "pushed" }, "dev"],
+    [
+      { type: "branch", branch: "feature/test", action: "pushed" },
+      "feature-test",
+    ],
+    [{ type: "pull_request", number: 87, action: "pushed" }, "pr-87"],
+  ] as const) {
+    const result = await handler({
+      content: current,
+      defaultStage: "unused",
+      trigger,
+    } as Run.ConfigParserEvent);
+    expect(result.stages?.[0]?.stage).toBe(expected);
+  }
+  for (const trigger of [
+    { type: "branch", branch: "production", action: "removed" },
+    { type: "tag", tag: "v1", action: "pushed" },
+  ]) {
+    const result = await handler({
+      content: current,
+      defaultStage: "unused",
       trigger,
     } as Run.ConfigParserEvent);
     expect(result.error).toBe("config_target_returned_undefined");
   }
+  const manual = await handler({
+    content: current,
+    defaultStage: "production",
+    trigger: { type: "user" } as Run.ConfigParserEvent["trigger"],
+  });
+  expect(manual.stages?.[0]?.stage).toBe("production");
 });

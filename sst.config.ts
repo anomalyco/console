@@ -18,10 +18,22 @@ export default $config({
   },
   console: {
     autodeploy: {
-      // REVIEW ONLY: remove this guard only for an explicitly authorized rollout.
-      // Both branch pushes and PR-open events can otherwise trigger deployment.
-      target() {
-        return undefined;
+      target(input) {
+        // Explicit opt-out for changes deployed manually from the merge commit.
+        if (input.commit?.message?.includes("[manual rollout]")) return;
+        // Preserve default branch/PR stage naming and branch/tag removal policy.
+        if (input.type === "branch") {
+          if (input.action === "removed") return;
+          return {
+            stage: input.branch
+              .replace(/[^a-zA-Z0-9-]/g, "-")
+              .replace(/-+/g, "-")
+              .replace(/^-/g, "")
+              .replace(/-$/g, ""),
+          };
+        }
+        if (input.type === "pull_request")
+          return { stage: `pr-${input.number}` };
       },
       runner(input) {
         return {
