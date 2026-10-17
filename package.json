@@ -36,7 +36,8 @@
     "typescript": "5.5.4"
   },
   "patchedDependencies": {
-    "@macaron-css/solid@1.5.3": "patches/@macaron-css%2Fsolid@1.5.3.patch"
+    "@macaron-css/solid@1.5.3": "patches/@macaron-css%2Fsolid@1.5.3.patch",
+    "@openauthjs/openauth@0.0.0-20250322224806": "patches/@openauthjs%2Fopenauth@0.0.0-20250322224806.patch"
   },
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",

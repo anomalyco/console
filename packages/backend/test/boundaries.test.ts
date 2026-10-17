@@ -28,6 +28,10 @@ import { handler as stack } from "../src/function/events/stack-updated-external"
 import { handler as internal } from "../src/function/events/event";
 import { internalActor } from "../src/function/events/authorization";
 import { eventBusPolicy } from "../../../infra/event-policy";
+import { issuer } from "@openauthjs/openauth";
+import { MemoryStorage } from "@openauthjs/openauth/storage/memory";
+import { subjects } from "../src/subjects";
+import { authorizeRefresh } from "../src/function/auth/refresh";
 
 const A = "workspaceaaaaaaaaaaaaaaa";
 const B = "workspacebbbbbbbbbbbbbbb";
@@ -217,6 +221,262 @@ describe("repository ownership", () => {
 afterEach(() => {
   fake.reset();
   database.close();
+});
+
+describe("issuer refresh authorization", () => {
+  const verifiedIdentity = {
+    ...accountActor.properties,
+    authentication: "email" as const,
+  };
+  async function refresh(
+    type = "account",
+    properties: unknown = verifiedIdentity,
+    reused = false,
+    storage = MemoryStorage(),
+  ) {
+    const subject = "refresh-fixture";
+    const token = crypto.randomUUID();
+    const key = ["oauth:refresh", subject, token];
+    await storage.set(key, {
+      type,
+      properties,
+      clientID: "console",
+      subject,
+      nextToken: crypto.randomUUID(),
+      ttl: { access: 900, refresh: 3600 },
+      ...(reused ? { timeUsed: Date.now() } : {}),
+    });
+    const app = issuer({
+      storage,
+      subjects,
+      providers: {},
+      refresh: authorizeRefresh,
+      ttl: { reuse: 60 },
+      async success() {
+        return new Response("Unused");
+      },
+    });
+    app.onError((_error, c) => c.json({ error: "server_error" }, 503));
+    const response = await app.request("https://auth.example/token", {
+      method: "POST",
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: `${subject}:${token}`,
+      }),
+    });
+    const body = (await response.json()) as {
+      error?: string;
+      access_token?: string;
+      refresh_token?: string;
+    };
+    // Boolean assertions never dump token contents on a failed expectation.
+    return {
+      status: response.status,
+      error: body.error,
+      tokens: !!body.access_token || !!body.refresh_token,
+      retained: !!(await storage.get(key)),
+    };
+  }
+  test("a live account can refresh and within-window reuse still works", async () => {
+    expect((await refresh()).status).toBe(200);
+    expect((await refresh("account", verifiedIdentity, true)).tokens).toBe(
+      true,
+    );
+  });
+  for (const reused of [false, true]) {
+    test(`deleted account cannot refresh (reuse=${reused})`, async () => {
+      database.run("UPDATE account SET time_deleted = '2026-01-01'");
+      const result = await refresh("account", verifiedIdentity, reused);
+      expect(result).toEqual({
+        status: 400,
+        error: "invalid_grant",
+        tokens: false,
+        retained: false,
+      });
+    });
+  }
+  test("hard-deleted account cannot refresh", async () => {
+    database.run("DELETE FROM account");
+    expect((await refresh()).tokens).toBe(false);
+  });
+  test("changed account identity cannot refresh an older identity", async () => {
+    database.run("UPDATE account SET email = 'new@example.com'");
+    expect((await refresh()).tokens).toBe(false);
+  });
+  test("live workspace membership can refresh a user subject", async () => {
+    expect((await refresh("user", actor.properties)).status).toBe(200);
+  });
+  for (const table of ["account", "workspace", "user"]) {
+    test(`deleted ${table} cannot refresh a workspace user`, async () => {
+      database.run(`UPDATE ${table} SET time_deleted = '2026-01-01'`);
+      const result = await refresh("user", actor.properties);
+      expect(result.status).toBe(400);
+      expect(result.tokens).toBe(false);
+    });
+  }
+  test("missing membership cannot refresh a workspace user", async () => {
+    database.run("DELETE FROM user");
+    expect((await refresh("user", actor.properties)).tokens).toBe(false);
+  });
+  test("malformed or unknown stored subjects fail closed before the callback", async () => {
+    expect((await refresh("account", { accountID: ACCOUNT })).tokens).toBe(
+      false,
+    );
+    expect((await refresh("unknown", accountActor.properties)).tokens).toBe(
+      false,
+    );
+  });
+  const impersonation = {
+    accountID: "staffaaaaaaaaaaaaaaaaaaa",
+    email: "dax@sst.dev",
+    workspaceID: A,
+    userID: actor.properties.userID,
+  };
+  function staff() {
+    database.run("INSERT INTO account (id, email) VALUES (?, ?)", [
+      impersonation.accountID,
+      impersonation.email,
+    ]);
+    return {
+      ...verifiedIdentity,
+      authentication: "impersonation" as const,
+      impersonation,
+    };
+  }
+  test("staff impersonation can refresh while both principals and the intended membership remain live", async () => {
+    expect((await refresh("account", staff())).status).toBe(200);
+  });
+  test("deleted staff account cannot refresh an impersonated session", async () => {
+    const identity = staff();
+    database.run(
+      "UPDATE account SET time_deleted = '2026-01-01' WHERE id = ?",
+      [impersonation.accountID],
+    );
+    expect((await refresh("account", identity)).tokens).toBe(false);
+  });
+  for (const table of ["workspace", "user"]) {
+    test(`impersonated session cannot refresh after ${table} deletion`, async () => {
+      const identity = staff();
+      database.run(`UPDATE ${table} SET time_deleted = '2026-01-01'`);
+      expect((await refresh("account", identity)).tokens).toBe(false);
+    });
+  }
+  test("unlisted account cannot refresh an impersonated session", async () => {
+    const identity = staff();
+    identity.impersonation = {
+      ...identity.impersonation,
+      email: "other@example.com",
+    };
+    expect((await refresh("account", identity)).tokens).toBe(false);
+  });
+  test("database failure cannot mint new tokens", async () => {
+    fake.sql = undefined;
+    fake.resolveSelect = () => {
+      throw new Error("unavailable");
+    };
+    const result = await refresh();
+    expect(result.status).toBe(503);
+    expect(result.tokens).toBe(false);
+  });
+  test("legacy account refreshes are revoked rather than guessed to be normal logins", async () => {
+    const result = await refresh("account", accountActor.properties);
+    expect(result).toEqual({
+      status: 400,
+      error: "invalid_grant",
+      tokens: false,
+      retained: false,
+    });
+  });
+  test("rejecting a legacy refresh does not revoke a separately verified native session", async () => {
+    const storage = MemoryStorage();
+    const key = ["oauth:refresh", "refresh-fixture", crypto.randomUUID()];
+    await storage.set(key, {
+      type: "account",
+      properties: verifiedIdentity,
+      subject: "refresh-fixture",
+      clientID: "web",
+      nextToken: crypto.randomUUID(),
+      ttl: { access: 900, refresh: 3600 },
+    });
+    expect(
+      (await refresh("account", accountActor.properties, false, storage))
+        .tokens,
+    ).toBe(false);
+    expect(!!(await storage.get(key))).toBe(true);
+    expect(
+      (await refresh("account", verifiedIdentity, false, storage)).tokens,
+    ).toBe(true);
+  });
+  test("Google verified sessions remain refreshable", async () => {
+    expect(
+      (
+        await refresh("account", {
+          ...verifiedIdentity,
+          authentication: "google",
+        })
+      ).tokens,
+    ).toBe(true);
+  });
+  test("impersonation marker without provenance is not refreshable", async () => {
+    expect(
+      (
+        await refresh("account", {
+          ...verifiedIdentity,
+          authentication: "impersonation",
+        })
+      ).tokens,
+    ).toBe(false);
+  });
+  test("normal authentication marker cannot disguise impersonation provenance", async () => {
+    expect(
+      (await refresh("account", { ...staff(), authentication: "email" }))
+        .tokens,
+    ).toBe(false);
+  });
+  test("rotation retains verified provenance and rechecks live authorization on the next refresh", async () => {
+    const storage = MemoryStorage();
+    const subject = "rotation-fixture";
+    const initial = crypto.randomUUID();
+    await storage.set(["oauth:refresh", subject, initial], {
+      type: "account",
+      properties: verifiedIdentity,
+      subject,
+      clientID: "web",
+      nextToken: crypto.randomUUID(),
+      ttl: { access: 900, refresh: 3600 },
+    });
+    const app = issuer({
+      storage,
+      subjects,
+      providers: {},
+      refresh: authorizeRefresh,
+      async success() {
+        return new Response("unused");
+      },
+    });
+    const post = (value: string) =>
+      app.request("https://auth.example/token", {
+        method: "POST",
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          refresh_token: value,
+        }),
+      });
+    const first = await post(`${subject}:${initial}`);
+    expect(first.status).toBe(200);
+    const firstBody = (await first.json()) as { refresh_token: string };
+    const second = await post(firstBody.refresh_token);
+    expect(second.status).toBe(200);
+    const secondBody = (await second.json()) as { refresh_token: string };
+    database.run("UPDATE account SET time_deleted = '2026-01-01'");
+    const denied = await post(secondBody.refresh_token);
+    expect(denied.status).toBe(400);
+    const body = (await denied.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+    };
+    expect(!!body.access_token || !!body.refresh_token).toBe(false);
+  });
 });
 
 describe("configuration ownership", () => {
