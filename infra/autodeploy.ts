@@ -155,7 +155,7 @@ function createConfigParser() {
     handler: "packages/backend/src/function/run/config-parser.handler",
     timeout: "1 minute",
     nodejs: {
-      install: ["esbuild"],
+      install: ["esbuild", "@esbuild/linux-arm64"],
     },
   });
 }
