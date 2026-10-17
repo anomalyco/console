@@ -64,10 +64,30 @@ function fixture(mailFailure = false) {
       return new Response("success");
     },
   });
-  const post = (form: Record<string, string>, cookie = "") =>
+  const authorize = (state: string) =>
+    app.request(
+      `https://auth.example/authorize?client_id=console&redirect_uri=https://app.example/callback&response_type=code&provider=email&state=${state}`,
+    );
+  const defaultAuthorization = Promise.resolve(
+    authorize(crypto.randomUUID()),
+  ).then(
+    (r) =>
+      r.headers
+        .getSetCookie()
+        .find((c) => c.startsWith("authorization="))!
+        .split(";")[0]!,
+  );
+  const post = async (form: Record<string, string>, cookie = "") =>
     app.request("https://auth.example/email/authorize", {
       method: "POST",
-      headers: { Cookie: cookie },
+      headers: {
+        Cookie: [
+          cookie,
+          cookie.includes("authorization=") ? "" : await defaultAuthorization,
+        ]
+          .filter(Boolean)
+          .join("; "),
+      },
       body: new URLSearchParams(form),
     });
   return {
@@ -82,10 +102,13 @@ function fixture(mailFailure = false) {
       unavailable = true;
     },
     challenges,
-    authorize: (state: string) =>
-      app.request(
-        `https://auth.example/authorize?client_id=console&redirect_uri=https://app.example/callback&response_type=code&provider=email&state=${state}`,
-      ),
+    authorize,
+    unbound: (form: Record<string, string>, cookie = "") =>
+      app.request("https://auth.example/email/authorize", {
+        method: "POST",
+        headers: { Cookie: cookie },
+        body: new URLSearchParams(form),
+      }),
   };
 }
 
@@ -295,4 +318,41 @@ test("verification without provider state fails closed", async () => {
   expect(result.status).toBe(302);
   expect(result.headers.get("set-cookie")).toBe(providerCookie);
   expect(f.successes()).toBe(0);
+});
+
+test("issuance without authenticated OAuth flow state never sends mail", async () => {
+  const f = fixture();
+  const response = await f.unbound({
+    action: "request",
+    email: "test@example.com",
+  });
+  expect(response.headers.get("location")).toContain("invalid_code");
+  expect(f.sends()).toBe(0);
+  const forged = await f.unbound(
+    { action: "request", email: "test@example.com" },
+    "authorization=not-a-real-authorization",
+  );
+  expect(forged.headers.get("location")).toContain("invalid_code");
+  expect(f.sends()).toBe(0);
+});
+
+test("separate encrypted OAuth sessions with identical decoded fields are not interchangeable", async () => {
+  const f = fixture();
+  const first = (await f.authorize("same")).headers
+    .getSetCookie()
+    .find((c) => c.startsWith("authorization="))!
+    .split(";")[0]!;
+  const second = (await f.authorize("same")).headers
+    .getSetCookie()
+    .find((c) => c.startsWith("authorization="))!
+    .split(";")[0]!;
+  const start = await f.post(
+    { action: "request", email: "test@example.com" },
+    first,
+  );
+  const provider = cookie(start);
+  await f.post({ action: "verify", code: f.code() }, `${provider}; ${second}`);
+  expect(f.successes()).toBe(0);
+  await f.post({ action: "verify", code: f.code() }, `${provider}; ${first}`);
+  expect(f.successes()).toBe(1);
 });

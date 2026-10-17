@@ -145,6 +145,7 @@ const app = issuer({
     const result = await ctx.subject("account", email!, {
       accountID: accountID!,
       email: email!,
+      authentication: impersonation ? "impersonation" : response.provider,
       impersonation,
     });
     authAudit("login", "success", {

@@ -9,6 +9,15 @@ import { staffEmails } from "./impersonation";
 export async function authorizeRefresh(
   subject: SubjectPayload<typeof subjects>,
 ) {
+  if (
+    subject.type === "account" &&
+    (!subject.properties.authentication ||
+      (subject.properties.authentication === "impersonation") !==
+        !!subject.properties.impersonation)
+  ) {
+    authAudit("refresh", "unverifiable", { email: subject.properties.email });
+    return false;
+  }
   let allowed =
     subject.type === "account"
       ? !!(await Account.authorize(subject.properties))

@@ -11,8 +11,8 @@ provider and replaces the current challenge for the same normalized email,
 server-generated flow ID and impersonation target. It contains:
 
 - A per-email cooldown conditional update (default 60 seconds).
-- A per-email UTC-hour counter (default 5).
-- Global UTC-minute/hour counters (provisional defaults 60 / 1,000).
+- A per-email UTC-hour counter (default 10).
+- Global UTC-minute/hour counters (defaults 20 / 120).
 - The active flow's challenge ID, normalized email, flow ID, impersonation target,
   authorization-state digest and 600-second expiry. No raw code is stored in DynamoDB.
 
@@ -37,7 +37,9 @@ guesses. A saved cookie does not restore a consumed or superseded challenge.
 
 ## Resend and denial-of-service tradeoffs
 
-Resend requires the existing encrypted provider state and cannot retarget its
+Issuance requires authenticated-encrypted OAuth authorization state; requests
+without it cannot reserve budgets or send mail. Resend also requires the existing
+encrypted provider state and cannot retarget its
 email/impersonation/OAuth authorization. A new request with the same state/email/
 target also replaces the old challenge. Requests with no existing state create a
 new server-generated flow; independent browser sessions do not invalidate each
@@ -69,8 +71,9 @@ already consumed, not just successful sign-ins.
 
 The pinned OpenAuth release has no refresh lifecycle hook. The checked-in patch
 adds a schema-validated `refresh` callback before refresh rotation, reuse handling
-and token issuance. It rejects invalid stored subjects and invalidates the refresh
-family on authorization denial. Storage/DB failures fail closed. Both first-use
+and token issuance. It rejects invalid stored subjects and removes the presented
+refresh record on authorization denial, without deleting independently verified
+sessions for the same account. Storage/DB failures fail closed. Both first-use
 refreshes and requests inside the reuse interval take this path.
 
 The callback reuses `Account.authorize` / `Account.authorizeUser`, not a duplicate
@@ -83,11 +86,21 @@ remain necessary: this change does not revoke already-issued access tokens by it
 The existing staff allowlist and impersonation feature remain. New impersonated
 account subjects include optional provenance (staff identity, workspace and target
 membership); refresh rechecks both principals, the allowlist and the intended live
-membership/workspace. This is provenance, not a multi-factor claim. Legacy refresh
-tokens lack this optional provenance and cannot be distinguished from normal
-account sessions; they get the live effective-account check but cannot acquire
-retroactive staff/workspace provenance. Owner-approved revocation of legacy
-refresh sessions is needed if that stronger guarantee must apply immediately.
+membership/workspace. This is provenance, not a multi-factor claim. New account
+sessions carry an issuer-owned authentication marker (`email`, `google` or
+`impersonation`). Impersonation markers require provenance; normal markers must
+not contain it. Refresh rotation retains the marker and rechecks live authorization.
+
+Legacy account refreshes without the marker cannot be distinguished safely from
+old impersonated sessions and are rejected on use, requiring a one-time sign-in.
+They are not guessed to be normal and cannot mint a verified marker through refresh.
+Rejecting one does not revoke a separate newly verified session for the same account.
+Existing user-subject refreshes continue to require live workspace membership and
+account checks; the account-only migration does not silently revoke them. The
+marker remains optional when decoding access tokens for compatibility. Existing
+access tokens retain their original expiry (the previous default was 30 days),
+so this refresh migration is not retroactive access-token revocation. API live
+account/membership checks remain necessary.
 
 ## Safe audit
 
@@ -101,30 +114,40 @@ authorization; the HTTP completion event also covers malformed requests or inval
 refresh tokens which never reach that hook. Restrict log access and retention since
 email/impersonation metadata is personal data.
 
-## Rollout prerequisites (no deployment performed here)
+## Rollout configuration
 
-The draft review branch has a separate review-only commit whose autodeploy target
-returns `undefined`, preventing both push and PR events from deploying this work.
-Remove that commit only as part of an explicitly authorized rollout. It must not
-be merged unintentionally because it also disables production autodeploy.
+The review-only deployment guard has been removed. Automatic branch/PR targets
+retain their normal stage naming; branch removals and tags retain their default
+skip behavior. A commit whose message includes `[manual rollout]` opts out of
+automation. Use that marker in the merge-commit subject when deployment must be
+performed manually from the exact reviewed merge commit, preventing duplicate runs.
 
 Configure deployment environment variables (forwarded explicitly by `infra/auth.ts`):
 
 | Variable                      | Default | Meaning                                               |
 | ----------------------------- | ------- | ----------------------------------------------------- |
 | `AUTH_EMAIL_COOLDOWN_SECONDS` | `60`    | Minimum seconds between sends to one normalized email |
-| `AUTH_EMAIL_HOURLY_LIMIT`     | `5`     | Reserved sends/email/UTC hour                         |
-| `AUTH_GLOBAL_MINUTE_LIMIT`    | `60`    | Reserved sends/UTC minute across all emails           |
-| `AUTH_GLOBAL_HOURLY_LIMIT`    | `1000`  | Reserved sends/UTC hour across all emails             |
+| `AUTH_EMAIL_HOURLY_LIMIT`     | `10`    | Reserved sends/email/UTC hour                         |
+| `AUTH_GLOBAL_MINUTE_LIMIT`    | `20`    | Reserved sends/UTC minute across all emails           |
+| `AUTH_GLOBAL_HOURLY_LIMIT`    | `120`   | Reserved sends/UTC hour across all emails             |
 
 All values must be positive integers; invalid configuration prevents startup.
-**The global defaults are provisional, not calibrated from production volume.**
-Before approving rollout, use a representative normal-period aggregate count of
-auth mail/issuance (without fetching message bodies or codes), measure peak minute
-and hour including legitimate retries, and choose explicit caps with headroom
-within the mail provider quota/cost envelope. Do not use an abuse-period request
-rate as the normal baseline. Record the chosen values and evidence in the rollout
-review. A global cap that is too low is a service-wide login denial mechanism.
+Defaults are based on a complete representative 15-day auth-mail metadata cohort,
+filtered by exact sender and auth subject prefix, including failed/suppressed
+attempts rather than only delivery successes. No message bodies, code values or
+recipient identities are published. Observed peaks were 2/global UTC minute,
+3/global rolling minute, 12/global UTC hour and 7/email UTC hour (8/rolling hour).
+Global limits provide 10x fixed-window headroom (at least 6.6x rolling-minute
+headroom); the email cap includes the observed retry peak with headroom. This is
+capacity allowance, not a growth forecast or an inference from HTTP invocations.
+Revisit it as normal send volumes grow, using issuance/send data rather than total
+issuer requests. A cap set too low becomes a service-wide login denial mechanism.
+
+The 60-second cooldown intentionally trades retry speed for a smaller guessing
+budget: some historically adjacent requests were under 60 seconds. A throttled
+resend keeps the outstanding code usable; a consumed wrong guess must wait for
+the next send slot. Hard caps also limit mail cost and are not a substitute for
+separate admission/abuse protection. No provider-quota increase is required.
 
 Verify the issuer role permits the transaction's PutItem/UpdateItem operations
 and conditional DeleteItem on the existing regional auth table, and TTL is enabled
@@ -135,8 +158,9 @@ and mail failures; global counter contention can yield conservative 503s even wi
 unused budget. No live concurrency setting changes are needed by this patch.
 
 In-flight legacy provider cookies do not have the new binding fields and must
-restart login. Independent existing account refreshes remain compatible. Decide
-explicitly whether to revoke legacy refresh sessions as described above. A rollback
+restart login. Unverifiable legacy account refreshes require a one-time sign-in;
+newly verified normal and deliberate impersonated sessions continue to rotate.
+A rollback
 to the old issuer also removes these protections and must be reviewed accordingly.
 
 ## Verification

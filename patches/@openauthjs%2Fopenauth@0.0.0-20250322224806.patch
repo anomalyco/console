@@ -41,7 +41,7 @@ index 2e0d44240f68ed26d1fefe54edb6f3a134cfac55..4b78f58ace8c10e952ec54ab1a585589
 +          type: payload.type,
 +          properties: validated.value,
 +        }, c.req.raw))) {
-+          await auth.invalidate(subject);
++          await Storage.remove(storage, key);
 +          return c.json({ error: "invalid_grant" }, 400);
 +        }
 +        payload.properties = validated.value;
@@ -129,7 +129,7 @@ index 66bb0bfd09d01a1e5ebbb10b1dd857668f805f95..9fe695f71033284ea6e8c7994bbf91d6
 +            type: payload.type,
 +            properties: validated.value,
 +          } as SubjectPayload<Subjects>, c.req.raw))) {
-+            await auth.invalidate(subject)
++            await Storage.remove(storage, key)
 +            return c.json({ error: "invalid_grant" }, 400)
 +          }
 +          payload.properties = validated.value

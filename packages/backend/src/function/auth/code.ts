@@ -2,6 +2,7 @@ import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import type { CodeProviderConfig } from "@openauthjs/openauth/provider/code";
 import type { Provider } from "@openauthjs/openauth/provider/provider";
 import { z } from "zod";
+import { getCookie } from "hono/cookie";
 
 export const providerCookie =
   "provider=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
@@ -67,8 +68,19 @@ export function singleUseCode(
         if (action !== "request" && action !== "resend" && action !== "verify")
           return ctx.forward(c, codeRedirect("email", "invalid_claim"));
         const state = stateSchema.safeParse(await ctx.get(c, "provider"));
+        const authorizationState = await ctx.get<object | undefined>(
+          c,
+          "authorization",
+        );
+        const authorizationCookie = getCookie(c, "authorization");
+        if (!authorizationState || !authorizationCookie) {
+          audit(action, "invalid");
+          return ctx.forward(c, codeRedirect("email", "invalid_code"));
+        }
         const authorization = createHash("sha256")
-          .update(JSON.stringify((await ctx.get(c, "authorization")) ?? null))
+          // Bind the authenticated JWE, not just its decoded fields: two OAuth
+          // sessions may have identical client/state/redirect/PKCE properties.
+          .update(authorizationCookie)
           .digest("hex");
         const invalid = () => {
           audit(

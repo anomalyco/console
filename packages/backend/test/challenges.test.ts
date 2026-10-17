@@ -94,7 +94,7 @@ integration("DynamoDB issuer boundary", () => {
   test("email hourly limit includes new flows, resends and consumed challenges", async () => {
     time = 10800;
     const original = challenge();
-    for (let n = 0; n < 5; n++) {
+    for (let n = 0; n < policy.emailHourly; n++) {
       const c = { ...original, challengeID: crypto.randomUUID() };
       expect(await issue(c)).toBe(true);
       expect(await store().consume(c)).toBe(true);
@@ -207,6 +207,9 @@ integration("DynamoDB issuer boundary", () => {
     const email = "normalized@example.com";
     const app = issuer({
       storage: MemoryStorage(),
+      async allow() {
+        return true;
+      },
       providers: {
         email: singleUseCode(
           {
@@ -228,10 +231,17 @@ integration("DynamoDB issuer boundary", () => {
         return new Response("success");
       },
     });
+    const authorization = await app.request(
+      "https://auth.example/authorize?client_id=console&redirect_uri=https://app.example/callback&response_type=code&provider=email&state=local-test",
+    );
+    const authorizationCookie = authorization.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("authorization="))!
+      .split(";")[0]!;
     const post = (form: Record<string, string>, cookie = "") =>
       app.request("https://auth.example/email/authorize", {
         method: "POST",
-        headers: { Cookie: cookie },
+        headers: { Cookie: `${cookie}; ${authorizationCookie}` },
         body: new URLSearchParams(form),
       });
     const responses = await Promise.all(

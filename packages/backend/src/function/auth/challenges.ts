@@ -5,9 +5,9 @@ import { challengeLifetime, type Challenge, type Challenges } from "./code";
 
 export const issuancePolicy = z.object({
   cooldown: z.coerce.number().int().min(1).default(60),
-  emailHourly: z.coerce.number().int().min(1).default(5),
-  globalMinute: z.coerce.number().int().min(1).default(60),
-  globalHourly: z.coerce.number().int().min(1).default(1000),
+  emailHourly: z.coerce.number().int().min(1).default(10),
+  globalMinute: z.coerce.number().int().min(1).default(20),
+  globalHourly: z.coerce.number().int().min(1).default(120),
 });
 type Policy = z.infer<typeof issuancePolicy>;
 const hash = (value: string) =>
