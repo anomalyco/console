@@ -3,7 +3,6 @@ import { createHash } from "crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { flatMap, groupBy, pipe, uniqueBy, values } from "remeda";
-import { z } from "zod";
 import { Events } from ".";
 import { withActor } from "../actor";
 import { app, stage } from "../app/app.sql";
@@ -21,11 +20,13 @@ import { bus } from "sst/aws/bus";
 import { Resource } from "sst";
 import { warning } from "../warning/warning.sql";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { workspace } from "../workspace/workspace.sql";
+import { SubscriptionBatch } from "./subscription";
 
 const sqs = new SQSClient({});
 
 export const extract = zod(
-  z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
+  SubscriptionBatch,
   async (input) => {
     // do not process self
     if (input.logGroup.includes("IssueStreamSubscriber")) return;
@@ -38,6 +39,9 @@ export const extract = zod(
     }
     console.log("filter", filter);
     const [_prefix, region, accountID, appName, stageName] = filter.split("#");
+    // Subscription names are customer-controlled. The delivery owner is the
+    // account identity supplied by CloudWatch Logs, not the filter name.
+    if (accountID !== input.owner) return;
 
     const hour = DateTime.now()
       .startOf("hour")
@@ -52,6 +56,7 @@ export const extract = zod(
         stageID: stage.id,
       })
       .from(awsAccount)
+      .innerJoin(workspace, eq(workspace.id, awsAccount.workspaceID))
       .leftJoin(
         app,
         and(
@@ -63,14 +68,21 @@ export const extract = zod(
         stage,
         and(
           eq(stage.workspaceID, app.workspaceID),
+          eq(stage.workspaceID, awsAccount.workspaceID),
+          eq(stage.awsAccountID, awsAccount.id),
           eq(stage.appID, app.id),
           eq(stage.name, stageName!),
+          eq(stage.region, region!),
         ),
       )
       .where(
         and(
           eq(awsAccount.accountID, accountID!),
           isNull(awsAccount.timeFailed),
+          isNull(awsAccount.timeDeleted),
+          isNull(workspace.timeDeleted),
+          isNull(app.timeDeleted),
+          isNull(stage.timeDeleted),
         ),
       )
       .execute();
@@ -187,7 +199,7 @@ export const extract = zod(
               }
 
               if (!err.error || !err.message) {
-                console.log("error was undefined for some reason", event);
+                console.log("error was undefined for some reason", event.id);
                 return;
               }
 

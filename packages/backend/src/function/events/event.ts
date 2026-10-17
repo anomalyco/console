@@ -41,7 +41,7 @@ export const handler = bus.subscriber(
   ],
   async (evt) =>
     withActor(evt.metadata.actor, async () => {
-      console.log(JSON.stringify(evt));
+      console.log("handling event", evt.type);
       const now = Date.now();
       switch (evt.type) {
         case User.Events.UserCreated.type:

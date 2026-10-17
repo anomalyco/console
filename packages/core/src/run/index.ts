@@ -71,6 +71,7 @@ import { githubOrgTable, githubRepoTable } from "../git/git.sql";
 import { Workspace } from "../workspace";
 import { bootstrapIon } from "../aws/bootstrap";
 import { disposable } from "../util/disposable";
+import { StageName } from "./stage-name";
 
 export { RunConfig } from "./config";
 
@@ -482,7 +483,7 @@ export module Run {
       id: z.string().cuid2(),
       ref: z.string().min(1),
       appID: z.string().cuid2(),
-      stageName: z.string().min(1),
+      stageName: StageName,
       force: z.boolean().optional(),
     }),
     async ({ id, ref, appID, stageName, force }) => {

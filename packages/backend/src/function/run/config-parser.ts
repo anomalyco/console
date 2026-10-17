@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 import { build } from "esbuild";
-import { Run } from "@console/core/run/index";
+import type { Run } from "@console/core/run/index";
 import { spawnSync } from "child_process";
 
 export async function handler(evt: Run.ConfigParserEvent) {
@@ -30,11 +30,19 @@ export async function handler(evt: Run.ConfigParserEvent) {
     },
   });
   if (buildRet.errors.length) {
-    console.log("errors", buildRet.errors);
+    console.log("config build failed", { errors: buildRet.errors.length });
     return { error: "config_build_failed" };
   }
 
   // Import the config
+  // Pass caller-controlled values as data, never as executable source.
+  await fs.writeFile(
+    "/tmp/eval-input.json",
+    JSON.stringify({
+      trigger: evt.trigger,
+      defaultStage: evt.defaultStage,
+    }),
+  );
   await fs.rm("/tmp/eval.mjs", { force: true });
   await fs.rm("/tmp/eval-output.mjs", { force: true });
   await fs.writeFile(
@@ -50,15 +58,15 @@ export async function handler(evt: Run.ConfigParserEvent) {
       // Handle 2 cases:
       // - latest format: `autodeploy.target` + `autodeploy.runner`
       // - legacy format: `autodeploy.target`
-      `const trigger = ${JSON.stringify(evt.trigger)};`,
+      `const { trigger, defaultStage } = JSON.parse(fs.readFileSync("/tmp/eval-input.json", "utf8"));`,
       // Resolve target stage(s)
       `let target, stages, isDefaultStage;`,
       `if (trigger.type === "user") {`,
-      `  stages = ["${evt.defaultStage}"];`,
+      `  stages = [defaultStage];`,
       `  isDefaultStage = true;`,
       `} else {`,
       `  if (!mod.console?.autodeploy?.target) {`,
-      `    stages = ["${evt.defaultStage}"];`,
+      `    stages = [defaultStage];`,
       `    isDefaultStage = true;`,
       `  }`,
       `  else {`,
@@ -95,12 +103,10 @@ export async function handler(evt: Run.ConfigParserEvent) {
     shell: true,
   });
   if (evalRet.status !== 0) {
-    console.log(evalRet.stdout?.toString());
-    console.log(evalRet.stderr?.toString());
+    console.log("config evaluation failed", { status: evalRet.status });
     return { error: "config_evaluate_failed" };
   }
   const output = await fs.readFile("/tmp/eval-output.mjs", "utf-8");
-  console.log("deploy config", output);
 
   return JSON.parse(output);
 }
