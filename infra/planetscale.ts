@@ -16,13 +16,13 @@ const branch =
       );
 
 const password = new planetscale.Password(
-  "DatabasePassword",
+  "DatabasePassword2",
   {
     database: mysql.name,
     organization: mysql.organization,
     branch: branch.name,
     role: "admin",
-    name: `${$app.name}-${$app.stage}-password`,
+    name: `${$app.name}-${$app.stage}-password-2`,
   },
   { ignoreChanges: ["organization"] },
 );
