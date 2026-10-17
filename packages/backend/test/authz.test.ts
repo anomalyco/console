@@ -68,6 +68,7 @@ const { ReplicacheRoute, TABLES } = await import("../src/api/replicache");
 const { LogRoute } = await import("../src/api/log");
 const { AWS } = await import("@console/core/aws/index");
 const { Stage } = await import("@console/core/app/stage");
+const { Issue } = await import("@console/core/issue/index");
 const { GithubRoute } = await import("../src/api/github");
 const { SlackRoute } = await import("../src/api/slack");
 const { IngestRoute } = await import("../src/api/ingest");
@@ -566,6 +567,39 @@ describe("ingest", () => {
     });
     expect(res.status).toBe(400);
     expect(fetches).toEqual([]);
+  });
+});
+
+describe("log subscription records", () => {
+  test("filter names cannot substitute another delivery account", async () => {
+    await Issue.extract({
+      owner: "222222222222",
+      logGroup: "g",
+      logStream: "s",
+      logEvents: [],
+      subscriptionFilters: ["sst#us-east-1#111111111111#app#production"],
+    });
+    expect(fake.queries).toEqual([]);
+    expect(fake.writes).toEqual([]);
+  });
+
+  test("matching delivery accounts use real account and region stage joins", async () => {
+    await Issue.extract({
+      owner: "111111111111",
+      logGroup: "g",
+      logStream: "s",
+      logEvents: [],
+      subscriptionFilters: ["sst#us-east-1#111111111111#app#production"],
+    });
+    const statements = querySQL(fake.queries[0]!);
+    const stage = statements.find((x) =>
+      x.sql.includes("`stage`.`aws_account_id`"),
+    )!;
+    expect(stage.sql).toContain(
+      "`stage`.`aws_account_id` = `aws_account`.`id`",
+    );
+    expect(stage.params).toContain("us-east-1");
+    expect(fake.writes).toEqual([]);
   });
 });
 

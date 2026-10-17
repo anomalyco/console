@@ -3,7 +3,6 @@ import { createHash } from "crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { flatMap, groupBy, pipe, uniqueBy, values } from "remeda";
-import { z } from "zod";
 import { Events } from ".";
 import { withActor } from "../actor";
 import { app, stage } from "../app/app.sql";
@@ -22,11 +21,12 @@ import { Resource } from "sst";
 import { warning } from "../warning/warning.sql";
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { workspace } from "../workspace/workspace.sql";
+import { SubscriptionBatch } from "./subscription";
 
 const sqs = new SQSClient({});
 
 export const extract = zod(
-  z.custom<(typeof Events.ErrorDetected.$output.records)[number]>(),
+  SubscriptionBatch,
   async (input) => {
     // do not process self
     if (input.logGroup.includes("IssueStreamSubscriber")) return;
@@ -39,6 +39,9 @@ export const extract = zod(
     }
     console.log("filter", filter);
     const [_prefix, region, accountID, appName, stageName] = filter.split("#");
+    // Subscription names are customer-controlled. The delivery owner is the
+    // account identity supplied by CloudWatch Logs, not the filter name.
+    if (accountID !== input.owner) return;
 
     const hour = DateTime.now()
       .startOf("hour")
