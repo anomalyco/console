@@ -28,6 +28,10 @@ import { handler as stack } from "../src/function/events/stack-updated-external"
 import { handler as internal } from "../src/function/events/event";
 import { internalActor } from "../src/function/events/authorization";
 import { eventBusPolicy } from "../../../infra/event-policy";
+import { issuer } from "@openauthjs/openauth";
+import { MemoryStorage } from "@openauthjs/openauth/storage/memory";
+import { subjects } from "../src/subjects";
+import { authorizeRefresh } from "../src/function/auth/refresh";
 
 const A = "workspaceaaaaaaaaaaaaaaa";
 const B = "workspacebbbbbbbbbbbbbbb";
@@ -217,6 +221,155 @@ describe("repository ownership", () => {
 afterEach(() => {
   fake.reset();
   database.close();
+});
+
+describe("issuer refresh authorization", () => {
+  async function refresh(
+    type = "account",
+    properties: unknown = accountActor.properties,
+    reused = false,
+  ) {
+    const storage = MemoryStorage();
+    const subject = "refresh-fixture";
+    const token = crypto.randomUUID();
+    const key = ["oauth:refresh", subject, token];
+    await storage.set(key, {
+      type,
+      properties,
+      clientID: "console",
+      subject,
+      nextToken: crypto.randomUUID(),
+      ttl: { access: 900, refresh: 3600 },
+      ...(reused ? { timeUsed: Date.now() } : {}),
+    });
+    const app = issuer({
+      storage,
+      subjects,
+      providers: {},
+      refresh: authorizeRefresh,
+      ttl: { reuse: 60 },
+      async success() {
+        return new Response("Unused");
+      },
+    });
+    app.onError((_error, c) => c.json({ error: "server_error" }, 503));
+    const response = await app.request("https://auth.example/token", {
+      method: "POST",
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: `${subject}:${token}`,
+      }),
+    });
+    const body = (await response.json()) as {
+      error?: string;
+      access_token?: string;
+      refresh_token?: string;
+    };
+    // Boolean assertions never dump token contents on a failed expectation.
+    return {
+      status: response.status,
+      error: body.error,
+      tokens: !!body.access_token || !!body.refresh_token,
+      retained: !!(await storage.get(key)),
+    };
+  }
+  test("a live account can refresh and within-window reuse still works", async () => {
+    expect((await refresh()).status).toBe(200);
+    expect(
+      (await refresh("account", accountActor.properties, true)).tokens,
+    ).toBe(true);
+  });
+  for (const reused of [false, true]) {
+    test(`deleted account cannot refresh (reuse=${reused})`, async () => {
+      database.run("UPDATE account SET time_deleted = '2026-01-01'");
+      const result = await refresh("account", accountActor.properties, reused);
+      expect(result).toEqual({
+        status: 400,
+        error: "invalid_grant",
+        tokens: false,
+        retained: false,
+      });
+    });
+  }
+  test("hard-deleted account cannot refresh", async () => {
+    database.run("DELETE FROM account");
+    expect((await refresh()).tokens).toBe(false);
+  });
+  test("changed account identity cannot refresh an older identity", async () => {
+    database.run("UPDATE account SET email = 'new@example.com'");
+    expect((await refresh()).tokens).toBe(false);
+  });
+  test("live workspace membership can refresh a user subject", async () => {
+    expect((await refresh("user", actor.properties)).status).toBe(200);
+  });
+  for (const table of ["account", "workspace", "user"]) {
+    test(`deleted ${table} cannot refresh a workspace user`, async () => {
+      database.run(`UPDATE ${table} SET time_deleted = '2026-01-01'`);
+      const result = await refresh("user", actor.properties);
+      expect(result.status).toBe(400);
+      expect(result.tokens).toBe(false);
+    });
+  }
+  test("missing membership cannot refresh a workspace user", async () => {
+    database.run("DELETE FROM user");
+    expect((await refresh("user", actor.properties)).tokens).toBe(false);
+  });
+  test("malformed or unknown stored subjects fail closed before the callback", async () => {
+    expect((await refresh("account", { accountID: ACCOUNT })).tokens).toBe(
+      false,
+    );
+    expect((await refresh("unknown", accountActor.properties)).tokens).toBe(
+      false,
+    );
+  });
+  const impersonation = {
+    accountID: "staffaaaaaaaaaaaaaaaaaaa",
+    email: "dax@sst.dev",
+    workspaceID: A,
+    userID: actor.properties.userID,
+  };
+  function staff() {
+    database.run("INSERT INTO account (id, email) VALUES (?, ?)", [
+      impersonation.accountID,
+      impersonation.email,
+    ]);
+    return { ...accountActor.properties, impersonation };
+  }
+  test("staff impersonation can refresh while both principals and the intended membership remain live", async () => {
+    expect((await refresh("account", staff())).status).toBe(200);
+  });
+  test("deleted staff account cannot refresh an impersonated session", async () => {
+    const identity = staff();
+    database.run(
+      "UPDATE account SET time_deleted = '2026-01-01' WHERE id = ?",
+      [impersonation.accountID],
+    );
+    expect((await refresh("account", identity)).tokens).toBe(false);
+  });
+  for (const table of ["workspace", "user"]) {
+    test(`impersonated session cannot refresh after ${table} deletion`, async () => {
+      const identity = staff();
+      database.run(`UPDATE ${table} SET time_deleted = '2026-01-01'`);
+      expect((await refresh("account", identity)).tokens).toBe(false);
+    });
+  }
+  test("unlisted account cannot refresh an impersonated session", async () => {
+    const identity = staff();
+    identity.impersonation = {
+      ...identity.impersonation,
+      email: "other@example.com",
+    };
+    expect((await refresh("account", identity)).tokens).toBe(false);
+  });
+  test("database failure cannot mint new tokens", async () => {
+    fake.sql = undefined;
+    fake.resolveSelect = () => {
+      throw new Error("unavailable");
+    };
+    const result = await refresh();
+    expect(result.status).toBe(503);
+    expect(result.tokens).toBe(false);
+  });
 });
 
 describe("configuration ownership", () => {
